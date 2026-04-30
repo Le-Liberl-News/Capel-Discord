@@ -41,7 +41,7 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         return cmdAnonyme.execute(interaction);
     }
 
-    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal'];
+    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'add-votes'];
     if (commandesRestreintes.includes(commandName)) {
         const hasPermission = member.roles.cache.some(role => ROLES_AUTORISES.includes(role.id));
         if (!hasPermission) {
@@ -75,6 +75,10 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
     if (commandName === 'actu-rank') {
         const cmdActuRank = require('../commands/actu-rank.js');
         return cmdActuRank.execute(interaction);
+    }
+    if (commandName === 'add-votes') {
+        const cmdAddVotes = require('../commands/add_votes.js');
+        return cmdAddVotes.execute(interaction);
     }
     if (commandName === 'creerthread') {
         const { createTheThread } = require('../utils/createThread.js');

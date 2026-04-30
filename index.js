@@ -42,6 +42,7 @@ const commands = [
     new SlashCommandBuilder().setName('profil').setDescription('Affiche la progression de l\'utilisateur.'),
     new SlashCommandBuilder().setName('closetrad').setDescription('Clore les soumissions'),
     new SlashCommandBuilder().setName('init-rank').setDescription('Commande système : Initialise le panneau de classement'),
+    new SlashCommandBuilder().setName('add-votes').setDescription('Commande système : Ajoute des boutons votes'),
     new SlashCommandBuilder().setName('actu-rank').setDescription('Commande système : Actualise le panneau de classement'),
     new SlashCommandBuilder().setName('testmodal').setDescription('test modal'),
     new SlashCommandBuilder().setName('creerthread').setDescription('Création du thread quotidien'),
@@ -314,7 +315,7 @@ cron.schedule('0 22 * * *', async () => {
     } catch (error) { console.error("❌ Erreur lors de la clôture de 22h :", error); }
 }, { timezone: "Europe/Paris" });
 
-cron.schedule('0 20 * * *', async () => {
+cron.schedule('0 19 * * *', async () => {
     const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
     mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
     propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
