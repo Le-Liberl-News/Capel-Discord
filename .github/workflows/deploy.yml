@@ -1,0 +1,43 @@
+name: 🚀 Deploy LN-Bot
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-and-restart:
+    name: 🚚 Sync & 🔄 Restart
+    runs-on: ubuntu-latest
+    steps:
+    - name: 📥 Get latest code
+      uses: actions/checkout@v4
+
+    - name: 🛠️ Deploy & Restart natively
+      env:
+        VPS_PASS: ${{ secrets.VPS_PASSWORD }}
+        VPS_USER: ${{ secrets.VPS_USERNAME }}
+        VPS_HOST: ${{ secrets.VPS_HOST }}
+        VPS_PORT: ${{ secrets.VPS_PORT }}
+        # Ton chemin exact :
+        TARGET_DIR: "/home/twnkek290001/Nial_Bot" 
+      run: |
+        sudo apt-get install -y sshpass
+        
+        echo "🚀 Début du transfert des fichiers..."
+        sshpass -p "$VPS_PASS" rsync -avz --exclude='.git/' --exclude='.github/' -e "ssh -o StrictHostKeyChecking=no -p $VPS_PORT" ./ $VPS_USER@$VPS_HOST:$TARGET_DIR/
+        
+        echo "🔄 Redémarrage du bot avec le moteur Orbal..."
+        # On utilise << 'EOF' pour envoyer un bloc de commandes complet via SSH
+        sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
+          # 1. On réveille NVM de force pour cette session robot
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          # 2. On exécute le reste
+          cd /home/twnkek290001/Nial_Bot
+          npm install
+          chmod +x maj.sh
+          ./maj.sh
+        EOF
+        
+        echo "✅ Déploiement terminé avec succès !"

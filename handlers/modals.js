@@ -1,0 +1,294 @@
+const db = require('../utils/db.js');
+const { ajouterXP } = require('../utils/xpManager.js');
+const { evaluerProposition } = require('../utils/ia_eval.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, WebhookClient } = require('discord.js');
+const sheetManager = require('../utils/sheetManager.js');
+const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
+
+const SALON_READONLY_ID = "1493171302624657428";
+
+function couleurAleatoire() {
+    return '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+}
+
+module.exports = async function handleModals(interaction, sheets) {
+
+    if (interaction.customId === 'modal_trad_groupe') {
+        try {
+            const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+            
+            if (!mission) throw new Error("Aucune mission active en BDD");
+
+            const userId = interaction.user.id;
+            const lignes = String(mission.ligne).split(',');
+            let textesSaisis = [];
+
+            await interaction.reply({ content: "⏳ Enregistrement...", ephemeral: true });
+
+            for (let i = 0; i < lignes.length; i++) {
+                const contenu = interaction.fields.getTextInputValue(`bulle_${i}`);
+                console.log(`>>> [DEBUG] Saisie Bulle ${i} : ${contenu ? "Reçue" : "VIDE"}`);
+                
+                if (!contenu || contenu.trim().length < 2) { 
+                    console.log(`>>> [DEBUG] Erreur : Bulle ${i} trop courte`);
+                    return interaction.editReply({ content: `❌ Bulle ${i + 1} invalide.` });
+                }
+                textesSaisis.push(contenu.trim());
+            }
+            
+            const texteComplet = textesSaisis.join('\n---\n');
+            const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
+
+            const maintenant = new Date();
+            const heureParis = new Date(maintenant.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }));
+            const heure = heureParis.getHours();
+
+            let row = null;
+            if (heure >= 19 && heure < 22) {
+                row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
+                );
+            }
+
+            const couleur = couleurAleatoire();
+
+            const embedProposition = new EmbedBuilder()
+            .setColor(couleur)
+            .setDescription(`${texteComplet}\n### **Score actuel :** \`0\``);
+
+            const publicMessage = await targetChannel.send({
+                embeds: [embedProposition],
+                reply: { messageReference: mission.mission_message_id, failIfNotExists: false },
+                components: row ? [row] : []
+            });
+
+            let objetStockage = {};
+            lignes.forEach((numLigne, i) => {
+                objetStockage[numLigne.trim()] = textesSaisis[i];
+            });
+            const jsonAStocker = JSON.stringify(objetStockage);
+
+            console.log(">>> [DEBUG] Tentative d'insertion en BDD...");
+            const stmt = db.prepare('INSERT INTO propositions (message_id, texte, score, sheet_id, ligne, user_id, couleur) VALUES (?, ?, 0, ?, ?, ?, ?)');
+            stmt.run(publicMessage.id, jsonAStocker, mission.sheet_id, mission.ligne, userId, couleur);
+            console.log(">>> [DEBUG] Insertion réussie");
+
+            const dejaSoumis = db.prepare(`
+                SELECT 1 FROM propositions 
+                WHERE user_id = ? AND sheet_id = ? AND ligne = ? AND message_id != ? 
+                LIMIT 1
+            `).get(userId, mission.sheet_id, mission.ligne, publicMessage.id);
+
+            let messageFinal = "✅ Ton bloc de propositions a été soumis !";
+
+            if (!dejaSoumis) {
+                db.prepare(`
+                    INSERT INTO users_stats (user_id, total_soumissions) VALUES (?, 1) 
+                    ON CONFLICT(user_id) DO UPDATE SET total_soumissions = total_soumissions + 1
+                `).run(userId);
+                
+                await ajouterXP(userId, 20, interaction.client);
+                messageFinal = "✅ Bloc soumis ! Tu as gagné **20 PB** ! 🎖️";
+            }
+
+            await interaction.editReply({ content: "✅ Bloc de propositions soumis avec succès !" });
+
+            if (typeof sheets !== 'undefined') {
+                console.log(">>> [DEBUG] Lancement de l'évaluation IA...");
+                evaluerProposition(interaction.client, sheets, publicMessage, mission, texteComplet, publicMessage.id);
+            } else {
+                console.log(">>> [DEBUG] IA ignorée : variable 'sheets' non accessible dans index.js");
+            }
+
+        } catch (err) {
+            console.error(">>> [CRITICAL ERROR] :", err.stack);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.editReply({ content: "❌ Erreur : " + err.message });
+            } else {
+                await interaction.reply({ content: "❌ Crash : " + err.message, ephemeral: true });
+            }
+        }
+    }
+
+    if (interaction.customId.startsWith('modal_edit_groupe:')) {
+  	    const ancienMessageId = interaction.customId.split(':')[1];
+  	
+  	    try {
+  	        const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+  	        if (!mission) throw new Error("Aucune mission active en BDD");
+  	
+  	        await interaction.reply({ content: "⏳ Mise à jour...", ephemeral: true });
+  	
+  	        const lignes = String(mission.ligne).split(',');
+  	        let textesSaisis = [];
+  	
+  	        for (let i = 0; i < lignes.length; i++) {
+  	            const contenu = interaction.fields.getTextInputValue(`bulle_${i}`);
+  	            if (!contenu || contenu.trim().length < 2) {
+  	                return interaction.editReply({ content: `❌ Bulle ${i + 1} invalide.` });
+  	            }
+  	            textesSaisis.push(contenu.trim());
+  	        }
+  
+  	        const propActuelle = db.prepare('SELECT score, couleur, texte, texte_original FROM propositions WHERE message_id = ?')
+  	            .get(ancienMessageId);
+  	        const scoreActuel = propActuelle?.score ?? 0;
+  			
+      			const votesExistants = db.prepare('SELECT COUNT(*) as total FROM votes WHERE message_id = ?')
+      			    .get(ancienMessageId);
+  	
+  	        if (votesExistants.total > 0) {
+  	            const stringSimilarity = require('string-similarity');
+        				const texteReference = propActuelle.texte_original || propActuelle.texte;
+      	
+      	        let ancienTexte = "";
+      	        try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
+      	        } catch (e) { ancienTexte = texteReference; }
+      	
+      	        const nouveauTexte = textesSaisis.join(' ');
+      	        const score = stringSimilarity.compareTwoStrings(ancienTexte, nouveauTexte);
+      	        const SEUIL = 0.65;
+      	
+      	        if (score < SEUIL) {
+      	            return interaction.editReply({
+      	                content: `❌ Modification refusée : ton texte est trop différent de l'original (similarité : ${Math.round(score * 100)}%). Seules les corrections mineures sont autorisées après réception d'un vote.`
+      	            });
+      	        }
+      	        if (!propActuelle.texte_original) {
+      	            db.prepare('UPDATE propositions SET texte_original = ? WHERE message_id = ?').run(propActuelle.texte, ancienMessageId);
+      	        }
+  	        }
+  			
+  	        let objetStockage = {};
+  	        lignes.forEach((numLigne, i) => {
+  	            objetStockage[numLigne.trim()] = textesSaisis[i];
+  	        });
+  	        const jsonAStocker = JSON.stringify(objetStockage);
+  	
+  	        const texteComplet = textesSaisis.join('\n---\n');
+  	
+  	        db.prepare('UPDATE propositions SET texte = ? WHERE message_id = ?').run(jsonAStocker, ancienMessageId);
+  	
+  	        const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
+  	        const ancienMessage = await targetChannel.messages.fetch(ancienMessageId);
+  
+            const embedEdite = new EmbedBuilder()
+                .setColor(propActuelle?.couleur || '#2F3136')
+                .setDescription(`${texteComplet}\n### **Score actuel :** \`${scoreActuel}\``);
+  	        await ancienMessage.edit({ embeds: [embedEdite] });
+  	
+  	        await interaction.editReply({ content: "✅ Ta proposition a été mise à jour !" });
+  	
+  	        if (typeof sheets !== 'undefined') {
+  	            evaluerProposition(interaction.client, sheets, ancienMessage, mission, texteComplet, ancienMessageId);
+  	        }
+  	
+  	    } catch (err) {
+  	        console.error(">>> [EDIT ERROR] :", err.stack);
+  	        if (interaction.replied || interaction.deferred) {
+  	            await interaction.editReply({ content: "❌ Erreur : " + err.message });
+  	        } else {
+  	            await interaction.reply({ content: "❌ Crash : " + err.message, ephemeral: true });
+  	        }
+  	    }
+  	}
+    
+    if (interaction.customId.startsWith('modal_save|')) {
+        await interaction.deferReply({ ephemeral: false }); 
+
+        const parts = interaction.customId.split('|');
+        const feuille = parts[1];
+        const ligne = parseInt(parts[2], 10);
+        
+        const nouvelleTrad = interaction.fields.getTextInputValue('input_trad_fr');
+
+        try {
+            const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
+            if (candidats.length === 0) throw new Error("Feuille disparue.");
+            const sheetId = candidats[0].id;
+
+            await sheetManager.ecrireEtVerifier(sheets, sheetId, 'E', ligne, nouvelleTrad);
+
+            console.log(`[CAPEL-LOG] Modification manuelle réussie : ${feuille} L${ligne}`);
+            await interaction.editReply(`✅ **CORRECTION APPLIQUÉE** par <@${interaction.user.id}>\n📄 **Fichier :** ${feuille} (Ligne **${ligne}**)\n📝 ➔ \`${nouvelleTrad}\``);
+
+        } catch (error) {
+            console.error("❌ ERREUR ÉCRITURE MODALE :", error);
+            await interaction.editReply("❌ **Échec de l'écriture.** Vérifiez l'intégrité de la liaison avec le serveur distant.");
+        }
+    }
+    
+    if (interaction.customId.startsWith('modal_fix_')) {
+        const baseName = interaction.customId.split('_')[2];
+        const nouvelleTrad = interaction.fields.getTextInputValue('new_translation');
+        
+        const messageContent = interaction.message.content;
+        const repliqueOriginale = messageContent.split('💬 **Réplique :**\n> ')[1].split('\n')[0];
+
+        await interaction.deferReply({ ephemeral: false });
+
+        try {
+            await sheetManager.updateTranslation(sheets, TABLE_ID, baseName, repliqueOriginale, nouvelleTrad);
+
+            const revertButton = new ButtonBuilder()
+                .setCustomId(`btn_revert_${baseName}`)
+                .setLabel('Annuler (Remettre l\'original)')
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('⏪');
+
+            const row = new ActionRowBuilder().addComponents(revertButton);
+
+            await interaction.message.edit({ components: [] });
+            await interaction.editReply({
+                content: `✨ Correction appliquée sur **${baseName}** par <@${interaction.user.id}>.\nNouveau texte : \`${nouvelleTrad}\``,
+                components: [row]
+            });
+
+        } catch (error) {
+            console.error("Erreur fix :", error);
+            await interaction.editReply("❌ Erreur lors de l'application de la correction.");
+        }
+    }
+
+    if (interaction.customId.startsWith('modal_anonyme_')) {
+        const targetMessageId = interaction.customId.split('_')[2];
+        const texte = interaction.fields.getTextInputValue('message_contenu');
+        const { getPseudoAnonyme } = require('../commands/anonyme.js');
+
+        await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
+        const roleplayId = process.env.ROLEPLAY_ID;
+        const isRoleplay = interaction.channelId === roleplayId;
+        const threadId = isRoleplay ? roleplayId : process.env.THREAD_ID;
+        const webhookUrl = isRoleplay ? process.env.WEBHOOK_ROLEPLAY_URL : process.env.WEBHOOK_URL;
+        const webhook = new WebhookClient({ url: webhookUrl });
+
+        const pseudo = getPseudoAnonyme(interaction.user.id);
+
+        const targetChannel = await interaction.client.channels.fetch(threadId);
+        const targetMsg = await targetChannel.messages.fetch(targetMessageId);
+
+        const lignesOriginales = targetMsg.content.split('\n');
+        const texteFiltre = lignesOriginales
+            .filter(ligne => !ligne.trim().startsWith('>'))
+            .join(' ').replace(/\s+/g, ' ').trim();
+
+        const extrait = texteFiltre.substring(0, 100) || "...";
+        const auteurOriginal = targetMsg.author.username;
+        const guildId = interaction.guildId;
+        const messageUrl = `https://discord.com/channels/${guildId}/${threadId}/${targetMessageId}`;
+
+        try {
+            const payload = {
+                content: `> [**${auteurOriginal}** : ${extrait}...](${messageUrl})\n${texte}`,
+                username: pseudo,
+                avatarURL: `${process.env.BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`,
+            };
+            if (!isRoleplay) payload.threadId = threadId;
+
+            await webhook.send(payload);
+            await interaction.deleteReply();
+
+        } catch (e) { console.error(e); }
+    }
+};

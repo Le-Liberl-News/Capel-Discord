@@ -1,0 +1,7 @@
+# Dépendances Node
+node_modules/
+# Fichiers de configuration et secrets
+.env
+credentials.json
+# Screenshots
+uploads/
