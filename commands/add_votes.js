@@ -9,19 +9,46 @@ module.exports = {
         const estAutorise = ROLES_AUTORISES.some(id => interaction.member.roles.cache.has(id));
         if (!estAutorise) return interaction.reply({ content: "🛑 Accès refusé.", ephemeral: true });
 
-        const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
-        const mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
-        const propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
-        );
+        // 1. On met l'interaction en attente immédiatement
+        await interaction.deferReply({ ephemeral: true });
 
-        for (const proposition of propositions) {
-            try {
-                const message = await targetChannel.messages.fetch(proposition.message_id);
-                await message.edit({ components: [row] });
-            } catch (e) { console.error("❌ Erreur à l'ajout des boutons de vote:", e) }
+        try {
+            const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
+            const mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
+            
+            // Sécurité anti-crash si la table est vide
+            if (!mission) {
+                return interaction.editReply({ content: "Aucune mission actuelle trouvée." });
+            }
+
+            const propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
+            
+            if (propositions.length === 0) {
+                return interaction.editReply({ content: "Aucune proposition à mettre à jour." });
+            }
+
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
+            );
+
+            let successCount = 0;
+            
+            for (const proposition of propositions) {
+                try {
+                    const message = await targetChannel.messages.fetch(proposition.message_id);
+                    await message.edit({ components: [row] });
+                    successCount++;
+                } catch (e) { 
+                    console.error(`❌ Erreur sur le message ${proposition.message_id}:`, e.message); 
+                }
+            }
+
+            // 2. On clôture l'interaction avec le bilan
+            await interaction.editReply({ content: `✅ Opération terminée.` });
+
+        } catch (error) {
+            console.error("💥 Erreur critique dans add-votes :", error);
+            await interaction.editReply({ content: "Une erreur inattendue est survenue." });
         }
-
     }
 };
