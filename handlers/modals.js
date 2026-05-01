@@ -37,7 +37,7 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const texteActuel = textesSaisis.join(' ');
             const autresPropositions = db.prepare('SELECT texte FROM propositions').all();
-            const score = stringSimilarity.compareTwoStrings(ancienTexte, nouveauTexte);
+            const stringSimilarity = require('string-similarity');
 
             for (autreProposition of autresPropositions) {
                 let ancienTexte = "";
