@@ -317,6 +317,7 @@ cron.schedule('0 22 * * *', async () => {
 }, { timezone: "Europe/Paris" });
 
 cron.schedule('0 19 * * *', async () => {
+    const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
     mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
     propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
     const row = new ActionRowBuilder().addComponents(
