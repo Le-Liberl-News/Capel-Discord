@@ -291,6 +291,7 @@ cron.schedule('0 0 * * *', async () => {
     **Fonctions système disponibles :**
     > \`/trad\`    : Transférer vos propositions dans la base de données.
     > \`/context\` : Extraire le script environnant et l'analyse de la situation.
+    > (les autres commandes sont détaillées dans le message épinglé sur ce salon)
 
     *Bonne chance aux participants !*`;
 

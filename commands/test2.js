@@ -35,20 +35,22 @@ module.exports = {
             const lienMission = `https://discord.com/channels/${interaction.guildId}/${SALON_READONLY_ID}/${missionMsg.id}`;
 
             const messageAnnonce = `\`\`\`text
-            The Orbal Calculator
-            CAPEL SYSTEM Ver.7.0 - COPYRIGHT C.T.Z.
-            ---------------------------------------
-            [STATUT]  : NOUVELLE ENTREE DETECTEE
-            [REQUETE] : SOUMISSIONS OUVERTES
-            ---------------------------------------\`\`\`
-            **Cible localisée :**
-            🔗 [Accéder au bloc de répliques du jour](${lienMission})
+    The Orbal Calculator
+    CAPEL SYSTEM Ver.7.0
+    COPYRIGHT C.T.Z.
+    ----------------------------------
+    [STATUT]  : NOUVELLE ENTREE DETECTEE
+    [REQUETE] : SOUMISSIONS OUVERTES
+    ----------------------------------\`\`\`
+    **Cible localisée :**
+    🔗 [Accéder au bloc de répliques du jour](${lienMission})
 
-            **Fonctions système disponibles :**
-            > \`/trad\`    : Transférer vos propositions dans la base de données.
-            > \`/context\` : Extraire le script environnant et l'analyse orbal.
+    **Fonctions système disponibles :**
+    > \`/trad\`    : Transférer vos propositions dans la base de données.
+    > \`/context\` : Extraire le script environnant et l'analyse de la situation.
+    > (les autres commandes sont détaillées dans le message épinglé sur ce salon)
 
-            *Bonne chance aux participants !*`;
+    *Bonne chance aux participants !*`;
 
             const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
