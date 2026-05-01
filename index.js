@@ -17,8 +17,8 @@ const handleSlashCommands = require('./handlers/slashCommands.js')
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
 const { updateRanking } = require('./utils/rankings.js')
-const KEY_FILE = './credentials.json'; 
-const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo'; 
+const KEY_FILE = './credentials.json';
+const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
 
 const auth = new google.auth.GoogleAuth({
     keyFile: KEY_FILE,
@@ -42,7 +42,6 @@ const commands = [
     new SlashCommandBuilder().setName('profil').setDescription('Affiche la progression de l\'utilisateur.'),
     new SlashCommandBuilder().setName('closetrad').setDescription('Clore les soumissions'),
     new SlashCommandBuilder().setName('init-rank').setDescription('Commande système : Initialise le panneau de classement'),
-    new SlashCommandBuilder().setName('add-votes').setDescription('Commande système : Ajoute des boutons votes'),
     new SlashCommandBuilder().setName('actu-rank').setDescription('Commande système : Actualise le panneau de classement'),
     new SlashCommandBuilder().setName('testmodal').setDescription('test modal'),
     new SlashCommandBuilder().setName('creerthread').setDescription('Création du thread quotidien'),
@@ -116,7 +115,7 @@ client.login(process.env.DISCORD_TOKEN);
 
 setInterval(async () => {
     const maintenant = Date.now();
-    const limiteTemps = 24 * 60 * 60 * 1000; 
+    const limiteTemps = 24 * 60 * 60 * 1000;
 
     const validationsExpirees = db.prepare('SELECT * FROM validations WHERE (? - timestamp_debut) > ?').all(maintenant, limiteTemps);
 
@@ -150,7 +149,7 @@ const upload = multer({ dest: 'uploads/' });
 app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
     try {
         const auteur = req.body.auteur || "Reporter Inconnu";
-        const fichierBrut = req.body.fichier || ""; 
+        const fichierBrut = req.body.fichier || "";
         const replique = req.body.replique || "";
 
         // 1. On nettoie le nom du fichier (on enlève le .v0 ou .x)
@@ -158,10 +157,10 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
 
         // 2. On lance la recherche massive via le sheetManager
         const matchs = await sheetManager.trouverOccurrencesBug(sheets, TABLE_ID, baseName, replique);
-        
+
         const channel = await client.channels.fetch(process.env.SECRET_CHANNEL_ID);
         const attachment = new AttachmentBuilder(req.file.path, { name: 'capture.png' });
-        
+
         let content = `**Nouveau bug report**\n**Auteur :** ${auteur}\nScript :** \`${baseName}\`\n**Réplique :**\n> ${replique}\n\n`;
         const components = [];
 
@@ -172,7 +171,7 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
             });
 
             const fixButton = new ButtonBuilder()
-                .setCustomId(`btn_fix_${baseName}`) 
+                .setCustomId(`btn_fix_${baseName}`)
                 .setLabel('Corriger ces lignes')
                 .setStyle(ButtonStyle.Success)
                 .setEmoji('✏️');
@@ -183,7 +182,7 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
             content += `❌ **Aucun match exact trouvé.** (Réplique vide, tag caché, ou erreur ?)\n🔍 Inspectez manuellement les feuilles liées :`;
 
             const feuillesLiees = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, baseName);
-            
+
             if (feuillesLiees.length > 0) {
                 const linkRow = new ActionRowBuilder();
                 feuillesLiees.slice(0, 5).forEach(f => {
@@ -201,7 +200,7 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
         }
 
         await channel.send({ content, files: [attachment], components });
-        
+
         const fs = require('fs');
         fs.unlinkSync(req.file.path);
         res.status(200).send('OK');
@@ -222,7 +221,7 @@ client.on('messageCreate', async message => {
 
     if (now - lastXP > (15 * 60000)) {
         await ajouterXP(message.author.id, 1, client);
-        cooldownsXP.set(message.author.id, now); 
+        cooldownsXP.set(message.author.id, now);
     }
 
     const threadId = process.env.THREAD_ID;
@@ -267,7 +266,7 @@ cron.schedule('0 0 * * *', async () => {
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     try {
         console.log("🕒 [CRON] Lancement de la mission de minuit...");
-        
+
         const channel = await client.channels.fetch(SALON_READONLY_ID);
         const result = await declencherNouvelleMission(sheets, TABLE_ID, SALON_READONLY_ID);
         const capelAvatar = new AttachmentBuilder('./capel.gif');
@@ -298,7 +297,8 @@ cron.schedule('0 0 * * *', async () => {
         const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
         db.prepare('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1').run(missionMsg.id);
-        
+        db.prepare('DELETE FROM pseudos_anonymes').run();
+
         console.log("✅ [CRON] Mission de minuit déployée avec succès.");
 
     } catch (error) { console.error("❌ Erreur lors du Cron de minuit :", error); }
@@ -316,7 +316,6 @@ cron.schedule('0 22 * * *', async () => {
 }, { timezone: "Europe/Paris" });
 
 cron.schedule('0 19 * * *', async () => {
-    const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
     mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
     propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
     const row = new ActionRowBuilder().addComponents(

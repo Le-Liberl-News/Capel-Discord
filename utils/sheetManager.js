@@ -4,7 +4,7 @@ async function lireLigne(sheets, sheetId, ligne) {
             spreadsheetId: sheetId,
             range: `A${ligne}:E${ligne}`,
         });
-        return res.data.values ? res.data.values[0] : null; 
+        return res.data.values ? res.data.values[0] : null;
     } catch (error) {
         console.error(`❌ Erreur de lecture sur la feuille ${sheetId} (Ligne ${ligne}) :`, error);
         throw error;
@@ -12,7 +12,7 @@ async function lireLigne(sheets, sheetId, ligne) {
 }
 
 async function ecrireEtVerifier(sheets, sheetId, colonne, ligne, nouvelleValeur) {
-    const range = `${colonne}${ligne}`; 
+    const range = `${colonne}${ligne}`;
 
     try {
         await sheets.spreadsheets.values.update({
@@ -32,8 +32,8 @@ async function ecrireEtVerifier(sheets, sheetId, colonne, ligne, nouvelleValeur)
         if (!valeurEcrite || valeurEcrite.trim() !== nouvelleValeur.trim()) {
             throw new Error(`Vérification échouée. Attendu : "${nouvelleValeur}", Trouvé : "${valeurEcrite}"`);
         }
-        return true; 
-        
+        return true;
+
     } catch (error) {
         console.error(`❌ Erreur d'écriture/vérification sur ${range} :`, error);
         throw error;
@@ -75,7 +75,7 @@ async function getToutesLesFeuillesCandidates(sheets, tableId) {
         if (!rangeData.values) return;
         rangeData.values.forEach(row => {
             const nomFeuille = row[0];
-			const endroit = row[1];
+            const endroit = row[1];
             const statut = row[2];
             const lien = row[5];
             if (nomFeuille && lien && (statut === "Non commencée")) {
@@ -90,7 +90,7 @@ async function getToutesLesFeuillesCandidates(sheets, tableId) {
 async function trouverBulleDansFeuille(sheets, sheetId) {
     const sheetRes = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'A1:E2000', 
+        range: 'A1:E2000',
     });
 
     const rows = sheetRes.data.values;
@@ -116,7 +116,7 @@ async function trouverBulleDansFeuille(sheets, sheetId) {
 
         if (colC && (!colE || colE.trim() === "")) {
             const texteEng = colD ? colD.trim() : "";
-            
+
             candidats.push({
                 ligne: i + 1,
                 perso: colB || "*Inconnu*",
@@ -129,7 +129,7 @@ async function trouverBulleDansFeuille(sheets, sheetId) {
 
     if (candidats.length === 0) return null;
 
-	const rank = Math.floor(Math.random() * candidats.length);
+    const rank = Math.floor(Math.random() * candidats.length);
 
     const meilleureBulle = candidats[rank];
     delete meilleureBulle.taille;
@@ -138,14 +138,17 @@ async function trouverBulleDansFeuille(sheets, sheetId) {
 async function determinerGroupe(sheets, sheetName, spreadsheetId) {
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
-        range: `Sheet1!A1:G2000`, 
+        range: `Sheet1!A1:G2000`,
     });
     const rows = response.data.values;
     if (!rows) return null;
 
     let startLine = -1;
     for (let i = 0; i < rows.length; i++) {
-        if (rows[i][0] && rows[i][0].trim().toUpperCase() === "PERSONNAGE") break;
+        if (rows[i][0] && rows[i][0].trim().toUpperCase() === "PERSONNAGE") {
+            startLine = i + 1;
+            break;
+        }
     }
 
     if (startLine === -1) {
@@ -155,7 +158,7 @@ async function determinerGroupe(sheets, sheetName, spreadsheetId) {
 
     let cibleIndex = -1;
     let maxDiff = null;
-	const charNumberAimed = 40 + (Math.random() * 200);
+    const charNumberAimed = 40 + (Math.random() * 200);
 
     for (let i = startLine; i < rows.length; i++) {
         const row = rows[i];
@@ -180,11 +183,11 @@ async function determinerGroupe(sheets, sheetName, spreadsheetId) {
     let indicesGroupe = [cibleIndex];
 
     const estGroupable = (idx) => {
-        if (idx < startLine || idx >= rows.length) return false; 
+        if (idx < startLine || idx >= rows.length) return false;
         const nom = rows[idx][1] ? rows[idx][1].trim() : "";
         const jap = rows[idx][2] ? rows[idx][2].trim() : "";
         const trad = rows[idx][4] ? rows[idx][4].trim() : "";
-        
+
         return (nom === persoCible && jap !== "" && trad === "");
     };
 
@@ -202,7 +205,7 @@ async function determinerGroupe(sheets, sheetName, spreadsheetId) {
 
     return {
         nom_perso: persoCible || "*Inconnu*",
-        lignes: indicesGroupe.map(idx => idx + 1).join(','), 
+        lignes: indicesGroupe.map(idx => idx + 1).join(','),
         jap: indicesGroupe.map(idx => rows[idx][2] || "").join(' |BR| '), // Colonne C
         eng: indicesGroupe.map(idx => rows[idx][3] || "").join(' |BR| ')  // Colonne D
     };
@@ -239,7 +242,7 @@ async function getFeuillesParNom(sheets, tableId, baseName) {
         rangeData.values.forEach(row => {
             const nomFeuille = row[0];
             const lien = row[5];
-            
+
             if (nomFeuille && lien && nomFeuille.startsWith(baseName)) {
                 const sheetId = extractSheetId(lien);
                 if (sheetId) candidats.push({ nom: nomFeuille, id: sheetId, lien: lien });
@@ -253,7 +256,7 @@ async function chercherTexteExact(sheets, sheetId, texteRecherche) {
     try {
         const sheetRes = await sheets.spreadsheets.values.get({
             spreadsheetId: sheetId,
-            range: 'A1:E2000', 
+            range: 'A1:E2000',
         });
 
         const rows = sheetRes.data.values;
@@ -289,7 +292,7 @@ async function chercherTexteExact(sheets, sheetId, texteRecherche) {
 
 async function trouverOccurrencesBug(sheets, tableId, baseName, texteRecherche) {
     const candidats = await getFeuillesParNom(sheets, tableId, baseName);
-    
+
     const resultatsGlobaux = [];
     for (const candidat of candidats) {
         const matchsDansFeuille = await chercherTexteExact(sheets, candidat.id, texteRecherche);
@@ -335,7 +338,7 @@ async function recupererLexique(sheets) {
             spreadsheetId: '1fDydK9_A185s2bz9EnLEeuLosDKS7hre5NK8Zd_a-jM',
             ranges: ['Général!B3:D', 'Items!C2:E', 'Lieux!B2:D', 'Noms!B2:D', 'Ennemis!B2:D'],
         });
-        
+
         let lexiqueTerms = [];
         lexiqueResponse.data.valueRanges.forEach(vr => {
             if (!vr.values) return;
@@ -362,7 +365,7 @@ async function recupererScript(sheets, spreadsheetId, targetLines) {
         const rows = scriptResponse.data.values || [];
         let contexte_texte = "";
         let startRow = -1;
-        
+
         for (let i = 0; i < rows.length; i++) {
             if (rows[i][0] && rows[i][0].toString().trim().toUpperCase() === "PERSONNAGE") {
                 startRow = i + 1;
@@ -400,7 +403,7 @@ module.exports = {
     trouverOccurrencesBug,
     getFeuillesParNom,
     updateTranslation,
-	lireLigne,
+    lireLigne,
     ecrireEtVerifier,
     formaterLigneDiscord,
     recupererLexique,

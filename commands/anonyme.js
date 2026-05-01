@@ -3,28 +3,29 @@ const db = require('../utils/db.js');
 
 const PSEUDOS = [
     "Estelle"   , "Joshua"      , "Scherazard", "Olivier" , "Campanella",
-    "Kloe"      , "Zin"         , "Tita"      , "Agate"   , "Chef-mécanicien Gustav",
-    "Weissmann" , "Loewe"       , "Luciola"   , "Walter"  , "Intendante Hilda",
-    "Nial"      , "Dorothy"     , "Anelace"   , "Anton"   , "Professeur Russell",
-    "Aina"      , "Josette"     , "Lila"      , "Lugran"  , "Maire Maybelle",
-    "Richard"   , "Kanone"      , "Grant"     , "Julia"   , "Proviseur Collins",
+    "Kloe"      , "Zin"         , "Tita"      , "Agate"   , "Ries",
+    "Weissmann" , "Loewe"       , "Luciola"   , "Walter"  , "Bleublanc",
+    "Nial"      , "Dorothy"     , "Anelace"   , "Renne"   , "Professeur Russell",
+    "Aina"      , "Josette"     , "Kevin"     , "Lugran"  , "Maire Maybelle",
+    "Richard"   , "Mueller"     , "Grant"     , "Julia"   , "Proviseur Collins",
     "Jill"      , "Hans"        , "Carna"     , "Jean"    , "Général Morgan",
     "Cassius"   , "Kilika"      , "Kurt"      , "Elnan"   , "Majordome Philippe",
-    "Duc Dunan" , "Kevin"       , "Kyle"      , "Don"     , "Reine Alicia",
-    "Bleublanc" , "Orvid"       , "Renne"     , "Mueller" , "Directeur Murdock",
+    "Duc Dunan" , "Lila"        , "Kyle"      , "Don"     , "Reine Alicia",
+    "Orvid"     , "Anton"       , "Kanone"    , "Chancelier Osborne",
     "Theresa"   , "Maire Klaus" , "Mme Mao"   , "Antoine" , "Lt-colonel Cid",
     "Dalmore"   , "Sieg"        , "Clem"      , "Daniel"  , "Ambassadrice Elsa",
     "Deen"      , "Rocco"       , "Rais"      , "Jack"    , "Ambassadeur Davil",
-    "Halle"     , "Lucy"        , "Mary"      , "Ries"    , "Erika Russell",
+    "Halle"     , "Lucy"        , "Mary"      , "Erika Russell",
     "Lechter"   , "Ein Selnate" , "Leo"       , "Phyllis" , "Dan Russell",
-    "Rufina Argent"             , "Chancelier Osborne"    , "Celeste von Auslese"
+    "Rufina Argent"             , "Celeste von Auslese"   , "Intendante Hilda",
+    "Chef-mécanicien Gustav"    , "Directeur Murdock"
 ];
 
 function getPseudoAnonyme(userId) {
     const existant = db.prepare('SELECT * FROM pseudos_anonymes WHERE user_id = ?').get(userId);
 
     if (existant) return PSEUDOS[existant.pseudo_index];
-  
+
     const indexDejaAttribues = db.prepare('SELECT pseudo_index FROM pseudos_anonymes').all().map(r => r.pseudo_index);
     const indexDisponibles = PSEUDOS.map((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
     const nouvelIndex = indexDisponibles.length > 0
@@ -32,7 +33,7 @@ function getPseudoAnonyme(userId) {
         : null;
 
     if (nouvelIndex === null) return "Pom";
-  
+
     db.prepare(`
         INSERT INTO pseudos_anonymes (user_id, pseudo_index)
         VALUES (?, ?)
