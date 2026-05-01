@@ -43,6 +43,7 @@ const commands = [
     new SlashCommandBuilder().setName('closetrad').setDescription('Clore les soumissions'),
     new SlashCommandBuilder().setName('init-rank').setDescription('Commande système : Initialise le panneau de classement'),
     new SlashCommandBuilder().setName('actu-rank').setDescription('Commande système : Actualise le panneau de classement'),
+    new SlashCommandBuilder().setName('add-votes').setDescription('Commande système : Ajoute le bouton vote aux propositions'),
     new SlashCommandBuilder().setName('testmodal').setDescription('test modal'),
     new SlashCommandBuilder().setName('creerthread').setDescription('Création du thread quotidien'),
     new SlashCommandBuilder().setName('edition').setDescription('Modifier une de tes propositions en cours'),
