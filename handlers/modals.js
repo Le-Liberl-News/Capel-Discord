@@ -16,7 +16,6 @@ module.exports = async function handleModals(interaction, sheets) {
     if (interaction.customId === 'modal_trad_groupe') {
         try {
             const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
-            
             if (!mission) throw new Error("Aucune mission active en BDD");
 
             const userId = interaction.user.id;
@@ -28,14 +27,31 @@ module.exports = async function handleModals(interaction, sheets) {
             for (let i = 0; i < lignes.length; i++) {
                 const contenu = interaction.fields.getTextInputValue(`bulle_${i}`);
                 console.log(`>>> [DEBUG] Saisie Bulle ${i} : ${contenu ? "Reçue" : "VIDE"}`);
-                
+
                 if (!contenu || contenu.trim().length < 2) { 
                     console.log(`>>> [DEBUG] Erreur : Bulle ${i} trop courte`);
                     return interaction.editReply({ content: `❌ Bulle ${i + 1} invalide.` });
                 }
                 textesSaisis.push(contenu.trim());
             }
-            
+
+            const texteActuel = textesSaisis.join(' ');
+            const autresPropositions = db.prepare('SELECT texte FROM propositions').all();
+            const score = stringSimilarity.compareTwoStrings(ancienTexte, nouveauTexte);
+
+            for (autreProposition of autresPropositions) {
+                let ancienTexte = "";
+                try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
+                } catch (e) { ancienTexte = texteReference; }
+
+                const ressemblance = stringSimilarity.compareTwoStrings(texteActuel, ancienTexte);
+                if (ressemblance > 0.8) {
+                    return interaction.editReply({
+                        content: `❌ Proposition refusée : ressemblance trop forte avec une proposition précédente.\nSi tu en es l'auteur, modifie-la avec /edition. Sinon, discutes-en sur un des salons dédiés.`
+                    });
+                }
+            }
+
             const texteComplet = textesSaisis.join('\n---\n');
             const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
 
@@ -86,7 +102,7 @@ module.exports = async function handleModals(interaction, sheets) {
                     INSERT INTO users_stats (user_id, total_soumissions) VALUES (?, 1) 
                     ON CONFLICT(user_id) DO UPDATE SET total_soumissions = total_soumissions + 1
                 `).run(userId);
-                
+
                 await ajouterXP(userId, 20, interaction.client);
                 messageFinal = "✅ Bloc soumis ! Tu as gagné **20 PB** ! 🎖️";
             }
@@ -111,95 +127,95 @@ module.exports = async function handleModals(interaction, sheets) {
     }
 
     if (interaction.customId.startsWith('modal_edit_groupe:')) {
-  	    const ancienMessageId = interaction.customId.split(':')[1];
-  	
-  	    try {
-  	        const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
-  	        if (!mission) throw new Error("Aucune mission active en BDD");
-  	
-  	        await interaction.reply({ content: "⏳ Mise à jour...", ephemeral: true });
-  	
-  	        const lignes = String(mission.ligne).split(',');
-  	        let textesSaisis = [];
-  	
-  	        for (let i = 0; i < lignes.length; i++) {
-  	            const contenu = interaction.fields.getTextInputValue(`bulle_${i}`);
-  	            if (!contenu || contenu.trim().length < 2) {
-  	                return interaction.editReply({ content: `❌ Bulle ${i + 1} invalide.` });
-  	            }
-  	            textesSaisis.push(contenu.trim());
-  	        }
-  
-  	        const propActuelle = db.prepare('SELECT score, couleur, texte, texte_original FROM propositions WHERE message_id = ?')
-  	            .get(ancienMessageId);
-  	        const scoreActuel = propActuelle?.score ?? 0;
-  			
-      			const votesExistants = db.prepare('SELECT COUNT(*) as total FROM votes WHERE message_id = ?')
-      			    .get(ancienMessageId);
-  	
-  	        if (votesExistants.total > 0) {
-  	            const stringSimilarity = require('string-similarity');
-        				const texteReference = propActuelle.texte_original || propActuelle.texte;
-      	
-      	        let ancienTexte = "";
-      	        try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
-      	        } catch (e) { ancienTexte = texteReference; }
-      	
-      	        const nouveauTexte = textesSaisis.join(' ');
-      	        const score = stringSimilarity.compareTwoStrings(ancienTexte, nouveauTexte);
-      	        const SEUIL = 0.65;
-      	
-      	        if (score < SEUIL) {
-      	            return interaction.editReply({
-      	                content: `❌ Modification refusée : ton texte est trop différent de l'original (similarité : ${Math.round(score * 100)}%). Seules les corrections mineures sont autorisées après réception d'un vote.`
-      	            });
-      	        }
-      	        if (!propActuelle.texte_original) {
-      	            db.prepare('UPDATE propositions SET texte_original = ? WHERE message_id = ?').run(propActuelle.texte, ancienMessageId);
-      	        }
-  	        }
-  			
-  	        let objetStockage = {};
-  	        lignes.forEach((numLigne, i) => {
-  	            objetStockage[numLigne.trim()] = textesSaisis[i];
-  	        });
-  	        const jsonAStocker = JSON.stringify(objetStockage);
-  	
-  	        const texteComplet = textesSaisis.join('\n---\n');
-  	
-  	        db.prepare('UPDATE propositions SET texte = ? WHERE message_id = ?').run(jsonAStocker, ancienMessageId);
-  	
-  	        const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
-  	        const ancienMessage = await targetChannel.messages.fetch(ancienMessageId);
-  
+        const ancienMessageId = interaction.customId.split(':')[1];
+
+        try {
+            const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+            if (!mission) throw new Error("Aucune mission active en BDD");
+
+            await interaction.reply({ content: "⏳ Mise à jour...", ephemeral: true });
+
+            const lignes = String(mission.ligne).split(',');
+            let textesSaisis = [];
+
+            for (let i = 0; i < lignes.length; i++) {
+                const contenu = interaction.fields.getTextInputValue(`bulle_${i}`);
+                if (!contenu || contenu.trim().length < 2) {
+                    return interaction.editReply({ content: `❌ Bulle ${i + 1} invalide.` });
+                }
+                textesSaisis.push(contenu.trim());
+            }
+
+            const propActuelle = db.prepare('SELECT score, couleur, texte, texte_original FROM propositions WHERE message_id = ?')
+                .get(ancienMessageId);
+            const scoreActuel = propActuelle?.score ?? 0;
+
+                const votesExistants = db.prepare('SELECT COUNT(*) as total FROM votes WHERE message_id = ?')
+                    .get(ancienMessageId);
+
+            if (votesExistants.total > 0) {
+                const stringSimilarity = require('string-similarity');
+                        const texteReference = propActuelle.texte_original || propActuelle.texte;
+
+                let ancienTexte = "";
+                try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
+                } catch (e) { ancienTexte = texteReference; }
+
+                const nouveauTexte = textesSaisis.join(' ');
+                const score = stringSimilarity.compareTwoStrings(ancienTexte, nouveauTexte);
+                const SEUIL = 0.65;
+
+                if (score < SEUIL) {
+                    return interaction.editReply({
+                        content: `❌ Modification refusée : ton texte est trop différent de l'original (similarité : ${Math.round(score * 100)}%). Seules les corrections mineures sont autorisées après réception d'un vote.`
+                    });
+                }
+                if (!propActuelle.texte_original) {
+                    db.prepare('UPDATE propositions SET texte_original = ? WHERE message_id = ?').run(propActuelle.texte, ancienMessageId);
+                }
+            }
+
+            let objetStockage = {};
+            lignes.forEach((numLigne, i) => {
+                objetStockage[numLigne.trim()] = textesSaisis[i];
+            });
+            const jsonAStocker = JSON.stringify(objetStockage);
+
+            const texteComplet = textesSaisis.join('\n---\n');
+
+            db.prepare('UPDATE propositions SET texte = ? WHERE message_id = ?').run(jsonAStocker, ancienMessageId);
+
+            const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
+            const ancienMessage = await targetChannel.messages.fetch(ancienMessageId);
+
             const embedEdite = new EmbedBuilder()
                 .setColor(propActuelle?.couleur || '#2F3136')
                 .setDescription(`${texteComplet}\n### **Score actuel :** \`${scoreActuel}\``);
-  	        await ancienMessage.edit({ embeds: [embedEdite] });
-  	
-  	        await interaction.editReply({ content: "✅ Ta proposition a été mise à jour !" });
-  	
-  	        if (typeof sheets !== 'undefined') {
-  	            evaluerProposition(interaction.client, sheets, ancienMessage, mission, texteComplet, ancienMessageId);
-  	        }
-  	
-  	    } catch (err) {
-  	        console.error(">>> [EDIT ERROR] :", err.stack);
-  	        if (interaction.replied || interaction.deferred) {
-  	            await interaction.editReply({ content: "❌ Erreur : " + err.message });
-  	        } else {
-  	            await interaction.reply({ content: "❌ Crash : " + err.message, ephemeral: true });
-  	        }
-  	    }
-  	}
-    
+            await ancienMessage.edit({ embeds: [embedEdite] });
+
+            await interaction.editReply({ content: "✅ Ta proposition a été mise à jour !" });
+
+            if (typeof sheets !== 'undefined') {
+                evaluerProposition(interaction.client, sheets, ancienMessage, mission, texteComplet, ancienMessageId);
+            }
+
+        } catch (err) {
+            console.error(">>> [EDIT ERROR] :", err.stack);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.editReply({ content: "❌ Erreur : " + err.message });
+            } else {
+                await interaction.reply({ content: "❌ Crash : " + err.message, ephemeral: true });
+            }
+        }
+    }
+
     if (interaction.customId.startsWith('modal_save|')) {
         await interaction.deferReply({ ephemeral: false }); 
 
         const parts = interaction.customId.split('|');
         const feuille = parts[1];
         const ligne = parseInt(parts[2], 10);
-        
+
         const nouvelleTrad = interaction.fields.getTextInputValue('input_trad_fr');
 
         try {
@@ -217,11 +233,11 @@ module.exports = async function handleModals(interaction, sheets) {
             await interaction.editReply("❌ **Échec de l'écriture.** Vérifiez l'intégrité de la liaison avec le serveur distant.");
         }
     }
-    
+
     if (interaction.customId.startsWith('modal_fix_')) {
         const baseName = interaction.customId.split('_')[2];
         const nouvelleTrad = interaction.fields.getTextInputValue('new_translation');
-        
+
         const messageContent = interaction.message.content;
         const repliqueOriginale = messageContent.split('💬 **Réplique :**\n> ')[1].split('\n')[0];
 
