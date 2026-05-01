@@ -3,7 +3,7 @@ const db = require('../utils/db.js');
 
 const PSEUDOS = [
     "Estelle"   , "Joshua"      , "Scherazard", "Olivier" , "Kloe",
-    "Agate"     , "Tita"        , "Zin"       , "Ries"    , "Nial",
+    "Agate"     , "Tita"        , "Zin"       , "Nial"    , "Ries",
     "Kevin"     , "Dorothy"     , "Luciola"   , "Walter"  , "Bleublanc",
     "Campanella", "Loewe"       , "Weissmann" , "Renne"   , "Professeur Russell",
     "Julia"     , "Josette"     , "Anelace"   , "Cassius" , "Maire Maybelle",
