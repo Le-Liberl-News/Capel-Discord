@@ -318,8 +318,8 @@ cron.schedule('0 22 * * *', async () => {
 
 cron.schedule('0 19 * * *', async () => {
     const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
-    mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
-    propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
+    const mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
+    const propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
     );
@@ -331,7 +331,8 @@ cron.schedule('0 19 * * *', async () => {
         } catch (e) { console.error("❌ Erreur à l'ajout des boutons de vote:", e) }
     }
 
-    const threadId = process.env.THREAD_ID;
+    const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
+    await discu_channel.send({ content: "**Les votes sont ouverts !**" });
 
 }, { timezone: "Europe/Paris"})
 
