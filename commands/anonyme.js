@@ -2,14 +2,14 @@ const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, Webhoo
 const db = require('../utils/db.js');
 
 const PSEUDOS = [
-    "Estelle"   , "Joshua"      , "Scherazard", "Olivier" , "Campanella",
-    "Kloe"      , "Zin"         , "Tita"      , "Agate"   , "Ries",
-    "Weissmann" , "Loewe"       , "Luciola"   , "Walter"  , "Bleublanc",
-    "Nial"      , "Dorothy"     , "Anelace"   , "Renne"   , "Professeur Russell",
-    "Aina"      , "Josette"     , "Kevin"     , "Lugran"  , "Maire Maybelle",
-    "Richard"   , "Mueller"     , "Grant"     , "Julia"   , "Proviseur Collins",
+    "Estelle"   , "Joshua"      , "Scherazard", "Olivier" , "Kloe",
+    "Agate"     , "Tita"        , "Zin"       , "Dorothy" , "Nial",
+    "Kevin"     , "Loewe"       , "Luciola"   , "Walter"  , "Bleublanc",
+    "Campanella", "Ries"        , "Weissmann" , "Renne"   , "Professeur Russell",
+    "Julia"     , "Josette"     , "Anelace"   , "Cassius" , "Maire Maybelle",
+    "Richard"   , "Mueller"     , "Grant"     , "Aina"    , "Proviseur Collins",
     "Jill"      , "Hans"        , "Carna"     , "Jean"    , "Général Morgan",
-    "Cassius"   , "Kilika"      , "Kurt"      , "Elnan"   , "Majordome Philippe",
+    "Lugran"    , "Kilika"      , "Kurt"      , "Elnan"   , "Majordome Philippe",
     "Duc Dunan" , "Lila"        , "Kyle"      , "Don"     , "Reine Alicia",
     "Orvid"     , "Anton"       , "Kanone"    , "Chancelier Osborne",
     "Theresa"   , "Maire Klaus" , "Mme Mao"   , "Antoine" , "Lt-colonel Cid",
@@ -29,7 +29,7 @@ function getPseudoAnonyme(userId) {
     const indexDejaAttribues = db.prepare('SELECT pseudo_index FROM pseudos_anonymes').all().map(r => r.pseudo_index);
     const indexDisponibles = PSEUDOS.map((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
     const nouvelIndex = indexDisponibles.length > 0
-        ? indexDisponibles[Math.floor(Math.pow(Math.random(), 1.8) * indexDisponibles.length)]
+        ? indexDisponibles[Math.floor(Math.pow(Math.random(), 3) * indexDisponibles.length)]
         : null;
 
     if (nouvelIndex === null) return "Pom";
