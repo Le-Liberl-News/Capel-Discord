@@ -41,8 +41,8 @@ module.exports = async function handleModals(interaction, sheets) {
 
             for (autreProposition of autresPropositions) {
                 let ancienTexte = "";
-                try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
-                } catch (e) { ancienTexte = texteReference; }
+                try { ancienTexte = Object.values(JSON.parse(autreProposition.texte)).join(' ');
+                } catch (e) { ancienTexte = autreProposition.texte; }
 
                 const ressemblance = stringSimilarity.compareTwoStrings(texteActuel, ancienTexte);
                 if (ressemblance > 0.8) {
