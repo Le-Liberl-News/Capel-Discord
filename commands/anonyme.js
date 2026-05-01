@@ -3,9 +3,9 @@ const db = require('../utils/db.js');
 
 const PSEUDOS = [
     "Estelle"   , "Joshua"      , "Scherazard", "Olivier" , "Kloe",
-    "Agate"     , "Tita"        , "Zin"       , "Dorothy" , "Nial",
-    "Kevin"     , "Loewe"       , "Luciola"   , "Walter"  , "Bleublanc",
-    "Campanella", "Ries"        , "Weissmann" , "Renne"   , "Professeur Russell",
+    "Agate"     , "Tita"        , "Zin"       , "Ries"    , "Nial",
+    "Kevin"     , "Dorothy"     , "Luciola"   , "Walter"  , "Bleublanc",
+    "Campanella", "Loewe"       , "Weissmann" , "Renne"   , "Professeur Russell",
     "Julia"     , "Josette"     , "Anelace"   , "Cassius" , "Maire Maybelle",
     "Richard"   , "Mueller"     , "Grant"     , "Aina"    , "Proviseur Collins",
     "Jill"      , "Hans"        , "Carna"     , "Jean"    , "Général Morgan",
