@@ -1,9 +1,9 @@
 const { AttachmentBuilder } = require('discord.js');
-const { state, renderMapImage, wait } = require('../rpg/gameState.js');
+const { state, renderMapImage, wait, saveState } = require('../rpg/gameState.js');
 
 module.exports = {
     async execute(interaction, traj) {
-        if (!state.mapMessage) {
+        if (!state.messageId || !state.channelId) {
             return interaction.reply({ content: "Aucune carte active. Lancez `/generer-map` d'abord.", ephemeral: true });
         }
 
@@ -22,6 +22,9 @@ module.exports = {
         state.isMoving = true;
 
         try {
+            const channel = await interaction.client.channels.fetch(state.channelId);
+            const mapMessage = await channel.messages.fetch(state.messageId);
+
             for (const direction of args) {
                 await wait(1000);
 
@@ -44,13 +47,15 @@ module.exports = {
                 const buffer = await renderMapImage(state.layout, state.playerX, state.playerY, state.iconPath);
                 const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
 
-                await state.mapMessage.edit({ 
+                await mapMessage.edit({ 
                     content: `Déplacement en cours... Trajectoire restante : ${args.join(' ')}`, 
                     files: [attachment] 
                 });
             }
             
-            await state.mapMessage.edit({ content: "Le groupe a terminé son déplacement." });
+            await mapMessage.edit({ content: "Le groupe a terminé son déplacement." });
+
+            saveState();
 
         } catch (error) {
             console.error("Erreur durant le déplacement :", error);

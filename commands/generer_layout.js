@@ -1,5 +1,5 @@
 const { AttachmentBuilder } = require('discord.js');
-const { state, generateMap, renderMapImage } = require('../rpg/gameState.js'); 
+const { state, generateMap, renderMapImage, saveState } = require('../rpg/gameState.js'); 
 
 module.exports = {
     async execute(interaction) {
@@ -17,9 +17,13 @@ module.exports = {
         const buffer = await renderMapImage(state.layout, state.playerX, state.playerY, state.iconPath);
         const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
 
-        state.mapMessage = await interaction.editReply({ 
+        const mapMessage = await interaction.editReply({ 
             content: "Nouvelle zone initialisée. Utilisez `/naviguer` pour avancer.", 
             files: [attachment] 
         });
+
+        state.messageId = mapMessage.id;
+        state.channelId = interaction.channelId;
+        saveState();
     }
 };

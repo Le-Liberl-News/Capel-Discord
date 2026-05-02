@@ -1,17 +1,39 @@
 const { createCanvas, loadImage } = require('canvas');
+const fs = require('fs');
 
-// Notre état global
-const state = {
+const STATE_FILE = './map_state.json';
+
+let state = {
     layout: null,
     playerX: 0,
     playerY: 0,
-    mapMessage: null,
+    messageId: null, 
+    channelId: null,
     isMoving: false,
     MAP_WIDTH: 10,
     MAP_HEIGHT: 10,
     TILE_SIZE: 40,
-    iconPath: './rpg/assets/player_icon.png' 
+    iconPath: './assets/player_icon.png'
 };
+
+function saveState() {
+    const dataToSave = { ...state, isMoving: false };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(dataToSave, null, 2));
+}
+
+function loadState() {
+    if (fs.existsSync(STATE_FILE)) {
+        try {
+            const rawData = fs.readFileSync(STATE_FILE);
+            const parsedData = JSON.parse(rawData);
+            state = { ...state, ...parsedData, isMoving: false };
+        } catch (error) {
+            console.error("Erreur de lecture du fichier de sauvegarde :", error);
+        }
+    }
+}
+
+loadState();
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -61,4 +83,5 @@ async function renderMapImage(map, playerX, playerY, iconPath) {
     return canvas.toBuffer('image/png');
 }
 
-module.exports = { state, wait, generateMap, renderMapImage };
+// On n'oublie pas d'exporter saveState
+module.exports = { state, wait, generateMap, renderMapImage, saveState };
