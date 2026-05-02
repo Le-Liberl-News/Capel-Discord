@@ -1,7 +1,8 @@
 const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
+const path = require('path');
 
-const STATE_FILE = './map_state.json';
+const STATE_FILE = path.join(__dirname, 'map_state.json');
 
 let state = {
     layout: null,
@@ -13,11 +14,17 @@ let state = {
     MAP_WIDTH: 20,
     MAP_HEIGHT: 20,
     TILE_SIZE: 30,
-    iconPath: './rpg/assets/player_icon.png'
+    iconPath: path.join(__dirname, 'rpg', 'assets', 'player_icon.png')
 };
 
 function saveState() {
-    const dataToSave = { ...state, isMoving: false };
+    const dataToSave = {
+        layout: state.layout,
+        playerX: state.playerX,
+        playerY: state.playerY,
+        messageId: state.messageId,
+        channelId: state.channelId
+    };
     fs.writeFileSync(STATE_FILE, JSON.stringify(dataToSave, null, 2));
 }
 
@@ -26,7 +33,13 @@ function loadState() {
         try {
             const rawData = fs.readFileSync(STATE_FILE);
             const parsedData = JSON.parse(rawData);
-            state = { ...state, ...parsedData, isMoving: false };
+            
+            state.layout = parsedData.layout || state.layout;
+            state.playerX = parsedData.playerX || state.playerX;
+            state.playerY = parsedData.playerY || state.playerY;
+            state.messageId = parsedData.messageId || state.messageId;
+            state.channelId = parsedData.channelId || state.channelId;
+            state.isMoving = false;
         } catch (error) {
             console.error(error);
         }
