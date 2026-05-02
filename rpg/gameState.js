@@ -1,6 +1,7 @@
 const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
 const path = require('path');
+const bestiaire = require('./data/bestiaire.json');
 
 const STATE_FILE = path.join(__dirname, 'map_state.json');
 
@@ -15,6 +16,7 @@ let state = {
     MAP_HEIGHT: 20,
     TILE_SIZE: 30,
     currentFloor: 1,
+    enemies: {},
     iconPath: path.join(__dirname, 'assets', 'player_icon.png'),
     enemyIconPath: path.join(__dirname, 'assets', 'enemy_icon.png'),
     exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png')
@@ -27,7 +29,8 @@ function saveState() {
         playerY: state.playerY,
         messageId: state.messageId,
         channelId: state.channelId,
-        currentFloor: state.currentFloor
+        currentFloor: state.currentFloor,
+        enemies: state.enemies
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(dataToSave, null, 2));
 }
@@ -44,6 +47,7 @@ function loadState() {
             state.messageId = parsedData.messageId || state.messageId;
             state.channelId = parsedData.channelId || state.channelId;
             state.currentFloor = parsedData.currentFloor || 1;
+            state.enemies = parsedData.enemies || {};
             state.isMoving = false;
         } catch (error) {
             console.error(error);
@@ -56,6 +60,7 @@ loadState();
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function generateMap() {
+    state.enemies = {};
     let map = Array(state.MAP_HEIGHT).fill().map(() => Array(state.MAP_WIDTH).fill(1));
     const rooms = [];
     const numRooms = 7;
@@ -103,6 +108,8 @@ function generateMap() {
     let lastRoom = rooms[rooms.length - 1];
     map[lastRoom.y][lastRoom.x] = 3;
 
+    const mobKeys = Object.keys(bestiaire);
+
     for (let y = 1; y < state.MAP_HEIGHT - 1; y++) {
         for (let x = 1; x < state.MAP_WIDTH - 1; x++) {
             if (map[y][x] === 0) {
@@ -111,6 +118,11 @@ function generateMap() {
                 
                 if ((isHoriz || isVert) && Math.random() < 0.25) {
                     map[y][x] = 2;
+                    const randomMobId = mobKeys[Math.floor(Math.random() * mobKeys.length)];
+                    state.enemies[`${y},${x}`] = {
+                        baseId: randomMobId,
+                        hpActuel: bestiaire[randomMobId].hpMax
+                    };
                 }
             }
         }

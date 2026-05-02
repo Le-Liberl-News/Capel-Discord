@@ -1,0 +1,20 @@
+{
+  "Estelle": {
+    "force": 45,
+    "magie": 20,
+    "agilite": 30,
+    "description": "Manie un long bâton. Excellente allonge et polyvalence."
+  },
+  "Joshua": {
+    "force": 35,
+    "magie": 40,
+    "agilite": 55,
+    "description": "Frappe avec deux lames courtes. Extrêmement rapide."
+  },
+  "default": {
+    "force": 25,
+    "magie": 25,
+    "agilite": 25,
+    "description": "Combattant standard avec un équipement de base."
+  }
+}
