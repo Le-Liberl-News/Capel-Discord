@@ -50,12 +50,13 @@ module.exports = {
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
 
         const prompt = `
-Tu es le maître du jeu.
+Tu es le maître du jeu d'un jeu de rôle dans l'univers des jeux Trails (Kiseki).
 Joueur: ${pseudo} (${statsJoueur.description}). Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Agilité: ${statsJoueur.agilite}.
 Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). HP: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}, Résistance Physique: ${baseEnemy.resistancePhysique}, Résistance Magique: ${baseEnemy.resistanceMagique}, Esquive: ${baseEnemy.esquive}.
 Action du joueur: "${attaque}"
 
-Analyse la faisabilité.
+Analyse la faisabilité de cette attaque sur la base des statistiques ET de la description de l'auteur de l'attaque et de sa cible. Va t-elle marcher ? Si oui, à quel point est-elle puissante ?
+Dans ton résultat, n'utilise pas toutes les informations des descriptions des protagonistes mais seulement celles qui sont pertinentes pour la réponse.
 Réponds UNIQUEMENT avec un objet JSON strict :
 {
     "succes": boolean,

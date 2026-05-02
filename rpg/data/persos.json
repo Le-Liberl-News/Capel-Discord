@@ -11,6 +11,12 @@
     "agilite": 55,
     "description": "Frappe avec deux lames courtes. Extrêmement rapide."
   },
+  "Zin": {
+    "force": 50,
+    "magie": 10,
+    "agilite": 40,
+    "description": "Zin a un grand gabarit musclé d'homme d'âge mûr. Il a de longs cheveux bruns attachés en arrière en une simple queue-de-cheval. Il s'habille dans le style de son pays natal, Calvard, arborant un pantalon ample resserré par des bandes métalliques, un tabard violet sans manches par-dessus une chemise à col ouvert, des chaussures plates à bout renforcé en acier et une grande écharpe jaune autour des épaules. Sa tenue comporte plusieurs éléments utiles pour les arts martiaux défensifs, comme des bandages autour de ses biceps et de ses tibias, des bandelettes violettes aux mains et des garnitures métalliques sur ses chaussures."
+  },
   "default": {
     "force": 25,
     "magie": 25,
