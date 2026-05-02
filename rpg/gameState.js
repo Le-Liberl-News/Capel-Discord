@@ -13,10 +13,10 @@ let state = {
     isMoving: false,
     MAP_WIDTH: 20,
     MAP_HEIGHT: 20,
-    TILE_SIZE: 30,
-    iconPath: path.join(__dirname, 'rpg', 'assets', 'player_icon.png'),
-    enemyIconPath: path.join(__dirname, 'rpg', 'assets', 'enemy_icon.png'),
-    exitIconPath: path.join(__dirname, 'rpg', 'assets', 'exit_icon.png')
+    TILE_SIZE: 40,
+    iconPath: path.join(__dirname, 'assets', 'player_icon.png'),
+    enemyIconPath: path.join(__dirname, 'assets', 'enemy_icon.png'),
+    exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png')
 };
 
 function saveState() {
