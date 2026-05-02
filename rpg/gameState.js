@@ -14,7 +14,9 @@ let state = {
     MAP_WIDTH: 20,
     MAP_HEIGHT: 20,
     TILE_SIZE: 30,
-    iconPath: path.join(__dirname, 'assets', 'player_icon.png')
+    iconPath: path.join(__dirname, 'rpg', 'assets', 'player_icon.png'),
+    enemyIconPath: path.join(__dirname, 'rpg', 'assets', 'enemy_icon.png'),
+    exitIconPath: path.join(__dirname, 'rpg', 'assets', 'exit_icon.png')
 };
 
 function saveState() {
@@ -95,29 +97,100 @@ function generateMap() {
     for (let px = Math.min(centerX, startRoom.x); px <= Math.max(centerX, startRoom.x); px++) map[centerY][px] = 0;
     for (let py = Math.min(centerY, startRoom.y); py <= Math.max(centerY, startRoom.y); py++) map[py][startRoom.x] = 0;
 
-    return map;
-}
+    let lastRoom = rooms[rooms.length - 1];
+    map[lastRoom.y][lastRoom.x] = 3;
 
-async function renderMapImage(map, playerX, playerY, iconPath) {
-    const canvas = createCanvas(state.MAP_WIDTH * state.TILE_SIZE, state.MAP_HEIGHT * state.TILE_SIZE);
-    const ctx = canvas.getContext('2d');
-
-    for (let y = 0; y < state.MAP_HEIGHT; y++) {
-        for (let x = 0; x < state.MAP_WIDTH; x++) {
-            ctx.fillStyle = map[y][x] === 1 ? '#2C2F33' : '#99AAB5';
-            ctx.fillRect(x * state.TILE_SIZE, y * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
-            ctx.strokeStyle = '#23272A';
-            ctx.strokeRect(x * state.TILE_SIZE, y * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+    for (let y = 1; y < state.MAP_HEIGHT - 1; y++) {
+        for (let x = 1; x < state.MAP_WIDTH - 1; x++) {
+            if (map[y][x] === 0) {
+                let isHoriz = map[y-1][x] === 1 && map[y+1][x] === 1 && map[y][x-1] === 0 && map[y][x+1] === 0;
+                let isVert = map[y][x-1] === 1 && map[y][x+1] === 1 && map[y-1][x] === 0 && map[y+1][x] === 0;
+                
+                if ((isHoriz || isVert) && Math.random() < 0.25) {
+                    map[y][x] = 2;
+                }
+            }
         }
     }
 
-    try {
-        const icon = await loadImage(iconPath);
-        ctx.drawImage(icon, playerX * state.TILE_SIZE, playerY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
-    } catch (e) {
+    return map;
+}
+
+async function renderMapImage(map, playerX, playerY) {
+    let minX = state.MAP_WIDTH;
+    let maxX = 0;
+    let minY = state.MAP_HEIGHT;
+    let maxY = 0;
+
+    for (let y = 0; y < state.MAP_HEIGHT; y++) {
+        for (let x = 0; x < state.MAP_WIDTH; x++) {
+            if (map[y][x] !== 1) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+
+    minX = Math.max(0, minX - 1);
+    maxX = Math.min(state.MAP_WIDTH - 1, maxX + 1);
+    minY = Math.max(0, minY - 1);
+    maxY = Math.min(state.MAP_HEIGHT - 1, maxY + 1);
+
+    const cropW = maxX - minX + 1;
+    const cropH = maxY - minY + 1;
+
+    const canvas = createCanvas(cropW * state.TILE_SIZE, cropH * state.TILE_SIZE);
+    const ctx = canvas.getContext('2d');
+
+    let playerIcon, enemyIcon, exitIcon;
+    try { playerIcon = await loadImage(state.iconPath); } catch (e) {}
+    try { enemyIcon = await loadImage(state.enemyIconPath); } catch (e) {}
+    try { exitIcon = await loadImage(state.exitIconPath); } catch (e) {}
+
+    for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+            const drawX = x - minX;
+            const drawY = y - minY;
+
+            if (map[y][x] === 1) {
+                ctx.fillStyle = '#2C2F33';
+            } else {
+                ctx.fillStyle = '#99AAB5';
+            }
+            
+            ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+            ctx.strokeStyle = '#23272A';
+            ctx.strokeRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+
+            if (map[y][x] === 2) {
+                if (enemyIcon) {
+                    ctx.drawImage(enemyIcon, drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+                } else {
+                    ctx.fillStyle = '#8B0000';
+                    ctx.fillRect(drawX * state.TILE_SIZE + 5, drawY * state.TILE_SIZE + 5, state.TILE_SIZE - 10, state.TILE_SIZE - 10);
+                }
+            } else if (map[y][x] === 3) {
+                if (exitIcon) {
+                    ctx.drawImage(exitIcon, drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+                } else {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(drawX * state.TILE_SIZE + 5, drawY * state.TILE_SIZE + 5, state.TILE_SIZE - 10, state.TILE_SIZE - 10);
+                }
+            }
+        }
+    }
+
+    const pDrawX = playerX - minX;
+    const pDrawY = playerY - minY;
+
+    if (playerIcon) {
+        ctx.drawImage(playerIcon, pDrawX * state.TILE_SIZE, pDrawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+    } else {
         ctx.fillStyle = '#ED4245';
         ctx.beginPath();
-        ctx.arc(playerX * state.TILE_SIZE + state.TILE_SIZE / 2, playerY * state.TILE_SIZE + state.TILE_SIZE / 2, state.TILE_SIZE / 3, 0, Math.PI * 2);
+        ctx.arc(pDrawX * state.TILE_SIZE + state.TILE_SIZE / 2, pDrawY * state.TILE_SIZE + state.TILE_SIZE / 2, state.TILE_SIZE / 3, 0, Math.PI * 2);
         ctx.fill();
     }
 
