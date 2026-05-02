@@ -13,7 +13,7 @@ let state = {
     MAP_WIDTH: 20,
     MAP_HEIGHT: 20,
     TILE_SIZE: 30,
-    iconPath: './assets/player_icon.png'
+    iconPath: './rpg/assets/player_icon.png'
 };
 
 function saveState() {

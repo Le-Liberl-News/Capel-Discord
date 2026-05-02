@@ -26,7 +26,7 @@ module.exports = {
             const mapMessage = await channel.messages.fetch(state.messageId);
 
             for (const direction of args) {
-                await wait(1000);
+                await wait(500);
 
                 let newX = state.playerX;
                 let newY = state.playerY;
