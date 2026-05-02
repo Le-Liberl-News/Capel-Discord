@@ -79,7 +79,9 @@ const commands = [
         .setType(ApplicationCommandType.Message),
 
     new SlashCommandBuilder().setName('naviguer').setDescription('Définis une trajectoire à suivre').addStringOption(opt => opt.setName('trajectoire').setDescription('Trajectoire (ex : D H D)').setRequired(true)),
-    new SlashCommandBuilder().setName('generer-map').setDescription('Génère un étage')
+    new SlashCommandBuilder().setName('generer-map').setDescription('Génère un étage'),
+    new SlashCommandBuilder().setName('attaque').setDescription('Lance une attaque sur la cible').addStringOption(opt => opt.setName('cible').setDescription('Cible (ex : D H B G)').setRequired(true)).addStringOption(opt => opt.setName('description').setDescription('Description de l\'attaque').setRequired(true)),
+    
 
 ].map(c => c.toJSON());
 
