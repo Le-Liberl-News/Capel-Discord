@@ -79,9 +79,9 @@ Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActue
 Action demandée par le joueur: "${attaque}"
 
 Processus de résolution OBLIGATOIRE (les stats font loi) :
-1. Faisabilité (Seuil) : Estime le seuil de Force ou de Magie requis pour réaliser l'action décrite (ex: pichenette = 5, soulever un rocher = 60). Compare ce seuil à la stat du Joueur. Si la stat est inférieure, l'action échoue lamentablement.
-2. Touche/Esquive : Si l'action est faisable, compare la Vitesse du Joueur à l'Esquive de l'Ennemi. La surprise (déduite de l'action) annule l'Esquive ennemie. Les conditions physiques sont déjà dans les stats, ne les compte pas deux fois.
-3. Encaissement : Si l'attaque touche, calcule les dégâts en fonction de la violence de l'action, de la stat du Joueur (Force/Magie) et de la Résistance correspondante de l'Ennemi.
+1. Faisabilité (Seuil) : Estime le seuil de Force ou de Magie requis pour réaliser l'action décrite. Compare ce seuil à la stat du Joueur. Si la stat est inférieure, l'action échoue.
+2. Touche/Esquive : Si l'action est faisable, compare la Vitesse du Joueur à l'Esquive de l'Ennemi. La surprise (déduite de l'action) annule l'Esquive ennemie.
+3. Encaissement : Si l'attaque touche, estime la "puissance brute" de l'action (ex: pichenette = 1, coup d'épée = 20). Calcule ensuite les dégâts finaux en multipliant cette puissance brute par la Force/Magie du Joueur, puis en soustrayant la Résistance correspondante de l'Ennemi. 
 
 Réponds UNIQUEMENT avec un JSON strict :
 {
@@ -118,9 +118,9 @@ Réponds UNIQUEMENT avec un JSON strict :
                 });
             }
 
-            if (outcome.degats_ennemi > 0) {
-                playerInstance.hpActuel -= outcome.degats_ennemi;
-                finalMessage += `\n💔 **${pseudo}** subit **${outcome.degats_ennemi}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
+            if (outcome.degats_contre_attaque > 0) {
+                playerInstance.hpActuel -= outcome.degats_contre_attaque;
+                finalMessage += `\n💔 **${pseudo}** subit **${outcome.degats_contre_attaque}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
                 if (playerInstance.hpActuel <= 0) {
                     finalMessage += `\n💀 **${pseudo} s'effondre, vaincu !**`;
                 }
@@ -132,8 +132,8 @@ Réponds UNIQUEMENT avec un JSON strict :
                 });
             }
 
-            if (outcome.succes_joueur && !outcome.esquive_ennemi) {
-                enemyInstance.hpActuel -= outcome.degats_joueur;
+            if (outcome.succes_global && !outcome.analyse_combat.esquive_reussie) {
+                enemyInstance.hpActuel -= outcome.analyse_combat.degats_infliges;
                 
                 if (enemyInstance.hpActuel <= 0 || outcome.mort_ennemi) {
                     state.layout[targetY][targetX] = 0;
@@ -150,7 +150,7 @@ Réponds UNIQUEMENT avec un JSON strict :
                     await mapMessage.edit({ files: [attachment] });
                 } else {
                     saveState();
-                    finalMessage += `\n\n💥 L'ennemi subit **${outcome.degats_joueur}** dégâts (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
+                    finalMessage += `\n\n💥 L'ennemi subit **${outcome.analyse_combat.degats_infliges}** dégâts (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
                 }
             } else {
                 saveState();
