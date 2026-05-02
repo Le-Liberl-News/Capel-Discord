@@ -73,36 +73,36 @@ module.exports = {
         }
 
         const prompt = `
-Tu es le maître du jeu d'un jeu de rôle dans l'univers des jeux Trails (Kiseki).
-Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse effective: ${effVitesseJoueur}. Statuts: [${playerInstance.statuts.join(', ')}].
-Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive effective: ${effEsquiveEnnemi}, Vitesse effective: ${effVitesseEnnemi}. Statuts: [${enemyInstance.statuts.join(', ')}].
-Action du joueur: "${attaque}"
+Tu es le moteur de résolution d'un RPG. 
+Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse: ${effVitesseJoueur}. Statuts: [${playerInstance.statuts.join(', ')}].
+Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive: ${effEsquiveEnnemi}, Vitesse: ${effVitesseEnnemi}, Résistance Phys: ${baseEnemy.resistancePhysique}, Résistance Mag: ${baseEnemy.resistanceMagique}. Statuts: [${enemyInstance.statuts.join(', ')}].
+Action demandée par le joueur: "${attaque}"
 
-Dans ton résultat, n'utilise pas toutes les informations des descriptions des protagonistes mais seulement celles qui sont pertinentes pour la réponse.
+Processus de résolution OBLIGATOIRE (les stats font loi) :
+1. Faisabilité (Seuil) : Estime le seuil de Force ou de Magie requis pour réaliser l'action décrite (ex: pichenette = 5, soulever un rocher = 60). Compare ce seuil à la stat du Joueur. Si la stat est inférieure, l'action échoue lamentablement.
+2. Touche/Esquive : Si l'action est faisable, compare la Vitesse du Joueur à l'Esquive de l'Ennemi. La surprise (déduite de l'action) annule l'Esquive ennemie. Les conditions physiques sont déjà dans les stats, ne les compte pas deux fois.
+3. Encaissement : Si l'attaque touche, calcule les dégâts en fonction de la violence de l'action, de la stat du Joueur (Force/Magie) et de la Résistance correspondante de l'Ennemi.
 
-Règles:
-0. Faisabilité : l'attaque va t-elle marcher ? Si elle est incohérente avec l'auteur de l'action, la cible, leurs statistiques : la faire échouer.
-1. Surprise: L'attaque est-elle furtive/dans le dos en se basant sur le texte et le profil du joueur ? Si oui, l'ennemi ne peut ni attaquer le premier, ni contre-attaquer. 
-2. Initiative: Si pas de surprise et vitesse ennemi très supérieure, l'ennemi frappe avant.
-3. Esquive: Estimer si l'ennemi esquive l'attaque du joueur en fonction du score d'esquive de la cible et de la vitesse du joueur.
-4. Contre-attaque: Si l'ennemi survit, n'est pas surpris, et a une vitesse > 0, il riposte.
-5. Statuts: Intègre les statuts existants dans la narration si l'un des deux acteurs en souffre ("poison", "paralysie", "etourdissement"). 
-
-Réponds UNIQUEMENT avec un JSON strict:
+Réponds UNIQUEMENT avec un JSON strict :
 {
-    "surprise": boolean,
-    "initiative": "joueur" | "ennemi",
-    "esquive_ennemi": boolean,
-    "succes_joueur": boolean,
-    "degats_joueur": number,
-    "contre_attaque_ennemi": boolean,
-    "degats_ennemi": number,
+    "analyse_seuil": {
+        "stat_requise": "force" | "magie",
+        "valeur_seuil": number,
+        "faisable": boolean
+    },
+    "analyse_combat": {
+        "surprise": boolean,
+        "esquive_reussie": boolean,
+        "degats_infliges": number
+    },
+    "succes_global": boolean,
     "mort_ennemi": boolean,
+    "contre_attaque_ennemi": boolean,
+    "degats_contre_attaque": number,
     "statuts_ajoutes_joueur": [],
     "statuts_ajoutes_ennemi": [],
-    "narration": "description épique du tour"
+    "narration": "Description dynamique du tour avec des détails issus de la description des différents acteurs, basée rigoureusement sur les analyses ci-dessus (pas plus de 200 caractères)."
 }`;
-
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
             const result = await model.generateContent(prompt);
