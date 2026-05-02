@@ -39,29 +39,68 @@ module.exports = {
 
         const enemyInstance = state.enemies[`${targetY},${targetX}`];
         if (!enemyInstance) {
-            return interaction.reply({ content: "Erreur de synchronisation, ennemi introuvable dans l'état.", ephemeral: true });
+            return interaction.reply({ content: "Erreur de synchronisation.", ephemeral: true });
         }
 
         const baseEnemy = bestiaire[enemyInstance.baseId];
-
-        await interaction.deferReply();
-
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
 
+        if (!state.players[pseudo]) {
+            state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
+        }
+        const playerInstance = state.players[pseudo];
+
+        if (playerInstance.hpActuel <= 0) {
+            return interaction.reply({ content: "Tu es inconscient et ne peux pas attaquer.", ephemeral: true });
+        }
+
+        await interaction.deferReply();
+
+        let effVitesseJoueur = statsJoueur.vitesse;
+        let effVitesseEnnemi = baseEnemy.vitesse;
+        let effEsquiveEnnemi = baseEnemy.esquive;
+
+        const statutsIncapacitants = ['paralysie', 'etourdissement'];
+        
+        if (playerInstance.statuts.some(s => statutsIncapacitants.includes(s))) {
+            effVitesseJoueur = 0;
+        }
+        
+        if (enemyInstance.statuts.some(s => statutsIncapacitants.includes(s))) {
+            effVitesseEnnemi = 0;
+            effEsquiveEnnemi = 0;
+        }
+
         const prompt = `
 Tu es le maître du jeu d'un jeu de rôle dans l'univers des jeux Trails (Kiseki).
-Joueur: ${pseudo} (${statsJoueur.description}). Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Agilité: ${statsJoueur.agilite}.
-Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). HP: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}, Résistance Physique: ${baseEnemy.resistancePhysique}, Résistance Magique: ${baseEnemy.resistanceMagique}, Esquive: ${baseEnemy.esquive}.
+Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse effective: ${effVitesseJoueur}. Statuts: [${playerInstance.statuts.join(', ')}].
+Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive effective: ${effEsquiveEnnemi}, Vitesse effective: ${effVitesseEnnemi}. Statuts: [${enemyInstance.statuts.join(', ')}].
 Action du joueur: "${attaque}"
 
-Analyse la faisabilité de cette attaque sur la base des statistiques ET de la description de l'auteur de l'attaque et de sa cible. Va t-elle marcher ? Si oui, à quel point est-elle puissante ?
 Dans ton résultat, n'utilise pas toutes les informations des descriptions des protagonistes mais seulement celles qui sont pertinentes pour la réponse.
-Réponds UNIQUEMENT avec un objet JSON strict :
+
+Règles:
+0. Faisabilité : l'attaque va t-elle marcher ? Si elle est incohérente avec l'auteur de l'action, la cible, leurs statistiques : la faire échouer.
+1. Surprise: L'attaque est-elle furtive/dans le dos en se basant sur le texte et le profil du joueur ? Si oui, l'ennemi ne peut ni attaquer le premier, ni contre-attaquer. 
+2. Initiative: Si pas de surprise et vitesse ennemi très supérieure, l'ennemi frappe avant.
+3. Esquive: Estimer si l'ennemi esquive l'attaque du joueur en fonction du score d'esquive de la cible et de la vitesse du joueur.
+4. Contre-attaque: Si l'ennemi survit, n'est pas surpris, et a une vitesse > 0, il riposte.
+5. Statuts: Intègre les statuts existants dans la narration si l'un des deux acteurs en souffre ("poison", "paralysie", "etourdissement"). 
+
+Réponds UNIQUEMENT avec un JSON strict:
 {
-    "succes": boolean,
-    "degats": number,
-    "narration": "courte description épique"
+    "surprise": boolean,
+    "initiative": "joueur" | "ennemi",
+    "esquive_ennemi": boolean,
+    "succes_joueur": boolean,
+    "degats_joueur": number,
+    "contre_attaque_ennemi": boolean,
+    "degats_ennemi": number,
+    "mort_ennemi": boolean,
+    "statuts_ajoutes_joueur": [],
+    "statuts_ajoutes_ennemi": [],
+    "narration": "description épique du tour"
 }`;
 
         try {
@@ -71,17 +110,37 @@ Réponds UNIQUEMENT avec un objet JSON strict :
             const textResult = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
             const outcome = JSON.parse(textResult);
 
-            let finalMessage = `**${pseudo}** attaque **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
+            let finalMessage = `**${pseudo}** engage **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
-            if (outcome.succes) {
-                enemyInstance.hpActuel -= outcome.degats;
+            if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
+                outcome.statuts_ajoutes_joueur.forEach(s => {
+                    if (!playerInstance.statuts.includes(s)) playerInstance.statuts.push(s);
+                });
+            }
+
+            if (outcome.degats_ennemi > 0) {
+                playerInstance.hpActuel -= outcome.degats_ennemi;
+                finalMessage += `\n💔 **${pseudo}** subit **${outcome.degats_ennemi}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
+                if (playerInstance.hpActuel <= 0) {
+                    finalMessage += `\n💀 **${pseudo} s'effondre, vaincu !**`;
+                }
+            }
+
+            if (outcome.statuts_ajoutes_ennemi && outcome.statuts_ajoutes_ennemi.length > 0) {
+                outcome.statuts_ajoutes_ennemi.forEach(s => {
+                    if (!enemyInstance.statuts.includes(s)) enemyInstance.statuts.push(s);
+                });
+            }
+
+            if (outcome.succes_joueur && !outcome.esquive_ennemi) {
+                enemyInstance.hpActuel -= outcome.degats_joueur;
                 
-                if (enemyInstance.hpActuel <= 0) {
+                if (enemyInstance.hpActuel <= 0 || outcome.mort_ennemi) {
                     state.layout[targetY][targetX] = 0;
                     delete state.enemies[`${targetY},${targetX}`];
                     saveState();
                     
-                    finalMessage += `\n\n💀 **L'ennemi est terrassé !**`;
+                    finalMessage += `\n\n🩸 **${baseEnemy.nom} est terrassé !**`;
                     
                     const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                     const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
@@ -91,10 +150,10 @@ Réponds UNIQUEMENT avec un objet JSON strict :
                     await mapMessage.edit({ files: [attachment] });
                 } else {
                     saveState();
-                    finalMessage += `\n\n💥 L'ennemi subit **${outcome.degats}** dégâts (HP restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
+                    finalMessage += `\n\n💥 L'ennemi subit **${outcome.degats_joueur}** dégâts (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
                 }
             } else {
-                finalMessage += `\n\n💨 L'attaque a échoué.`;
+                saveState();
             }
 
             await interaction.editReply({ content: finalMessage });

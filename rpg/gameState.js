@@ -17,6 +17,7 @@ let state = {
     TILE_SIZE: 30,
     currentFloor: 1,
     enemies: {},
+    players: {},
     iconPath: path.join(__dirname, 'assets', 'player_icon.png'),
     enemyIconPath: path.join(__dirname, 'assets', 'enemy_icon.png'),
     exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png')
@@ -30,7 +31,8 @@ function saveState() {
         messageId: state.messageId,
         channelId: state.channelId,
         currentFloor: state.currentFloor,
-        enemies: state.enemies
+        enemies: state.enemies,
+        players: state.players
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(dataToSave, null, 2));
 }
@@ -48,6 +50,7 @@ function loadState() {
             state.channelId = parsedData.channelId || state.channelId;
             state.currentFloor = parsedData.currentFloor || 1;
             state.enemies = parsedData.enemies || {};
+            state.players = parsedData.players || {};
             state.isMoving = false;
         } catch (error) {
             console.error(error);
@@ -121,7 +124,8 @@ function generateMap() {
                     const randomMobId = mobKeys[Math.floor(Math.random() * mobKeys.length)];
                     state.enemies[`${y},${x}`] = {
                         baseId: randomMobId,
-                        hpActuel: bestiaire[randomMobId].hpMax
+                        hpActuel: bestiaire[randomMobId].hpMax,
+                        statuts: []
                     };
                 }
             }

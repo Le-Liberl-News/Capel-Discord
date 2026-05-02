@@ -7,6 +7,7 @@
     "attaqueMagique": 0,
     "resistancePhysique": 60,
     "resistanceMagique": 20,
-    "esquive": 10
+    "esquive": 10,
+	"vitesse": 15
   }
 }
