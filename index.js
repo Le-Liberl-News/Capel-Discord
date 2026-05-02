@@ -76,7 +76,10 @@ const commands = [
                 .setMaxLength(1000)),
 
     new ContextMenuCommandBuilder().setName('Répondre anonymement')
-        .setType(ApplicationCommandType.Message)
+        .setType(ApplicationCommandType.Message),
+
+    new SlashCommandBuilder().setName('naviguer').setDescription('Définis une trajectoire à suivre').addStringOption(opt => opt.setName('trajectoire').setDescription('Trajectoire (ex : D H D)').setRequired(true)),
+    new SlashCommandBuilder().setName('generer-map').setDescription('Génère un étage')
 
 ].map(c => c.toJSON());
 

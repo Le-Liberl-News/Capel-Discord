@@ -41,7 +41,7 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         return cmdAnonyme.execute(interaction);
     }
 
-    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'add-votes'];
+    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'generer-map', 'naviguer'];
     if (commandesRestreintes.includes(commandName)) {
         const hasPermission = member.roles.cache.some(role => ROLES_AUTORISES.includes(role.id));
         if (!hasPermission) {
@@ -167,5 +167,15 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
             components: [row],
             ephemeral: false
         });
+    }
+
+    if (commandName === 'generer-map') {
+        const cmdGenMap = require('../commands/generer_layout.js');
+        return cmdGenMap.execute(interaction);
+    }
+    if (commandName === 'naviguer') {
+        const cmdNavigate = require('../commands/naviguer_map.js');
+        const traj = options.getString('trajectoire');
+        return cmdNavigate.execute(interaction, traj);
     }
 };
