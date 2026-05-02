@@ -7,12 +7,12 @@ let state = {
     layout: null,
     playerX: 0,
     playerY: 0,
-    messageId: null, 
+    messageId: null,
     channelId: null,
     isMoving: false,
-    MAP_WIDTH: 10,
-    MAP_HEIGHT: 10,
-    TILE_SIZE: 40,
+    MAP_WIDTH: 20,
+    MAP_HEIGHT: 20,
+    TILE_SIZE: 30,
     iconPath: './assets/player_icon.png'
 };
 
@@ -28,7 +28,7 @@ function loadState() {
             const parsedData = JSON.parse(rawData);
             state = { ...state, ...parsedData, isMoving: false };
         } catch (error) {
-            console.error("Erreur de lecture du fichier de sauvegarde :", error);
+            console.error(error);
         }
     }
 }
@@ -39,21 +39,49 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function generateMap() {
     let map = Array(state.MAP_HEIGHT).fill().map(() => Array(state.MAP_WIDTH).fill(1));
-    let x = Math.floor(state.MAP_WIDTH / 2);
-    let y = Math.floor(state.MAP_HEIGHT / 2);
-    let floorTiles = 40;
-    
-    while (floorTiles > 0) {
-        if (map[y][x] === 1) {
-            map[y][x] = 0;
-            floorTiles--;
+    const rooms = [];
+    const numRooms = 7;
+    const minSize = 3;
+    const maxSize = 6;
+
+    for (let i = 0; i < numRooms; i++) {
+        let w = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+        let h = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+        let x = Math.floor(Math.random() * (state.MAP_WIDTH - w - 2)) + 1;
+        let y = Math.floor(Math.random() * (state.MAP_HEIGHT - h - 2)) + 1;
+
+        for (let ry = y; ry < y + h; ry++) {
+            for (let rx = x; rx < x + w; rx++) {
+                map[ry][rx] = 0;
+            }
         }
-        const dir = Math.floor(Math.random() * 4);
-        if (dir === 0 && y > 1) y--;
-        else if (dir === 1 && y < state.MAP_HEIGHT - 2) y++;
-        else if (dir === 2 && x > 1) x--;
-        else if (dir === 3 && x < state.MAP_WIDTH - 2) x++;
+
+        let cx = Math.floor(x + w / 2);
+        let cy = Math.floor(y + h / 2);
+
+        if (rooms.length > 0) {
+            let prev = rooms[rooms.length - 1];
+            let pcx = prev.x;
+            let pcy = prev.y;
+
+            if (Math.random() < 0.5) {
+                for (let px = Math.min(pcx, cx); px <= Math.max(pcx, cx); px++) map[pcy][px] = 0;
+                for (let py = Math.min(pcy, cy); py <= Math.max(pcy, cy); py++) map[py][cx] = 0;
+            } else {
+                for (let py = Math.min(pcy, cy); py <= Math.max(pcy, cy); py++) map[py][pcx] = 0;
+                for (let px = Math.min(pcx, cx); px <= Math.max(pcx, cx); px++) map[cy][px] = 0;
+            }
+        }
+        rooms.push({ x: cx, y: cy });
     }
+
+    let centerX = Math.floor(state.MAP_WIDTH / 2);
+    let centerY = Math.floor(state.MAP_HEIGHT / 2);
+    let startRoom = rooms[0];
+    
+    for (let px = Math.min(centerX, startRoom.x); px <= Math.max(centerX, startRoom.x); px++) map[centerY][px] = 0;
+    for (let py = Math.min(centerY, startRoom.y); py <= Math.max(centerY, startRoom.y); py++) map[py][startRoom.x] = 0;
+
     return map;
 }
 
@@ -83,5 +111,4 @@ async function renderMapImage(map, playerX, playerY, iconPath) {
     return canvas.toBuffer('image/png');
 }
 
-// On n'oublie pas d'exporter saveState
 module.exports = { state, wait, generateMap, renderMapImage, saveState };
