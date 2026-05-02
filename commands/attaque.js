@@ -81,7 +81,7 @@ Action demandée par le joueur: "${attaque}"
 Processus de résolution OBLIGATOIRE (les stats font loi) :
 1. Faisabilité (Seuil) : Estime le seuil de Force ou de Magie requis pour réaliser l'action décrite. Compare ce seuil à la stat du Joueur. Si la stat est inférieure, l'action échoue.
 2. Touche/Esquive : Si l'action est faisable, compare la Vitesse du Joueur à l'Esquive de l'Ennemi. La surprise (déduite de l'action) annule l'Esquive ennemie.
-3. Encaissement : Si l'attaque touche, estime la "puissance brute" de l'action (ex: pichenette = 1, coup d'épée = 20). Calcule ensuite les dégâts finaux en multipliant cette puissance brute par la Force/Magie du Joueur, puis en soustrayant la Résistance correspondante de l'Ennemi. 
+3. Encaissement : Si l'attaque touche, estime d'abord la "puissance de base" de l'action décrite (ex: quasi-nulle pour un simple toucher, élevée pour une frappe armée). Additionne cette puissance à la stat appropriée du Joueur (Force ou Magie) pour obtenir l'impact total. ENFIN, confronte cet impact total à la Résistance (Physique ou Magique) de l'Ennemi. Si la Résistance est supérieure à l'impact, le coup est encaissé/absorbé et les dégâts tombent à 0 (ou 1 point symbolique).
 
 Réponds UNIQUEMENT avec un JSON strict :
 {
@@ -101,7 +101,7 @@ Réponds UNIQUEMENT avec un JSON strict :
     "degats_contre_attaque": number,
     "statuts_ajoutes_joueur": [],
     "statuts_ajoutes_ennemi": [],
-    "narration": "Description dynamique du tour avec des détails issus de la description des différents acteurs, basée rigoureusement sur les analyses ci-dessus (pas plus de 200 caractères)."
+    "narration": "Description dynamique du tour avec des détails issus de la description des différents acteurs, basée rigoureusement sur les analyses ci-dessus. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni PV restants) dans ce texte."
 }`;
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
