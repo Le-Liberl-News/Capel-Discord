@@ -52,7 +52,7 @@ function getPseudoAnonyme(userId) {
     if (Math.random() < Math.pow(0.5, Math.pow(indexDejaAttribues, 0.5))) {
         const comboDisponibles = COMBO.filter((valeur, index) =>
             indexDejaAttribues.includes(index) &&
-            !indexDejaAttribues.includes(valeur);
+            !indexDejaAttribues.includes(valeur));
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
         }
