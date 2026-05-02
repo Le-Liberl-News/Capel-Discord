@@ -24,9 +24,10 @@ module.exports = {
         try {
             const channel = await interaction.client.channels.fetch(state.channelId);
             const mapMessage = await channel.messages.fetch(state.messageId);
+            let collisionType = null;
 
             for (const direction of args) {
-                await wait(500);
+                await wait(250);
 
                 let newX = state.playerX;
                 let newY = state.playerY;
@@ -36,15 +37,28 @@ module.exports = {
                 else if (direction === 'G') newX--;
                 else if (direction === 'D') newX++;
 
-                if (newX >= 0 && newX < state.MAP_WIDTH && 
-                    newY >= 0 && newY < state.MAP_HEIGHT && 
-                    state.layout[newY][newX] === 0) {
+                if (newX >= 0 && newX < state.MAP_WIDTH && newY >= 0 && newY < state.MAP_HEIGHT) {
+                    const targetTile = state.layout[newY][newX];
+
+                    if (targetTile === 1) {
+                        continue;
+                    } 
                     
+                    if (targetTile === 2) {
+                        collisionType = 'enemy';
+                        break;
+                    }
+
                     state.playerX = newX;
                     state.playerY = newY;
+
+                    if (targetTile === 3) {
+                        collisionType = 'exit';
+                        break;
+                    }
                 }
 
-                const buffer = await renderMapImage(state.layout, state.playerX, state.playerY, state.iconPath);
+                const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                 const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
 
                 await mapMessage.edit({ 
@@ -52,13 +66,26 @@ module.exports = {
                     files: [attachment] 
                 });
             }
+
+            const bufferFinal = await renderMapImage(state.layout, state.playerX, state.playerY);
+            const attachmentFinal = new AttachmentBuilder(bufferFinal, { name: 'map.png' });
             
-            await mapMessage.edit({ content: "Le groupe a terminé son déplacement." });
+            let finalMessage = "Le groupe a terminé son déplacement.";
+            if (collisionType === 'enemy') {
+                finalMessage = "🛑 Un ennemi vous bloque la route ! Déplacement interrompu.";
+            } else if (collisionType === 'exit') {
+                finalMessage = "✨ Vous avez atteint l'escalier !";
+            }
+
+            await mapMessage.edit({ 
+                content: finalMessage, 
+                files: [attachmentFinal] 
+            });
 
             saveState();
 
         } catch (error) {
-            console.error("Erreur durant le déplacement :", error);
+            console.error(error);
         } finally {
             state.isMoving = false;
         }
