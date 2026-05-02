@@ -46,12 +46,13 @@ function getPseudoAnonyme(userId) {
     if (existant) return PSEUDOS[existant.pseudo_index];
 
     const indexDejaAttribues = db.prepare('SELECT pseudo_index FROM pseudos_anonymes').all().map(r => r.pseudo_index);
-    const indexDisponibles = PSEUDOS.map((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
 
     let nouvelIndex = null;
 
-    if (Math.random() < 0.5) {
-        const comboDisponibles = COMBO.map(i => indexDejaAttribues.includes(i) ? null : i).filter(i => i !== null);
+    if (Math.random() < Math.pow(0.5, Math.pow(indexDejaAttribues, 0.5))) {
+        const comboDisponibles = COMBO.filter((valeur, index) =>
+            indexDejaAttribues.includes(index) &&
+            !indexDejaAttribues.includes(valeur);
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
         }
