@@ -13,7 +13,8 @@ let state = {
     isMoving: false,
     MAP_WIDTH: 20,
     MAP_HEIGHT: 20,
-    TILE_SIZE: 40,
+    TILE_SIZE: 30,
+    currentFloor: 1,
     iconPath: path.join(__dirname, 'assets', 'player_icon.png'),
     enemyIconPath: path.join(__dirname, 'assets', 'enemy_icon.png'),
     exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png')
@@ -25,7 +26,8 @@ function saveState() {
         playerX: state.playerX,
         playerY: state.playerY,
         messageId: state.messageId,
-        channelId: state.channelId
+        channelId: state.channelId,
+        currentFloor: state.currentFloor
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(dataToSave, null, 2));
 }
@@ -41,6 +43,7 @@ function loadState() {
             state.playerY = parsedData.playerY || state.playerY;
             state.messageId = parsedData.messageId || state.messageId;
             state.channelId = parsedData.channelId || state.channelId;
+            state.currentFloor = parsedData.currentFloor || 1;
             state.isMoving = false;
         } catch (error) {
             console.error(error);
@@ -193,6 +196,12 @@ async function renderMapImage(map, playerX, playerY) {
         ctx.arc(pDrawX * state.TILE_SIZE + state.TILE_SIZE / 2, pDrawY * state.TILE_SIZE + state.TILE_SIZE / 2, state.TILE_SIZE / 3, 0, Math.PI * 2);
         ctx.fill();
     }
+
+    ctx.fillStyle = 'rgba(44, 47, 51, 0.85)';
+    ctx.fillRect(5, 5, 100, 30);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 18px Arial';
+    ctx.fillText(`Étage ${state.currentFloor}`, 15, 27);
 
     return canvas.toBuffer('image/png');
 }

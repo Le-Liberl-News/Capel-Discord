@@ -1,5 +1,5 @@
 const { AttachmentBuilder } = require('discord.js');
-const { state, generateMap, renderMapImage, saveState } = require('../rpg/gameState.js'); 
+const { state, generateMap, renderMapImage, saveState } = require('../gameState.js'); 
 
 module.exports = {
     async execute(interaction) {
@@ -9,12 +9,13 @@ module.exports = {
 
         await interaction.deferReply(); 
 
+        state.currentFloor = 1;
         state.layout = generateMap();
         state.playerX = Math.floor(state.MAP_WIDTH / 2);
         state.playerY = Math.floor(state.MAP_HEIGHT / 2);
         state.layout[state.playerY][state.playerX] = 0; 
 
-        const buffer = await renderMapImage(state.layout, state.playerX, state.playerY, state.iconPath);
+        const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
         const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
 
         const mapMessage = await interaction.editReply({ 

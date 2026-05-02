@@ -1,5 +1,5 @@
 const { AttachmentBuilder } = require('discord.js');
-const { state, renderMapImage, wait, saveState } = require('../rpg/gameState.js');
+const { state, renderMapImage, wait, saveState, generateMap } = require('../rpg/gameState.js');
 
 module.exports = {
     async execute(interaction, traj) {
@@ -27,7 +27,7 @@ module.exports = {
             let collisionType = null;
 
             for (const direction of args) {
-                await wait(250);
+                await wait(1000);
 
                 let newX = state.playerX;
                 let newY = state.playerY;
@@ -67,16 +67,22 @@ module.exports = {
                 });
             }
 
+            let finalMessage = "Le groupe a terminé son déplacement.";
+            
+            if (collisionType === 'exit') {
+                state.currentFloor++;
+                state.layout = generateMap();
+                state.playerX = Math.floor(state.MAP_WIDTH / 2);
+                state.playerY = Math.floor(state.MAP_HEIGHT / 2);
+                state.layout[state.playerY][state.playerX] = 0;
+                finalMessage = `✨ Vous avez pris l'escalier ! Bienvenue à l'étage ${state.currentFloor}.`;
+            } else if (collisionType === 'enemy') {
+                finalMessage = "🛑 Un ennemi vous bloque la route ! Déplacement interrompu.";
+            }
+
             const bufferFinal = await renderMapImage(state.layout, state.playerX, state.playerY);
             const attachmentFinal = new AttachmentBuilder(bufferFinal, { name: 'map.png' });
             
-            let finalMessage = "Le groupe a terminé son déplacement.";
-            if (collisionType === 'enemy') {
-                finalMessage = "🛑 Un ennemi vous bloque la route ! Déplacement interrompu.";
-            } else if (collisionType === 'exit') {
-                finalMessage = "✨ Vous avez atteint l'escalier !";
-            }
-
             await mapMessage.edit({ 
                 content: finalMessage, 
                 files: [attachmentFinal] 
