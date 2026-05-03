@@ -33,6 +33,7 @@ function appliquerStatuts(cible, statutsAjoutes, nomCible) {
 
 module.exports = {
     async execute(interaction, cible, attaque) {
+        const logChannel = await interaction.client.channels.fetch('1499373178483507210');
         if (!state.messageId || !state.channelId) {
             return interaction.reply({ content: "Aucune carte active.", ephemeral: true });
         }
@@ -78,13 +79,13 @@ module.exports = {
         const fatigueMax = statsJoueur.fatigueMax || 100;
         const statEndurance = statsJoueur.endurance || 30;
 
-        if (playerInstance.fatigueActuelle === undefined) {
-            playerInstance.fatigueActuelle = fatigueMax;
+        if (playerInstance.PCActuel === undefined) {
+            playerInstance.PCActuel = fatigueMax;
         }
 
         actualiserRegenPassive(playerInstance, statsJoueur);
 
-        if (playerInstance.fatigueActuelle <= 0) {
+        if (playerInstance.PCActuel <= 0) {
             return interaction.reply({ content: "Tu es trop épuisé pour attaquer...", ephemeral: true });
         }
 
@@ -174,8 +175,9 @@ module.exports = {
 
             if (!transactionPC.applique) {
                 // Échec de la transaction : on arrête tout
-                return await interaction.editReply({ 
-                    content: `**${pseudo}** tente de se lancer... mais il est trop épuisé !\n*Coût estimé : ${transactionPC.cout} PC. (Reste: ${playerInstance.PCActuel} PC)*` 
+                
+                return await logChannel.send({ 
+                    content: `**${pseudo}** tente de se lancer... mais l'épuisement le gagne !` 
                 });
             }
 
@@ -231,7 +233,7 @@ module.exports = {
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
 
-            const logChannel = await interaction.client.channels.fetch('1499373178483507210');
+            
             const hudMessage = await interaction.channel.messages.fetch(state.hudMessageId);
 
             await Promise.all([

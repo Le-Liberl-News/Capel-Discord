@@ -9,7 +9,7 @@ const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 module.exports = {
     async execute(interaction, cibleInput, description) {
         await interaction.deferReply();
-
+        const logChannel = await interaction.client.channels.fetch('1499373178483507210');
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const playerInstance = state.players[pseudo];
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
@@ -66,7 +66,7 @@ module.exports = {
             const transaction = consommerFatigue(playerInstance, statsJoueur, coef);
 
             if (!transaction.applique) {
-                return await interaction.editReply({ 
+                return await logChannel.send({ 
                     content: `**${pseudo}** tente d'agir envers **${ciblePseudo}**, mais l'épuisement le gagne !\n*Besoin de **${transaction.cout} PC** (Reste: ${playerInstance.PCActuel} PC).*` 
                 });
             }
@@ -118,7 +118,6 @@ module.exports = {
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
 
-            const logChannel = await interaction.client.channels.fetch('1499373178483507210');
             const hudMessage = await interaction.channel.messages.fetch(state.hudMessageId);
 
             await Promise.all([
