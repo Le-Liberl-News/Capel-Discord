@@ -34,7 +34,7 @@ module.exports = {
         if (playerInstance.hpActuel <= 0) {
             return interaction.reply({ content: "Tu es inconscient et ne peux pas te déplacer.", ephemeral: true });
         }
-
+        await interaction.deferReply({ ephemeral: true });
         state.isMoving = true;
 
         try {
@@ -138,6 +138,10 @@ module.exports = {
             console.error(error);
         } finally {
             state.isMoving = false;
+            try {
+                await interaction.deleteReply();
+            } catch (e) {
+            }
         }
     }
 };
