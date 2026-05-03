@@ -26,12 +26,11 @@ module.exports = {
 
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
-        const playerInstance = state.players[pseudo];
-        actualiserRegenPassive(playerInstance, statsJoueur);
-
         if (!state.players[pseudo]) {
             state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
         }
+        const playerInstance = state.players[pseudo];
+        actualiserRegenPassive(playerInstance, statsJoueur);
         
 
         if (playerInstance.hpActuel <= 0) {
