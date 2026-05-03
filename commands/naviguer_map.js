@@ -27,7 +27,7 @@ module.exports = {
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
         if (!state.players[pseudo]) {
-            state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
+            state.players[pseudo] = { hpActuel: statsJoueur.hpMax, PCActuel: statsJoueur.PCMax, PEActuel: statsJoueur.PEMax, statuts: [] };
         }
         const playerInstance = state.players[pseudo];
         actualiserRegenPassive(playerInstance, statsJoueur);
