@@ -15,11 +15,9 @@ module.exports = {
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const playerInstance = state.players[pseudo];
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
-
-        // Résolution de la cible
+        actualiserRegenPassive(playerInstance, statsJoueur);
         const ciblePseudo = Object.keys(state.players).find(p => p.toLowerCase() === cibleInput.toLowerCase());
         if (!ciblePseudo) {
-            // On a ajouté await ici
             return await interaction.editReply({ content: "Cible introuvable dans le groupe actuel." });
         }
 
@@ -71,10 +69,7 @@ module.exports = {
             const transaction = consommerFatigue(playerInstance, statsJoueur, coef);
 
             if (!transaction.applique) {
-                // LE FIX EST ICI : On envoie l'histoire, PUIS on ferme l'interaction
-                //await logChannel.send({ 
-                //    content: `**${pseudo}** tente d'agir envers **${ciblePseudo}**, mais l'épuisement le gagne !\n*Besoin de **${transaction.cout} PC** (Reste: ${playerInstance.PCActuel} PC).*` 
-                //});
+                
                 return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
             }
 

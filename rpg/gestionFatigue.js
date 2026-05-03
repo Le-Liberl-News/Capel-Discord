@@ -21,7 +21,7 @@ function actualiserRegenPassive(playerInstance, statsJoueur) {
             playerInstance.lastActionTime += (regenAmount / 2) * 60000; 
         }
     } else {
-        playerInstance.lastActionTime = now;
+        //playerInstance.lastActionTime = now;
     }
 }
 
