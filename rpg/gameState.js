@@ -276,6 +276,14 @@ async function jouerTourEnnemis(genAI) { // <-- On garde juste genAI
         
         const baseEnemy = bestiaire[enemyInstance.baseId];
 
+
+        // --- GESTION DE LA PARALYSIE ENNEMIE ---
+        if (enemyInstance.statuts && enemyInstance.statuts.some(s => s.nom === "paralysie")) {
+            rapportTour += `\n⚡ **${baseEnemy.nom}** est paralysé et ne peut pas agir !`;
+            rapportTour += gererTicksStatuts(enemyInstance, baseEnemy.nom); // Il prend quand même ses ticks s'il saigne !
+            continue; // On coupe court : il ne bouge pas et n'attaque pas
+        }
+
         // --- PHASE 1 : DÉPLACEMENT ---
         if (baseEnemy.mobile) {
             let aBouge = false;
@@ -364,12 +372,22 @@ async function jouerTourEnnemis(genAI) { // <-- On garde juste genAI
         }
         
         const ciblePseudo = pseudosVivants[Math.floor(Math.random() * pseudosVivants.length)];
+
+        const gardien = pseudosVivants.find(p => 
+            state.players[p].statuts && state.players[p].statuts.some(s => s.nom === "garde" && s.protege === ciblePseudo)
+        );
+
+        if (gardien && gardien !== ciblePseudo) {
+            rapportTour += `\n🛡️ **${gardien}** s'interpose héroïquement pour protéger ${ciblePseudo} !`;
+            ciblePseudo = gardien; 
+        }
+
         const cibleInstance = state.players[ciblePseudo];
         const cibleStats = databasePersos[ciblePseudo] || databasePersos["default"];
-        // ----------------------------------
 
         let infoAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; 
         let nomAttaque = "une attaque";
+        let statutAAppliquer = null; // Prépare la variable pour l'altération
         
         if (baseEnemy.attaques && baseEnemy.attaques.length > 0) {
             const attaqueAleatoire = baseEnemy.attaques[Math.floor(Math.random() * baseEnemy.attaques.length)];
@@ -378,6 +396,9 @@ async function jouerTourEnnemis(genAI) { // <-- On garde juste genAI
             
             nomAttaque = `*${attaqueAleatoire.nom}*`;
             infoAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}.`;
+            if (attaqueAleatoire.effet && Math.random() < attaqueAleatoire.effet.chance) {
+                statutAAppliquer = attaqueAleatoire.effet;
+            }
         }
 
         rapportTour += `\n\n⚠️ **${baseEnemy.nom} bondit sur ${ciblePseudo} et utilise ${nomAttaque} !**`;
@@ -408,6 +429,18 @@ Réponds UNIQUEMENT avec ce JSON strict :
             if (!outcome.esquive_joueur) {
                 cibleInstance.hpActuel -= outcome.degats_infliges;
                 rapportTour += `\n💥 ${ciblePseudo} subit **${outcome.degats_infliges}** dégâts (PV restants: ${cibleInstance.hpActuel}/${cibleStats.hpMax}).`;
+
+               
+                if (statutAAppliquer && cibleInstance.hpActuel > 0) {
+                    cibleInstance.statuts.push({
+                        nom: statutAAppliquer.nom,
+                        duree: statutAAppliquer.duree,
+                        degats: statutAAppliquer.degats
+                    });
+                    rapportTour += `\n⚠️ ${ciblePseudo} souffre de **${statutAAppliquer.nom}** !`;
+                }
+                
+
                 if (cibleInstance.hpActuel <= 0) {
                     rapportTour += `\n💀 **${ciblePseudo} s'effondre, vaincu !**`;
                 }
@@ -422,4 +455,29 @@ Réponds UNIQUEMENT avec ce JSON strict :
     return rapportTour;
 }
 
-module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard };
+function gererTicksStatuts(instance, nomInstance) {
+    let log = "";
+    if (!instance.statuts || instance.statuts.length === 0) return log;
+
+    // On boucle à l'envers pour pouvoir utiliser splice() sans casser l'index
+    for (let i = instance.statuts.length - 1; i >= 0; i--) {
+        let statut = instance.statuts[i];
+        
+        // Effet actif du saignement
+        if (statut.nom === "saignement") {
+            const degats = statut.degats || 5; // 5 par défaut si non précisé
+            instance.hpActuel -= degats;
+            log += `\n🩸 **${nomInstance}** perd ${degats} PV à cause du saignement.`;
+        }
+
+        // Réduction de la durée
+        statut.duree--;
+        if (statut.duree <= 0) {
+            log += `\n✨ L'effet **${statut.nom}** de ${nomInstance} s'est dissipé.`;
+            instance.statuts.splice(i, 1);
+        }
+    }
+    return log;
+}
+
+module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard,gererTicksStatuts };

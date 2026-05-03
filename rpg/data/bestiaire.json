@@ -18,9 +18,10 @@
           "puissance_base": 15
         },
         {
-          "nom": "Coup de bedaine",
-          "description": "Mishy bondit et frappe avec son ventre rebondi.",
-          "puissance_base": 25
+          "nom": "Coup de griffe",
+          "description": "Mishy bondit et griffe sa cible.",
+          "puissance_base": 25,
+          "effet": { "nom": "saignement", "degats": 8, "duree": 3, "chance": 0.4 }
         }
       ]
     }

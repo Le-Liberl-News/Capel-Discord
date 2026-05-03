@@ -7,6 +7,30 @@ const databasePersos = require('../rpg/data/persos.json');
 const { actualiserRegenPassive, consommerFatigue } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
+function appliquerStatuts(cible, statutsAjoutes, nomCible) {
+    let msg = "";
+    if (!statutsAjoutes || statutsAjoutes.length === 0) return msg;
+
+    statutsAjoutes.forEach(nouveauStatut => {
+        if (!["paralysie", "saignement", "garde"].includes(nouveauStatut.nom)) return;
+
+        const indexExistant = cible.statuts.findIndex(s => s.nom === nouveauStatut.nom);
+        
+        if (indexExistant !== -1) {
+            cible.statuts[indexExistant].duree = Math.max(cible.statuts[indexExistant].duree, nouveauStatut.duree || 2);
+            if (nouveauStatut.degats) cible.statuts[indexExistant].degats = nouveauStatut.degats;
+        } else {
+            cible.statuts.push({
+                nom: nouveauStatut.nom,
+                duree: nouveauStatut.duree || 2,
+                degats: nouveauStatut.degats || 0
+            });
+            msg += `\n⚠️ **${nomCible}** subit l'effet **${nouveauStatut.nom}** !`;
+        }
+    });
+    return msg;
+}
+
 module.exports = {
     async execute(interaction, cible, attaque) {
         if (!state.messageId || !state.channelId) {
@@ -74,7 +98,7 @@ module.exports = {
         let effVitesseEnnemi = baseEnemy.vitesse;
         let effEsquiveEnnemi = baseEnemy.esquive;
 
-        const statutsIncapacitants = ['paralysie', 'etourdissement'];
+        const statutsIncapacitants = ['paralysie'];
         
         if (playerInstance.statuts.some(s => statutsIncapacitants.includes(s))) {
             effVitesseJoueur = 0;
@@ -115,7 +139,8 @@ module.exports = {
             - COMPARE STRICTEMENT la Vitesse du Joueur (${effVitesseJoueur}) et l'Esquive de l'Ennemi (${effEsquiveEnnemi}).
             - SI ET SEULEMENT SI Vitesse Joueur < Esquive Ennemi : L'ennemi esquive avec succès ET riposte avec l'attaque prévue. Tu DOIS calculer "degats_contre_attaque" = (Puissance de la riposte * Intensité) + Force Ennemi - Résistance du Joueur. "contre_attaque_ennemi" sera true.
             - SINON (Vitesse Joueur >= Esquive Ennemi) : L'ennemi N'ESQUIVE PAS et NE PEUT PAS contre-attaquer. "contre_attaque_ennemi" DOIT être false, et "degats_contre_attaque" DOIT être 0.
-
+            6. ALTÉRATIONS D'ÉTAT (Si l'attaque réussit) :
+            - DÉDUIS de la description si une paralysie est logique. "J'assomme", "J'aveugle", "Choc électrique" -> applique "paralysie" (durée 1 ou 2). 
             Réponds UNIQUEMENT avec ce JSON strict :
             {
                 "type_action": "attaque" | "soin",
@@ -133,8 +158,8 @@ module.exports = {
                 "mort_ennemi": boolean,
                 "contre_attaque_ennemi": boolean,
                 "degats_contre_attaque": number,
-                "statuts_ajoutes_joueur": [],
-                "statuts_ajoutes_ennemi": [],
+                "statuts_ajoutes_joueur": [{"nom": "string", "duree": 0, "degats": 0}],
+                "statuts_ajoutes_ennemi": [{"nom": "string", "duree": 0, "degats": 0}],
                 "narration": "Description dynamique du tour, incluant la riposte si applicable. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni soins, ni PV restants) dans ce texte."
             }`;
         try {
@@ -151,17 +176,11 @@ module.exports = {
             console.log("==============================\n");
             // ------------------------------------------
 
-            let finalMessage = `**${pseudo}** agit sur **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
+            let finalMessage = `**${pseudo}** affronte **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
-            if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
-                outcome.statuts_ajoutes_joueur.forEach(s => {
-                    if (!playerInstance.statuts.includes(s)) playerInstance.statuts.push(s);
-                });
-            }
-            if (outcome.statuts_ajoutes_ennemi && outcome.statuts_ajoutes_ennemi.length > 0) {
-                outcome.statuts_ajoutes_ennemi.forEach(s => {
-                    if (!enemyInstance.statuts.includes(s)) enemyInstance.statuts.push(s);
-                });
+            if (outcome.succes_global && !outcome.analyse_combat.esquive_reussie) {
+                const msgEnnemi = appliquerStatuts(enemyInstance, outcome.statuts_ajoutes_ennemi, baseEnemy.nom);
+                finalMessage += msgEnnemi;
             }
 
             if (outcome.succes_global) {

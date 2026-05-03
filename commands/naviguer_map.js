@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard } = require('../rpg/gameState.js');
+const { state, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
@@ -85,6 +85,21 @@ module.exports = {
                     rapportGlobal += rapportEnnemis;
                     collisionType = 'enemy_attack'; 
                 }
+                // --- DÉCLENCHEMENT DES TICKS DE STATUTS DES JOUEURS ---
+                const pseudosActifs = Object.keys(state.players).filter(p => state.players[p].hpActuel > 0);
+                for (const p of pseudosActifs) {
+                    const logStatut = gererTicksStatuts(state.players[p], p);
+                    if (logStatut !== "") {
+                        rapportGlobal += logStatut;
+                        
+                        // Vérification de décès suite à un saignement mortel
+                        if (state.players[p].hpActuel <= 0) {
+                            rapportGlobal += `\n💀 **${p} succombe à ses blessures !**`;
+                            if (p === pseudo) collisionType = 'mort_saignement'; // Arrête le mouvement si c'est toi qui meurs
+                        }
+                    }
+                }
+                // --------------------------------------------------------
 
                 const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                 const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
