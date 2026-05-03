@@ -6,7 +6,7 @@ const databasePersos = require('./data/persos.json');
 const STATE_FILE = path.join(__dirname, 'map_state.json');
 const VISION_RADIUS = 2;
 const MAX_FLOOR = 10;
-
+const statutsPossibles = ["alcoolise", "paralysie", "saignement", "garde"]
 
 let state = {
     layout: null,

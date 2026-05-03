@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderHUDImage, saveState } = require('../rpg/gameState.js');
+const { state, renderHUDImage, saveState, statutsPossibles } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js');
 const databasePersos = require('../rpg/data/persos.json');
 const { consommerFatigue, actualiserRegenPassive } = require('../rpg/gestionFatigue.js');
@@ -206,11 +206,25 @@ module.exports = {
 
             if (outcome.statuts_ajoutes_acteur && outcome.statuts_ajoutes_acteur.length > 0) {
                 outcome.statuts_ajoutes_acteur.forEach(s => {
-                    if (!isSelf || !outcome.statuts_ajoutes_cible.some(c => c.nom === s.nom)) {
-                        playerInstance.statuts.push(s);
-                    }
-                    if (s.nom === "garde" && !isSelf && !cibleDejaMorte) {
-                        finalMessage += `\n🛡️ **${pseudo}** se prépare à encaisser les coups à la place de **${s.protege}** !`;
+                    if (!statutsAutorises.includes(s.nom)) return;
+
+                    const indexExistant = playerInstance.statuts.findIndex(ex => ex.nom === s.nom);
+                    
+                    if (indexExistant !== -1) {
+                        playerInstance.statuts[indexExistant].duree = Math.max(playerInstance.statuts[indexExistant].duree, s.duree || 2);
+                    } else if (!isSelf || !outcome.statuts_ajoutes_cible.some(c => c.nom === s.nom)) {
+                        playerInstance.statuts.push({
+                            nom: s.nom,
+                            duree: s.duree || 2,
+                            degats: s.degats || 0,
+                            protege: s.protege || null
+                        });
+                        
+                        if (s.nom === "garde" && !isSelf && !cibleDejaMorte) {
+                            finalMessage += `\n🛡️ **${pseudo}** se prépare à encaisser les coups à la place de **${s.protege || ciblePseudo}** !`;
+                        } else if (s.nom !== "garde") {
+                            finalMessage += `\n⚠️ Par contrecoup, **${pseudo}** subit l'effet **${s.nom}** !`;
+                        }
                     }
                 });
             }
