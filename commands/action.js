@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { state, renderHUDImage, saveState } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js');
 const databasePersos = require('../rpg/data/persos.json');
-const { consommerFatigue } = require('../rpg/gestionFatigue.js');
+const { consommerFatigue, actualiserRegenPassive } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
         // 1. On cache la commande aux autres joueurs
         await interaction.deferReply({ flags: ['Ephemeral'] }); 
         
-        const logChannel = await interaction.client.channels.fetch('1499373178483507210');
+        const logChannel = await interaction.client.channels.fetch('1500487420481896539');
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const playerInstance = state.players[pseudo];
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
@@ -72,9 +72,9 @@ module.exports = {
 
             if (!transaction.applique) {
                 // LE FIX EST ICI : On envoie l'histoire, PUIS on ferme l'interaction
-                await logChannel.send({ 
-                    content: `**${pseudo}** tente d'agir envers **${ciblePseudo}**, mais l'épuisement le gagne !\n*Besoin de **${transaction.cout} PC** (Reste: ${playerInstance.PCActuel} PC).*` 
-                });
+                //await logChannel.send({ 
+                //    content: `**${pseudo}** tente d'agir envers **${ciblePseudo}**, mais l'épuisement le gagne !\n*Besoin de **${transaction.cout} PC** (Reste: ${playerInstance.PCActuel} PC).*` 
+                //});
                 return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
             }
 

@@ -4,6 +4,7 @@ const { state, renderMapImage, renderHUDImage, wait, saveState, generateMap, jou
 const { getPseudoAnonyme } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
+const { actualiserRegenPassive} = require('../rpg/gestionFatigue.js');
 
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
@@ -25,7 +26,8 @@ module.exports = {
 
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
-
+        actualiserRegenPassive(playerInstance, statsJoueur);
+        
         if (!state.players[pseudo]) {
             state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
         }

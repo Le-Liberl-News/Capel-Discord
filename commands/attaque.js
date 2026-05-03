@@ -33,7 +33,7 @@ function appliquerStatuts(cible, statutsAjoutes, nomCible) {
 
 module.exports = {
     async execute(interaction, cible, attaque) {
-        const logChannel = await interaction.client.channels.fetch('1499373178483507210');
+        const logChannel = await interaction.client.channels.fetch('1500487420481896539');
         
         if (!state.messageId || !state.channelId) {
             return interaction.reply({ content: "Aucune carte active.", flags: ['Ephemeral'] });
@@ -177,9 +177,9 @@ module.exports = {
             const transactionPC = consommerFatigue(playerInstance, statsJoueur, coef);
 
             if (!transactionPC.applique) {
-                await logChannel.send({ 
-                    content: `**${pseudo}** tente de se lancer... mais l'épuisement le gagne !` 
-                });
+                //await logChannel.send({ 
+                //    content: `**${pseudo}** tente de se lancer... mais l'épuisement le gagne !` 
+                //});
                 return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
             }
 
