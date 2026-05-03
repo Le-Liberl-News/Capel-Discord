@@ -51,6 +51,17 @@ module.exports = {
         }
         const playerInstance = state.players[pseudo];
 
+        const fatigueMax = statsJoueur.fatigueMax || 100;
+        const statEndurance = statsJoueur.endurance || 30;
+
+        if (playerInstance.fatigueActuelle === undefined) {
+            playerInstance.fatigueActuelle = fatigueMax;
+        }
+
+        if (playerInstance.fatigueActuelle <= 0) {
+            return interaction.reply({ content: "Tu es trop épuisé pour agir ! Passe ton tour.", ephemeral: true });
+        }
+
         if (playerInstance.hpActuel <= 0) {
             return interaction.reply({ content: "Tu es inconscient et ne peux pas agir.", ephemeral: true });
         }
@@ -71,8 +82,7 @@ module.exports = {
             effVitesseEnnemi = 0;
             effEsquiveEnnemi = 0;
         }
-        // Préparation de la contre-attaque ennemie
-        let infoContreAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; // Fallback si le monstre n'a pas d'attaques définies
+        let infoContreAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; 
         if (baseEnemy.attaques && baseEnemy.attaques.length > 0) {
             const attaqueAleatoire = baseEnemy.attaques[Math.floor(Math.random() * baseEnemy.attaques.length)];
             const coefficients = [0.5, 1.0, 1.5, 2.0];
@@ -107,6 +117,7 @@ module.exports = {
             Réponds UNIQUEMENT avec ce JSON strict :
             {
                 "type_action": "attaque" | "soin",
+                "coefficient_intensite": number,
                 "details_calcul": "Écris l'équation appliquée : (Base * Coef) + Stat - Resistance = Résultat",
                 "analyse_seuil": {
                     "faisable": boolean
@@ -132,7 +143,6 @@ module.exports = {
             const outcome = JSON.parse(textResult);
 
 
-            // --- AJOUT POUR LE DEBUG DANS LA CONSOLE ---
             console.log("\n=== RÉSULTAT DU MOTEUR LLM ===");
             console.log(`Action du joueur : "${attaque}"`);
             console.log(JSON.stringify(outcome, null, 2));
@@ -141,7 +151,6 @@ module.exports = {
 
             let finalMessage = `**${pseudo}** agit sur **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
-            // GESTION DES STATUTS JOUER/ENNEMI
             if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
                 outcome.statuts_ajoutes_joueur.forEach(s => {
                     if (!playerInstance.statuts.includes(s)) playerInstance.statuts.push(s);
@@ -153,7 +162,6 @@ module.exports = {
                 });
             }
 
-            // GESTION DE L'ACTION DU JOUEUR
             if (outcome.succes_global) {
                 if (outcome.type_action === "soin") {
                     enemyInstance.hpActuel = Math.min(baseEnemy.hpMax, enemyInstance.hpActuel + outcome.analyse_combat.valeur_finale);
@@ -177,9 +185,7 @@ module.exports = {
                 }
             }
 
-            // GESTION DE LA CONTRE-ATTAQUE
             if (outcome.contre_attaque_ennemi && outcome.degats_contre_attaque > 0) {
-                // Pour sécuriser au cas où la stat résistance serait absente chez le joueur
                 const statResistanceJoueur = statsJoueur.resistancePhysique || 30; 
                 
                 playerInstance.hpActuel -= outcome.degats_contre_attaque;
@@ -189,6 +195,16 @@ module.exports = {
                     finalMessage += `\n💀 **${pseudo} s'effondre, vaincu par la riposte !**`;
                 }
             }
+
+            const coef = outcome.coefficient_intensite || 1.0;
+            
+            let coutFatigue = Math.max(1, Math.floor((15 * coef) * (50 / Math.max(1, statEndurance))));
+            
+            playerInstance.fatigueActuelle -= coutFatigue;
+            if (playerInstance.fatigueActuelle < 0) playerInstance.fatigueActuelle = 0;
+
+            finalMessage += `\n\n💨 **Fatigue :** -${coutFatigue} (Reste: ${playerInstance.fatigueActuelle}/${fatigueMax})`;
+            // -----------------------------
 
             saveState();
             await interaction.editReply({ content: finalMessage });
