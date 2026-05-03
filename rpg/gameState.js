@@ -25,7 +25,7 @@ let state = {
     iconPath: path.join(__dirname, 'assets', 'player_icon.png'),
     enemyIconPath: path.join(__dirname, 'assets', 'enemy_icon.png'),
     exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png'),
-    floorIconPath: path.join(__dirname, 'assets', 'floor_tile.png')
+    floorIconPath: path.join(__dirname, 'assets', 'floor_icon.png')
 };
 
 function saveState() {
