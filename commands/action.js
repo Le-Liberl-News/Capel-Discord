@@ -115,14 +115,21 @@ module.exports = {
                 });
             }
             finalMessage += `\n\n💨 **PC :** -${transaction.cout} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
-            const bufferHUD = await renderHUDImage();
-            const attachmentHUD = new AttachmentBuilder(bufferHUD, { name: 'hud.png' });
+            const hudBuffer = await renderHUDImage();
+            const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
 
-            await interaction.editReply({ 
-                content: finalMessage,
-                files: [attachmentHUD]
-            });
+            
+            const channel = await interaction.client.channels.fetch(state.channelId);
+            const hudMessage = await channel.messages.fetch(state.hudMessageId);
 
+            await Promise.all([
+                interaction.editReply({ 
+                    content: finalMessage 
+                }),
+                hudMessage.edit({
+                    files: [attachmentHUD]
+                })
+            ]);
             saveState();
 
         } catch (error) {
