@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts } = require('../rpg/gameState.js');
+const { state, renderMapImage, renderHUDImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
