@@ -289,14 +289,14 @@ module.exports = async function handleModals(interaction, sheets) {
             .filter(ligne => !ligne.trim().startsWith('>'))
             .join(' ').replace(/\s+/g, ' ').trim();
 
-        const extrait = texteFiltre.substring(0, 100) || "...";
+        const extrait = (texteFiltre.substring(0, 100) || "...") + (texteFiltre.length > 100) * "...";
         const auteurOriginal = targetMsg.author.username;
         const guildId = interaction.guildId;
         const messageUrl = `https://discord.com/channels/${guildId}/${threadId}/${targetMessageId}`;
 
         try {
             const payload = {
-                content: `> [**${auteurOriginal}** : ${extrait}...](${messageUrl})\n${texte}`,
+                content: `> [**${auteurOriginal}** : ${extrait}](${messageUrl})\n${texte}`,
                 username: pseudo,
                 avatarURL: `${process.env.BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`,
             };
