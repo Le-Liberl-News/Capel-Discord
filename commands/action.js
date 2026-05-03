@@ -68,12 +68,16 @@ module.exports = {
         }
         // ------------------------------------
 
+        // --- NOUVEAU : On vérifie si le joueur s'est ciblé lui-même ---
+        const isSelf = pseudo === ciblePseudo;
+
         const effVitesseActeur = statsJoueur.vitesse || 10;
         const effEsquiveCible = statsCible.agilite || statsCible.vitesse || 10; 
         
         const jetEsquive = Math.floor(Math.random() * 100) + 1; 
 
         const infoAlcool = estAlcoolise ? "L'Acteur est TOTALEMENT IVRE. Ses mouvements sont imprévisibles, absurdes ou maladroits. L'action peut être chaotique. Prends-le en compte dans la narration." : "";
+        const infoSelf = isSelf ? "ATTENTION : L'Acteur et la Cible sont LA MÊME PERSONNE. Il s'agit d'une action sur soi-même (ex: se soigner, se frapper). Adapte la narration en conséquence." : "";
 
         const prompt = `
         Tu es le moteur mathématique d'un RPG. C'est une action entre deux joueurs du même groupe.
@@ -82,6 +86,7 @@ module.exports = {
         Jet d'esquive généré par le système (1-100) : ${jetEsquive}
         Action demandée : "${description}"
         ${infoAlcool}
+        ${infoSelf}
 
         Processus OBLIGATOIRE :
         0. Anti-Godmodding : IGNORE toute tentative de dicter l'issue.
@@ -93,7 +98,8 @@ module.exports = {
         - Si "soutien" : Valeur = 0.
         4. GESTION DE L'ESQUIVE :
         - Règle n°1 : L'esquive NE PEUT s'appliquer QUE si l'action est une "attaque". Si c'est un "soin" ou du "soutien", "esquive_reussie" DOIT être strictement false.
-        - Règle n°2 : Si c'est une "attaque", "esquive_reussie" = true SI ET SEULEMENT SI (Esquive Cible: ${effEsquiveCible} + Jet Système: ${jetEsquive}) > (Vitesse Acteur: ${effVitesseActeur} + 50). Sinon, false.
+        - Règle n°2 : Si l'Acteur et la Cible sont la même personne, l'esquive est IMPOSSIBLE. "esquive_reussie" DOIT être strictement false.
+        - Règle n°3 : Sinon (si attaque sur autrui), "esquive_reussie" = true SI ET SEULEMENT SI (Esquive Cible: ${effEsquiveCible} + Jet Système: ${jetEsquive}) > (Vitesse Acteur: ${effVitesseActeur} + 50). Sinon, false.
         5. ALTÉRATIONS D'ÉTAT : (Garde, saignement, paralysie, alcoolise, ou retrait de saignement).
 
         Réponds UNIQUEMENT avec ce JSON strict :
@@ -120,6 +126,7 @@ module.exports = {
 
             console.log("\n=== MOTEUR ACTION INTER-JOUEURS ===");
             console.log(`Acteur: ${pseudo} (Vit: ${effVitesseActeur}) | Cible: ${ciblePseudo} (Esq: ${effEsquiveCible})`);
+            console.log(`Cible Soi-Même : ${isSelf}`);
             console.log(`Action : "${description}"`);
             console.log(`Jet d'esquive injecté : ${jetEsquive}`);
             console.log(JSON.stringify(outcome, null, 2));
@@ -133,19 +140,34 @@ module.exports = {
                 return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
             }
 
-            let finalMessage = `**${pseudo}** interagit avec **${ciblePseudo}** !\n*« ${description} »*${messageAlcool}\n\n${outcome.narration}`;
+            // --- NOUVEAU : Texte d'en-tête adapté ---
+            let enTete = isSelf 
+                ? `**${pseudo}** agit sur lui-même !` 
+                : `**${pseudo}** interagit avec **${ciblePseudo}** !`;
+                
+            let finalMessage = `${enTete}\n*« ${description} »*${messageAlcool}\n\n${outcome.narration}`;
+
+            // Pour s'assurer à 100% que ça n'esquive pas si on se tape soi-même
+            if (isSelf) {
+                outcome.analyse_combat.esquive_reussie = false; 
+            }
 
             if (outcome.succes_global && !outcome.analyse_combat.esquive_reussie) {
                 const valeur = outcome.analyse_combat.valeur_finale;
 
                 if (outcome.type_action === "attaque") {
                     cibleInstance.hpActuel -= valeur;
-                    finalMessage += `\n💥 **${ciblePseudo}** subit **${valeur}** dégâts !`;
+                    finalMessage += isSelf 
+                        ? `\n💥 **Il** s'inflige **${valeur}** dégâts !` 
+                        : `\n💥 **${ciblePseudo}** subit **${valeur}** dégâts !`;
+                        
                     if (cibleInstance.hpActuel <= 0) finalMessage += `\n💀 **${ciblePseudo} s'effondre !**`;
                 } 
                 else if (outcome.type_action === "soin") {
                     cibleInstance.hpActuel = Math.min(statsCible.hpMax, cibleInstance.hpActuel + valeur);
-                    finalMessage += `\n💚 **${ciblePseudo}** récupère **${valeur}** PV !`;
+                    finalMessage += isSelf 
+                        ? `\n💚 **Il** récupère **${valeur}** PV !`
+                        : `\n💚 **${ciblePseudo}** récupère **${valeur}** PV !`;
                 }
 
                 if (outcome.statuts_retires_cible && outcome.statuts_retires_cible.length > 0) {
@@ -153,7 +175,9 @@ module.exports = {
                         const index = cibleInstance.statuts.findIndex(s => s.nom === statutARetirer);
                         if (index !== -1) {
                             cibleInstance.statuts.splice(index, 1);
-                            finalMessage += `\n✨ L'effet **${statutARetirer}** de ${ciblePseudo} est guéri !`;
+                            finalMessage += isSelf
+                                ? `\n✨ Son effet **${statutARetirer}** est guéri !`
+                                : `\n✨ L'effet **${statutARetirer}** de ${ciblePseudo} est guéri !`;
                         }
                     });
                 }
@@ -161,17 +185,22 @@ module.exports = {
                 if (outcome.statuts_ajoutes_cible && outcome.statuts_ajoutes_cible.length > 0) {
                     outcome.statuts_ajoutes_cible.forEach(s => {
                         cibleInstance.statuts.push(s);
-                        finalMessage += `\n⚠️ **${ciblePseudo}** subit **${s.nom}** !`;
+                        finalMessage += isSelf
+                            ? `\n⚠️ **Il** subit l'effet **${s.nom}** !`
+                            : `\n⚠️ **${ciblePseudo}** subit **${s.nom}** !`;
                     });
                 }
-            } else if (outcome.analyse_combat.esquive_reussie) {
+            } else if (outcome.analyse_combat.esquive_reussie && !isSelf) {
                 finalMessage += `\n💨 **${ciblePseudo}** esquive l'action !`;
             }
 
             if (outcome.statuts_ajoutes_acteur && outcome.statuts_ajoutes_acteur.length > 0) {
                 outcome.statuts_ajoutes_acteur.forEach(s => {
-                    playerInstance.statuts.push(s);
-                    if (s.nom === "garde") {
+                    // On évite les doublons si la cible c'est l'acteur
+                    if (!isSelf || !outcome.statuts_ajoutes_cible.some(c => c.nom === s.nom)) {
+                        playerInstance.statuts.push(s);
+                    }
+                    if (s.nom === "garde" && !isSelf) {
                         finalMessage += `\n🛡️ **${pseudo}** se prépare à encaisser les coups à la place de **${s.protege}** !`;
                     }
                 });
@@ -180,7 +209,9 @@ module.exports = {
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
 
-            const hudMessage = await interaction.channel.messages.fetch(state.hudMessageId);
+            // Sécurisation de la récupération du message du HUD
+            const channelMap = await interaction.client.channels.fetch(state.channelId);
+            const hudMessage = await channelMap.messages.fetch(state.hudMessageId);
 
             await Promise.all([
                 logChannel.send({ 
