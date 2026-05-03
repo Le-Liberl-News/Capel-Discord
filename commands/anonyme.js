@@ -1,5 +1,8 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, WebhookClient } = require('discord.js');
 const db = require('../utils/db.js');
+const { state, saveState } = require('../rpg/gameState.js');
+const databasePersos = require('../rpg/data/persos.json');
+const { tenterRegenDiscussion } = require('../rpg/gestionFatigue.js');
 
 const PSEUDOS = [
 //   0-5                 1-6         2-7              3-8                   4-9
@@ -90,6 +93,20 @@ async function execute(interaction) {
     const pseudo = getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
     const threadId = process.env.THREAD_ID;
+
+    // --- GESTION DE LA FATIGUE LORS DU RP ---
+    const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
+    
+    // Initialisation sécurité si le joueur n'existe pas encore dans state
+    if (!state.players[pseudo]) {
+        state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], fatigueActuelle: statsJoueur.fatigueMax };
+    }
+    const playerInstance = state.players[pseudo];
+
+    // On tente la régénération
+    const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
+    saveState(); // Sauvegarde des PV/Fatigue
+    // ----------------------------------------
 
     try {
         const payload = {
