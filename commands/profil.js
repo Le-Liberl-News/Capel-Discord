@@ -48,7 +48,7 @@ module.exports = {
                 { name: 'PB', value: `**${xpActuel}**`, inline: true },
                 { name: 'Progression', value: `${affichageBarre}\n*${texteProchainNiveau}*`, inline: false }
             )
-            .setFooter({ text: 'Le Capel', iconURL: interaction.client.user.displayAvatarURL() });
+            //.setFooter({ text: 'Le Capel', iconURL: interaction.client.user.displayAvatarURL() });
 
         await interaction.reply({ embeds: [embedProfil], ephemeral: true });
     }
