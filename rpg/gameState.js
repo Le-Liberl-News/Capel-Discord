@@ -24,7 +24,8 @@ let state = {
     players: {},
     iconPath: path.join(__dirname, 'assets', 'player_icon.png'),
     enemyIconPath: path.join(__dirname, 'assets', 'enemy_icon.png'),
-    exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png')
+    exitIconPath: path.join(__dirname, 'assets', 'exit_icon.png'),
+    floorIconPath: path.join(__dirname, 'assets', 'floor_tile.png')
 };
 
 function saveState() {
@@ -202,7 +203,7 @@ async function renderMapImage(map, playerX, playerY) {
     let playerIcon, exitIcon;
     try { playerIcon = await loadImage(state.iconPath); } catch (e) {}
     try { exitIcon = await loadImage(state.exitIconPath); } catch (e) {}
-
+    try { floorIcon = await loadImage(state.floorIconPath); } catch (e) {}
     let loadedEnemyIcons = {};
     if (state.enemies) {
         const uniqueEnemyIds = [...new Set(Object.values(state.enemies).map(e => e.baseId))];
@@ -238,7 +239,14 @@ async function renderMapImage(map, playerX, playerY) {
                 // Les "murs" deviennent le ciel bleu au sommet
                 ctx.fillStyle = state.currentFloor >= MAX_FLOOR ? '#87CEEB' : '#2C2F33';
             } else {
-                ctx.fillStyle = '#99AAB5'; // Le sol (la plateforme du sommet)
+                if (floorIcon) {
+                    // Sol texturé
+                    ctx.drawImage(floorIcon, drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+                } else {
+                    // Sol couleur de secours
+                    ctx.fillStyle = '#99AAB5';
+                    ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+                }
             }
             
             ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
