@@ -112,6 +112,9 @@ function generateMap() {
 
     let centerX = Math.floor(state.MAP_WIDTH / 2);
     let centerY = Math.floor(state.MAP_HEIGHT / 2);
+    state.playerX = centerX;
+    state.playerY = centerY;
+
     let startRoom = rooms[0];
     
     for (let px = Math.min(centerX, startRoom.x); px <= Math.max(centerX, startRoom.x); px++) map[centerY][px] = 0;
@@ -237,20 +240,24 @@ async function renderMapImage(map, playerX, playerY) {
             // --------------------------------
 
             if (map[y][x] === 1) {
-                // Les "murs" deviennent le ciel bleu au sommet
+                // Les "murs"
                 ctx.fillStyle = state.currentFloor >= MAX_FLOOR ? '#87CEEB' : '#2C2F33';
+                // On met la peinture uniquement POUR LES MURS
+                ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
             } else {
                 if (floorIcon) {
-                    // Sol texturé
+                    // Sol texturé : on colle l'image (pas de peinture)
                     ctx.drawImage(floorIcon, drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
                 } else {
-                    // Sol couleur de secours
+                    // Sol couleur de secours : on peint
                     ctx.fillStyle = '#99AAB5';
                     ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
                 }
             }
             
-            ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+            // On a SUPPRIMÉ le fillRect global qui barbouillait de noir !
+            
+            // On garde les contours de la grille
             ctx.strokeStyle = '#23272A';
             ctx.strokeRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
 

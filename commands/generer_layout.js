@@ -12,7 +12,7 @@ module.exports = {
         await interaction.deferReply(); 
 
         state.currentFloor = 1;
-    
+        
         for (const pseudo in state.players) {
             const stats = databasePersos[pseudo] || databasePersos["default"];
             state.players[pseudo].hpActuel = stats.hpMax || 100;
