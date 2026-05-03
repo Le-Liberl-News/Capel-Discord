@@ -2,7 +2,7 @@ const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
 const path = require('path');
 const bestiaire = require('./data/bestiaire.json');
-
+const databasePersos = require('./data/persos.json');
 const STATE_FILE = path.join(__dirname, 'map_state.json');
 const VISION_RADIUS = 2;
 
@@ -263,17 +263,15 @@ async function renderMapImage(map, playerX, playerY) {
 }
 
 
-async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
+async function jouerTourEnnemis(genAI) { // <-- On garde juste genAI
     let rapportTour = "";
     let alertesAttaques = [];
     
-    // On copie les clés car on va modifier le dictionnaire state.enemies en cours de route
     const ennemisCoordonnees = Object.keys(state.enemies);
 
     for (const coord of ennemisCoordonnees) {
         let [y, x] = coord.split(',').map(Number);
         const enemyInstance = state.enemies[coord];
-        // Sécurité si l'ennemi a été supprimé entre temps
         if (!enemyInstance) continue; 
         
         const baseEnemy = bestiaire[enemyInstance.baseId];
@@ -283,45 +281,35 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
             let aBouge = false;
             const distAuJoueur = Math.abs(state.playerX - x) + Math.abs(state.playerY - y);
 
-            // COMPORTEMENT A : TRAQUE (Si agressif et à portée de vue - ex: 6 cases)
-            // S'il est à 1 case (distAuJoueur === 1), il ne bouge pas, il va attaquer à la Phase 2
             if (baseEnemy.agressif && distAuJoueur <= 6 && distAuJoueur > 1) {
                 let movesOptimaux = [];
-                
-                // On détermine les axes à privilégier pour se rapprocher
                 if (state.playerX < x) movesOptimaux.push({ dy: 0, dx: -1 });
                 else if (state.playerX > x) movesOptimaux.push({ dy: 0, dx: 1 });
-
                 if (state.playerY < y) movesOptimaux.push({ dy: -1, dx: 0 });
                 else if (state.playerY > y) movesOptimaux.push({ dy: 1, dx: 0 });
 
-                // On mélange l'ordre pour que les déplacements en diagonale ne soient pas prévisibles
                 movesOptimaux.sort(() => Math.random() - 0.5);
 
                 for (const move of movesOptimaux) {
                     const ny = y + move.dy;
                     const nx = x + move.dx;
 
-                    // Vérification de collision
                     if (ny >= 0 && ny < state.MAP_HEIGHT && nx >= 0 && nx < state.MAP_WIDTH &&
                         state.layout[ny][nx] === 0 && !(nx === state.playerX && ny === state.playerY)) {
                         
-                        // Déplacement validé
                         state.layout[y][x] = 0;
                         state.layout[ny][nx] = 2;
-                        
                         state.enemies[`${ny},${nx}`] = state.enemies[coord];
                         delete state.enemies[coord];
                         
                         y = ny; 
                         x = nx;
                         aBouge = true;
-                        break; // Il a fait son pas, on arrête de chercher
+                        break;
                     }
                 }
             }
 
-            // COMPORTEMENT B : ERRANCE ALÉATOIRE (Si pas agressif, trop loin, ou bloqué par un mur)
             if (!aBouge) {
                 const directionsPossibles = [
                     { dy: -1, dx: 0 }, { dy: 1, dx: 0 },
@@ -344,7 +332,6 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
 
                     state.layout[y][x] = 0;
                     state.layout[ny][nx] = 2;
-                    
                     state.enemies[`${ny},${nx}`] = state.enemies[coord];
                     delete state.enemies[coord];
                     
@@ -356,8 +343,11 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
 
         // --- PHASE 2 : DÉTECTION D'ATTAQUE ---
         const isAdjacent = (Math.abs(state.playerX - x) + Math.abs(state.playerY - y)) === 1;
+        
+        // On vérifie s'il reste au moins UNE personne en vie dans le groupe
+        const groupeVivant = Object.values(state.players).some(p => p.hpActuel > 0);
 
-        if (isAdjacent && baseEnemy.agressif && playerInstance.hpActuel > 0) {
+        if (isAdjacent && baseEnemy.agressif && groupeVivant) {
             alertesAttaques.push({ enemyInstance, baseEnemy });
         }
     }
@@ -365,6 +355,19 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
     // --- PHASE 3 : RÉSOLUTION DES ATTAQUES ---
     for (const attaquant of alertesAttaques) {
         const { enemyInstance, baseEnemy } = attaquant;
+        
+        // --- TIRAGE AU SORT DE LA CIBLE ---
+        const pseudosVivants = Object.keys(state.players).filter(p => state.players[p].hpActuel > 0);
+        if (pseudosVivants.length === 0) {
+            rapportTour += `\n💀 **Le groupe a été entièrement décimé !**`;
+            break;
+        }
+        
+        const ciblePseudo = pseudosVivants[Math.floor(Math.random() * pseudosVivants.length)];
+        const cibleInstance = state.players[ciblePseudo];
+        const cibleStats = databasePersos[ciblePseudo] || databasePersos["default"];
+        // ----------------------------------
+
         let infoAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; 
         let nomAttaque = "une attaque";
         
@@ -377,12 +380,12 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
             infoAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}.`;
         }
 
-        rapportTour += `\n\n⚠️ **${baseEnemy.nom} vous prend par surprise et utilise ${nomAttaque} !**`;
+        rapportTour += `\n\n⚠️ **${baseEnemy.nom} bondit sur ${ciblePseudo} et utilise ${nomAttaque} !**`;
         
         const prompt = `
-Tu es le moteur mathématique d'un RPG. L'ennemi attaque le joueur !
+Tu es le moteur mathématique d'un RPG. L'ennemi attaque un joueur spécifique du groupe !
 Attaquant (Ennemi): ${baseEnemy.nom} (${baseEnemy.description}). Force: ${baseEnemy.attaquePhysique}, Magie: ${baseEnemy.attaqueMagique}.
-Cible (Joueur): ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Résistance Phys: ${statsJoueur.resistancePhysique || 30}, Résistance Mag: ${statsJoueur.resistanceMagique || 30}, Esquive: 10.
+Cible (Joueur): ${ciblePseudo} (${cibleStats.description}). PV: ${cibleInstance.hpActuel}/${cibleStats.hpMax}. Résistance Phys: ${cibleStats.resistancePhysique || 30}, Résistance Mag: ${cibleStats.resistanceMagique || 30}, Esquive: 10.
 Action de l'ennemi : ${infoAttaque}
 
 Calcule les dégâts infligés au joueur selon la formule stricte : (Puissance de base * Intensité générée) + Force/Magie de l'ennemi - Résistance du Joueur. (Minimum 1 dégât).
@@ -403,14 +406,13 @@ Réponds UNIQUEMENT avec ce JSON strict :
             rapportTour += `\n*${outcome.narration}*`;
 
             if (!outcome.esquive_joueur) {
-                playerInstance.hpActuel -= outcome.degats_infliges;
-                rapportTour += `\n💥 Tu subis **${outcome.degats_infliges}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
-                if (playerInstance.hpActuel <= 0) {
-                    rapportTour += `\n💀 **Tu t'effondres, vaincu !**`;
-                    break; 
+                cibleInstance.hpActuel -= outcome.degats_infliges;
+                rapportTour += `\n💥 ${ciblePseudo} subit **${outcome.degats_infliges}** dégâts (PV restants: ${cibleInstance.hpActuel}/${cibleStats.hpMax}).`;
+                if (cibleInstance.hpActuel <= 0) {
+                    rapportTour += `\n💀 **${ciblePseudo} s'effondre, vaincu !**`;
                 }
             } else {
-                rapportTour += `\n💨 Tu esquives l'attaque in extremis !`;
+                rapportTour += `\n💨 ${ciblePseudo} esquive l'attaque in extremis !`;
             }
         } catch (e) {
             console.error("Erreur d'attaque auto", e);

@@ -79,7 +79,7 @@ module.exports = {
                 }
 
                
-                const rapportEnnemis = await jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance);
+                const rapportEnnemis = await jouerTourEnnemis(genAI);
                 
                 if (rapportEnnemis !== "") {
                     rapportGlobal += rapportEnnemis;
