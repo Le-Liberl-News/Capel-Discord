@@ -41,7 +41,7 @@ module.exports = {
             const channel = await interaction.client.channels.fetch(state.channelId);
             const mapMessage = await channel.messages.fetch(state.messageId);
             const hudMessage = await channel.messages.fetch(state.hudMessageId);
-            
+
             let collisionType = null;
             let rapportGlobal = "";
             majBrouillard(state.playerX, state.playerY);
@@ -150,11 +150,11 @@ module.exports = {
             }
 
             const bufferFinal = await renderMapImage(state.layout, state.playerX, state.playerY);
-            const attachmentFinal = new AttachmentBuilder(bufferFinal, { name: 'map.png' });
+            const attachmentFinalMap = new AttachmentBuilder(bufferFinal, { name: 'map.png' });
             
             // --- NOUVEAU : On génère le HUD final ---
             const hudBufferFinal = await renderHUDImage();
-            const hudAttachmentFinal = new AttachmentBuilder(hudBufferFinal, { name: 'hud.png' });
+            const attachmentFinalHUD = new AttachmentBuilder(hudBufferFinal, { name: 'hud.png' });
             // ----------------------------------------
             
             await Promise.all([

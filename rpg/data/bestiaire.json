@@ -25,6 +25,6 @@
         }
       ],
 	"etages": [1, 5],
-	"icone": "/assets/enemies/mishy.png"
+	"icone": "enemies/mishy.png"
     }
 }
