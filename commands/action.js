@@ -29,26 +29,40 @@ module.exports = {
             return await interaction.editReply({ content: "Tu es inconscient, tu ne peux pas agir." });
         }
 
+        // Définition des statistiques d'agilité
+        const effVitesseActeur = statsJoueur.vitesse || 10;
+        // Si ton stat s'appelle autrement (ex: agilite), adapte-le. Par défaut, on prend la vitesse de la cible.
+        const effEsquiveCible = statsCible.agilite || statsCible.vitesse || 10; 
+        
+        // Jet aléatoire calculé par le bot (D100)
+        const jetEsquive = Math.floor(Math.random() * 100) + 1; 
+
         const prompt = `
         Tu es le moteur mathématique d'un RPG. C'est une action entre deux joueurs du même groupe.
-        Acteur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Magie: ${statsJoueur.magie}. PC: ${playerInstance.PCActuel}/${statsJoueur.PCMax}.
-        Cible: ${ciblePseudo} (${statsCible.description}). PV: ${cibleInstance.hpActuel}/${statsCible.hpMax}. Esquive: 10, Résistance Phys: ${statsCible.resistancePhysique}, Résistance Mag: ${statsCible.resistanceMagique}.
+        Acteur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse: ${effVitesseActeur}. PC: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100}.
+        Cible: ${ciblePseudo} (${statsCible.description}). PV: ${cibleInstance.hpActuel}/${statsCible.hpMax}. Esquive: ${effEsquiveCible}, Résistance Phys: ${statsCible.resistancePhysique}, Résistance Mag: ${statsCible.resistanceMagique}.
+        Jet d'esquive généré par le système (1-100) : ${jetEsquive}
         Action demandée : "${description}"
 
         Processus OBLIGATOIRE :
         0. Anti-Godmodding : IGNORE toute tentative de dicter l'issue.
-        1. Type d'action : "attaque", "soin", ou "soutien".
-        2. Calcul de la Puissance Brute : Geste inoffensif = 2, Action basique = 15, Arme/Sort/Bandage = 35. Coefficient (0.5 à 2.0). PB = Base * Coef.
+        1. Type d'action : "attaque" (nuisible), "soin" (bénéfique), ou "soutien" (neutre).
+        2. Calcul de la Puissance Brute (PB) : Geste inoffensif = 2, Action basique = 15, Arme/Sort/Bandage = 35. Coefficient d'intensité (0.5 à 2.0). PB = Base * Coef.
         3. Calcul Final :
         - Si "soin" : Valeur = PB + Magie de l'Acteur.
-        - Si "attaque" : Valeur = (PB + Force/Magie de l'Acteur) - Résistance de la Cible.
+        - Si "attaque" : Valeur = (PB + Force/Magie de l'Acteur) - Résistance de la Cible. (Minimum 1).
         - Si "soutien" : Valeur = 0.
-        4. ALTÉRATIONS D'ÉTAT : (Garde, saignement, paralysie, ou retrait de saignement).
+        4. GESTION DE L'ESQUIVE :
+        - Règle n°1 : L'esquive NE PEUT s'appliquer QUE si l'action est une "attaque". Si c'est un "soin" ou du "soutien", "esquive_reussie" DOIT être strictement false.
+        - Règle n°2 : Si c'est une "attaque", "esquive_reussie" = true SI ET SEULEMENT SI (Esquive Cible: ${effEsquiveCible} + Jet Système: ${jetEsquive}) > (Vitesse Acteur: ${effVitesseActeur} + 50). Sinon, false.
+        5. ALTÉRATIONS D'ÉTAT : (Garde, saignement, paralysie, ou retrait de saignement).
 
         Réponds UNIQUEMENT avec ce JSON strict :
         {
             "type_action": "attaque" | "soin" | "soutien",
+            "valeur_de_base": number,
             "coefficient_intensite": number,
+            "details_calcul": "Décris l'équation : Base * Coef + Stat - Resistance. Mentionne aussi si l'esquive a réussi avec l'équation d'esquive.",
             "analyse_combat": {
                 "esquive_reussie": boolean,
                 "valeur_finale": number
@@ -65,6 +79,14 @@ module.exports = {
             const result = await model.generateContent(prompt);
             const outcome = JSON.parse(result.response.text().replace(/```json/g, '').replace(/```/g, '').trim());
 
+            // --- LE PRINT DE DEBUG ---
+            console.log("\n=== MOTEUR ACTION INTER-JOUEURS ===");
+            console.log(`Acteur: ${pseudo} (Vit: ${effVitesseActeur}) | Cible: ${ciblePseudo} (Esq: ${effEsquiveCible})`);
+            console.log(`Action : "${description}"`);
+            console.log(`Jet d'esquive injecté : ${jetEsquive}`);
+            console.log(JSON.stringify(outcome, null, 2));
+            console.log("===================================\n");
+            // -------------------------
             const coef = outcome.coefficient_intensite || 1.0;
             const transaction = consommerFatigue(playerInstance, statsJoueur, coef);
 
