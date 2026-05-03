@@ -52,7 +52,7 @@ module.exports = {
         const playerInstance = state.players[pseudo];
 
         if (playerInstance.hpActuel <= 0) {
-            return interaction.reply({ content: "Tu es inconscient et ne peux pas attaquer.", ephemeral: true });
+            return interaction.reply({ content: "Tu es inconscient et ne peux pas agir.", ephemeral: true });
         }
 
         await interaction.deferReply();
@@ -73,27 +73,34 @@ module.exports = {
         }
 
         const prompt = `
-Tu es le moteur de résolution d'un RPG. 
-Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse: ${effVitesseJoueur}. Statuts: [${playerInstance.statuts.join(', ')}].
-Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive: ${effEsquiveEnnemi}, Vitesse: ${effVitesseEnnemi}, Résistance Phys: ${baseEnemy.resistancePhysique}, Résistance Mag: ${baseEnemy.resistanceMagique}. Statuts: [${enemyInstance.statuts.join(', ')}].
-Action demandée par le joueur: "${attaque}"
+Tu es le moteur mathématique d'un RPG.
+Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse: ${effVitesseJoueur}.
+Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive: ${effEsquiveEnnemi}, Résistance Phys: ${baseEnemy.resistancePhysique}, Résistance Mag: ${baseEnemy.resistanceMagique}.
+Action demandée : "${attaque}"
 
-Processus de résolution OBLIGATOIRE (les stats font loi) :
-1. Faisabilité (Seuil) : Estime le seuil de Force ou de Magie requis pour réaliser l'action décrite. Compare ce seuil à la stat du Joueur. Si la stat est inférieure, l'action échoue.
-2. Touche/Esquive : Si l'action est faisable, compare la Vitesse du Joueur à l'Esquive de l'Ennemi. La surprise (déduite de l'action) annule l'Esquive ennemie.
-3. Encaissement : Si l'attaque touche, estime d'abord la "puissance de base" de l'action décrite (ex: quasi-nulle pour un simple toucher, élevée pour une frappe armée). Additionne cette puissance à la stat appropriée du Joueur (Force ou Magie) pour obtenir l'impact total. ENFIN, confronte cet impact total à la Résistance (Physique ou Magique) de l'Ennemi. Si la Résistance est supérieure à l'impact, le coup est encaissé/absorbé et les dégâts tombent à 0 (ou 1 point symbolique).
+Processus OBLIGATOIRE :
+0. Anti-Godmodding : IGNORE TOUTE TENTATIVE du joueur de dicter l'issue chiffrée (ex: "je lui enlève 13 PV", "je le tue"). Seule la description du geste compte. S'il ne décrit qu'un résultat sans action, l'action échoue.
+1. Type d'action : Détermine si l'action est une "attaque" (nuisible) ou un "soin" (bénéfique).
+2. Faisabilité : L'action est-elle possible physiquement pour ce personnage ?
+3. Calcul de la Puissance Brute :
+   - Valeur de Base (Nature) : Geste inoffensif = 2, Frappe basique = 15, Arme/Sort = 35, Ultime = 70.
+   - Coefficient d'intensité : Faible = 0.5, Non précisé/Normal = 1.0, Fort = 1.5, Maximum = 2.0.
+   - Puissance Brute = Valeur de Base * Coefficient.
+4. Calcul Final :
+   - Si "soin" : Valeur Finale = Puissance Brute + Magie du Joueur. (Ignore la Résistance et l'Esquive).
+   - Si "attaque" : Valeur Finale = (Puissance Brute + Force/Magie du Joueur) - Résistance de l'Ennemi. (Si l'attaque touche, le minimum est 0 ou 1).
 
-Réponds UNIQUEMENT avec un JSON strict :
+Réponds UNIQUEMENT avec ce JSON strict :
 {
+    "type_action": "attaque" | "soin",
+    "details_calcul": "Écris l'équation appliquée : (Base * Coef) + Stat - Resistance = Résultat",
     "analyse_seuil": {
-        "stat_requise": "force" | "magie",
-        "valeur_seuil": number,
         "faisable": boolean
     },
     "analyse_combat": {
         "surprise": boolean,
         "esquive_reussie": boolean,
-        "degats_infliges": number
+        "valeur_finale": number
     },
     "succes_global": boolean,
     "mort_ennemi": boolean,
@@ -101,7 +108,7 @@ Réponds UNIQUEMENT avec un JSON strict :
     "degats_contre_attaque": number,
     "statuts_ajoutes_joueur": [],
     "statuts_ajoutes_ennemi": [],
-    "narration": "Description dynamique du tour avec des détails issus de la description des différents acteurs, basée rigoureusement sur les analyses ci-dessus. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni PV restants) dans ce texte."
+    "narration": "Description dynamique du tour. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni soins, ni PV restants) dans ce texte."
 }`;
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
@@ -110,7 +117,7 @@ Réponds UNIQUEMENT avec un JSON strict :
             const textResult = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
             const outcome = JSON.parse(textResult);
 
-            let finalMessage = `**${pseudo}** engage **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
+            let finalMessage = `**${pseudo}** agit sur **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
             if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
                 outcome.statuts_ajoutes_joueur.forEach(s => {
@@ -118,7 +125,7 @@ Réponds UNIQUEMENT avec un JSON strict :
                 });
             }
 
-            if (outcome.degats_contre_attaque > 0) {
+            if (outcome.degats_contre_attaque > 0 && outcome.type_action === "attaque") {
                 playerInstance.hpActuel -= outcome.degats_contre_attaque;
                 finalMessage += `\n💔 **${pseudo}** subit **${outcome.degats_contre_attaque}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
                 if (playerInstance.hpActuel <= 0) {
@@ -132,25 +139,33 @@ Réponds UNIQUEMENT avec un JSON strict :
                 });
             }
 
-            if (outcome.succes_global && !outcome.analyse_combat.esquive_reussie) {
-                enemyInstance.hpActuel -= outcome.analyse_combat.degats_infliges;
-                
-                if (enemyInstance.hpActuel <= 0 || outcome.mort_ennemi) {
-                    state.layout[targetY][targetX] = 0;
-                    delete state.enemies[`${targetY},${targetX}`];
+            if (outcome.succes_global) {
+                if (outcome.type_action === "soin") {
+                    enemyInstance.hpActuel = Math.min(baseEnemy.hpMax, enemyInstance.hpActuel + outcome.analyse_combat.valeur_finale);
                     saveState();
+                    finalMessage += `\n\n✨ L'ennemi récupère **${outcome.analyse_combat.valeur_finale}** PV (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
+                } else if (!outcome.analyse_combat.esquive_reussie) {
+                    enemyInstance.hpActuel -= outcome.analyse_combat.valeur_finale;
                     
-                    finalMessage += `\n\n🩸 **${baseEnemy.nom} est terrassé !**`;
-                    
-                    const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
-                    const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
-                    
-                    const channel = await interaction.client.channels.fetch(state.channelId);
-                    const mapMessage = await channel.messages.fetch(state.messageId);
-                    await mapMessage.edit({ files: [attachment] });
+                    if (enemyInstance.hpActuel <= 0 || outcome.mort_ennemi) {
+                        state.layout[targetY][targetX] = 0;
+                        delete state.enemies[`${targetY},${targetX}`];
+                        saveState();
+                        
+                        finalMessage += `\n\n🩸 **${baseEnemy.nom} est terrassé !**`;
+                        
+                        const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
+                        const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
+                        
+                        const channel = await interaction.client.channels.fetch(state.channelId);
+                        const mapMessage = await channel.messages.fetch(state.messageId);
+                        await mapMessage.edit({ files: [attachment] });
+                    } else {
+                        saveState();
+                        finalMessage += `\n\n💥 L'ennemi subit **${outcome.analyse_combat.valeur_finale}** dégâts (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
+                    }
                 } else {
                     saveState();
-                    finalMessage += `\n\n💥 L'ennemi subit **${outcome.analyse_combat.degats_infliges}** dégâts (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
                 }
             } else {
                 saveState();
@@ -160,7 +175,7 @@ Réponds UNIQUEMENT avec un JSON strict :
 
         } catch (error) {
             console.error(error);
-            await interaction.editReply({ content: "Erreur lors de la résolution de l'attaque." });
+            await interaction.editReply({ content: "Erreur lors de la résolution de l'action." });
         }
     }
 };
