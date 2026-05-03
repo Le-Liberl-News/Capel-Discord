@@ -545,7 +545,7 @@ async function renderHUDImage() {
         // J'utilise pcActuel/pcMax comme tu l'as renommé, avec un fallback au cas où
         const pcMax = stats.pcMax || stats.fatigueMax || 100; 
         const hp = Math.max(0, instance.hpActuel);
-        const pc = Math.max(0, instance.pcActuel || instance.fatigueActuelle || 0);
+        const pc = Math.max(0, instance.PCActuel || 0);
 
         // 1. DESSINER LE PSEUDO
         ctx.fillStyle = '#FFFFFF';

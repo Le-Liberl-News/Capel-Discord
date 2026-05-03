@@ -226,7 +226,7 @@ module.exports = {
                 }
             }
 
-            finalMessage += `\n\n💨 **PT :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
+            //finalMessage += `\n\n💨 **PT :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
             // -----------------------------
 
             saveState();

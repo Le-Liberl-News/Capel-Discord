@@ -55,7 +55,7 @@ module.exports = {
             "statuts_ajoutes_acteur": [{"nom": "string", "protege": "string", "duree": 0, "degats": 0}],
             "statuts_ajoutes_cible": [{"nom": "string", "duree": 0, "degats": 0}],
             "statuts_retires_cible": ["string"],
-            "narration": "Description dynamique courte."
+            "narration": "Description dynamique courte sans évoquer de gain/perte de ressources."
         }`;
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
@@ -114,11 +114,9 @@ module.exports = {
                     }
                 });
             }
-            finalMessage += `\n\n💨 **PC :** -${transaction.cout} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
+            //finalMessage += `\n\n💨 **PC :** -${transaction.cout} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
-
-            
             const channel = await interaction.client.channels.fetch(state.channelId);
             const hudMessage = await channel.messages.fetch(state.hudMessageId);
 
