@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { state, renderHUDImage, saveState } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js');
 const databasePersos = require('../rpg/data/persos.json');
-
+const { consommerFatigue } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
 module.exports = {
