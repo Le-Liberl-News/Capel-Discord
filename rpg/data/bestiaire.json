@@ -2,6 +2,8 @@
   "mishy": {
     "nom": "Mishy",
     "description": "Mishy est un grand chat bipède gris et blanc avec une énorme tête. Mishy a une longue queue grise. Toujours souriant, c'est un champion de la justice et de l'amitié. Tous les enfants l'adorent.",
+    "mobile": true,
+    "agressif": true,
     "hpMax": 100,
     "attaquePhysique": 30,
     "attaqueMagique": 0,

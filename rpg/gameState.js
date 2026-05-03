@@ -222,4 +222,101 @@ async function renderMapImage(map, playerX, playerY) {
     return canvas.toBuffer('image/png');
 }
 
-module.exports = { state, wait, generateMap, renderMapImage, saveState };
+
+async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
+    let rapportTour = "";
+    let alertesAttaques = [];
+    
+    const ennemisCoordonnees = Object.keys(state.enemies);
+
+    for (const coord of ennemisCoordonnees) {
+        let [y, x] = coord.split(',').map(Number);
+        const enemyInstance = state.enemies[coord];
+        const baseEnemy = bestiaire[enemyInstance.baseId];
+
+        if (baseEnemy.mobile) {
+            const directionsPossibles = [
+                { dy: -1, dx: 0 }, { dy: 1, dx: 0 },
+                { dy: 0, dx: -1 }, { dy: 0, dx: 1 }
+            ];
+
+            const casesValides = directionsPossibles.filter(dir => {
+                const ny = y + dir.dy;
+                const nx = x + dir.dx;
+                return ny >= 0 && ny < state.MAP_HEIGHT &&
+                       nx >= 0 && nx < state.MAP_WIDTH &&
+                       state.layout[ny][nx] === 0 &&
+                       !(nx === state.playerX && ny === state.playerY);
+            });
+
+            if (casesValides.length > 0) {
+                const move = casesValides[Math.floor(Math.random() * casesValides.length)];
+                const newY = y + move.dy;
+                const newX = x + move.dx;
+
+                state.layout[y][x] = 0;
+                state.layout[newY][newX] = 2;
+                
+                state.enemies[`${newY},${newX}`] = state.enemies[coord];
+                delete state.enemies[coord];
+                
+                y = newY;
+                x = newX;
+            }
+        }
+
+        
+        const isAdjacent = (Math.abs(state.playerX - x) + Math.abs(state.playerY - y)) === 1;
+
+        if (isAdjacent && baseEnemy.agressif && playerInstance.hpActuel > 0) {
+            alertesAttaques.push({ enemyInstance, baseEnemy });
+        }
+    }
+
+    
+    for (const attaquant of alertesAttaques) {
+        const { enemyInstance, baseEnemy } = attaquant;
+        rapportTour += `\n\n⚠️ **${baseEnemy.nom} vous prend par surprise et attaque !**`;
+        
+        const prompt = `
+Tu es le moteur mathématique d'un RPG. L'ennemi attaque le joueur !
+Attaquant (Ennemi): ${baseEnemy.nom} (${baseEnemy.description}). Force: ${baseEnemy.attaquePhysique}, Magie: ${baseEnemy.attaqueMagique}.
+Cible (Joueur): ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Résistance Phys: ${statsJoueur.resistancePhysique || 30}, Résistance Mag: ${statsJoueur.resistanceMagique || 30}, Esquive: 10.
+Action: L'ennemi lance une attaque de base en rapport avec sa description.
+
+Calcule les dégâts infligés au joueur selon la formule : Force/Magie de l'ennemi - Résistance du Joueur. (Minimum 1 dégât).
+Fais une narration TRÈS COURTE (< 200 caractères) de l'attaque sans inclure de chiffres.
+
+Réponds UNIQUEMENT avec ce JSON strict :
+{
+    "esquive_joueur": boolean,
+    "degats_infliges": number,
+    "narration": "Texte court"
+}`;
+        try {
+            const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
+            const result = await model.generateContent(prompt);
+            const outcome = JSON.parse(result.response.text().replace(/```json/g, '').replace(/```/g, '').trim());
+
+            rapportTour += `\n*${outcome.narration}*`;
+
+            if (!outcome.esquive_joueur) {
+                playerInstance.hpActuel -= outcome.degats_infliges;
+                rapportTour += `\n💥 Tu subis **${outcome.degats_infliges}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
+                if (playerInstance.hpActuel <= 0) {
+                    rapportTour += `\n💀 **Tu t'effondres, vaincu !**`;
+                    break; // On arrête les autres attaques si le joueur est mort
+                }
+            } else {
+                rapportTour += `\n💨 Tu esquives l'attaque in extremis !`;
+            }
+        } catch (e) {
+            console.error("Erreur d'attaque auto", e);
+        }
+    }
+
+    return rapportTour;
+}
+
+// Ne pas oublier d'exporter jouerTourEnnemis
+module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis };
