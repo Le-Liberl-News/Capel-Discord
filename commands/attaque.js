@@ -220,7 +220,7 @@ module.exports = {
             const coef = outcome.coefficient_intensite || 1.0;
             const coutFatigue = consommerFatigue(playerInstance, statsJoueur, coef);
 
-            finalMessage += `\n\n💨 **PCs :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
+            finalMessage += `\n\n💨 **PT :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
             // -----------------------------
 
             saveState();
