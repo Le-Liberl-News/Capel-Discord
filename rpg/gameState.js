@@ -4,7 +4,7 @@ const path = require('path');
 const bestiaire = require('./data/bestiaire.json');
 
 const STATE_FILE = path.join(__dirname, 'map_state.json');
-const VISION_RADIUS = 4;
+const VISION_RADIUS = 2;
 
 let state = {
     layout: null,
@@ -133,6 +133,7 @@ function generateMap() {
         }
     }
     state.explored = Array(state.MAP_HEIGHT).fill(0).map(() => Array(state.MAP_WIDTH).fill(false));
+    majBrouillard(centerX, centerY);
     return map;
 }
 function majBrouillard(px, py) {
