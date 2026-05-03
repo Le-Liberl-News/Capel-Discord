@@ -1,5 +1,5 @@
 const { AttachmentBuilder } = require('discord.js');
-const { state, generateMap, renderMapImage, saveState } = require('../rpg/gameState.js'); 
+const { state, generateMap, renderMapImage, saveState, renderHUDImage } = require('../rpg/gameState.js'); 
 
 module.exports = {
     async execute(interaction) {
@@ -23,7 +23,17 @@ module.exports = {
             files: [attachment] 
         });
 
+        const bufferHUD = await renderHUDImage();
+        const attachmentHUD = new AttachmentBuilder(bufferHUD, { name: 'hud.png' });
+        
+        
+        const hudMessage = await interaction.followUp({
+            content: "État du groupe :",
+            files: [attachmentHUD]
+        });
+
         state.messageId = mapMessage.id;
+        state.hudMessageId = hudMessage.id; 
         state.channelId = interaction.channelId;
         saveState();
     }

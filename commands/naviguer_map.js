@@ -40,6 +40,7 @@ module.exports = {
         try {
             const channel = await interaction.client.channels.fetch(state.channelId);
             const mapMessage = await channel.messages.fetch(state.messageId);
+            const hudMessage = await channel.messages.fetch(state.hudMessageId);
             
             let collisionType = null;
             let rapportGlobal = "";
@@ -103,17 +104,22 @@ module.exports = {
 
                 const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                 const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
-                // --- NOUVEAU : On génère le HUD ---
+                
                 const hudBuffer = await renderHUDImage();
                 const hudAttachment = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
-                // ----------------------------------
                 
                 const remainingPath = args.slice(i + 1).join('');
 
-                await mapMessage.edit({ 
-                    content: `Déplacement en cours... Trajectoire restante : ${remainingPath}\n${rapportGlobal}`, 
-                    files: [attachment] 
-                });
+                // On met à jour les deux messages en parallèle pour ne pas perdre de temps
+                await Promise.all([
+                    mapMessage.edit({ 
+                        content: `Déplacement en cours... Trajectoire restante : ${remainingPath}\n${rapportGlobal}`, 
+                        files: [attachmentMap] 
+                    }),
+                    hudMessage.edit({
+                        files: [attachmentHUD]
+                    })
+                ]);
 
                 
                 if (collisionType === 'enemy_attack' || playerInstance.hpActuel <= 0) {
@@ -151,10 +157,15 @@ module.exports = {
             const hudAttachmentFinal = new AttachmentBuilder(hudBufferFinal, { name: 'hud.png' });
             // ----------------------------------------
             
-            await mapMessage.edit({ 
-                content: finalMessage, 
-                files: [attachmentFinal, hudAttachmentFinal] // <-- Idem ici !
-            });
+            await Promise.all([
+                mapMessage.edit({ 
+                    content: finalMessage, 
+                    files: [attachmentFinalMap] 
+                }),
+                hudMessage.edit({
+                    files: [attachmentFinalHUD]
+                })
+            ]);
 
             saveState();
 

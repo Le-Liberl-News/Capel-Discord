@@ -11,6 +11,7 @@ let state = {
     playerX: 0,
     playerY: 0,
     messageId: null,
+    hudMessageId: null, 
     channelId: null,
     isMoving: false,
     MAP_WIDTH: 20,
@@ -30,6 +31,7 @@ function saveState() {
         playerX: state.playerX,
         playerY: state.playerY,
         messageId: state.messageId,
+        hudMessageId: state.hudMessageId,
         channelId: state.channelId,
         currentFloor: state.currentFloor,
         enemies: state.enemies,
@@ -49,6 +51,7 @@ function loadState() {
             state.playerX = parsedData.playerX || state.playerX;
             state.playerY = parsedData.playerY || state.playerY;
             state.messageId = parsedData.messageId || state.messageId;
+            state.hudMessageId = parsedData.hudMessageId || state.hudMessageId;
             state.channelId = parsedData.channelId || state.channelId;
             state.currentFloor = parsedData.currentFloor || 1;
             state.enemies = parsedData.enemies || {};
