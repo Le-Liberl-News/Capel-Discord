@@ -91,7 +91,8 @@ async function execute(interaction) {
     } else {
         webhook = new WebhookClient({ url: process.env.WEBHOOK_URL });
     }
-    const texte = interaction.options.getString('message');
+    const texte = interaction.options.getString('message') || '';
+    const image = interaction.options.getAttachment('image');
     const pseudo = getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
     const threadId = process.env.THREAD_ID;
@@ -112,6 +113,7 @@ async function execute(interaction) {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`
         };
+        if (image) payload.files = [image.url];
         if (interaction.channelId !== roleplayId) payload.threadId = threadId;
         await webhook.send(payload);
         await interaction.reply({ content: "Message anonyme envoyé !", ephemeral: true });
