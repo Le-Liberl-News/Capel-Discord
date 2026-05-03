@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, saveState } = require('../rpg/gameState.js');
+const { state, renderMapImage, renderHUDImage, saveState } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js'); 
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
@@ -228,7 +228,19 @@ module.exports = {
 
             //finalMessage += `\n\n💨 **PT :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
             // -----------------------------
+            const hudBuffer = await renderHUDImage();
+            const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
+            const channel = await interaction.client.channels.fetch(state.channelId);
+            const hudMessage = await channel.messages.fetch(state.hudMessageId);
 
+            await Promise.all([
+                interaction.editReply({ 
+                    content: finalMessage 
+                }),
+                hudMessage.edit({
+                    files: [attachmentHUD]
+                })
+            ]);
             saveState();
             await interaction.editReply({ content: finalMessage });
 
