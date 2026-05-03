@@ -53,12 +53,7 @@ function loadState() {
             state.currentFloor = parsedData.currentFloor || 1;
             state.enemies = parsedData.enemies || {};
             state.players = parsedData.players || {};
-            
-            if (parsedData.explored) {
-                state.explored = parsedData.explored;
-            } else if (state.layout) {
-                state.explored = Array(state.MAP_HEIGHT).fill(0).map(() => Array(state.MAP_WIDTH).fill(false));
-            }
+            state.explored = parsedData.explored || undefined;
             state.isMoving = false;
         } catch (error) {
             console.error(error);
@@ -144,9 +139,16 @@ function generateMap() {
     return map;
 }
 function majBrouillard(px, py) {
+    if (!state.explored || !Array.isArray(state.explored) || state.explored.length !== state.MAP_HEIGHT) {
+        state.explored = Array(state.MAP_HEIGHT).fill(0).map(() => Array(state.MAP_WIDTH).fill(false));
+    }
+
     for (let y = 0; y < state.MAP_HEIGHT; y++) {
+        if (!state.explored[y]) {
+            state.explored[y] = Array(state.MAP_WIDTH).fill(false);
+        }
+        
         for (let x = 0; x < state.MAP_WIDTH; x++) {
-            // Distance euclidienne pour un champ de vision circulaire
             const dist = Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
             if (dist <= VISION_RADIUS) {
                 state.explored[y][x] = true;
