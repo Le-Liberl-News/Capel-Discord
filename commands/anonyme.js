@@ -120,7 +120,7 @@ async function execute(interaction) {
     }
 }
 
-aync function monIdentite(interaction) {
+async function monIdentite(interaction) {
     const pseudo = getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
 
