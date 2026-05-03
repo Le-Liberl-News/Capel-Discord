@@ -58,14 +58,16 @@ function getPseudoAnonyme(userId) {
             !indexDejaAttribues.includes(valeur));
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
+            console.log(`Rôle attribué par combo : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
         }
     }
 
     if (nouvelIndex === null) {
         const indexDisponibles = PSEUDOS.map((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
-        nouvelIndex = indexDisponibles.length > 0
-            ? indexDisponibles[Math.floor(Math.pow(Math.random(), 3) * indexDisponibles.length)]
-            : null;
+        if (indexDisponibles.length > 0) {
+            nouvelIndex = indexDisponibles[Math.floor(Math.pow(Math.random(), 3) * indexDisponibles.length)];
+            console.log(`Rôle attribué au hasard : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
+        }
     }
 
     if (nouvelIndex === null) return "Pom";
