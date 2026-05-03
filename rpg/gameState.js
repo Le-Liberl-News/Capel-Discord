@@ -365,15 +365,27 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
     // --- PHASE 3 : RÉSOLUTION DES ATTAQUES ---
     for (const attaquant of alertesAttaques) {
         const { enemyInstance, baseEnemy } = attaquant;
-        rapportTour += `\n\n⚠️ **${baseEnemy.nom} vous prend par surprise et attaque !**`;
+        let infoAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; 
+        let nomAttaque = "une attaque";
+        
+        if (baseEnemy.attaques && baseEnemy.attaques.length > 0) {
+            const attaqueAleatoire = baseEnemy.attaques[Math.floor(Math.random() * baseEnemy.attaques.length)];
+            const coefficients = [0.5, 1.0, 1.5, 2.0];
+            const coefAleatoire = coefficients[Math.floor(Math.random() * coefficients.length)];
+            
+            nomAttaque = `*${attaqueAleatoire.nom}*`;
+            infoAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}.`;
+        }
+
+        rapportTour += `\n\n⚠️ **${baseEnemy.nom} vous prend par surprise et utilise ${nomAttaque} !**`;
         
         const prompt = `
 Tu es le moteur mathématique d'un RPG. L'ennemi attaque le joueur !
 Attaquant (Ennemi): ${baseEnemy.nom} (${baseEnemy.description}). Force: ${baseEnemy.attaquePhysique}, Magie: ${baseEnemy.attaqueMagique}.
 Cible (Joueur): ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Résistance Phys: ${statsJoueur.resistancePhysique || 30}, Résistance Mag: ${statsJoueur.resistanceMagique || 30}, Esquive: 10.
-Action: L'ennemi lance une attaque de base en rapport avec sa description.
+Action de l'ennemi : ${infoAttaque}
 
-Calcule les dégâts infligés au joueur selon la formule : Force/Magie de l'ennemi - Résistance du Joueur. (Minimum 1 dégât).
+Calcule les dégâts infligés au joueur selon la formule stricte : (Puissance de base * Intensité générée) + Force/Magie de l'ennemi - Résistance du Joueur. (Minimum 1 dégât).
 Fais une narration TRÈS COURTE (< 200 caractères) de l'attaque sans inclure de chiffres.
 
 Réponds UNIQUEMENT avec ce JSON strict :
@@ -382,6 +394,7 @@ Réponds UNIQUEMENT avec ce JSON strict :
     "degats_infliges": number,
     "narration": "Texte court"
 }`;
+
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
             const result = await model.generateContent(prompt);
