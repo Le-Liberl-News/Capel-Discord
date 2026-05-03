@@ -1,7 +1,7 @@
 const { AttachmentBuilder } = require('discord.js');
 const { state, generateMap, renderMapImage, saveState, renderHUDImage } = require('../rpg/gameState.js'); 
 
-const databasePersos = require('./data/persos.json');
+const databasePersos = require('../rpg/data/persos.json');
 
 module.exports = {
     async execute(interaction) {
