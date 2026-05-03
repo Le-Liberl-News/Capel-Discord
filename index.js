@@ -67,7 +67,7 @@ const commands = [
         .addStringOption(opt => opt.setName('terme').setDescription('Le mot à chercher (ex: Aureole, bracer...)').setRequired(true)),
 
     new SlashCommandBuilder().setName('anonyme').setDescription('Envoyer un message anonyme dans le thread du jour')
-        .addStringOption(opt => opt.setName('message').setDescription('Ton message').setMaxLength(1000).setRequired(false))
+        .addStringOption(opt => opt.setName('message').setDescription('Ton message').setMaxLength(1000).setRequired(true))
         .addAttachmentOption(opt => opt.setName('image').setDescription('Image à joindre').setRequired(false)),
 
     new ContextMenuCommandBuilder().setName('Répondre anonymement')
