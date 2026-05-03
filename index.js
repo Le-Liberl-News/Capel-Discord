@@ -79,6 +79,9 @@ const commands = [
     new SlashCommandBuilder().setName('attaque').setDescription('Lance une attaque sur la cible')
         .addStringOption(opt => opt.setName('cible').setDescription('Cible (ex : D H B G)').setRequired(true))
         .addStringOption(opt => opt.setName('description').setDescription('Description de l\'attaque').setRequired(true)),
+    new SlashCommandBuilder().setName('action').setDescription('Lance une action sur la cible')
+        .addStringOption(opt => opt.setName('cible').setDescription('Cible (ex : Joshua)').setRequired(true))
+        .addStringOption(opt => opt.setName('description').setDescription('Description de l\'action').setRequired(true)),
     
 
 ].map(c => c.toJSON());

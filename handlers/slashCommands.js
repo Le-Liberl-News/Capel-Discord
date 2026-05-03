@@ -45,7 +45,7 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         return cmdAnonyme.monIdentite(interaction);
     }
 
-    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'generer-map', 'naviguer', 'attaque'];
+    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'generer-map', 'naviguer', 'attaque', 'action'];
     if (commandesRestreintes.includes(commandName)) {
         const hasPermission = member.roles.cache.some(role => ROLES_AUTORISES.includes(role.id));
         if (!hasPermission) {
@@ -187,5 +187,11 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         const cible = options.getString('cible');
         const desc = options.getString('description');
         return cmdAttack.execute(interaction, cible, desc);
+    }
+    if (commandName === 'action') {
+        const cmdAction = require('../commands/action.js');
+        const cible = options.getString('cible');
+        const desc = options.getString('description');
+        return cmdAction.execute(interaction, cible, desc);
     }
 };

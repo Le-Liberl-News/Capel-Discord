@@ -169,6 +169,15 @@ module.exports = {
             const textResult = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
             const outcome = JSON.parse(textResult);
 
+            const coef = outcome.coefficient_intensite || 1.0;
+            const transactionPC = consommerFatigue(playerInstance, statsJoueur, coef);
+
+            if (!transactionPC.applique) {
+                // Échec de la transaction : on arrête tout
+                return await interaction.editReply({ 
+                    content: `**${pseudo}** tente de se lancer... mais il est trop épuisé !\n*Coût estimé : ${transactionPC.cout} PC. (Reste: ${playerInstance.PCActuel} PC)*` 
+                });
+            }
 
             console.log("\n=== RÉSULTAT DU MOTEUR LLM ===");
             console.log(`Action du joueur : "${attaque}"`);
@@ -216,9 +225,6 @@ module.exports = {
                     finalMessage += `\n💀 **${pseudo} s'effondre, vaincu par la riposte !**`;
                 }
             }
-
-            const coef = outcome.coefficient_intensite || 1.0;
-            const coutFatigue = consommerFatigue(playerInstance, statsJoueur, coef);
 
             finalMessage += `\n\n💨 **PT :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
             // -----------------------------

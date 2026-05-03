@@ -71,12 +71,17 @@ function consommerFatigue(playerInstance, statsJoueur, coefficientIntensite = 1.
     // Formule mathématique (minimum 1 pt)
     let cout = Math.max(1, Math.floor((15 * coefficientIntensite) * (50 / Math.max(1, statEndurance))));
     
-    playerInstance.PCActuel -= cout;
-    if (playerInstance.PCActuel < 0) playerInstance.PCActuel = 0;
-    
-    playerInstance.lastActionTime = Date.now(); 
-
-    return cout; 
+    // Vérification de la transaction
+    if (playerInstance.PCActuel >= cout) {
+        // Les fonds sont suffisants, on applique la déduction
+        playerInstance.PCActuel -= cout;
+        playerInstance.lastActionTime = Date.now(); 
+        
+        return { cout: cout, applique: true };
+    } else {
+        // Fonds insuffisants, on annule l'opération
+        return { cout: cout, applique: false };
+    }
 }
 
 module.exports = { actualiserRegenPassive, tenterRegenDiscussion, consommerFatigue };
