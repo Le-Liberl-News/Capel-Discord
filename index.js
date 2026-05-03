@@ -262,7 +262,7 @@ client.on('messageCreate', async message => {
     try { await message.delete();
     } catch (e) { return console.error("Impossible de supprimer le message :", e.message); }
 
-    const databasePersos = require('../rpg/data/persos.json');
+    const databasePersos = require('./rpg/data/persos.json');
     const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
 
     if (!state.players[pseudo]) {
