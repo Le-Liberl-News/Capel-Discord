@@ -120,7 +120,20 @@ async function execute(interaction) {
     }
 }
 
+aync function monIdentite(interaction) {
+    const pseudo = getPseudoAnonyme(interaction.user.id);
+    const BASE_URL = process.env.BASE_URL;
+
+    const embedProfil = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setTitle(`Tu es : ${pseudo}`)
+        .setThumbnail(`${BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`);
+
+    await interaction.reply({ embeds: [embedProfil], ephemeral: true });
+}
+
 module.exports = {
     getPseudoAnonyme,
     execute
+    monIdentite
 };

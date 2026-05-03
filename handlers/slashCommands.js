@@ -40,6 +40,10 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         const cmdAnonyme = require('../commands/anonyme.js');
         return cmdAnonyme.execute(interaction);
     }
+    if (commandName === 'kisekijesuis') {
+        const cmdAnonyme = require('../commands/anonyme.js');
+        return cmdAnonyme.monIdentite(interaction);
+    }
 
     const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'generer-map', 'naviguer', 'attaque'];
     if (commandesRestreintes.includes(commandName)) {
