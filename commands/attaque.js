@@ -34,12 +34,14 @@ function appliquerStatuts(cible, statutsAjoutes, nomCible) {
 module.exports = {
     async execute(interaction, cible, attaque) {
         const logChannel = await interaction.client.channels.fetch('1499373178483507210');
+        
+        // --- 1. Correction des flags éphémères ---
         if (!state.messageId || !state.channelId) {
-            return interaction.reply({ content: "Aucune carte active.", ephemeral: true });
+            return interaction.reply({ content: "Aucune carte active.", flags: ['Ephemeral'] });
         }
 
         if (state.isMoving) {
-            return interaction.reply({ content: "Un déplacement est en cours.", ephemeral: true });
+            return interaction.reply({ content: "Un déplacement est en cours.", flags: ['Ephemeral'] });
         }
 
         let targetX = state.playerX;
@@ -51,20 +53,20 @@ module.exports = {
         else if (dir === 'G') targetX--;
         else if (dir === 'D') targetX++;
         else {
-            return interaction.reply({ content: "Direction invalide (H, B, G, D attendu).", ephemeral: true });
+            return interaction.reply({ content: "Direction invalide (H, B, G, D attendu).", flags: ['Ephemeral'] });
         }
 
         if (targetX < 0 || targetX >= state.MAP_WIDTH || targetY < 0 || targetY >= state.MAP_HEIGHT) {
-            return interaction.reply({ content: "Cible hors limites.", ephemeral: true });
+            return interaction.reply({ content: "Cible hors limites.", flags: ['Ephemeral'] });
         }
 
         if (state.layout[targetY][targetX] !== 2) {
-            return interaction.reply({ content: "Il n'y a pas d'ennemi dans cette direction.", ephemeral: true });
+            return interaction.reply({ content: "Il n'y a pas d'ennemi dans cette direction.", flags: ['Ephemeral'] });
         }
 
         const enemyInstance = state.enemies[`${targetY},${targetX}`];
         if (!enemyInstance) {
-            return interaction.reply({ content: "Erreur de synchronisation.", ephemeral: true });
+            return interaction.reply({ content: "Erreur de synchronisation.", flags: ['Ephemeral'] });
         }
 
         const baseEnemy = bestiaire[enemyInstance.baseId];
@@ -86,14 +88,15 @@ module.exports = {
         actualiserRegenPassive(playerInstance, statsJoueur);
 
         if (playerInstance.PCActuel <= 0) {
-            return interaction.reply({ content: "Tu es trop épuisé pour attaquer...", ephemeral: true });
+            return interaction.reply({ content: "Tu es trop épuisé pour attaquer...", flags: ['Ephemeral'] });
         }
 
         if (playerInstance.hpActuel <= 0) {
-            return interaction.reply({ content: "Tu es inconscient et ne peux pas agir.", ephemeral: true });
+            return interaction.reply({ content: "Tu es inconscient et ne peux pas agir.", flags: ['Ephemeral'] });
         }
 
-        await interaction.deferReply();
+        // --- 2. Mise en attente invisible ---
+        await interaction.deferReply({ flags: ['Ephemeral'] });
 
         let effVitesseJoueur = statsJoueur.vitesse;
         let effVitesseEnnemi = baseEnemy.vitesse;
@@ -101,14 +104,15 @@ module.exports = {
 
         const statutsIncapacitants = ['paralysie'];
         
-        if (playerInstance.statuts.some(s => statutsIncapacitants.includes(s))) {
+        if (playerInstance.statuts.some(s => statutsIncapacitants.includes(s.nom))) { // Attention au .nom ici !
             effVitesseJoueur = 0;
         }
         
-        if (enemyInstance.statuts.some(s => statutsIncapacitants.includes(s))) {
+        if (enemyInstance.statuts.some(s => statutsIncapacitants.includes(s.nom))) { // Idem ici
             effVitesseEnnemi = 0;
             effEsquiveEnnemi = 0;
         }
+        
         let infoContreAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; 
         if (baseEnemy.attaques && baseEnemy.attaques.length > 0) {
             const attaqueAleatoire = baseEnemy.attaques[Math.floor(Math.random() * baseEnemy.attaques.length)];
@@ -163,6 +167,7 @@ module.exports = {
                 "statuts_ajoutes_ennemi": [{"nom": "string", "duree": 0, "degats": 0}],
                 "narration": "Description dynamique du tour, incluant la riposte si applicable. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni soins, ni PV restants) dans ce texte."
             }`;
+            
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
             const result = await model.generateContent(prompt);
@@ -174,18 +179,12 @@ module.exports = {
             const transactionPC = consommerFatigue(playerInstance, statsJoueur, coef);
 
             if (!transactionPC.applique) {
-                // Échec de la transaction : on arrête tout
-                
-                return await logChannel.send({ 
+                // --- 3. Correction de l'échec d'endurance ---
+                await logChannel.send({ 
                     content: `**${pseudo}** tente de se lancer... mais l'épuisement le gagne !` 
                 });
+                return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
             }
-
-            console.log("\n=== RÉSULTAT DU MOTEUR LLM ===");
-            console.log(`Action du joueur : "${attaque}"`);
-            console.log(JSON.stringify(outcome, null, 2));
-            console.log("==============================\n");
-            // ------------------------------------------
 
             let finalMessage = `**${pseudo}** affronte **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
@@ -218,8 +217,6 @@ module.exports = {
             }
 
             if (outcome.contre_attaque_ennemi && outcome.degats_contre_attaque > 0) {
-                const statResistanceJoueur = statsJoueur.resistancePhysique || 30; 
-                
                 playerInstance.hpActuel -= outcome.degats_contre_attaque;
                 finalMessage += `\n\n⚠️ **Contre-attaque !** **${pseudo}** subit **${outcome.degats_contre_attaque}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
                 
@@ -228,11 +225,9 @@ module.exports = {
                 }
             }
 
-            //finalMessage += `\n\n💨 **PT :** -${coutFatigue} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
-            // -----------------------------
+            // --- HUD et Finalisation ---
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
-
             
             const hudMessage = await interaction.channel.messages.fetch(state.hudMessageId);
 
@@ -247,9 +242,9 @@ module.exports = {
                     content: "L'action a été transmise au journal de combat." 
                 })
             ]);
+            
             saveState();
-            await interaction.editReply({ content: finalMessage });
-
+            // Ligne supprimée ici : await interaction.editReply({ content: finalMessage });
 
         } catch (error) {
             console.error(error);

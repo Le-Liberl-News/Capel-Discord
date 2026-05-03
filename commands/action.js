@@ -8,7 +8,9 @@ const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
 module.exports = {
     async execute(interaction, cibleInput, description) {
-        await interaction.deferReply();
+        // 1. On cache la commande aux autres joueurs
+        await interaction.deferReply({ flags: ['Ephemeral'] }); 
+        
         const logChannel = await interaction.client.channels.fetch('1499373178483507210');
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const playerInstance = state.players[pseudo];
@@ -17,14 +19,16 @@ module.exports = {
         // Résolution de la cible
         const ciblePseudo = Object.keys(state.players).find(p => p.toLowerCase() === cibleInput.toLowerCase());
         if (!ciblePseudo) {
-            return interaction.editReply("Cible introuvable dans le groupe actuel.");
+            // On a ajouté await ici
+            return await interaction.editReply({ content: "Cible introuvable dans le groupe actuel." });
         }
 
         const cibleInstance = state.players[ciblePseudo];
         const statsCible = databasePersos[ciblePseudo] || databasePersos["default"];
 
         if (playerInstance.hpActuel <= 0) {
-            return interaction.editReply("Tu es inconscient, tu ne peux pas agir.");
+            // Et ici aussi
+            return await interaction.editReply({ content: "Tu es inconscient, tu ne peux pas agir." });
         }
 
         const prompt = `
@@ -57,6 +61,7 @@ module.exports = {
             "statuts_retires_cible": ["string"],
             "narration": "Description dynamique courte sans évoquer de gain/perte de ressources."
         }`;
+
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
             const result = await model.generateContent(prompt);
@@ -66,9 +71,11 @@ module.exports = {
             const transaction = consommerFatigue(playerInstance, statsJoueur, coef);
 
             if (!transaction.applique) {
-                return await logChannel.send({ 
+                // LE FIX EST ICI : On envoie l'histoire, PUIS on ferme l'interaction
+                await logChannel.send({ 
                     content: `**${pseudo}** tente d'agir envers **${ciblePseudo}**, mais l'épuisement le gagne !\n*Besoin de **${transaction.cout} PC** (Reste: ${playerInstance.PCActuel} PC).*` 
                 });
+                return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
             }
 
             let finalMessage = `**${pseudo}** interagit avec **${ciblePseudo}** !\n*« ${description} »*\n\n${outcome.narration}`;
@@ -114,7 +121,7 @@ module.exports = {
                     }
                 });
             }
-            //finalMessage += `\n\n💨 **PC :** -${transaction.cout} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
+
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
 
@@ -135,7 +142,7 @@ module.exports = {
 
         } catch (error) {
             console.error(error);
-            await interaction.editReply("Le moteur de jeu a eu un raté, l'action est annulée.");
+            await interaction.editReply({ content: "Le moteur de jeu a eu un raté, l'action est annulée." });
         }
     }
 };
