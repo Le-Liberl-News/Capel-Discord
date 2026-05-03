@@ -17,6 +17,7 @@ const handleSlashCommands = require('./handlers/slashCommands.js')
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
 const { updateRanking } = require('./utils/rankings.js')
+const { state, saveState } = require('../rpg/gameState.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
 
