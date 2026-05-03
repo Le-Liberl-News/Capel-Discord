@@ -1,7 +1,7 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, renderHUDImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts } = require('../rpg/gameState.js');
-const { getPseudoAnonyme } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
+const { state, renderMapImage, renderHUDImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts, MAX_FLOOR } = require('../rpg/gameState.js');
+const { getPseudoAnonyme,getIdFromPseudo } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
 const { actualiserRegenPassive} = require('../rpg/gestionFatigue.js');
@@ -27,7 +27,7 @@ module.exports = {
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
         actualiserRegenPassive(playerInstance, statsJoueur);
-        
+
         if (!state.players[pseudo]) {
             state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
         }
@@ -139,7 +139,23 @@ module.exports = {
                 state.playerY = Math.floor(state.MAP_HEIGHT / 2);
                 state.layout[state.playerY][state.playerX] = 0;
                 majBrouillard(state.playerX, state.playerY);
-                finalMessage = `✨ Vous avez pris l'escalier ! Bienvenue à l'étage ${state.currentFloor}.`;
+                // Vérification si on vient d'arriver au sommet
+                if (state.currentFloor === MAX_FLOOR) {
+                    finalMessage = `🌤️ **LE SOMMET EST ATTEINT !** La lumière du jour vous éblouit. Vous avez survécu à l'ascension.`;
+                    
+                    const xpVictoire = 500; // Ajuste le montant comme tu le souhaites
+                    const pseudosVivants = Object.keys(state.players).filter(p => state.players[p].hpActuel > 0);
+                    
+                    for (const p of pseudosVivants) {
+                        const userId = getIdFromPseudo(p);
+                        if (userId) {
+                            ajouterXP(userId, xpVictoire, interaction.client);
+                        }
+                    }
+                    finalMessage += `\n🏅 Chaque survivant reçoit un bonus massif de **${xpVictoire} XP** !`;
+                } else {
+                    finalMessage = `✨ Vous avez pris l'escalier ! Bienvenue à l'étage ${state.currentFloor}.`;
+                }
                 rapportGlobal = ""; 
             } else if (collisionType === 'enemy') {
                 finalMessage = "🛑 Un ennemi vous bloque la route ! Déplacement interrompu.";

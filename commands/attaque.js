@@ -1,11 +1,13 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { state, renderMapImage, renderHUDImage, saveState } = require('../rpg/gameState.js');
-const { getPseudoAnonyme } = require('./anonyme.js'); 
+const { getPseudoAnonyme,getIdFromPseudo } = require('./anonyme.js'); 
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
 const { actualiserRegenPassive, consommerFatigue } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
+const { ajouterXP } = require('../utils/xpManager.js');
+
 
 function appliquerStatuts(cible, statutsAjoutes, nomCible) {
     let msg = "";
@@ -202,6 +204,25 @@ module.exports = {
                         delete state.enemies[`${targetY},${targetX}`];
                         finalMessage += `\n\n🩸 **${baseEnemy.nom} est terrassé !**`;
                         
+                        const xpMonstre = baseEnemy.xp || 1; // 10 par défaut si tu oublies de le mettre
+    
+                        // On trouve qui est encore en vie pour recevoir l'XP
+                        const pseudosVivants = Object.keys(state.players).filter(p => state.players[p].hpActuel > 0);
+                        
+                        if (pseudosVivants.length > 0) {
+                            // On divise l'XP du monstre par le nombre de survivants (ou tu peux donner le total à tout le monde)
+                            const xpParJoueur = Math.floor(xpMonstre / pseudosVivants.length); 
+                            
+                            for (const p of pseudosVivants) {
+                                const userId = getIdFromPseudo(p);
+                                if (userId) {
+                                    // On n'a pas besoin de await ici, ça peut se faire en arrière-plan
+                                    ajouterXP(userId, xpParJoueur, interaction.client); 
+                                }
+                            }
+                            finalMessage += `\n✨ Le groupe gagne **${xpMonstre} PB** (*${xpParJoueur} chacun*) !`;
+                        }
+
                         const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                         const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
                         const channel = await interaction.client.channels.fetch(state.channelId);

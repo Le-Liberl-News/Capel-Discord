@@ -81,6 +81,23 @@ function getPseudoAnonyme(userId) {
     return PSEUDOS[nouvelIndex];
 }
 
+function getIdFromPseudo(pseudoRecherche) {
+    const pseudoIndex = PSEUDOS.indexOf(pseudoRecherche);
+
+    if (pseudoIndex === -1) {
+        return null;
+    }
+
+    try {
+        const row = db.prepare("SELECT user_id FROM pseudos_anonymes WHERE pseudo_index = ?").get(pseudoIndex);
+        
+        return row ? row.user_id : null;
+    } catch (error) {
+        console.error("Erreur DB lors de la récupération de l'ID :", error);
+        return null;
+    }
+}
+
 async function execute(interaction) {
     const messageRef = interaction.reference;
     const roleplayId = process.env.ROLEPLAY_ID;
@@ -139,5 +156,6 @@ async function monIdentite(interaction) {
 module.exports = {
     getPseudoAnonyme,
     execute,
-    monIdentite
+    monIdentite,
+    getIdFromPseudo
 };

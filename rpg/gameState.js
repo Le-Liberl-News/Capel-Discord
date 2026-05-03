@@ -5,6 +5,8 @@ const bestiaire = require('./data/bestiaire.json');
 const databasePersos = require('./data/persos.json');
 const STATE_FILE = path.join(__dirname, 'map_state.json');
 const VISION_RADIUS = 2;
+const MAX_FLOOR = 10;
+
 
 let state = {
     layout: null,
@@ -115,7 +117,9 @@ function generateMap() {
     for (let py = Math.min(centerY, startRoom.y); py <= Math.max(centerY, startRoom.y); py++) map[py][startRoom.x] = 0;
 
     let lastRoom = rooms[rooms.length - 1];
-    map[lastRoom.y][lastRoom.x] = 3;
+    if (state.currentFloor < 10) {
+        map[lastRoom.y][lastRoom.x] = 3; // L'escalier n'apparaît qu'avant le niveau 10
+    }
 
     const mobKeys = Object.keys(bestiaire);
 
@@ -221,19 +225,20 @@ async function renderMapImage(map, playerX, playerY) {
             const drawY = y - minY;
 
             // --- GESTION DE L'EXPLORATION ---
-            const isExplored = state.explored ? state.explored[y][x] : true;
+            const isExplored = state.currentFloor >= MAX_FLOOR ? true : (state.explored ? state.explored[y][x] : true);
 
             if (!isExplored) {
-                ctx.fillStyle = '#000000'; // Case inconnue = Noir total
+                ctx.fillStyle = '#000000';
                 ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
                 continue; // On passe à la case suivante, on ne dessine ni mur ni monstre
             }
             // --------------------------------
 
             if (map[y][x] === 1) {
-                ctx.fillStyle = '#2C2F33';
+                // Les "murs" deviennent le ciel bleu au sommet
+                ctx.fillStyle = state.currentFloor >= MAX_FLOOR ? '#87CEEB' : '#2C2F33';
             } else {
-                ctx.fillStyle = '#99AAB5';
+                ctx.fillStyle = '#99AAB5'; // Le sol (la plateforme du sommet)
             }
             
             ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
@@ -288,6 +293,9 @@ async function renderMapImage(map, playerX, playerY) {
     ctx.fillRect(5, 5, 100, 30);
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 18px Arial';
+    const libelleEtage = state.currentFloor >= MAX_FLOOR ? "Sommet" : `Étage ${state.currentFloor}`;
+    ctx.fillText(libelleEtage, 15, 27);
+
     ctx.fillText(`Étage ${state.currentFloor}`, 15, 27);
 
     return canvas.toBuffer('image/png');
