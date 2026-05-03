@@ -1,6 +1,8 @@
 const { AttachmentBuilder } = require('discord.js');
 const { state, generateMap, renderMapImage, saveState, renderHUDImage } = require('../rpg/gameState.js'); 
 
+const databasePersos = require('./data/persos.json');
+
 module.exports = {
     async execute(interaction) {
         if (state.isMoving) {
@@ -11,14 +13,12 @@ module.exports = {
 
         state.currentFloor = 1;
     
-        // On remet tous les joueurs sur pied
         for (const pseudo in state.players) {
             const stats = databasePersos[pseudo] || databasePersos["default"];
             state.players[pseudo].hpActuel = stats.hpMax || 100;
             state.players[pseudo].PCActuel = stats.pcMax || stats.fatigueMax || 100;
             state.players[pseudo].statuts = [];
         }
-        // ---------------------------------
 
         state.enemies = {};
 
