@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts } = require('../rpg/gameState.js');
+const { state, renderMapImage, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
@@ -103,6 +103,10 @@ module.exports = {
 
                 const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                 const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
+                // --- NOUVEAU : On génère le HUD ---
+                const hudBuffer = await renderHUDImage();
+                const hudAttachment = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
+                // ----------------------------------
                 
                 const remainingPath = args.slice(i + 1).join('');
 
@@ -142,9 +146,14 @@ module.exports = {
             const bufferFinal = await renderMapImage(state.layout, state.playerX, state.playerY);
             const attachmentFinal = new AttachmentBuilder(bufferFinal, { name: 'map.png' });
             
+            // --- NOUVEAU : On génère le HUD final ---
+            const hudBufferFinal = await renderHUDImage();
+            const hudAttachmentFinal = new AttachmentBuilder(hudBufferFinal, { name: 'hud.png' });
+            // ----------------------------------------
+            
             await mapMessage.edit({ 
                 content: finalMessage, 
-                files: [attachmentFinal] 
+                files: [attachmentFinal, hudAttachmentFinal] // <-- Idem ici !
             });
 
             saveState();

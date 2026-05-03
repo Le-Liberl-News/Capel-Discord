@@ -480,4 +480,82 @@ function gererTicksStatuts(instance, nomInstance) {
     return log;
 }
 
-module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard,gererTicksStatuts };
+async function renderHUDImage() {
+    const players = Object.keys(state.players);
+    
+    // S'il n'y a pas encore de joueurs, on fait une petite image vide
+    if (players.length === 0) {
+        const canvas = createCanvas(450, 50);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#2C2F33';
+        ctx.fillRect(0, 0, 450, 50);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '16px Arial';
+        ctx.fillText("Aucun joueur n'a rejoint le groupe.", 20, 30);
+        return canvas.toBuffer('image/png');
+    }
+
+    const width = 450;
+    const rowHeight = 60; // Hauteur allouée à chaque joueur
+    const height = players.length * rowHeight + 20;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Fond global de l'interface (couleur sombre Discord)
+    ctx.fillStyle = '#2C2F33';
+    ctx.fillRect(0, 0, width, height);
+
+    players.forEach((pseudo, index) => {
+        const y = 10 + index * rowHeight;
+        const instance = state.players[pseudo];
+        const stats = databasePersos[pseudo] || databasePersos["default"];
+        
+        const hpMax = stats.hpMax || 100;
+        // J'utilise pcActuel/pcMax comme tu l'as renommé, avec un fallback au cas où
+        const pcMax = stats.pcMax || stats.fatigueMax || 100; 
+        const hp = Math.max(0, instance.hpActuel);
+        const pc = Math.max(0, instance.pcActuel || instance.fatigueActuelle || 0);
+
+        // 1. DESSINER LE PSEUDO
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText(pseudo, 15, y + 20);
+
+        // 2. DESSINER LES STATUTS (À côté du pseudo)
+        if (instance.statuts && instance.statuts.length > 0) {
+            const iconesStatuts = { 
+                'saignement': '🩸', 
+                'paralysie': '⚡', 
+                'garde': '🛡️' 
+            };
+            const statutsTexte = instance.statuts.map(s => iconesStatuts[s.nom] || s.nom).join(' ');
+            ctx.font = '14px Arial';
+            ctx.fillText(statutsTexte, 180, y + 20);
+        }
+
+        // 3. JAUGE DE PV (Rouge / Verte)
+        const hpRatio = hp / hpMax;
+        ctx.fillStyle = '#440000'; // Fond de jauge rouge sombre
+        ctx.fillRect(15, y + 30, 200, 16);
+        ctx.fillStyle = hpRatio > 0.3 ? '#43B581' : '#ED4245'; // Vert, ou Rouge si bas PV
+        ctx.fillRect(15, y + 30, Math.floor(200 * hpRatio), 16);
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '12px Arial';
+        ctx.fillText(`PV: ${hp}/${hpMax}`, 20, y + 43);
+
+        // 4. JAUGE DE PC (Bleue)
+        const pcRatio = pc / pcMax;
+        ctx.fillStyle = '#001a33'; // Fond de jauge bleu sombre
+        ctx.fillRect(230, y + 30, 200, 16);
+        ctx.fillStyle = '#5865F2'; // Bleu vif Discord
+        ctx.fillRect(230, y + 30, Math.floor(200 * pcRatio), 16);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(`PC: ${pc}/${pcMax}`, 235, y + 43);
+    });
+
+    return canvas.toBuffer('image/png');
+}
+
+module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard,gererTicksStatuts, renderHUDImage};
