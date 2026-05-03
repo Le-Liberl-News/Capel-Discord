@@ -108,7 +108,9 @@ async function execute(interaction) {
     } else {
         webhook = new WebhookClient({ url: process.env.WEBHOOK_URL });
     }
-    const texte = interaction.options.getString('message') || '';
+    
+    // On passe texte en 'let' car on va potentiellement le modifier
+    let texte = interaction.options.getString('message') || '';
     const image = interaction.options.getAttachment('image');
     const pseudo = getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
@@ -121,6 +123,27 @@ async function execute(interaction) {
     }
     const playerInstance = state.players[pseudo];
 
+    // --- GESTION DES HICS ALÉATOIRES ---
+    const estAlcoolise = playerInstance.statuts && playerInstance.statuts.some(s => s.nom === "alcoolise");
+    if (estAlcoolise && texte.length > 0) {
+        const mots = texte.split(' ');
+        
+        // 15% de chance d'insérer un *hic* ou un *hips* après chaque mot
+        texte = mots.map(mot => {
+            if (Math.random() < 0.15) {
+                const bruit = Math.random() < 0.5 ? "*hic*" : "*hips*";
+                return `${mot} ${bruit}`;
+            }
+            return mot;
+        }).join(' ');
+
+        // Sécurité : si le message était très court et que le jet de 15% a échoué, on force un hoquet à la fin
+        if (!texte.includes('*hic*') && !texte.includes('*hips*')) {
+            texte += ' ... *hic*';
+        }
+    }
+    // -----------------------------------
+
     const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
     saveState();
 
@@ -132,12 +155,13 @@ async function execute(interaction) {
         };
         if (image) payload.files = [image.url];
         if (interaction.channelId !== roleplayId) payload.threadId = threadId;
+        
         await webhook.send(payload);
-        await interaction.reply({ content: "Message anonyme envoyé !", ephemeral: true });
+        await interaction.reply({ content: "Message anonyme envoyé !", flags: ['Ephemeral'] });
 
     } catch (e) {
         console.error("Erreur envoi anonyme :", e);
-        await interaction.reply({ content: "❌ Impossible d'envoyer le message.", ephemeral: true });
+        await interaction.reply({ content: "❌ Impossible d'envoyer le message.", flags: ['Ephemeral'] });
     }
 }
 
