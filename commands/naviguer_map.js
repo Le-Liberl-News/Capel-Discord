@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis } = require('../rpg/gameState.js');
+const { state, renderMapImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
@@ -45,7 +45,7 @@ module.exports = {
             
             let collisionType = null;
             let rapportGlobal = "";
-
+            majBrouillard(state.playerX, state.playerY);
             for (let i = 0; i < args.length; i++) {
                 const direction = args[i];
                 await wait(1000);
@@ -73,7 +73,7 @@ module.exports = {
                     // Le joueur avance
                     state.playerX = newX;
                     state.playerY = newY;
-
+                    majBrouillard(state.playerX, state.playerY);
                     if (targetTile === 3) {
                         collisionType = 'exit'; 
                         break;
@@ -113,6 +113,7 @@ module.exports = {
                 state.playerX = Math.floor(state.MAP_WIDTH / 2);
                 state.playerY = Math.floor(state.MAP_HEIGHT / 2);
                 state.layout[state.playerY][state.playerX] = 0;
+                majBrouillard(state.playerX, state.playerY);
                 finalMessage = `✨ Vous avez pris l'escalier ! Bienvenue à l'étage ${state.currentFloor}.`;
                 rapportGlobal = ""; 
             } else if (collisionType === 'enemy') {

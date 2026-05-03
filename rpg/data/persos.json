@@ -1,7 +1,7 @@
 {
   "Estelle": {
     "hpMax": 150,
-    "fatigueMax": 100,
+    "PCMax": 100,
     "force": 45,
     "magie": 20,
     "agilite": 30,
@@ -13,7 +13,7 @@
   },
   "Joshua": {
     "hpMax": 120,
-    "fatigueMax": 100,
+    "PCMax": 100,
     "force": 35,
     "magie": 40,
     "agilite": 55,
@@ -25,7 +25,7 @@
   },
   "Zin": {
     "hpMax": 200,
-    "fatigueMax": 100,
+    "PCMax": 100,
     "force": 50,
     "magie": 10,
     "agilite": 40,
@@ -37,7 +37,7 @@
   },
   "Kloe": {
     "hpMax": 110,
-    "fatigueMax": 100,
+    "PCMax": 100,
     "force": 20,
     "magie": 60,
     "agilite": 35,
@@ -49,7 +49,7 @@
   },
   "default": {
     "hpMax": 100,
-    "fatigueMax": 100,
+    "PCMax": 100,
     "force": 25,
     "magie": 25,
     "agilite": 25,

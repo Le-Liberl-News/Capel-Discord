@@ -4,6 +4,7 @@ const path = require('path');
 const bestiaire = require('./data/bestiaire.json');
 
 const STATE_FILE = path.join(__dirname, 'map_state.json');
+const VISION_RADIUS = 4;
 
 let state = {
     layout: null,
@@ -131,8 +132,19 @@ function generateMap() {
             }
         }
     }
-
+    state.explored = Array(state.MAP_HEIGHT).fill(0).map(() => Array(state.MAP_WIDTH).fill(false));
     return map;
+}
+function majBrouillard(px, py) {
+    for (let y = 0; y < state.MAP_HEIGHT; y++) {
+        for (let x = 0; x < state.MAP_WIDTH; x++) {
+            // Distance euclidienne pour un champ de vision circulaire
+            const dist = Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
+            if (dist <= VISION_RADIUS) {
+                state.explored[y][x] = true;
+            }
+        }
+    }
 }
 
 async function renderMapImage(map, playerX, playerY) {
@@ -173,6 +185,16 @@ async function renderMapImage(map, playerX, playerY) {
             const drawX = x - minX;
             const drawY = y - minY;
 
+            // --- GESTION DE L'EXPLORATION ---
+            const isExplored = state.explored ? state.explored[y][x] : true;
+
+            if (!isExplored) {
+                ctx.fillStyle = '#000000'; // Case inconnue = Noir total
+                ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+                continue; // On passe à la case suivante, on ne dessine ni mur ni monstre
+            }
+            // --------------------------------
+
             if (map[y][x] === 1) {
                 ctx.fillStyle = '#2C2F33';
             } else {
@@ -198,6 +220,14 @@ async function renderMapImage(map, playerX, playerY) {
                     ctx.fillRect(drawX * state.TILE_SIZE + 5, drawY * state.TILE_SIZE + 5, state.TILE_SIZE - 10, state.TILE_SIZE - 10);
                 }
             }
+
+            // --- OPTIONNEL : ASSOMBRIR CE QUI EST LOIN ---
+            const dist = Math.sqrt(Math.pow(playerX - x, 2) + Math.pow(playerY - y, 2));
+            if (dist > VISION_RADIUS) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; // Voile assombrissant
+                ctx.fillRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+            }
+            // --------------------------------------------
         }
     }
 
@@ -318,4 +348,4 @@ Réponds UNIQUEMENT avec ce JSON strict :
     return rapportTour;
 }
 
-module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis };
+module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard };

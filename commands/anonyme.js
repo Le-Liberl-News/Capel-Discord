@@ -97,7 +97,7 @@ async function execute(interaction) {
     const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
     
     if (!state.players[pseudo]) {
-        state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], fatigueActuelle: statsJoueur.fatigueMax };
+        state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], PCActuel: statsJoueur.PCMax };
     }
     const playerInstance = state.players[pseudo];
 
