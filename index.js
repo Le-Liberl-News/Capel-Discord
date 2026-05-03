@@ -40,6 +40,7 @@ const commands = [
     new SlashCommandBuilder().setName('trad').setDescription('Soumettre une traduction anonyme'),
     new SlashCommandBuilder().setName('context').setDescription('Donne le contexte de la réplique du jour'),
     new SlashCommandBuilder().setName('profil').setDescription('Affiche la progression de l\'utilisateur.'),
+    new SlashCommandBuilder().setName('kisekijesuis').setDescription('Vous indique quel est votre rôle anonyme du jour'),
     new SlashCommandBuilder().setName('closetrad').setDescription('Clore les soumissions'),
     new SlashCommandBuilder().setName('init-rank').setDescription('Commande système : Initialise le panneau de classement'),
     new SlashCommandBuilder().setName('actu-rank').setDescription('Commande système : Actualise le panneau de classement'),
@@ -63,24 +64,21 @@ const commands = [
         .addStringOption(opt => opt.setName('trad').setDescription('Le texte FR').setRequired(true)),
 
     new SlashCommandBuilder().setName('lexique').setDescription('Cherche un terme approximatif dans le lexique officiel')
-        .addStringOption(option =>
-            option.setName('terme')
-                .setDescription('Le mot à chercher (ex: Aureole, bracer...)')
-                .setRequired(true)),
+        .addStringOption(opt => opt.setName('terme').setDescription('Le mot à chercher (ex: Aureole, bracer...)').setRequired(true)),
 
     new SlashCommandBuilder().setName('anonyme').setDescription('Envoyer un message anonyme dans le thread du jour')
-        .addStringOption(opt =>
-            opt.setName('message')
-                .setDescription('Ton message')
-                .setRequired(true)
-                .setMaxLength(1000)),
+        .addStringOption(opt => opt.setName('message').setDescription('Ton message').setRequired(true).setMaxLength(1000)),
 
     new ContextMenuCommandBuilder().setName('Répondre anonymement')
         .setType(ApplicationCommandType.Message),
 
-    new SlashCommandBuilder().setName('naviguer').setDescription('Définis une trajectoire à suivre').addStringOption(opt => opt.setName('trajectoire').setDescription('Trajectoire (ex : D H D)').setRequired(true)),
     new SlashCommandBuilder().setName('generer-map').setDescription('Génère un étage'),
-    new SlashCommandBuilder().setName('attaque').setDescription('Lance une attaque sur la cible').addStringOption(opt => opt.setName('cible').setDescription('Cible (ex : D H B G)').setRequired(true)).addStringOption(opt => opt.setName('description').setDescription('Description de l\'attaque').setRequired(true)),
+    new SlashCommandBuilder().setName('naviguer').setDescription('Définis une trajectoire à suivre')
+        .addStringOption(opt => opt.setName('trajectoire').setDescription('Trajectoire (ex : D H D)').setRequired(true)),
+
+    new SlashCommandBuilder().setName('attaque').setDescription('Lance une attaque sur la cible')
+        .addStringOption(opt => opt.setName('cible').setDescription('Cible (ex : D H B G)').setRequired(true))
+        .addStringOption(opt => opt.setName('description').setDescription('Description de l\'attaque').setRequired(true)),
     
 
 ].map(c => c.toJSON());
