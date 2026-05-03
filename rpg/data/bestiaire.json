@@ -57,7 +57,7 @@
     "icone": "enemies/pom.png",
     "xp": 2
 },
-"creepy_sheep": {
+"Mouton simiesque": {
     "nom": "Mouton simiesque",
     "description": "Une créature simiesque bipède couverte de laine blanche, avec un long museau, des griffes et une queue préhensile. Sournois et calculateur, il combat de façon lâche, utilisant le terrain à son avantage ou tentant de distraire ses cibles avec un comportement étrange.",
     "mobile": true,
