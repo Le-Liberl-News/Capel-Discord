@@ -35,7 +35,6 @@ module.exports = {
     async execute(interaction, cible, attaque) {
         const logChannel = await interaction.client.channels.fetch('1499373178483507210');
         
-        // --- 1. Correction des flags éphémères ---
         if (!state.messageId || !state.channelId) {
             return interaction.reply({ content: "Aucune carte active.", flags: ['Ephemeral'] });
         }
@@ -95,7 +94,6 @@ module.exports = {
             return interaction.reply({ content: "Tu es inconscient et ne peux pas agir.", flags: ['Ephemeral'] });
         }
 
-        // --- 2. Mise en attente invisible ---
         await interaction.deferReply({ flags: ['Ephemeral'] });
 
         let effVitesseJoueur = statsJoueur.vitesse;
@@ -179,7 +177,6 @@ module.exports = {
             const transactionPC = consommerFatigue(playerInstance, statsJoueur, coef);
 
             if (!transactionPC.applique) {
-                // --- 3. Correction de l'échec d'endurance ---
                 await logChannel.send({ 
                     content: `**${pseudo}** tente de se lancer... mais l'épuisement le gagne !` 
                 });
@@ -225,7 +222,6 @@ module.exports = {
                 }
             }
 
-            // --- HUD et Finalisation ---
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
             
@@ -244,7 +240,6 @@ module.exports = {
             ]);
             
             saveState();
-            // Ligne supprimée ici : await interaction.editReply({ content: finalMessage });
 
         } catch (error) {
             console.error(error);
