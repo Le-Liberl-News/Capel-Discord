@@ -117,15 +117,19 @@ module.exports = {
             //finalMessage += `\n\n💨 **PC :** -${transaction.cout} (Reste: ${playerInstance.PCActuel}/${statsJoueur.PCMax || 100})`;
             const hudBuffer = await renderHUDImage();
             const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
-            const channel = await interaction.client.channels.fetch(state.channelId);
-            const hudMessage = await channel.messages.fetch(state.hudMessageId);
+
+            const logChannel = await interaction.client.channels.fetch('1499373178483507210');
+            const hudMessage = await interaction.channel.messages.fetch(state.hudMessageId);
 
             await Promise.all([
-                interaction.editReply({ 
+                logChannel.send({ 
                     content: finalMessage 
                 }),
                 hudMessage.edit({
                     files: [attachmentHUD]
+                }),
+                interaction.editReply({ 
+                    content: "L'action a été transmise au journal de combat." 
                 })
             ]);
             saveState();
