@@ -117,6 +117,14 @@ Réponds UNIQUEMENT avec ce JSON strict :
             const textResult = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
             const outcome = JSON.parse(textResult);
 
+
+            // --- AJOUT POUR LE DEBUG DANS LA CONSOLE ---
+            console.log("\n=== RÉSULTAT DU MOTEUR LLM ===");
+            console.log(`Action du joueur : "${attaque}"`);
+            console.log(JSON.stringify(outcome, null, 2));
+            console.log("==============================\n");
+            // ------------------------------------------
+            
             let finalMessage = `**${pseudo}** agit sur **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
             if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
