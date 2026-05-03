@@ -27,8 +27,13 @@ function actualiserRegenPassive(playerInstance, statsJoueur) {
 
 function tenterRegenDiscussion(playerInstance, statsJoueur, state) {
     const fatigueMax = statsJoueur.fatigueMax || 100;
+    const fatigueInitiale = playerInstance.fatigueActuelle;
     const RAYON_SECURITE = 3;
     let ennemiProche = false;
+
+    if (fatigueInitiale >= fatigueMax) {
+        return { notify: false };
+    }
 
     for (const coord of Object.keys(state.enemies)) {
         const [ey, ex] = coord.split(',').map(Number);
@@ -41,17 +46,21 @@ function tenterRegenDiscussion(playerInstance, statsJoueur, state) {
     }
 
     if (!ennemiProche) {
-        const regain = 30;
+        const regain = 30; 
         playerInstance.fatigueActuelle = Math.min(fatigueMax, playerInstance.fatigueActuelle + regain);
-        return { 
-            safe: true, 
-            message: `✨ Loin du danger, tu prends le temps de souffler. (+${regain} Fatigue)` 
-        };
+        
+        if (playerInstance.fatigueActuelle === fatigueMax) {
+            return { 
+                notify: true, 
+                message: `✨ À force de discuter au calme, tu es totalement reposé ! (Fatigue maximale atteinte)` 
+            };
+        } else {
+            
+            return { notify: false };
+        }
     } else {
-        return { 
-            safe: false, 
-            message: `👀 Un ennemi rôde trop près. Impossible de se détendre totalement...` 
-        };
+        
+        return { notify: false }; 
     }
 }
 

@@ -94,19 +94,15 @@ async function execute(interaction) {
     const BASE_URL = process.env.BASE_URL;
     const threadId = process.env.THREAD_ID;
 
-    // --- GESTION DE LA FATIGUE LORS DU RP ---
     const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
     
-    // Initialisation sécurité si le joueur n'existe pas encore dans state
     if (!state.players[pseudo]) {
         state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], fatigueActuelle: statsJoueur.fatigueMax };
     }
     const playerInstance = state.players[pseudo];
 
-    // On tente la régénération
     const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
-    saveState(); // Sauvegarde des PV/Fatigue
-    // ----------------------------------------
+    saveState();
 
     try {
         const payload = {
