@@ -134,6 +134,6 @@ async function monIdentite(interaction) {
 
 module.exports = {
     getPseudoAnonyme,
-    execute
+    execute,
     monIdentite
 };
