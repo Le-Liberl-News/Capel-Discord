@@ -67,7 +67,7 @@ const commands = [
         .addStringOption(opt => opt.setName('terme').setDescription('Le mot à chercher (ex: Aureole, bracer...)').setRequired(true)),
 
     new SlashCommandBuilder().setName('anonyme').setDescription('Envoyer un message anonyme dans le thread du jour')
-        .addStringOption(opt => opt.setName('message').setDescription('Ton message').setMaxLength(1000).setRequired(false))
+        .addStringOption(opt => opt.setName('message').setDescription('Ton message').setMaxLength(1000).setRequired(true))
         .addAttachmentOption(opt => opt.setName('image').setDescription('Image à joindre').setRequired(false)),
 
     new ContextMenuCommandBuilder().setName('Répondre anonymement')
@@ -246,7 +246,16 @@ client.on('messageCreate', async message => {
     const pseudo = getPseudoAnonyme(message.author.id);
     const BASE_URL = process.env.BASE_URL;
     const texte = message.content;
-    const attachments = message.attachments.map(a => a.url);
+    const fichiersTelecharges = await Promise.all(
+        message.attachments.map(async attachment => {
+            const response = await fetch(attachment.url);
+            const buffer = await response.arrayBuffer();
+            return {
+                attachment: Buffer.from(buffer),
+                name: attachment.name
+            };
+        })
+    );
     const avertissement = await message.reply({ content: "⚠️ Utilisez `/anonyme` pour poster dans ce fil !"});
     setTimeout(() => avertissement.delete().catch(() => {}), 5000);
 
@@ -259,7 +268,7 @@ client.on('messageCreate', async message => {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`
         }
-        if (attachments.length > 0) payload.files = attachments;
+        if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );
 
