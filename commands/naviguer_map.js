@@ -103,10 +103,10 @@ module.exports = {
                 // --------------------------------------------------------
 
                 const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
-                const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
+                const attachmentMap = new AttachmentBuilder(buffer, { name: 'map.png' });
                 
                 const hudBuffer = await renderHUDImage();
-                const hudAttachment = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
+                const attachmentHUD = new AttachmentBuilder(hudBuffer, { name: 'hud.png' });
                 
                 const remainingPath = args.slice(i + 1).join('');
 
