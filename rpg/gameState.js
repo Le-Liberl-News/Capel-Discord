@@ -119,6 +119,13 @@ function generateMap() {
 
     const mobKeys = Object.keys(bestiaire);
 
+    let mobKeysValides = mobKeys.filter(key => {
+        const range = bestiaire[key].etages || [1, 999]; 
+        return state.currentFloor >= range[0] && state.currentFloor <= range[1];
+    });
+
+    if (mobKeysValides.length === 0) mobKeysValides = mobKeys;
+
     for (let y = 1; y < state.MAP_HEIGHT - 1; y++) {
         for (let x = 1; x < state.MAP_WIDTH - 1; x++) {
             if (map[y][x] === 0) {
@@ -127,7 +134,7 @@ function generateMap() {
                 
                 if ((isHoriz || isVert) && Math.random() < 0.25) {
                     map[y][x] = 2;
-                    const randomMobId = mobKeys[Math.floor(Math.random() * mobKeys.length)];
+                    const randomMobId = mobKeysValides[Math.floor(Math.random() * mobKeysValides.length)];
                     state.enemies[`${y},${x}`] = {
                         baseId: randomMobId,
                         hpActuel: bestiaire[randomMobId].hpMax,
@@ -188,10 +195,25 @@ async function renderMapImage(map, playerX, playerY) {
     const canvas = createCanvas(cropW * state.TILE_SIZE, cropH * state.TILE_SIZE);
     const ctx = canvas.getContext('2d');
 
-    let playerIcon, enemyIcon, exitIcon;
+    let playerIcon, exitIcon;
     try { playerIcon = await loadImage(state.iconPath); } catch (e) {}
-    try { enemyIcon = await loadImage(state.enemyIconPath); } catch (e) {}
     try { exitIcon = await loadImage(state.exitIconPath); } catch (e) {}
+
+    let loadedEnemyIcons = {};
+    if (state.enemies) {
+        const uniqueEnemyIds = [...new Set(Object.values(state.enemies).map(e => e.baseId))];
+        
+        for (const id of uniqueEnemyIds) {
+            const nomIcone = bestiaire[id].icone;
+            if (nomIcone) {
+                try {
+                    loadedEnemyIcons[id] = await loadImage(path.join(__dirname, 'assets', nomIcone));
+                } catch (e) {
+                    console.error(`Erreur chargement icone pour ${id}`);
+                }
+            }
+        }
+    }
 
     for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
@@ -219,9 +241,16 @@ async function renderMapImage(map, playerX, playerY) {
             ctx.strokeRect(drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
 
             if (map[y][x] === 2) {
-                if (enemyIcon) {
-                    ctx.drawImage(enemyIcon, drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
-                } else {
+                const enemyInstance = state.enemies[`${y},${x}`];
+                let isDrawn = false;
+                
+                if (enemyInstance && loadedEnemyIcons[enemyInstance.baseId]) {
+                    ctx.drawImage(loadedEnemyIcons[enemyInstance.baseId], drawX * state.TILE_SIZE, drawY * state.TILE_SIZE, state.TILE_SIZE, state.TILE_SIZE);
+                    isDrawn = true;
+                }
+                
+                // Si pas d'image trouvée, on garde le carré rouge par défaut
+                if (!isDrawn) {
                     ctx.fillStyle = '#8B0000';
                     ctx.fillRect(drawX * state.TILE_SIZE + 5, drawY * state.TILE_SIZE + 5, state.TILE_SIZE - 10, state.TILE_SIZE - 10);
                 }
@@ -234,7 +263,6 @@ async function renderMapImage(map, playerX, playerY) {
                 }
             }
 
-            // --- OPTIONNEL : ASSOMBRIR CE QUI EST LOIN ---
             const dist = Math.sqrt(Math.pow(playerX - x, 2) + Math.pow(playerY - y, 2));
             if (dist > VISION_RADIUS) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; // Voile assombrissant
