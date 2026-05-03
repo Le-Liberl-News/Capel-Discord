@@ -218,10 +218,10 @@ async function cloreLeVoteActuel(client) {
         const voteXP = Math.round((1.2 * seconde.score) * (seconde.score + 5));
         await ajouterXP(seconde.user_id, voteXP + consecutifXP, client);
         db.prepare(`UPDATE users_stats SET jours_consecutifs = jours_consecutifs + 1 WHERE user_id = ?`).run(seconde.user_id);
-        let messageXP = `Merci d'avoir envoyé une proposition de traduction aujourd'hui !\nTu as remporté ${ seconde.score } votes.\n`;
+        let messageXP = `Merci d'avoir envoyé une proposition de traduction aujourd'hui !\n`;
         if (seconde.score > 0) {
             if (seconde.score === topScore.maxScore) {
-                messageXP += `Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour les ${seconde.score} votes que tu as reçus, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
+                messageXP += ` Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour les ${seconde.score} votes que tu as reçus, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
             } else {
                 messageXP += `Tu gagnes ${voteXP} PB pour les ${seconde.score} votes que tu as reçus !`;
             }
@@ -229,7 +229,7 @@ async function cloreLeVoteActuel(client) {
             messageXP += "Tu n'a pas reçu de vote, malheureusement, mais n'hésite pas à retenter ta chance demain !\n";
         }
         if (joursConsecutifs > 0) {
-            messageXP += `C'est par ailleurs ton ${joursConsecutifs + 1}ème jour consécutif à participer.\nTu reçois donc ${consecutifXP} PB en bonus.`
+            messageXP += ` C'est par ailleurs ton ${joursConsecutifs + 1}ème jour consécutif à participer. Tu reçois donc ${consecutifXP} PB en bonus.`
         }
         try { db.prepare(`UPDATE users_stats SET resultats_du_jour = ? WHERE user_id = ?`).run(messageXP, seconde.user_id);
         } catch (e) { console.error(`Echec de l'enregistrement du message de fin de journée.`, e.message, e.code); }
