@@ -7,6 +7,7 @@ const databasePersos = require('../rpg/data/persos.json');
 const { actualiserRegenPassive, consommerFatigue } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 const { ajouterXP } = require('../utils/xpManager.js');
+const { detecterArt, consommerPE, genererInstructionsArt } = require('../rpg/arts.js');
 
 function appliquerStatuts(cible, statutsAjoutes, nomCible) {
     let msg = "";
@@ -75,7 +76,7 @@ module.exports = {
             // Si c'est bon, on prépare le texte pour le LLM
             infoArtLLM = genererInstructionsArt(artDetecte);
         }
-        
+
         actualiserRegenPassive(playerInstance, statsJoueur);
 
         if (playerInstance.PCActuel <= 0) {
@@ -336,13 +337,19 @@ module.exports = {
                 await mapMessage.edit(mapOptions);
             }
 
-            const hudMessage = await interaction.channel.messages.fetch(state.hudMessageId);
+            const channelMap = await interaction.client.channels.fetch(state.channelId);
+            const hudMessage = await channelMap.messages.fetch(state.hudMessageId).catch(() => null);
 
-            await Promise.all([
+            const actionsFutures = [
                 logChannel.send({ content: finalMessage }),
-                hudMessage.edit({ files: [attachmentHUD] }),
                 interaction.editReply({ content: "L'action a été transmise au journal de combat." })
-            ]);
+            ];
+
+            if (hudMessage) {
+                actionsFutures.push(hudMessage.edit({ files: [attachmentHUD] }));
+            }
+
+            await Promise.all(actionsFutures);
             
             saveState();
 
