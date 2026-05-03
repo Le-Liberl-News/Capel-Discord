@@ -262,11 +262,20 @@ client.on('messageCreate', async message => {
     try { await message.delete();
     } catch (e) { return console.error("Impossible de supprimer le message :", e.message); }
 
+    const databasePersos = require('../rpg/data/persos.json');
+    const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
+
+    if (!state.players[pseudo]) {
+        state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], PCActuel: statsJoueur.PCMax };
+    }
+    const playerInstance = state.players[pseudo];
+    const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
+
     try {
         const payload = {
             content: texte,
             username: pseudo,
-            avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`
+            avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         }
         if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
