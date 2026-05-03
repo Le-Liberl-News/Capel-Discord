@@ -5,11 +5,15 @@ const { getPseudoAnonyme } = require('./anonyme.js');
 const databasePersos = require('../rpg/data/persos.json');
 const { consommerFatigue, actualiserRegenPassive } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
+const { detecterArt, consommerPE, genererInstructionsArt } = require('../rpg/arts.js');
 
 module.exports = {
     async execute(interaction, cibleInput, description) {
         await interaction.deferReply({ flags: ['Ephemeral'] }); 
         
+        const artDetecte = detecterArt(description);
+        
+
         const logChannel = await interaction.client.channels.fetch('1500487420481896539');
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
@@ -18,10 +22,27 @@ module.exports = {
             state.players[pseudo] = { 
                 hpActuel: statsJoueur.hpMax, 
                 statuts: [], 
-                PCActuel: statsJoueur.PCMax || 100 
+                PCActuel: statsJoueur.PCMax || 100,
+                PEActuel: statsJoueur.PEMax || 50
             };
         }
         const playerInstance = state.players[pseudo];
+        
+        let infoArtLLM = "";
+
+        if (artDetecte) {
+            // S'il y a un sort, on tente de pomper les PE
+            const peSuffisants = consommerPE(playerInstance, artDetecte.stats.pe_cost);
+            
+            if (!peSuffisants) {
+                return await interaction.editReply({ 
+                    content: `❌ Action annulée : Pas assez de PE pour lancer **${artDetecte.nom}** (coût: ${artDetecte.stats.pe_cost} PE).` 
+                });
+            }
+
+            // Si c'est bon, on prépare le texte pour le LLM
+            infoArtLLM = genererInstructionsArt(artDetecte);
+        }
         
         actualiserRegenPassive(playerInstance, statsJoueur);
         
@@ -88,6 +109,7 @@ module.exports = {
         ${infoAlcool}
         ${infoSelf}
         ${infoMort}
+        ${infoArtLLM} 
 
         Processus OBLIGATOIRE :
         0. Anti-Godmodding : IGNORE toute tentative de dicter l'issue.

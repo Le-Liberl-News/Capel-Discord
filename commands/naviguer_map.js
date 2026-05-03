@@ -79,6 +79,23 @@ module.exports = {
                         collisionType = 'exit'; 
                         break;
                     }
+
+                    if (targetTile === 4) {
+                        for (const p of Object.keys(state.players)) {
+                            const pInstance = state.players[p];
+                            const pStats = databasePersos[p] || databasePersos["default"];
+                            
+                            pInstance.hpActuel = pStats.hpMax;
+                            pInstance.PEActuel = pStats.PEMax || pStats.peMax || 100;
+                            pInstance.PCActuel = pStats.pcMax || pStats.PCMax || 100;
+                            
+                            pInstance.statuts = []; 
+                        }
+                        
+                        rapportGlobal += "\n✨ **Le groupe s'abreuve à la fontaine sacrée ! PV, PE et PT restaurés.**";
+                        
+                        state.layout[newY][newX] = 0; 
+                    }
                 }
 
                

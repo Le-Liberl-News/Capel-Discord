@@ -2,6 +2,7 @@
   "Estelle": {
     "hpMax": 150,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 45,
     "magie": 20,
     "agilite": 30,
@@ -9,11 +10,13 @@
     "endurance": 35,
     "resistancePhysique": 40,
     "resistanceMagique": 30,
+	
     "description": "Manie un long bâton. Excellente allonge et polyvalence."
   },
   "Joshua": {
     "hpMax": 120,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 35,
     "magie": 40,
     "agilite": 55,
@@ -26,6 +29,7 @@
   "Zin": {
     "hpMax": 200,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 50,
     "magie": 10,
     "agilite": 40,
@@ -38,6 +42,7 @@
   "Kloe": {
     "hpMax": 110,
     "PCMax": 100,
+	"PEMax": 300,
     "force": 20,
     "magie": 60,
     "agilite": 35,
@@ -50,6 +55,7 @@
   "Scherazard": {
     "hpMax": 130,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 35,
     "magie": 50,
     "agilite": 45,
@@ -62,6 +68,7 @@
   "Olivier": {
     "hpMax": 120,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 30,
     "magie": 65,
     "agilite": 35,
@@ -74,6 +81,7 @@
 "Agate": {
     "hpMax": 165,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 60,
     "magie": 10,
     "agilite": 20,
@@ -86,6 +94,7 @@
 "Renne": {
     "hpMax": 110,
     "PCMax": 100,
+	"PEMax": 350,
     "force": 40,
     "magie": 75,
     "agilite": 50,
@@ -98,6 +107,7 @@
 "Anelace": {
     "hpMax": 140,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 50,
     "magie": 25,
     "agilite": 40,
@@ -110,6 +120,7 @@
 "Ries": {
     "hpMax": 155,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 45,
     "magie": 55,
     "agilite": 35,
@@ -122,6 +133,7 @@
 "Gilbert": {
     "hpMax": 105,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 25,
     "magie": 5,
     "agilite": 40,
@@ -134,6 +146,7 @@
   "default": {
     "hpMax": 100,
     "PCMax": 100,
+	"PEMax": 50,
     "force": 25,
     "magie": 25,
     "agilite": 25,

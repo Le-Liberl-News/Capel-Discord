@@ -1,0 +1,586 @@
+{
+    "Marteau Rocheux": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 15,
+        "element": "earth",
+        "description": "Cible unique - Attaque\nLargue un rocher sur un ennemi."
+    },
+    "Lance Terrestre": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 50,
+        "element": "earth",
+        "description": "Cible unique - Attaque\nFait jaillir du sol une lame acérée."
+    },
+    "Souffle Pétrifiant": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 20,
+        "element": "earth",
+        "description": "Cible unique - Attaque\nSouffle un gaz pétrifiant sur un ennemi. [Pétrification 20%] "
+    },
+    "Impact Rocheux": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 20,
+        "element": "earth",
+        "description": "Zone (M) - Attaque\nLargue un énorme rocher sur les ennemis."
+    },
+    "Nuage Pétrifiant": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 60,
+        "puissance": 35,
+        "element": "earth",
+        "description": "Zone (M) - Attaque\nSouffle un gaz pétrifiant dans une zone étendue. [Pétrification 20%]"
+    },
+    "Marteau d'Atlas": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 80,
+        "puissance": 70,
+        "element": "earth",
+        "description": "Zone (M) - Attaque\nAssomme les ennemis avec un amas de rochers trouvés à proximité."
+    },
+    "Grondement Titanesque": {
+        "type": "attaque",
+        "area": "All",
+        "pe_cost": 70,
+        "puissance": 30,
+        "element": "earth",
+        "description": "Tous - Attaque\nCrée un puissant séisme localisé."
+    },
+    "Géo-catastrophe": {
+        "type": "attaque",
+        "area": "All",
+        "pe_cost": 160,
+        "puissance": 90,
+        "element": "earth",
+        "description": "Tous - Attaque\nProvoque un grand séisme local à l'aide de l'énergie du magma souterrain."
+    },
+    "Jet Aqueux": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 10,
+        "element": "water",
+        "description": "Cible unique - Attaque\nFrappe l'ennemi d'une lourde masse d'eau."
+    },
+    "Pression Azure": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 50,
+        "element": "water",
+        "description": "Cible unique - Attaque\nFrappe l'ennemi d'une colonne d'eau sous pression."
+    },
+    "Jaillissement Azur": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 80,
+        "element": "water",
+        "description": "Cible unique - Attaque\nCompresse une poche d'eau pour la faire exploser en fracas sur l'ennemi."
+    },
+    "Poussière de Diamant": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 60,
+        "puissance": 20,
+        "element": "water",
+        "description": "Zone (P) - Attaque (Placement)\nGénère un froid intense. [Gel 20%]"
+    },
+    "Cocytus": {
+        "type": "attaque",
+        "area": "All",
+        "pe_cost": 150,
+        "puissance": 60,
+        "element": "water",
+        "description": "Tous - Attaque\nInvoque un énorme pilier de glace. [Gel 20%]"
+    },
+    "Boule de Feu": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 10,
+        "element": "fire",
+        "description": "Cible unique - Attaque\nLance une boule de feu sur l'ennemi."
+    },
+    "Flèche Calcinée": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 40,
+        "element": "fire",
+        "description": "Cible unique - Attaque\nInvoque un projectile enflammé au-dessus de l'ennemi."
+    },
+    "Rejet de Napalm": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 80,
+        "element": "fire",
+        "description": "Cible unique - Attaque\nÉruption de flammes écarlates."
+    },
+    "Cyclone de Napalm": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 70,
+        "puissance": 130,
+        "element": "fire",
+        "description": "Cible unique - Attaque\nBrûle l'ennemi par un tourbillon de flammes écarlates."
+    },
+    "Boule de Feu EX": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 10,
+        "element": "fire",
+        "description": "Zone (M) - Attaque\nLance une volée de boules de feu."
+    },
+    "Pluie Calcinante": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 50,
+        "element": "fire",
+        "description": "Zone (M) - Attaque\nUne rafale chaotique de flèches brûlantes."
+    },
+    "Furie Volcanique": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 50,
+        "puissance": 90,
+        "element": "fire",
+        "description": "Zone (M) - Attaque\nCause une explosion d'énergie concentrée."
+    },
+    "Chute Météorique": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 80,
+        "puissance": 110,
+        "element": "fire",
+        "description": "Zone (G) - Attaque\nInvoque à l'horizon des météorites qui partent s'écraser sur les ennemis."
+    },
+    "Éruption Solaire": {
+        "type": "attaque",
+        "area": "All",
+        "pe_cost": 180,
+        "puissance": 130,
+        "element": "fire",
+        "description": "Tous - Attaque\nIncinère tous les ennemis par l'explosion d'une dense masse de flammes."
+    },
+    "Brise Frappante": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 10,
+        "element": "wind",
+        "description": "Cible unique - Attaque\nDéchiquette un ennemi avec de l'air comprimé."
+    },
+    "Aeria": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 20,
+        "element": "wind",
+        "description": "Zone (M) - Attaque (Placement)\nUne puissante tornade avec des débris tourbillonnants."
+    },
+    "Aéro-tempête": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 70,
+        "puissance": 50,
+        "element": "wind",
+        "description": "Zone (G) - Attaque (Placement)\nCrée un vortex massif de lames de vent tranchantes."
+    },
+    "Rafale Torrentielle": {
+        "type": "attaque",
+        "area": "All",
+        "pe_cost": 140,
+        "puissance": 65,
+        "element": "wind",
+        "description": "Tous - Attaque\nFait déferler sur les ennemis un vent puissant qui les lacère et les meurtrit."
+    },
+    "Foudroiement": {
+        "type": "attaque",
+        "area": "Ligne",
+        "pe_cost": 20,
+        "puissance": 30,
+        "element": "wind",
+        "description": "Ligne - Attaque (Placement)\nGénère un arc électrique. [Entrave 20%]"
+    },
+    "Onde Plasmique": {
+        "type": "attaque",
+        "area": "Ligne",
+        "pe_cost": 50,
+        "puissance": 40,
+        "element": "wind",
+        "description": "Ligne - Attaque (Placement)\nFrappe avec des éclairs. [Entrave 20%]"
+    },
+    "Déflagration Ragna": {
+        "type": "attaque",
+        "area": "Ligne",
+        "pe_cost": 80,
+        "puissance": 65,
+        "element": "wind",
+        "description": "Ligne - Attaque (Placement)\nFais s'abattre la foudre de la justice. [Entrave 20%]"
+    },
+    "Lance Obscure": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 35,
+        "element": "time",
+        "description": "Cible unique - Attaque\nUne lame qui fauche la vie de l'ennemi. [Coup Mortel 20%]"
+    },
+    "Cri Funeste": {
+        "type": "attaque",
+        "area": "All",
+        "pe_cost": 120,
+        "puissance": 25,
+        "element": "time",
+        "description": "Tous - Attaque\nUn cri attirant ses victimes vers le royaume des morts. [Coup Mortel 20%]"
+    },
+    "Porte des Enfers": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 30,
+        "element": "time",
+        "description": "Zone (P) - Attaque\nInterrompt l'activité psychique des ennemis. [Évanouissement 20%]"
+    },
+    "Géhenne Blanche": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 60,
+        "puissance": 65,
+        "element": "time",
+        "description": "Zone (M) - Attaque (Placement)\nPerturbe le continuum espace-temps. [Évanouissement 20%]"
+    },
+    "Irruption des Abysses": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 90,
+        "puissance": 80,
+        "element": "time",
+        "description": "Zone (G) - Attaque\nInvoque un émissaire de l'au-delà. [Évanouissement 20%]"
+    },
+    "Disques Animiques": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 10,
+        "element": "time",
+        "description": "Cible unique - Attaque\nÉmet une pulsation qui fait trembler l'espace-temps. [Évanouissement 20%]"
+    },
+    "Matière Noire": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 90,
+        "element": "space",
+        "description": "Cible unique - Attaque\nÉcrase le corps de l'ennemi en comprimant l'espace autour de lui."
+    },
+    "Mœbius Perdu": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 100,
+        "puissance": 120,
+        "element": "space",
+        "description": "Zone (M) - Attaque (Placement)\nTord les corps des ennemis en déformant l'espace qui les entoure."
+    },
+    "Épines d'Argent": {
+        "type": "attaque",
+        "area": "S",
+        "pe_cost": 90,
+        "puissance": 0,
+        "element": "mirage",
+        "description": "Zone (M) - Attaque (Placement)\nUne pluie de lames argentées qui induisent la folie. [Confusion 90%]"
+    },
+    "Garde Terrestre": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 0,
+        "element": "earth",
+        "description": "Cible unique - Soutien\nCrée un bouclier rocheux permettant de bloquer une attaque. [Immunité]"
+    },
+    "Mur Terrestre": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 75,
+        "puissance": 0,
+        "element": "earth",
+        "description": "Zone (P) - Soutien\nCrée dans une zone un bouclier rocheux qui bloque une attaque. [Immunité]"
+    },
+    "Bouclier de Gaïa": {
+        "type": "soutien",
+        "area": "All",
+        "pe_cost": 220,
+        "puissance": 0,
+        "element": "earth",
+        "description": "Tous - Soutien\nDonne à tous les alliés un bouclier rocheux bloquant une attaque. [Immunité]"
+    },
+    "Crest": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 15,
+        "puissance": 0,
+        "element": "earth",
+        "description": "Cible unique - Soutien\nAttribue une bénédiction terrestre temporaire. [DÉF+25%]"
+    },
+    "Alcrest": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "earth",
+        "description": "Zone (M) - Soutien\nAttribue une bénédiction terrestre temportaire aux alliés ciblés [DÉF+25%]"
+    },
+    "Pétrosphère": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "earth",
+        "description": "Zone (P) - Affaiblissement\nEmpêtre les membres des ennemis par force terrestre. [DÉP+4]"
+    },
+    "Lacrym": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne 1 000 PV à un allié."
+    },
+    "Lacryma": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne 3 000 PV à un allié."
+    },
+    "Lacrymal": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne 6 500 PV à un allié."
+    },
+    "Lacrymalia": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 70,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne tous les PV d'un allié."
+    },
+    "Alacrym": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 0,
+        "element": "water",
+        "description": "Zone (P) - Soin\nSoigne 1 000 PV aux alliés présents dans la zone."
+    },
+    "Alacryma": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 55,
+        "puissance": 0,
+        "element": "water",
+        "description": "Zone (M) - Soin\nSoigne 3 000 PV aux alliés présents dans la zone."
+    },
+    "Alacrymal": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 200,
+        "puissance": 0,
+        "element": "water",
+        "description": "Zone (G) - Soin\nSoigne 6 500 PV aux alliés présents dans la zone."
+    },
+    "Alacrymalia": {
+        "type": "soin",
+        "area": "All",
+        "pe_cost": 300,
+        "puissance": 0,
+        "element": "water",
+        "description": "Zone (G) - Soin\nSoigne tous les PV des alliés présents dans la zone."
+    },
+    "Thelas": {
+        "type": "soin_ko",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne du K.O. un allié et lui redonne 800 PV."
+    },
+    "Athelas": {
+        "type": "soin_ko",
+        "area": "S",
+        "pe_cost": 180,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne du K.O. un allié et lui redonne tous ses PV."
+    },
+    "Curia": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 0,
+        "element": "water",
+        "description": "Cible unique - Soin\nSoigne tous les statuts mis à part le K.O."
+    },
+    "Alcuria": {
+        "type": "soin",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 0,
+        "element": "water",
+        "description": "Zone (G) - Soin\nSoigne les statuts de tous les alliés mis à part le K.O."
+    },
+    "Forte": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 15,
+        "puissance": 0,
+        "element": "fire",
+        "description": "Cible unique - Soutien\nAttribue une bénédiction ardente temporaire. [FOR+25%]"
+    },
+    "Alforte": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "fire",
+        "description": "Zone (M) - Soutien\nAttribue une bénédiction ardente temportaire aux alliés ciblés [FOR+25%]"
+    },
+    "Garde Sylphéenne": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 0,
+        "element": "wind",
+        "description": "Cible unique - Soutien\nCrée une brise protectrice temporaire. [ESQ+50%]"
+    },
+    "Aile Sylphéenne": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 0,
+        "element": "wind",
+        "description": "Cible unique - Soutien\nAttribue une bénédiction éolienne temporaire. [DÉP+1]"
+    },
+    "Sylpharion": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "wind",
+        "description": "Zone (P) - Soutien\nAttribue une bénédiction féérique temporaire. [DÉP+2]"
+    },
+    "Accélération": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 10,
+        "puissance": 0,
+        "element": "time",
+        "description": "Cible unique - Soutien\nAccélère l'écoulement du temps pendant quelques tours. [VIT+25%]"
+    },
+    "Accélération EX": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 30,
+        "puissance": 0,
+        "element": "time",
+        "description": "Cible unique - Soutien\nAccélère significativement l'écoulement du temps. [VIT+50%]"
+    },
+    "Anti-Sept": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 20,
+        "puissance": 0,
+        "element": "time",
+        "description": "Cible unique - Affaiblissement\nEmpêche temporairement l'utilisation d'arts. [Silence]"
+    },
+    "Anti-Septal": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "time",
+        "description": "Zone (M) - Affaiblissement (Placement)\nEmpêche temporairement l'utilisation d'arts. [Silence]"
+    },
+    "Désorbement": {
+        "type": "soutien",
+        "area": "All",
+        "pe_cost": 100,
+        "puissance": 0,
+        "element": "time",
+        "description": "Tous - Affaiblissement\nScelle les arts des ennemis et les rend temporairement vulnérables. [RÉS-30%]"
+    },
+    "Décélération": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 50,
+        "puissance": 0,
+        "element": "time",
+        "description": "Zone - Affaiblissement\nRalentit le cours du temps des ennemis pendant quelques tours. [VIT-50%]"
+    },
+    "Crest-A": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 50,
+        "puissance": 0,
+        "element": "space",
+        "description": "Zone (M) - Soutien\nAugmente temporairement la résistance aux arts des alliés ciblés [RÉS+30%]"
+    },
+    "Puissance Divine": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "mirage",
+        "description": "Cible unique - Soutien\nAugmente temporairement les statistiques d'un allié. [FOR&DÉF+25%]"
+    },
+    "Zodiaque": {
+        "type": "soutien",
+        "area": "All",
+        "pe_cost": 240,
+        "puissance": 0,
+        "element": "mirage",
+        "description": "Tous - Soutien\nAugmente temporairement les statistiques des alliés. [FOR&DÉF+25%]"
+    },
+    "Marque du Chaos": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 40,
+        "puissance": 0,
+        "element": "mirage",
+        "description": "Cible unique - Affaiblissement\nPerturbe les capacités cognitives d'un ennemi. [Confusion]"
+    },
+    "Croix du Silence": {
+        "type": "soutien",
+        "area": "All",
+        "pe_cost": 50,
+        "puissance": 0,
+        "element": "mirage",
+        "description": "Tous - Affaiblissement\nBrouillard dissipant tout entrain. Interrompt les préparations d'arts et techs."
+    },
+    "Douleur Fantôme": {
+        "type": "soutien",
+        "area": "S",
+        "pe_cost": 50,
+        "puissance": 0,
+        "element": "mirage",
+        "description": "Zone (M) - Affaiblissement (Placement)\nIllusionne l'ennemi et le prive temporairement de combativité. [FOR-15%]"
+    }
+}

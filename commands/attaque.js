@@ -44,19 +44,38 @@ module.exports = {
             return interaction.reply({ content: "Un déplacement est en cours.", flags: ['Ephemeral'] });
         }
 
+        const artDetecte = detecterArt(attaque);
+        
+
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
 
         if (!state.players[pseudo]) {
-            state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
+            state.players[pseudo] = { hpActuel: statsJoueur.hpMax, PEActuel: statsJoueur.PEMax, statuts: [] };
         }
         const playerInstance = state.players[pseudo];
 
-        const fatigueMax = statsJoueur.fatigueMax || 100;
+        const PCMax = statsJoueur.PCMax || 100;
         if (playerInstance.PCActuel === undefined) {
-            playerInstance.PCActuel = fatigueMax;
+            playerInstance.PCActuel = PCMax;
         }
 
+        let infoArtLLM = "";
+
+        if (artDetecte) {
+            // S'il y a un sort, on tente de pomper les PE
+            const peSuffisants = consommerPE(playerInstance, artDetecte.stats.pe_cost);
+            
+            if (!peSuffisants) {
+                return await interaction.editReply({ 
+                    content: `❌ Action annulée : Pas assez de PE pour lancer **${artDetecte.nom}** (coût: ${artDetecte.stats.pe_cost} PE).` 
+                });
+            }
+
+            // Si c'est bon, on prépare le texte pour le LLM
+            infoArtLLM = genererInstructionsArt(artDetecte);
+        }
+        
         actualiserRegenPassive(playerInstance, statsJoueur);
 
         if (playerInstance.PCActuel <= 0) {
@@ -193,6 +212,7 @@ module.exports = {
             Cible (${cibleFinaleType}): ${nomCibleFinale} (${statsCibleFinale.description}). PV: ${cibleFinaleObjet.hpActuel}/${hpMaxCible}. Esquive: ${effEsquiveCible}, Résistance Phys: ${resPhysCible}, Résistance Mag: ${resMagCible}.
             Action demandée : "${attaque}"
             ${infoAlcool}
+            ${infoArtLLM}
             Riposte prévue : ${cibleFinaleType === "monstre" ? infoContreAttaque : "Aucune riposte (C'est un allié)."}
 
             Processus OBLIGATOIRE :
