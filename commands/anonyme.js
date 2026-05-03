@@ -110,17 +110,17 @@ async function execute(interaction) {
     // On passe texte en 'let' car on va potentiellement le modifier
     let texte = interaction.options.getString('message') || '';
     const image = interaction.options.getAttachment('image');
-    const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
     const pseudo = getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
     const threadId = process.env.THREAD_ID;
 
     const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
-    
+
     if (!state.players[pseudo]) {
         state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], PCActuel: statsJoueur.PCMax };
     }
     const playerInstance = state.players[pseudo];
+    const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
 
     // --- GESTION DES HICS ALÉATOIRES ---
     const estAlcoolise = playerInstance.statuts && playerInstance.statuts.some(s => s.nom === "alcoolise");
