@@ -12,8 +12,17 @@ module.exports = {
         
         const logChannel = await interaction.client.channels.fetch('1500487420481896539');
         const pseudo = getPseudoAnonyme(interaction.user.id);
-        const playerInstance = state.players[pseudo];
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
+        
+        // On s'assure que l'instance du joueur est bien créée avant de manipuler ses ressources
+        if (!state.players[pseudo]) {
+            state.players[pseudo] = { 
+                hpActuel: statsJoueur.hpMax, 
+                statuts: [], 
+                PCActuel: statsJoueur.PCMax || 100 
+            };
+        }
+        const playerInstance = state.players[pseudo];
         
         actualiserRegenPassive(playerInstance, statsJoueur);
         
