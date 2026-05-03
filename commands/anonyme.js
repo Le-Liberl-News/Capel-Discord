@@ -1,4 +1,4 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, WebhookClient } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, WebhookClient, EmbedBuilder } = require('discord.js');
 const db = require('../utils/db.js');
 const { state, saveState } = require('../rpg/gameState.js');
 const databasePersos = require('../rpg/data/persos.json');
