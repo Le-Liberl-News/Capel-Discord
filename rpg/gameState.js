@@ -33,7 +33,8 @@ function saveState() {
         channelId: state.channelId,
         currentFloor: state.currentFloor,
         enemies: state.enemies,
-        players: state.players
+        players: state.players,
+        explored: state.explored
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(dataToSave, null, 2));
 }
@@ -52,6 +53,12 @@ function loadState() {
             state.currentFloor = parsedData.currentFloor || 1;
             state.enemies = parsedData.enemies || {};
             state.players = parsedData.players || {};
+            
+            if (parsedData.explored) {
+                state.explored = parsedData.explored;
+            } else if (state.layout) {
+                state.explored = Array(state.MAP_HEIGHT).fill(0).map(() => Array(state.MAP_WIDTH).fill(false));
+            }
             state.isMoving = false;
         } catch (error) {
             console.error(error);
