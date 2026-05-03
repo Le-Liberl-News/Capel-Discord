@@ -24,8 +24,67 @@
           "effet": { "nom": "saignement", "degats": 8, "duree": 3, "chance": 0.4 }
         }
       ],
-	"etages": [1, 5],
+	"etages": [3, 6],
 	"icone": "enemies/mishy.png",
-	"xp": 1
-    }
+	"xp": 5
+    },
+  "pom": {
+    "nom": "Pom",
+    "description": "Petit monstre blanc et duveteux ressemblant à une boule de coton animée. Il possède de courts appendices en guise d'oreilles et une zone sombre révélant ses yeux. Très actif, il bondit sans cesse en groupe.",
+    "mobile": true,
+    "agressif": true,
+    "hpMax": 60,
+    "attaquePhysique": 20,
+    "attaqueMagique": 25,
+    "resistancePhysique": 15,
+    "resistanceMagique": 40,
+    "esquive": 35,
+    "vitesse": 45,
+    "attaques": [
+        {
+          "nom": "Bond rebondissant",
+          "description": "Le Pom utilise son élan pour percuter sa cible comme une balle de coton.",
+          "puissance_base": 15
+        },
+        {
+          "nom": "Flash duveteux",
+          "description": "Le Pom libère des fibres de coton irritantes en secouant son corps.",
+          "puissance_base": 10,
+          "effet": { "nom": "paralysie", "duree": 2, "chance": 0.3 }
+        }
+      ],
+    "etages": [1, 4],
+    "icone": "enemies/pom.png",
+    "xp": 2
+},
+"creepy_sheep": {
+    "nom": "Mouton simiesque",
+    "description": "Une créature simiesque bipède couverte de laine blanche, avec un long museau, des griffes et une queue préhensile. Sournois et calculateur, il combat de façon lâche, utilisant le terrain à son avantage ou tentant de distraire ses cibles avec un comportement étrange.",
+    "mobile": true,
+    "agressif": true,
+    "hpMax": 80,
+    "attaquePhysique": 35,
+    "attaqueMagique": 15,
+    "resistancePhysique": 25,
+    "resistanceMagique": 25,
+    "esquive": 25,
+    "vitesse": 30,
+    "attaques": [
+        {
+          "nom": "Griffe sournoise",
+          "description": "Le mouton feinte une fuite avant de faire volte-face pour griffer.",
+          "puissance_base": 25,
+          "effet": { "nom": "saignement", "duree": 10, "chance": 0.3 }
+        },
+        {
+          "nom": "Danse Dérangeante",
+          "description": "Le mouton se déhanche bizarrement, perturbant profondément sa cible.",
+          "puissance_base": 10
+        }
+      ],
+    "etages": [5, 9],
+    "icone": "enemies/sheep.png",
+    "xp": 10
+}
+	
 }
