@@ -50,12 +50,13 @@ function getPseudoAnonyme(userId) {
 
     const indexDejaAttribues = db.prepare('SELECT pseudo_index FROM pseudos_anonymes').all().map(r => r.pseudo_index);
 
+    const comboDisponibles = COMBO.filter((valeur, index) =>
+    indexDejaAttribues.includes(index) &&
+    !indexDejaAttribues.includes(valeur));
+
     let nouvelIndex = null;
 
-    if (Math.random() > Math.pow(0.5, Math.pow(indexDejaAttribues.length, 0.5))) {
-        const comboDisponibles = COMBO.filter((valeur, index) =>
-            indexDejaAttribues.includes(index) &&
-            !indexDejaAttribues.includes(valeur));
+    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length, 0.5))) {
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
             console.log(`Rôle attribué par combo : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
