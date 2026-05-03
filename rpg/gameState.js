@@ -594,7 +594,7 @@ async function renderHUDImage() {
         
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '12px Arial';
-        ctx.fillText(`PV: ${hp}/${hpMax}`, 20, y + 43);
+        ctx.fillText(`PV : ${hp}/${hpMax}`, 20, y + 43);
 
         // 4. JAUGE DE PC (Bleue)
         const pcRatio = pc / pcMax;
@@ -604,7 +604,7 @@ async function renderHUDImage() {
         ctx.fillRect(230, y + 30, Math.floor(200 * pcRatio), 16);
 
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(`PC: ${pc}/${pcMax}`, 235, y + 43);
+        ctx.fillText(`PT : ${pc}/${pcMax}`, 235, y + 43);
     });
 
     return canvas.toBuffer('image/png');

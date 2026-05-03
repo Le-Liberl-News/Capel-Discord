@@ -182,7 +182,7 @@ module.exports = {
                 //await logChannel.send({ 
                 //    content: `**${pseudo}** tente de se lancer... mais l'épuisement le gagne !` 
                 //});
-                return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
+                return await interaction.editReply({ content: "Action annulée : PT insuffisants." });
             }
 
             let finalMessage = `**${pseudo}** affronte **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;

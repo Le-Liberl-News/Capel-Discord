@@ -52,7 +52,7 @@ function tenterRegenDiscussion(playerInstance, statsJoueur, state) {
         if (playerInstance.PCActuel === PCMax) {
             return { 
                 notify: true, 
-                message: `✨ À force de discuter au calme, tu es totalement reposé ! (max de PCs atteint)` 
+                message: `✨ À force de discuter au calme, tu es totalement reposé ! (max de PT atteint)`
             };
         } else {
             

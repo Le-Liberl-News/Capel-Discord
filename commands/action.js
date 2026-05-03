@@ -92,7 +92,7 @@ module.exports = {
 
             if (!transaction.applique) {
                 
-                return await interaction.editReply({ content: "Action annulée : PC insuffisants." });
+                return await interaction.editReply({ content: "Action annulée : PT insuffisants." });
             }
 
             let finalMessage = `**${pseudo}** interagit avec **${ciblePseudo}** !\n*« ${description} »*\n\n${outcome.narration}`;
