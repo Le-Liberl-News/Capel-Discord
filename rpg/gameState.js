@@ -200,7 +200,8 @@ async function renderMapImage(map, playerX, playerY) {
     const canvas = createCanvas(cropW * state.TILE_SIZE, cropH * state.TILE_SIZE);
     const ctx = canvas.getContext('2d');
 
-    let playerIcon, exitIcon;
+    let playerIcon, exitIcon, floorIcon;
+    
     try { playerIcon = await loadImage(state.iconPath); } catch (e) {}
     try { exitIcon = await loadImage(state.exitIconPath); } catch (e) {}
     try { floorIcon = await loadImage(state.floorIconPath); } catch (e) {}
@@ -303,9 +304,6 @@ async function renderMapImage(map, playerX, playerY) {
     ctx.font = 'bold 18px Arial';
     const libelleEtage = state.currentFloor >= MAX_FLOOR ? "Sommet" : `Étage ${state.currentFloor}`;
     ctx.fillText(libelleEtage, 15, 27);
-
-    ctx.fillText(`Étage ${state.currentFloor}`, 15, 27);
-
     return canvas.toBuffer('image/png');
 }
 

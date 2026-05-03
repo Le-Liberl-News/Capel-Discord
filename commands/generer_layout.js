@@ -10,6 +10,18 @@ module.exports = {
         await interaction.deferReply(); 
 
         state.currentFloor = 1;
+    
+        // On remet tous les joueurs sur pied
+        for (const pseudo in state.players) {
+            const stats = databasePersos[pseudo] || databasePersos["default"];
+            state.players[pseudo].hpActuel = stats.hpMax || 100;
+            state.players[pseudo].PCActuel = stats.pcMax || stats.fatigueMax || 100;
+            state.players[pseudo].statuts = [];
+        }
+        // ---------------------------------
+
+        state.enemies = {};
+
         state.layout = generateMap();
         state.playerX = Math.floor(state.MAP_WIDTH / 2);
         state.playerY = Math.floor(state.MAP_HEIGHT / 2);
