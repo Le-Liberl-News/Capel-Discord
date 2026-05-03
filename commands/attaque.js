@@ -99,8 +99,10 @@ module.exports = {
             4. Calcul Final du Joueur :
             - Si "soin" : Valeur Finale = Puissance Brute + Magie du Joueur. (Ignore la Résistance et l'Esquive).
             - Si "attaque" : Valeur Finale = (Puissance Brute + Force/Magie du Joueur) - Résistance de l'Ennemi. (Si l'attaque touche, le minimum est 0 ou 1).
-            5. Contre-attaque de l'ennemi : Si la vitesse du joueur est inférieure à l'esquive de l'ennemi, l'ennemi esquive ET contre-attaque. Utilise STRICTEMENT l'attaque fournie dans "Riposte ennemie prévue". 
-            - Dégâts Contre-Attaque = (Puissance de base de la riposte * Intensité générée) + Force/Magie Ennemi - Résistance du Joueur. (Le minimum est 0 ou 1).
+            5. CONTRE-ATTAQUE :
+            - COMPARE STRICTEMENT la Vitesse du Joueur (${effVitesseJoueur}) et l'Esquive de l'Ennemi (${effEsquiveEnnemi}).
+            - SI ET SEULEMENT SI Vitesse Joueur < Esquive Ennemi : L'ennemi esquive avec succès ET riposte avec l'attaque prévue. Tu DOIS calculer "degats_contre_attaque" = (Puissance de la riposte * Intensité) + Force Ennemi - Résistance du Joueur. "contre_attaque_ennemi" sera true.
+            - SINON (Vitesse Joueur >= Esquive Ennemi) : L'ennemi N'ESQUIVE PAS et NE PEUT PAS contre-attaquer. "contre_attaque_ennemi" DOIT être false, et "degats_contre_attaque" DOIT être 0.
 
             Réponds UNIQUEMENT avec ce JSON strict :
             {
@@ -139,59 +141,58 @@ module.exports = {
 
             let finalMessage = `**${pseudo}** agit sur **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
+            // GESTION DES STATUTS JOUER/ENNEMI
             if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
                 outcome.statuts_ajoutes_joueur.forEach(s => {
                     if (!playerInstance.statuts.includes(s)) playerInstance.statuts.push(s);
                 });
             }
-
-            if (outcome.degats_contre_attaque > 0 && outcome.type_action === "attaque") {
-                playerInstance.hpActuel -= outcome.degats_contre_attaque;
-                finalMessage += `\n💔 **${pseudo}** subit **${outcome.degats_contre_attaque}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
-                if (playerInstance.hpActuel <= 0) {
-                    finalMessage += `\n💀 **${pseudo} s'effondre, vaincu !**`;
-                }
-            }
-
             if (outcome.statuts_ajoutes_ennemi && outcome.statuts_ajoutes_ennemi.length > 0) {
                 outcome.statuts_ajoutes_ennemi.forEach(s => {
                     if (!enemyInstance.statuts.includes(s)) enemyInstance.statuts.push(s);
                 });
             }
 
+            // GESTION DE L'ACTION DU JOUEUR
             if (outcome.succes_global) {
                 if (outcome.type_action === "soin") {
                     enemyInstance.hpActuel = Math.min(baseEnemy.hpMax, enemyInstance.hpActuel + outcome.analyse_combat.valeur_finale);
-                    saveState();
                     finalMessage += `\n\n✨ L'ennemi récupère **${outcome.analyse_combat.valeur_finale}** PV (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
-                } else if (!outcome.analyse_combat.esquive_reussie) {
+                } else if (!outcome.analyse_combat.esquive_reussie && !outcome.contre_attaque_ennemi) {
                     enemyInstance.hpActuel -= outcome.analyse_combat.valeur_finale;
                     
                     if (enemyInstance.hpActuel <= 0 || outcome.mort_ennemi) {
                         state.layout[targetY][targetX] = 0;
                         delete state.enemies[`${targetY},${targetX}`];
-                        saveState();
-                        
                         finalMessage += `\n\n🩸 **${baseEnemy.nom} est terrassé !**`;
                         
                         const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
                         const attachment = new AttachmentBuilder(buffer, { name: 'map.png' });
-                        
                         const channel = await interaction.client.channels.fetch(state.channelId);
                         const mapMessage = await channel.messages.fetch(state.messageId);
                         await mapMessage.edit({ files: [attachment] });
                     } else {
-                        saveState();
                         finalMessage += `\n\n💥 L'ennemi subit **${outcome.analyse_combat.valeur_finale}** dégâts (PV restants: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}).`;
                     }
-                } else {
-                    saveState();
                 }
-            } else {
-                saveState();
             }
 
+            // GESTION DE LA CONTRE-ATTAQUE
+            if (outcome.contre_attaque_ennemi && outcome.degats_contre_attaque > 0) {
+                // Pour sécuriser au cas où la stat résistance serait absente chez le joueur
+                const statResistanceJoueur = statsJoueur.resistancePhysique || 30; 
+                
+                playerInstance.hpActuel -= outcome.degats_contre_attaque;
+                finalMessage += `\n\n⚠️ **Contre-attaque !** **${pseudo}** subit **${outcome.degats_contre_attaque}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
+                
+                if (playerInstance.hpActuel <= 0) {
+                    finalMessage += `\n💀 **${pseudo} s'effondre, vaincu par la riposte !**`;
+                }
+            }
+
+            saveState();
             await interaction.editReply({ content: finalMessage });
+
 
         } catch (error) {
             console.error(error);
