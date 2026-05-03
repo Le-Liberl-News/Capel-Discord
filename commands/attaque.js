@@ -4,7 +4,7 @@ const { state, renderMapImage, saveState } = require('../rpg/gameState.js');
 const { getPseudoAnonyme } = require('./anonyme.js'); 
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
-
+const { actualiserRegenPassive, consommerFatigue } = require('../rpg/gestionFatigue.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
 module.exports = {
@@ -58,8 +58,10 @@ module.exports = {
             playerInstance.fatigueActuelle = fatigueMax;
         }
 
+        actualiserRegenPassive(playerInstance, statsJoueur);
+
         if (playerInstance.fatigueActuelle <= 0) {
-            return interaction.reply({ content: "Tu es trop épuisé pour agir ! Passe ton tour.", ephemeral: true });
+            return interaction.reply({ content: "Tu es trop épuisé pour attaquer...", ephemeral: true });
         }
 
         if (playerInstance.hpActuel <= 0) {
@@ -197,13 +199,9 @@ module.exports = {
             }
 
             const coef = outcome.coefficient_intensite || 1.0;
-            
-            let coutFatigue = Math.max(1, Math.floor((15 * coef) * (50 / Math.max(1, statEndurance))));
-            
-            playerInstance.fatigueActuelle -= coutFatigue;
-            if (playerInstance.fatigueActuelle < 0) playerInstance.fatigueActuelle = 0;
+            const coutFatigue = consommerFatigue(playerInstance, statsJoueur, coef);
 
-            finalMessage += `\n\n💨 **Fatigue :** -${coutFatigue} (Reste: ${playerInstance.fatigueActuelle}/${fatigueMax})`;
+            finalMessage += `\n\n💨 **Fatigue :** -${coutFatigue} (Reste: ${playerInstance.fatigueActuelle}/${statsJoueur.fatigueMax || 100})`;
             // -----------------------------
 
             saveState();
