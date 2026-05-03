@@ -84,14 +84,12 @@ function getPseudoAnonyme(userId) {
 function getIdFromPseudo(pseudoRecherche) {
     const pseudoIndex = PSEUDOS.indexOf(pseudoRecherche);
 
-    if (pseudoIndex === -1) {
-        return null;
-    }
+    if (pseudoIndex === -1) return null;
 
     try {
         const row = db.prepare("SELECT user_id FROM pseudos_anonymes WHERE pseudo_index = ?").get(pseudoIndex);
-        
         return row ? row.user_id : null;
+
     } catch (error) {
         console.error("Erreur DB lors de la récupération de l'ID :", error);
         return null;
@@ -112,6 +110,7 @@ async function execute(interaction) {
     // On passe texte en 'let' car on va potentiellement le modifier
     let texte = interaction.options.getString('message') || '';
     const image = interaction.options.getAttachment('image');
+    const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
     const pseudo = getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
     const threadId = process.env.THREAD_ID;
@@ -151,7 +150,7 @@ async function execute(interaction) {
         const payload = {
             content: texte,
             username: pseudo,
-            avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`
+            avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         };
         if (image) payload.files = [image.url];
         if (interaction.channelId !== roleplayId) payload.threadId = threadId;
