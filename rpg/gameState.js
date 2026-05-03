@@ -258,45 +258,94 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
     let rapportTour = "";
     let alertesAttaques = [];
     
+    // On copie les clés car on va modifier le dictionnaire state.enemies en cours de route
     const ennemisCoordonnees = Object.keys(state.enemies);
 
     for (const coord of ennemisCoordonnees) {
         let [y, x] = coord.split(',').map(Number);
         const enemyInstance = state.enemies[coord];
+        // Sécurité si l'ennemi a été supprimé entre temps
+        if (!enemyInstance) continue; 
+        
         const baseEnemy = bestiaire[enemyInstance.baseId];
 
+        // --- PHASE 1 : DÉPLACEMENT ---
         if (baseEnemy.mobile) {
-            const directionsPossibles = [
-                { dy: -1, dx: 0 }, { dy: 1, dx: 0 },
-                { dy: 0, dx: -1 }, { dy: 0, dx: 1 }
-            ];
+            let aBouge = false;
+            const distAuJoueur = Math.abs(state.playerX - x) + Math.abs(state.playerY - y);
 
-            const casesValides = directionsPossibles.filter(dir => {
-                const ny = y + dir.dy;
-                const nx = x + dir.dx;
-                return ny >= 0 && ny < state.MAP_HEIGHT &&
-                       nx >= 0 && nx < state.MAP_WIDTH &&
-                       state.layout[ny][nx] === 0 &&
-                       !(nx === state.playerX && ny === state.playerY);
-            });
-
-            if (casesValides.length > 0) {
-                const move = casesValides[Math.floor(Math.random() * casesValides.length)];
-                const newY = y + move.dy;
-                const newX = x + move.dx;
-
-                state.layout[y][x] = 0;
-                state.layout[newY][newX] = 2;
+            // COMPORTEMENT A : TRAQUE (Si agressif et à portée de vue - ex: 6 cases)
+            // S'il est à 1 case (distAuJoueur === 1), il ne bouge pas, il va attaquer à la Phase 2
+            if (baseEnemy.agressif && distAuJoueur <= 6 && distAuJoueur > 1) {
+                let movesOptimaux = [];
                 
-                state.enemies[`${newY},${newX}`] = state.enemies[coord];
-                delete state.enemies[coord];
-                
-                y = newY;
-                x = newX;
+                // On détermine les axes à privilégier pour se rapprocher
+                if (state.playerX < x) movesOptimaux.push({ dy: 0, dx: -1 });
+                else if (state.playerX > x) movesOptimaux.push({ dy: 0, dx: 1 });
+
+                if (state.playerY < y) movesOptimaux.push({ dy: -1, dx: 0 });
+                else if (state.playerY > y) movesOptimaux.push({ dy: 1, dx: 0 });
+
+                // On mélange l'ordre pour que les déplacements en diagonale ne soient pas prévisibles
+                movesOptimaux.sort(() => Math.random() - 0.5);
+
+                for (const move of movesOptimaux) {
+                    const ny = y + move.dy;
+                    const nx = x + move.dx;
+
+                    // Vérification de collision
+                    if (ny >= 0 && ny < state.MAP_HEIGHT && nx >= 0 && nx < state.MAP_WIDTH &&
+                        state.layout[ny][nx] === 0 && !(nx === state.playerX && ny === state.playerY)) {
+                        
+                        // Déplacement validé
+                        state.layout[y][x] = 0;
+                        state.layout[ny][nx] = 2;
+                        
+                        state.enemies[`${ny},${nx}`] = state.enemies[coord];
+                        delete state.enemies[coord];
+                        
+                        y = ny; 
+                        x = nx;
+                        aBouge = true;
+                        break; // Il a fait son pas, on arrête de chercher
+                    }
+                }
+            }
+
+            // COMPORTEMENT B : ERRANCE ALÉATOIRE (Si pas agressif, trop loin, ou bloqué par un mur)
+            if (!aBouge) {
+                const directionsPossibles = [
+                    { dy: -1, dx: 0 }, { dy: 1, dx: 0 },
+                    { dy: 0, dx: -1 }, { dy: 0, dx: 1 }
+                ];
+
+                const casesValides = directionsPossibles.filter(dir => {
+                    const ny = y + dir.dy;
+                    const nx = x + dir.dx;
+                    return ny >= 0 && ny < state.MAP_HEIGHT &&
+                           nx >= 0 && nx < state.MAP_WIDTH &&
+                           state.layout[ny][nx] === 0 &&
+                           !(nx === state.playerX && ny === state.playerY);
+                });
+
+                if (casesValides.length > 0) {
+                    const move = casesValides[Math.floor(Math.random() * casesValides.length)];
+                    const ny = y + move.dy;
+                    const nx = x + move.dx;
+
+                    state.layout[y][x] = 0;
+                    state.layout[ny][nx] = 2;
+                    
+                    state.enemies[`${ny},${nx}`] = state.enemies[coord];
+                    delete state.enemies[coord];
+                    
+                    y = ny;
+                    x = nx;
+                }
             }
         }
 
-        
+        // --- PHASE 2 : DÉTECTION D'ATTAQUE ---
         const isAdjacent = (Math.abs(state.playerX - x) + Math.abs(state.playerY - y)) === 1;
 
         if (isAdjacent && baseEnemy.agressif && playerInstance.hpActuel > 0) {
@@ -304,7 +353,7 @@ async function jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance) {
         }
     }
 
-    
+    // --- PHASE 3 : RÉSOLUTION DES ATTAQUES ---
     for (const attaquant of alertesAttaques) {
         const { enemyInstance, baseEnemy } = attaquant;
         rapportTour += `\n\n⚠️ **${baseEnemy.nom} vous prend par surprise et attaque !**`;

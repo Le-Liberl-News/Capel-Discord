@@ -35,8 +35,6 @@ module.exports = {
             return interaction.reply({ content: "Tu es inconscient et ne peux pas te déplacer.", ephemeral: true });
         }
 
-        await interaction.reply({ content: "Trajectoire reçue, déplacement en cours...", ephemeral: true });
-
         state.isMoving = true;
 
         try {
