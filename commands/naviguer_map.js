@@ -62,11 +62,11 @@ module.exports = {
                     const targetTile = state.layout[newY][newX];
 
                     if (targetTile === 1) {
-                        continue; // Mur : on ignore et on passe à la prochaine instruction
+                        continue; 
                     } 
                     
                     if (targetTile === 2) {
-                        collisionType = 'enemy'; // On percute un monstre statique
+                        collisionType = 'enemy';
                         break;
                     }
 
@@ -75,17 +75,17 @@ module.exports = {
                     state.playerY = newY;
 
                     if (targetTile === 3) {
-                        collisionType = 'exit'; // On trouve la sortie
+                        collisionType = 'exit'; 
                         break;
                     }
                 }
 
-                // --- TOUR DES ENNEMIS (Après le pas du joueur) ---
+               
                 const rapportEnnemis = await jouerTourEnnemis(genAI, pseudo, statsJoueur, playerInstance);
                 
                 if (rapportEnnemis !== "") {
                     rapportGlobal += rapportEnnemis;
-                    collisionType = 'enemy_attack'; // L'ennemi nous a attaqué, on stoppe la course !
+                    collisionType = 'enemy_attack'; 
                 }
 
                 const buffer = await renderMapImage(state.layout, state.playerX, state.playerY);
@@ -98,13 +98,13 @@ module.exports = {
                     files: [attachment] 
                 });
 
-                // Si on a été attaqué ou tué pendant ce pas, on casse la boucle de déplacement
+                
                 if (collisionType === 'enemy_attack' || playerInstance.hpActuel <= 0) {
                     break;
                 }
             }
 
-            // --- FIN DU DÉPLACEMENT ---
+            
             let finalMessage = "Le groupe a terminé son déplacement.";
             
             if (collisionType === 'exit') {
@@ -114,7 +114,7 @@ module.exports = {
                 state.playerY = Math.floor(state.MAP_HEIGHT / 2);
                 state.layout[state.playerY][state.playerX] = 0;
                 finalMessage = `✨ Vous avez pris l'escalier ! Bienvenue à l'étage ${state.currentFloor}.`;
-                rapportGlobal = ""; // On nettoie les anciens rapports pour le nouvel étage
+                rapportGlobal = ""; 
             } else if (collisionType === 'enemy') {
                 finalMessage = "🛑 Un ennemi vous bloque la route ! Déplacement interrompu.";
             } else if (collisionType === 'enemy_attack') {

@@ -305,7 +305,7 @@ Réponds UNIQUEMENT avec ce JSON strict :
                 rapportTour += `\n💥 Tu subis **${outcome.degats_infliges}** dégâts (PV restants: ${playerInstance.hpActuel}/${statsJoueur.hpMax}).`;
                 if (playerInstance.hpActuel <= 0) {
                     rapportTour += `\n💀 **Tu t'effondres, vaincu !**`;
-                    break; // On arrête les autres attaques si le joueur est mort
+                    break; 
                 }
             } else {
                 rapportTour += `\n💨 Tu esquives l'attaque in extremis !`;
@@ -318,5 +318,4 @@ Réponds UNIQUEMENT avec ce JSON strict :
     return rapportTour;
 }
 
-// Ne pas oublier d'exporter jouerTourEnnemis
 module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis };
