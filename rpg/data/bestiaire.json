@@ -10,6 +10,18 @@
     "resistancePhysique": 60,
     "resistanceMagique": 20,
     "esquive": 10,
-	"vitesse": 15
-  }
+    "vitesse": 15,
+    "attaques": [
+        {
+          "nom": "Câlin étouffant",
+          "description": "Mishy enserre sa cible avec ses gros bras pelucheux.",
+          "puissance_base": 15
+        },
+        {
+          "nom": "Coup de bedaine",
+          "description": "Mishy bondit et frappe avec son ventre rebondi.",
+          "puissance_base": 25
+        }
+      ]
+    }
 }

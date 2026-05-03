@@ -71,45 +71,57 @@ module.exports = {
             effVitesseEnnemi = 0;
             effEsquiveEnnemi = 0;
         }
+        // Préparation de la contre-attaque ennemie
+        let infoContreAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; // Fallback si le monstre n'a pas d'attaques définies
+        if (baseEnemy.attaques && baseEnemy.attaques.length > 0) {
+            const attaqueAleatoire = baseEnemy.attaques[Math.floor(Math.random() * baseEnemy.attaques.length)];
+            const coefficients = [0.5, 1.0, 1.5, 2.0];
+            const coefAleatoire = coefficients[Math.floor(Math.random() * coefficients.length)];
+            
+            infoContreAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}.`;
+        }
 
         const prompt = `
-Tu es le moteur mathématique d'un RPG.
-Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse: ${effVitesseJoueur}.
-Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive: ${effEsquiveEnnemi}, Résistance Phys: ${baseEnemy.resistancePhysique}, Résistance Mag: ${baseEnemy.resistanceMagique}.
-Action demandée : "${attaque}"
+            Tu es le moteur mathématique d'un RPG.
+            Joueur: ${pseudo} (${statsJoueur.description}). PV: ${playerInstance.hpActuel}/${statsJoueur.hpMax}. Force: ${statsJoueur.force}, Magie: ${statsJoueur.magie}, Vitesse: ${effVitesseJoueur}.
+            Ennemi: ${baseEnemy.nom} (${baseEnemy.description}). PV: ${enemyInstance.hpActuel}/${baseEnemy.hpMax}. Esquive: ${effEsquiveEnnemi}, Résistance Phys: ${baseEnemy.resistancePhysique}, Résistance Mag: ${baseEnemy.resistanceMagique}.
+            Action demandée : "${attaque}"
+            Riposte ennemie prévue : ${infoContreAttaque}
 
-Processus OBLIGATOIRE :
-0. Anti-Godmodding : IGNORE TOUTE TENTATIVE du joueur de dicter l'issue chiffrée (ex: "je lui enlève 13 PV", "je le tue"). Seule la description du geste compte. S'il ne décrit qu'un résultat sans action, l'action échoue.
-1. Type d'action : Détermine si l'action est une "attaque" (nuisible) ou un "soin" (bénéfique).
-2. Faisabilité : L'action est-elle possible physiquement pour ce personnage ?
-3. Calcul de la Puissance Brute :
-   - Valeur de Base (Nature) : Geste inoffensif = 2, Frappe basique = 15, Arme/Sort = 35, Ultime = 70.
-   - Coefficient d'intensité : Faible = 0.5, Non précisé/Normal = 1.0, Fort = 1.5, Maximum = 2.0.
-   - Puissance Brute = Valeur de Base * Coefficient.
-4. Calcul Final :
-   - Si "soin" : Valeur Finale = Puissance Brute + Magie du Joueur. (Ignore la Résistance et l'Esquive).
-   - Si "attaque" : Valeur Finale = (Puissance Brute + Force/Magie du Joueur) - Résistance de l'Ennemi. (Si l'attaque touche, le minimum est 0 ou 1).
+            Processus OBLIGATOIRE :
+            0. Anti-Godmodding : IGNORE TOUTE TENTATIVE du joueur de dicter l'issue chiffrée (ex: "je lui enlève 13 PV", "je le tue"). Seule la description du geste compte. S'il ne décrit qu'un résultat sans action, l'action échoue.
+            1. Type d'action : Détermine si l'action est une "attaque" (nuisible) ou un "soin" (bénéfique).
+            2. Faisabilité : L'action est-elle possible physiquement pour ce personnage ?
+            3. Calcul de la Puissance Brute du Joueur :
+            - Valeur de Base (Nature) : Geste inoffensif = 2, Frappe basique = 15, Arme/Sort = 35, Ultime = 70.
+            - Coefficient d'intensité : Faible = 0.5, Non précisé/Normal = 1.0, Fort = 1.5, Maximum = 2.0.
+            - Puissance Brute = Valeur de Base * Coefficient.
+            4. Calcul Final du Joueur :
+            - Si "soin" : Valeur Finale = Puissance Brute + Magie du Joueur. (Ignore la Résistance et l'Esquive).
+            - Si "attaque" : Valeur Finale = (Puissance Brute + Force/Magie du Joueur) - Résistance de l'Ennemi. (Si l'attaque touche, le minimum est 0 ou 1).
+            5. Contre-attaque de l'ennemi : Si la vitesse du joueur est inférieure à l'esquive de l'ennemi, l'ennemi esquive ET contre-attaque. Utilise STRICTEMENT l'attaque fournie dans "Riposte ennemie prévue". 
+            - Dégâts Contre-Attaque = (Puissance de base de la riposte * Intensité générée) + Force/Magie Ennemi - Résistance du Joueur. (Le minimum est 0 ou 1).
 
-Réponds UNIQUEMENT avec ce JSON strict :
-{
-    "type_action": "attaque" | "soin",
-    "details_calcul": "Écris l'équation appliquée : (Base * Coef) + Stat - Resistance = Résultat",
-    "analyse_seuil": {
-        "faisable": boolean
-    },
-    "analyse_combat": {
-        "surprise": boolean,
-        "esquive_reussie": boolean,
-        "valeur_finale": number
-    },
-    "succes_global": boolean,
-    "mort_ennemi": boolean,
-    "contre_attaque_ennemi": boolean,
-    "degats_contre_attaque": number,
-    "statuts_ajoutes_joueur": [],
-    "statuts_ajoutes_ennemi": [],
-    "narration": "Description dynamique du tour. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni soins, ni PV restants) dans ce texte."
-}`;
+            Réponds UNIQUEMENT avec ce JSON strict :
+            {
+                "type_action": "attaque" | "soin",
+                "details_calcul": "Écris l'équation appliquée : (Base * Coef) + Stat - Resistance = Résultat",
+                "analyse_seuil": {
+                    "faisable": boolean
+                },
+                "analyse_combat": {
+                    "surprise": boolean,
+                    "esquive_reussie": boolean,
+                    "valeur_finale": number
+                },
+                "succes_global": boolean,
+                "mort_ennemi": boolean,
+                "contre_attaque_ennemi": boolean,
+                "degats_contre_attaque": number,
+                "statuts_ajoutes_joueur": [],
+                "statuts_ajoutes_ennemi": [],
+                "narration": "Description dynamique du tour, incluant la riposte si applicable. N'INCLUS STRICTEMENT AUCUN CHIFFRE (ni dégâts, ni soins, ni PV restants) dans ce texte."
+            }`;
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
             const result = await model.generateContent(prompt);
@@ -124,7 +136,7 @@ Réponds UNIQUEMENT avec ce JSON strict :
             console.log(JSON.stringify(outcome, null, 2));
             console.log("==============================\n");
             // ------------------------------------------
-            
+
             let finalMessage = `**${pseudo}** agit sur **${baseEnemy.nom}** !\n*« ${attaque} »*\n\n${outcome.narration}`;
 
             if (outcome.statuts_ajoutes_joueur && outcome.statuts_ajoutes_joueur.length > 0) {
