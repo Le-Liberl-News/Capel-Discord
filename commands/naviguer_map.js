@@ -26,12 +26,13 @@ module.exports = {
 
         const pseudo = getPseudoAnonyme(interaction.user.id);
         const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
+        const playerInstance = state.players[pseudo];
         actualiserRegenPassive(playerInstance, statsJoueur);
 
         if (!state.players[pseudo]) {
             state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [] };
         }
-        const playerInstance = state.players[pseudo];
+        
 
         if (playerInstance.hpActuel <= 0) {
             return interaction.reply({ content: "Tu es inconscient et ne peux pas te déplacer.", ephemeral: true });
