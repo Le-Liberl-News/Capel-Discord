@@ -2,8 +2,10 @@ const db = require('../utils/db.js');
 
 module.exports = {
     async execute(interaction) {
-        const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1').get();
-        if (!mission) { return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true }); }
+        const [missions] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+        if (missions.length < 1) { return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true }); }
+        const mission = missions[0];
+
         const userId = interaction.user.id;
 
         const [mesVotes_rows] = await db.query(`
@@ -27,6 +29,7 @@ module.exports = {
             try {
                 const obj = JSON.parse(row.texte);
                 paragraphe = Object.values(obj).join('\n');
+
             } catch (e) { paragraphe = "Erreur de lecture..."; }
           
             let nouvelAjout = `**[${i + 1}]**\n${paragraphe}`;
