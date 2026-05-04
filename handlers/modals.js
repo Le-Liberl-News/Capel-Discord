@@ -15,8 +15,9 @@ module.exports = async function handleModals(interaction, sheets) {
 
     if (interaction.customId === 'modal_trad_groupe') {
         try {
-            const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1').get();
-            if (!mission) throw new Error("Aucune mission active en BDD");
+            const [missions] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+            if (!missions) throw new Error("Aucune mission active en BDD");
+            mission = missions[0];
 
             const userId = interaction.user.id;
             const lignes = String(mission.ligne).split(',');
