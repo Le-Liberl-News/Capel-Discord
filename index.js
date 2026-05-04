@@ -98,7 +98,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     } catch (e) { console.error(e); }
 })();
 
-client.once('ready', () => {
+client.once('clientReady', () => {
     console.log(`Connecté en tant que ${client.user.tag}`);
     relancerAudioApresCrash(client, state);
 });
