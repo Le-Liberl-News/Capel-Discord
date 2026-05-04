@@ -121,36 +121,38 @@ async function execute(interaction) {
 
     const statsJoueur = databasePersos[pseudo] || databasePersos["default"];
 
-    if (!state.players[pseudo]) {
-        state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], PCActuel: statsJoueur.PCMax };
-    }
-    const playerInstance = state.players[pseudo];
-    const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
-
-    // --- GESTION DES HICS ALÉATOIRES ---
-    const estAlcoolise = playerInstance.statuts && playerInstance.statuts.some(s => s.nom === "alcoolise");
-    if (estAlcoolise && texte.length > 0) {
-        const mots = texte.split(' ');
-        
-        // 15% de chance d'insérer un *hic* ou un *hips* après chaque mot
-        texte = mots.map(mot => {
-            if (Math.random() < 0.15) {
-                const bruit = Math.random() < 0.5 ? "*hic*" : "*hips*";
-                return `${mot} ${bruit}`;
-            }
-            return mot;
-        }).join(' ');
-
-        // Sécurité : si le message était très court et que le jet de 15% a échoué, on force un hoquet à la fin
-        if (!texte.includes('*hic*') && !texte.includes('*hips*')) {
-            texte += ' ... *hic*';
+    let ko = "";
+    if (state?.players) {
+        if (!state.players[pseudo]) {
+            state.players[pseudo] = { hpActuel: statsJoueur.hpMax, statuts: [], PCActuel: statsJoueur.PCMax };
         }
+        const playerInstance = state.players[pseudo];
+        const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
+
+        // --- GESTION DES HICS ALÉATOIRES ---
+        const estAlcoolise = playerInstance.statuts && playerInstance.statuts.some(s => s.nom === "alcoolise");
+        if (estAlcoolise && texte.length > 0) {
+            const mots = texte.split(' ');
+
+            // 15% de chance d'insérer un *hic* ou un *hips* après chaque mot
+            texte = mots.map(mot => {
+                if (Math.random() < 0.15) {
+                    const bruit = Math.random() < 0.5 ? "*hic*" : "*hips*";
+                    return `${mot} ${bruit}`;
+                }
+                return mot;
+            }).join(' ');
+
+            // Sécurité : si le message était très court et que le jet de 15% a échoué, on force un hoquet à la fin
+            if (!texte.includes('*hic*') && !texte.includes('*hips*')) {
+                texte += ' ... *hic*';
+            }
+        }
+        // -----------------------------------
+
+        const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
+        saveState();
     }
-    // -----------------------------------
-
-    const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
-    saveState();
-
     try {
         const payload = {
             content: texte,
