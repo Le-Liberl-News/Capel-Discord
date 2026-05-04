@@ -14,6 +14,9 @@ const handleButtons = require('./handlers/buttons.js');
 const handleModals = require('./handlers/modals.js');
 const handleSlashCommands = require('./handlers/slashCommands.js')
 
+const { state } = require('./rpg/gameState.js');
+const { relancerAudioApresCrash } = require('./rpg/audioManager.js');
+
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
 const { updateRanking } = require('./utils/rankings.js')
@@ -95,6 +98,11 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
         console.log('✅ Commandes synchronisées !');
     } catch (e) { console.error(e); }
 })();
+
+client.once('ready', () => {
+    console.log(`Connecté en tant que ${client.user.tag}`);
+    relancerAudioApresCrash(client, state);
+});
 
 client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) return handleButtons(interaction, sheets);

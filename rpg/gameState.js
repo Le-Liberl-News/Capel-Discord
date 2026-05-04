@@ -2,6 +2,7 @@ const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
 const path = require('path');
 const bestiaire = require('./data/bestiaire.json');
+
 const databasePersos = require('./data/persos.json');
 const STATE_FILE = path.join(__dirname, 'map_state.json');
 const VISION_RADIUS = 2;

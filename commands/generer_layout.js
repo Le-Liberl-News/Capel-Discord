@@ -2,7 +2,7 @@ const { AttachmentBuilder } = require('discord.js');
 const { state, generateMap, renderMapImage, saveState, renderHUDImage } = require('../rpg/gameState.js'); 
 
 const databasePersos = require('../rpg/data/persos.json');
-
+const { jouerAmbianceMap } = require('../rpg/audioManager.js');
 module.exports = {
     async execute(interaction) {
         if (state.isMoving) {
@@ -17,6 +17,7 @@ module.exports = {
         state.enemies = {};
 
         state.layout = generateMap();
+        jouerAmbianceMap(interaction, state.currentFloor, state);
         state.playerX = Math.floor(state.MAP_WIDTH / 2);
         state.playerY = Math.floor(state.MAP_HEIGHT / 2);
         state.layout[state.playerY][state.playerX] = 0; 
@@ -28,7 +29,7 @@ module.exports = {
             content: "Nouvelle zone initialisée. Utilisez `/naviguer` pour avancer.", 
             files: [attachment] 
         });
-
+        
         const bufferHUD = await renderHUDImage();
         const attachmentHUD = new AttachmentBuilder(bufferHUD, { name: 'hud.png' });
         
