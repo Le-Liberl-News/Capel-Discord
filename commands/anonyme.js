@@ -80,7 +80,6 @@ async function getPseudoAnonyme(userId) {
     await db.query(`
         INSERT INTO pseudos_anonymes (user_id, pseudo_index)
         VALUES (?, ?)
-        ON CONFLICT(user_id) DO UPDATE SET pseudo_index = excluded.pseudo_index
     `, [userId, nouvelIndex]);
 
     return PSEUDOS[nouvelIndex];
