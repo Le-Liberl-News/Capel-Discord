@@ -73,7 +73,6 @@ async function getPseudoAnonyme(userId) {
             console.log(`Rôle attribué au hasard : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
         }
     }
-    console.log("id anonyme existant :", nouvelIndex);
 
     if (nouvelIndex === null) return "Pom";
 
@@ -173,7 +172,6 @@ async function execute(interaction) {
 
 async function monIdentite(interaction) {
     const pseudo = await getPseudoAnonyme(interaction.user.id);
-    console.log("Mon identité:", pseudo);
     const BASE_URL = process.env.BASE_URL;
 
     const embedProfil = new EmbedBuilder()
