@@ -14,7 +14,6 @@ const handleButtons = require('./handlers/buttons.js');
 const handleModals = require('./handlers/modals.js');
 const handleSlashCommands = require('./handlers/slashCommands.js')
 
-const { state } = require('./rpg/gameState.js');
 const { relancerAudioApresCrash } = require('./rpg/audioManager.js');
 
 const cleanup = require('./utils/cleanup.js');
