@@ -172,6 +172,7 @@ async function execute(interaction) {
 
 async function monIdentite(interaction) {
     const pseudo = getPseudoAnonyme(interaction.user.id);
+    console.log("Mon identité:", pseudo);
     const BASE_URL = process.env.BASE_URL;
 
     const embedProfil = new EmbedBuilder()
