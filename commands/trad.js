@@ -10,6 +10,8 @@ module.exports = {
             return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true });
         }
 
+        console.log("Mission :", mission);
+
         const [mesPropositions] = await db.query(`
             SELECT message_id, texte FROM propositions 
             WHERE user_id = ? AND sheet_id = ? AND ligne = ?
