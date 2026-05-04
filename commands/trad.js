@@ -18,7 +18,7 @@ module.exports = {
 
         const [bracerConfirme_rows] = await db.query(`SELECT xp FROM users_stats WHERE user_id = ?`, [userId]);
         const bracerConfirme = (bracerConfirme_rows[0] && bracerConfirme_rows[0].xp >= 1300);
-        if (bracerConfirme && mesPropositions) {
+        if (bracerConfirme && mesPropositions.length > 0) {
             return interaction.reply({
                 content: "Tu es un bracer confirmé désormais ! Tu n'as plus droit qu'à une seule proposition simultanée.",
                 ephemeral: true
