@@ -11,7 +11,7 @@ const {
 
 const path = require('path');
 const fs = require('fs');
-const ffmpeg = require('ffmpeg-static');
+const ffmpegStatic = require('ffmpeg-static');
 
 const SALON_VOCAL_ID = "1500777104730755102";
 let currentPlayer = null;
