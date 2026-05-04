@@ -47,6 +47,7 @@ async function getPseudoAnonyme(userId) {
     const [existant_rows] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]);
     const existant = existant_rows[0];
 
+    console.log("id anonyme existant :", existant);
     if (existant) return PSEUDOS[existant.pseudo_index];
 
     const [indexRows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
@@ -72,6 +73,7 @@ async function getPseudoAnonyme(userId) {
             console.log(`Rôle attribué au hasard : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
         }
     }
+    console.log("id anonyme existant :", nouvelIndex);
 
     if (nouvelIndex === null) return "Pom";
 
