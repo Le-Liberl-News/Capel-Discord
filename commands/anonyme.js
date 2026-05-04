@@ -44,11 +44,13 @@ const COMBO = [
 ];
 
 async function getPseudoAnonyme(userId) {
-    const [existant] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]).pop();
+    const [existant_rows] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]);
+    const existant = existant_rows[0];
 
     if (existant) return PSEUDOS[existant.pseudo_index];
 
-    const [indexDejaAttribues] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
+    const [indexRows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
+    const indexDejaAttribues = indexRows.map(r => r.pseudo_index);
 
     const comboDisponibles = COMBO.filter((valeur, index) =>
     indexDejaAttribues.includes(index) &&
@@ -64,7 +66,7 @@ async function getPseudoAnonyme(userId) {
     }
 
     if (nouvelIndex === null) {
-        const indexDisponibles = PSEUDOS.mapasync ((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
+        const indexDisponibles = PSEUDOS.map ((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
         if (indexDisponibles.length > 0) {
             nouvelIndex = indexDisponibles[Math.floor(Math.pow(Math.random(), 3) * indexDisponibles.length)];
             console.log(`Rôle attribué au hasard : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
@@ -89,8 +91,7 @@ async function getIdFromPseudo(pseudoRecherche) {
 
     try {
         const [row_rows] = await db.query("SELECT user_id FROM pseudos_anonymes WHERE pseudo_index = ?", [pseudoIndex]);
-        const row = row_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
-    const indexDejaAttribues = indexDejaAttribues_rows[0];
+        const row = row_rows[0]
         return row ? row.user_id : null;
 
     } catch (error) {
