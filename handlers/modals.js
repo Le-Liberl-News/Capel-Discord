@@ -17,7 +17,7 @@ module.exports = async function handleModals(interaction, sheets) {
         try {
             const [missions] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
             if (!missions) throw new Error("Aucune mission active en BDD");
-            mission = missions[0];
+            const mission = missions[0];
 
             const userId = interaction.user.id;
             const lignes = String(mission.ligne).split(',');
@@ -40,7 +40,7 @@ module.exports = async function handleModals(interaction, sheets) {
             const [autresPropositions] = await db.query('SELECT texte FROM propositions');
             const stringSimilarity = require('string-similarity');
 
-            for (autreProposition of autresPropositions) {
+            for (const autreProposition of autresPropositions) {
                 let ancienTexte = "";
                 try { ancienTexte = Object.values(JSON.parse(autreProposition.texte)).join(' ');
                 } catch (e) { ancienTexte = autreProposition.texte; }
@@ -154,9 +154,9 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const [votesExistants] = await db.query('SELECT COUNT(*) as total FROM votes WHERE message_id = ?', [ancienMessageId]);
 
-            if (votesExistants.total > 0) {
+            if (votesExistants[0].total > 0) {
                 const stringSimilarity = require('string-similarity');
-                        const texteReference = propActuelle.texte_original || propActuelle.texte;
+                const texteReference = propActuelle.texte_original || propActuelle.texte;
 
                 let ancienTexte = "";
                 try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
@@ -177,7 +177,7 @@ module.exports = async function handleModals(interaction, sheets) {
             }
 
             let objetStockage = {};
-            lignes.forEachasync ((numLigne, i) => {
+            lignes.forEach ((numLigne, i) => {
                 objetStockage[numLigne.trim()] = textesSaisis[i];
             });
             const jsonAStocker = JSON.stringify(objetStockage);

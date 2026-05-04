@@ -7,7 +7,7 @@ module.exports = {
         const userId = interaction.user.id;
 
         if (!missions) return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true });
-        mission = missions[0];
+        const mission = missions[0];
 
         const [mesPropositions] = await db.query(`
             SELECT message_id, texte FROM propositions 
