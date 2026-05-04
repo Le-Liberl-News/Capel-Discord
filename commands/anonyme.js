@@ -43,12 +43,13 @@ const COMBO = [
     44, 15, 66, 19, 78
 ];
 
-function getPseudoAnonyme(userId) {
-    const existant = db.prepare('SELECT * FROM pseudos_anonymes WHERE user_id = ?').get(userId);
+async function getPseudoAnonyme(userId) {
+    const [existant_rows] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?').get(userId);
 
     if (existant) return PSEUDOS[existant.pseudo_index];
 
-    const indexDejaAttribues = db.prepare('SELECT pseudo_index FROM pseudos_anonymes').all().map(r => r.pseudo_index);
+    const [indexDejaAttribues_rows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
+    const existant = existant_rows.map(r => r.pseudo_index);
 
     const comboDisponibles = COMBO.filter((valeur, index) =>
     indexDejaAttribues.includes(index) &&
@@ -64,7 +65,7 @@ function getPseudoAnonyme(userId) {
     }
 
     if (nouvelIndex === null) {
-        const indexDisponibles = PSEUDOS.map((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
+        const indexDisponibles = PSEUDOS.mapasync ((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
         if (indexDisponibles.length > 0) {
             nouvelIndex = indexDisponibles[Math.floor(Math.pow(Math.random(), 3) * indexDisponibles.length)];
             console.log(`Rôle attribué au hasard : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
@@ -73,22 +74,24 @@ function getPseudoAnonyme(userId) {
 
     if (nouvelIndex === null) return "Pom";
 
-    db.prepare(`
+    await db.query(`
         INSERT INTO pseudos_anonymes (user_id, pseudo_index)
         VALUES (?, ?)
         ON CONFLICT(user_id) DO UPDATE SET pseudo_index = excluded.pseudo_index
-    `).run(userId, nouvelIndex);
+    `, [userId, nouvelIndex]);
 
     return PSEUDOS[nouvelIndex];
 }
 
-function getIdFromPseudo(pseudoRecherche) {
+async function getIdFromPseudo(pseudoRecherche) {
     const pseudoIndex = PSEUDOS.indexOf(pseudoRecherche);
 
     if (pseudoIndex === -1) return null;
 
     try {
-        const row = db.prepare("SELECT user_id FROM pseudos_anonymes WHERE pseudo_index = ?").get(pseudoIndex);
+        const [row_rows] = await db.query("SELECT user_id FROM pseudos_anonymes WHERE pseudo_index = ?", [pseudoIndex]);
+        const row = row_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
+    const indexDejaAttribues = indexDejaAttribues_rows[0];
         return row ? row.user_id : null;
 
     } catch (error) {

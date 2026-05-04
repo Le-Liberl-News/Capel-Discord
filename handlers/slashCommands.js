@@ -82,11 +82,12 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
     }
     if (commandName === 'add-votes') {
         const cmdAddVotes = require('../commands/add_votes.js');
-        return cmdAddVotes.execute(interaction);
+        return cmdAddVotes.async execute(interaction);
     }
     if (commandName === 'creerthread') {
         const { createTheThread } = require('../utils/createThread.js');
-        const name = db.prepare(`SELECT texte_jap FROM mission_actuelle WHERE id = 1`).get().texte_jap;
+        const [name_rows] = await db.query(`SELECT texte_jap FROM mission_actuelle WHERE id = 1`);
+        const name = name_rows[0] ? name_rows[0].texte_jap : null;
         return createTheThread(interaction.client, String(name).substring(0, 10));
     }
     if (commandName === 'read') {

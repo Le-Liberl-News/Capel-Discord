@@ -6,7 +6,8 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+            const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+            const mission = mission_rows[0];
             if (!mission) {
                 return interaction.editReply("❌ Aucune réplique du jour n'est actuellement définie.");
             }

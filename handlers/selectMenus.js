@@ -15,7 +15,7 @@ module.exports = async function handleSelectMenus(interaction) {
           
         } catch (e) { console.log("Ancien message déjà supprimé ou introuvable."); }
       
-        db.prepare('DELETE FROM propositions WHERE message_id = ?').run(oldMessageId);
+        await db.query('DELETE FROM propositions WHERE message_id = ?', [oldMessageId]);
       
         await interaction.update({
             content: "✅ Ancienne proposition supprimée !",
@@ -26,8 +26,10 @@ module.exports = async function handleSelectMenus(interaction) {
 
     if (interaction.customId === 'selectionner_prop_edit') {
         const messageId = interaction.values[0];
-        const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
-        const proposition = db.prepare('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
+        const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+        const mission = mission_rows[0];
+        const [proposition_rows] = await db.query('SELECT * FROM propositions WHERE message_id = ?', [messageId]);
+        const proposition = proposition_rows[0];
 
         if (!proposition || !mission) return interaction.reply({ content: "❌ Proposition introuvable.", ephemeral: true });
         await ouvrirModaleEdit(interaction, mission, proposition);
@@ -35,25 +37,28 @@ module.exports = async function handleSelectMenus(interaction) {
 
     if (interaction.customId === 'selectionner_suppr') {
   	    const messageId = interaction.values[0];
-  	    const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
-  	    const proposition = db.prepare('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
+  	    const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+  	    const mission = mission_rows[0];
+  	    const [proposition_rows] = await db.query('SELECT * FROM propositions WHERE message_id = ?', [messageId]);
+  	    const proposition = proposition_rows[0];
   	
   	    if (!proposition || !mission) return interaction.reply({ content: "❌ Proposition introuvable.", ephemeral: true });
 		await interaction.update({ content: "🗑️ Suppression de la proposition", components: [] });
-        db.prepare('DELETE FROM propositions WHERE message_id = ?').run(messageId);
-		db.prepare('DELETE FROM votes WHERE message_id = ?').run(messageId);
+        await db.query('DELETE FROM propositions WHERE message_id = ?', [messageId]);
+		await db.query('DELETE FROM votes WHERE message_id = ?', [messageId]);
 
-        const dejaSoumis = db.prepare(`
+        const [dejaSoumis_rows] = await db.query(`
             SELECT 1 FROM propositions 
             WHERE user_id = ? AND sheet_id = ? AND ligne = ? AND message_id != ? 
             LIMIT 1
-		    `).get(interaction.user.id, mission.sheet_id, mission.ligne, messageId);
+		    `, [interaction.user.id, mission.sheet_id, mission.ligne, messageId]);
+        const dejaSoumis = dejaSoumis_rows[0];
 		
         if (!dejaSoumis) {
-            db.prepare(`
+            await db.query(`
                 INSERT INTO users_stats (user_id, total_soumissions) VALUES (?, 1) 
                 ON CONFLICT(user_id) DO UPDATE SET total_soumissions = total_soumissions - 1
-            `).run(interaction.user.id);
+            `, [interaction.user.id]);
             await ajouterXP(interaction.user.id, -20, interaction.client);
         }
 		

@@ -14,23 +14,25 @@ module.exports = async function handleButtons(interaction, sheets) {
         let messageRetour = "";
 
         try {
-            const proposition = db.prepare('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
+            const [proposition] = await db.query('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
             if (!proposition) return interaction.followUp({ content: "Cette proposition n'est plus dans la base.", ephemeral: true });
-            const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+            const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1', [);
 
-            const votePrecedent = db.prepare('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?').get(messageId, userId);
-            const nombreVotes = db.prepare(`
+            const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
+            const votePrecedent = votePrecedent_rows[0];
+            const [nombreVotes_rows] = await db.query(`
                 SELECT votes.* FROM votes
                 JOIN propositions ON votes.message_id = propositions.message_id
                 WHERE votes.user_id = ?
                 AND propositions.sheet_id = ?
                 AND propositions.ligne = ?
-                `).all(userId, mission.sheet_id, mission.ligne).length;
+                `, [userId, mission.sheet_id, mission.ligne]);
+            const mission = mission_rows[0] ? mission_rows[0].length : null;
             let change = false;
       
             if (votePrecedent) {
-                db.prepare('DELETE FROM votes WHERE message_id = ? AND user_id = ?').run(messageId, userId);
-                db.prepare('UPDATE propositions SET score = score - 1 WHERE message_id = ?').run(messageId);
+                await db.query('DELETE FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]]);
+                await db.query('UPDATE propositions SET score = score - 1 WHERE message_id = ?', [messageId]);
                 messageRetour = "Ton vote a été retiré ! 🔙";
                 change = true;
             } else {
@@ -39,18 +41,19 @@ module.exports = async function handleButtons(interaction, sheets) {
                 } else if (nombreVotes >= 3) {
                     messageRetour = "☝️ Maximum 3 votes simultanés ! Utilisez /votes pour retrouver vos votes actifs.";
                 } else {
-                    db.prepare('INSERT INTO votes (message_id, user_id, valeur) VALUES (?, ?, 1)').run(messageId, userId);
-                    db.prepare('UPDATE propositions SET score = score + 1 WHERE message_id = ?').run(messageId);
+                    await db.query('INSERT INTO votes (message_id, user_id, valeur) VALUES (?, ?, 1)', [messageId, userId]);
+                    await db.query('UPDATE propositions SET score = score + 1 WHERE message_id = ?', [messageId]);
                     messageRetour = "Ton vote a été pris en compte ! 👍";
                     change = true;
                 }
             }
 
             if (change) {
-                const nouveauScore = db.prepare('SELECT score FROM propositions WHERE message_id = ?').get(messageId).score;
+                const [nouveauScore] = await db.query('SELECT score FROM propositions WHERE message_id = ?', [messageId).score;
                 const componentsActuels = interaction.message.components;
 
-                const rowButtons = ActionRowBuilder.from(componentsActuels[0]);
+                const rowButtons = ActionRowBuilder.from(componentsActuels[0]]);
+            const nombreVotes = nombreVotes_rows[0];
 
                 let texteAafficher = proposition.texte;
                 try {
@@ -82,7 +85,8 @@ module.exports = async function handleButtons(interaction, sheets) {
   
     if (interaction.customId.startsWith('voir_rapport_')) {
         const propId = interaction.customId.split('_')[2];
-        const data = db.prepare('SELECT gemma_eval FROM propositions WHERE message_id = ?').get(propId);
+        const [data_rows] = await db.query('SELECT gemma_eval FROM propositions WHERE message_id = ?', [propId]);
+        const data = data_rows[0];
 
         if (data && data.gemma_eval) {
             await interaction.reply({ 
@@ -99,18 +103,20 @@ module.exports = async function handleButtons(interaction, sheets) {
         const val = interaction.customId === 'juge_ok' ? 'OK' : 'REJET';
         const msgId = interaction.message.id;
 
-        const dejaVote = db.prepare('SELECT * FROM votes_juges WHERE message_id = ? AND juge_id = ?').get(msgId, interaction.user.id);
+        const [dejaVote_rows] = await db.query('SELECT * FROM votes_juges WHERE message_id = ? AND juge_id = ?', [msgId, interaction.user.id]);
+        const dejaVote = dejaVote_rows[0];
         if (dejaVote) return interaction.followUp({ content: "Tu as déjà voté, l'ami !", ephemeral: true });
         
-        db.prepare('INSERT INTO votes_juges (message_id, juge_id, valeur) VALUES (?, ?, ?)').run(msgId, interaction.user.id, val);
+        await db.query('INSERT INTO votes_juges (message_id, juge_id, valeur) VALUES (?, ?, ?)', [msgId, interaction.user.id, val]);
 
         if (val === 'OK') {
-            db.prepare('UPDATE validations SET votes_positifs = votes_positifs + 1 WHERE message_id = ?').run(msgId);
+            await db.query('UPDATE validations SET votes_positifs = votes_positifs + 1 WHERE message_id = ?', [msgId]);
         } else {
-            db.prepare('UPDATE validations SET votes_negatifs = votes_negatifs + 1 WHERE message_id = ?').run(msgId);
+            await db.query('UPDATE validations SET votes_negatifs = votes_negatifs + 1 WHERE message_id = ?', [msgId]);
         }
     
-        const v = db.prepare('SELECT * FROM validations WHERE message_id = ?').get(msgId);
+        const [v_rows] = await db.query('SELECT * FROM validations WHERE message_id = ?', [msgId]);
+        const v = v_rows[0];
 
         const estRejete = v.votes_negatifs >= 2;
         const estValide = v.votes_positifs >= 2;
@@ -122,7 +128,8 @@ module.exports = async function handleButtons(interaction, sheets) {
             } catch (e) {
                 console.error("Impossible de supprimer les boutons :", e);
             }
-            const mission = db.prepare('SELECT nom_feuille FROM mission_actuelle WHERE sheet_id = ? AND ligne = ?').get(v.sheet_id, v.ligne);// 1. Initialisation des paramètres de la feuille
+            const [mission_rows] = await db.query('SELECT nom_feuille FROM mission_actuelle WHERE sheet_id = ? AND ligne = ?', [v.sheet_id, v.ligne]);
+            const mission = mission_rows[0];// 1. Initialisation des paramètres de la feuille
             const nomFeuille = mission ? mission.nom_feuille.trim() : 'Sheet1';
         
             try {
@@ -158,9 +165,9 @@ module.exports = async function handleButtons(interaction, sheets) {
                         range: `Sheet1!F${ligneUnique}`,
                     });
                     let valeurExistanteF = (checkF.data.values && checkF.data.values[0][0]) ? checkF.data.values[0][0] : "";
-                    const toutesLesPropsJSON = db.prepare('SELECT texte FROM propositions WHERE sheet_id = ? AND ligne = ?').all(v.sheet_id, v.ligne);
+                    const [toutesLesPropsJSON_rows] = await db.query('SELECT texte FROM propositions WHERE sheet_id = ? AND ligne = ?', [v.sheet_id, v.ligne]);
                     let archivesLigne = [];
-                    toutesLesPropsJSON.forEach(p => {
+                    toutesLesPropsJSON.forEach(async p => {
                         const objet = JSON.parse(p.texte);
                         const texteBulle = objet[ligneUnique];
                                 
@@ -189,17 +196,19 @@ module.exports = async function handleButtons(interaction, sheets) {
                 const statusMsg = estValide  ? "validées et écrites en E" : estEgalite ? "écrites en E mais nécessitent correction" : "rejetées";
                 await interaction.channel.send(`✅ Système : Groupe de lignes [${v.ligne}] ${statusMsg}. Archivage en F terminé.`);
         
-                const validationsRestantes = db.prepare(`
+                const [validationsRestantes_rows] = await db.query(`
                     SELECT COUNT(*) as total FROM validations
                     WHERE sheet_id = ? AND ligne = ?
-                `).get(v.sheet_id, v.ligne);
+                `, [v.sheet_id, v.ligne]);
+                const validationsRestantes = validationsRestantes_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
+                    const toutesLesPropsJSON = toutesLesPropsJSON_rows[0];
 
                 if (validationsRestantes.total <= 1) {
                     await cleanup.clearButtons(interaction.client, v.sheet_id, v.ligne);
                     cleanup.purgeMission(v.sheet_id, v.ligne, v.message_id);
                 } else {
-                    db.prepare('DELETE FROM validations WHERE message_id = ?').run(v.message_id);
-                    db.prepare('DELETE FROM votes_juges WHERE message_id = ?').run(v.message_id);
+                    await db.query('DELETE FROM validations WHERE message_id = ?', [v.message_id]);
+                    await db.query('DELETE FROM votes_juges WHERE message_id = ?', [v.message_id]);
                     await interaction.channel.send(`✅ Décision enregistrée. ${validationsRestantes.total - 1} proposition(s) encore en attente de jugement.`);
                 }
         
@@ -301,7 +310,8 @@ module.exports = async function handleButtons(interaction, sheets) {
     if (interaction.customId === 'resultats') {
         await interaction.deferUpdate();
         userId = interaction.user.id;
-        resultats = db.prepare(`SELECT * FROM users_stats WHERE user_id = ?`).get(userId);
+        const [resultats_rows] = await db.query(`SELECT * FROM users_stats WHERE user_id = ?`, [userId]);
+        resultats = resultats_rows[0];
         if (!resultats || !resultats.resultats_du_jour) return interaction.followUp({ content: "Tu n'as pas proposé de traduction à la dernière mission ! (ou alors il y a un bug)", ephemeral: true });
         await interaction.followUp({ content : resultats.resultats_du_jour, ephemeral: true});
     }

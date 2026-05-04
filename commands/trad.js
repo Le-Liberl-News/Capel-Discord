@@ -3,19 +3,21 @@ const db = require('../utils/db.js');
 
 module.exports = {
     async execute(interaction) {
-        const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+        const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1').get();
         const userId = interaction.user.id;
 
         if (!mission) {
             return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true });
         }
 
-        const mesPropositions = db.prepare(`
+        const [mesPropositions_rows] = await db.query(`
             SELECT message_id, texte FROM propositions 
             WHERE user_id = ? AND sheet_id = ? AND ligne = ?
-        `).all(userId, mission.sheet_id, mission.ligne);
+        `, [userId, mission.sheet_id, mission.ligne]);
+        const mesPropositions = mesPropositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
 
-        const bracerConfirme = (db.prepare(`SELECT xp FROM users_stats WHERE user_id = ?`).get(userId) >= 1300);
+        const [bracerConfirme_rows] = await db.query(`SELECT xp FROM users_stats WHERE user_id = ?`, [userId]);
+        const bracerConfirme = (bracerConfirme_rows[0] && bracerConfirme_rows[0].xp >= 1300);
         if (bracerConfirme && mesPropositions) {
             return interaction.reply({
                 content: "Tu es un bracer confirmé désormais ! Tu n'as plus droit qu'à une seule proposition simultanée.",

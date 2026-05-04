@@ -12,7 +12,7 @@ const SALON_VOTE_ID = "1492972991418732685";
 module.exports = {
     async execute(interaction, sheets, tableId) {
         const membreRoles = interaction.member.roles.cache;
-        const estAutorise = ROLES_AUTORISES.some(roleId => membreRoles.has(roleId));
+        const estAutorise = ROLES_AUTORISES.some(async roleId => membreRoles.has(roleId));
         if (!estAutorise) return interaction.reply({ content: "🛑 Tu n'as pas le rôle requis.", ephemeral: true });
 
         await interaction.deferReply({ ephemeral: true });
@@ -54,7 +54,7 @@ module.exports = {
 
             const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
-            db.prepare('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1').run(missionMsg.id);
+            await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
 
             await interaction.editReply(`✅ Mission déployée avec succès dans <#${SALON_READONLY_ID}> !`);
 

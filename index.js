@@ -134,7 +134,7 @@ setInterval(async () => {
     const maintenant = Date.now();
     const limiteTemps = 24 * 60 * 60 * 1000;
 
-    const validationsExpirees = db.prepare('SELECT * FROM validations WHERE (? - timestamp_debut) > ?').all(maintenant, limiteTemps);
+    const [validationsExpirees] = await db.query('SELECT * FROM validations WHERE (? - timestamp_debut) > ?', [maintenant, limiteTemps]);
 
     for (const val of validationsExpirees) {
         try {
@@ -334,8 +334,8 @@ cron.schedule('0 0 * * *', async () => {
 
         const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
-        db.prepare('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1').run(missionMsg.id);
-        db.prepare('DELETE FROM pseudos_anonymes').run();
+        await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
+        await db.query('DELETE FROM pseudos_anonymes');
 
         console.log("✅ [CRON] Mission de minuit déployée avec succès.");
 
@@ -355,8 +355,9 @@ cron.schedule('0 22 * * *', async () => {
 
 cron.schedule('0 19 * * *', async () => {
     const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
-    const mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
-    const propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
+    const [mission] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
+    const [propositions_rows] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
+    const propositions = propositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
     );

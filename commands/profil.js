@@ -13,7 +13,8 @@ function creerBarreXP(xpActuel, xpRequis, tailleBarre = 15) {
 
 module.exports = {
     async execute(interaction) {
-        const stats = db.prepare('SELECT xp, niveau FROM users_stats WHERE user_id = ?').get(interaction.user.id);
+        const [stats_rows] = await db.query('SELECT xp, niveau FROM users_stats WHERE user_id = ?', [interaction.user.id]);
+        const stats = stats_rows[0];
 
         if (!stats) {
             return interaction.reply({ 

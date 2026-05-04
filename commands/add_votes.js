@@ -6,7 +6,7 @@ const SALON_READONLY_ID = "1493171302624657428";
 
 module.exports = {
     async execute(interaction) {
-        const estAutorise = ROLES_AUTORISES.some(id => interaction.member.roles.cache.has(id));
+        const estAutorise = ROLES_AUTORISES.some(async id => interaction.member.roles.cache.has(id));
         if (!estAutorise) return interaction.reply({ content: "🛑 Accès refusé.", ephemeral: true });
 
         // 1. On met l'interaction en attente immédiatement
@@ -14,14 +14,15 @@ module.exports = {
 
         try {
             const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
-            const mission = db.prepare(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
+            const [mission] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
             
             // Sécurité anti-crash si la table est vide
             if (!mission) {
                 return interaction.editReply({ content: "Aucune mission actuelle trouvée." });
             }
 
-            const propositions = db.prepare(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`).all(mission.sheet_id, mission.ligne);
+            const [propositions_rows] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
+            const propositions = propositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
             
             if (propositions.length === 0) {
                 return interaction.editReply({ content: "Aucune proposition à mettre à jour." });

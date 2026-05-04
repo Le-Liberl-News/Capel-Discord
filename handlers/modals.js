@@ -15,7 +15,7 @@ module.exports = async function handleModals(interaction, sheets) {
 
     if (interaction.customId === 'modal_trad_groupe') {
         try {
-            const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+            const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1').get();
             if (!mission) throw new Error("Aucune mission active en BDD");
 
             const userId = interaction.user.id;
@@ -36,7 +36,7 @@ module.exports = async function handleModals(interaction, sheets) {
             }
 
             const texteActuel = textesSaisis.join(' ');
-            const autresPropositions = db.prepare('SELECT texte FROM propositions').all();
+            const [autresPropositions_rows] = await db.query('SELECT texte FROM propositions');
             const stringSimilarity = require('string-similarity');
 
             for (autreProposition of autresPropositions) {
@@ -85,23 +85,25 @@ module.exports = async function handleModals(interaction, sheets) {
             const jsonAStocker = JSON.stringify(objetStockage);
 
             console.log(">>> [DEBUG] Tentative d'insertion en BDD...");
-            const stmt = db.prepare('INSERT INTO propositions (message_id, texte, score, sheet_id, ligne, user_id, couleur) VALUES (?, ?, 0, ?, ?, ?, ?)');
-            stmt.run(publicMessage.id, jsonAStocker, mission.sheet_id, mission.ligne, userId, couleur);
+            // TODO: Remplacer le .async run() de stmt plus bas par : await db.query('INSERT INTO propositions (message_id, texte, score, sheet_id, ligne, user_id, couleur) VALUES (?, ?, 0, ?, ?, ?, ?)', [...])
+            stmt.async run(publicMessage.id, jsonAStocker, mission.sheet_id, mission.ligne, userId, couleur);
             console.log(">>> [DEBUG] Insertion réussie");
 
-            const dejaSoumis = db.prepare(`
+            const [dejaSoumis_rows] = await db.query(`
                 SELECT 1 FROM propositions 
                 WHERE user_id = ? AND sheet_id = ? AND ligne = ? AND message_id != ? 
                 LIMIT 1
-            `).get(userId, mission.sheet_id, mission.ligne, publicMessage.id);
+            `, [userId, mission.sheet_id, mission.ligne, publicMessage.id]);
+            const dejaSoumis = dejaSoumis_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
+            const autresPropositions = autresPropositions_rows[0];
 
             let messageFinal = "✅ Ton bloc de propositions a été soumis !";
 
             if (!dejaSoumis) {
-                db.prepare(`
+                await db.query(`
                     INSERT INTO users_stats (user_id, total_soumissions) VALUES (?, 1) 
                     ON CONFLICT(user_id) DO UPDATE SET total_soumissions = total_soumissions + 1
-                `).run(userId);
+                `, [userId]);
 
                 await ajouterXP(userId, 20, interaction.client);
                 messageFinal = "✅ Bloc soumis ! Tu as gagné **20 PB** ! 🎖️";
@@ -130,7 +132,8 @@ module.exports = async function handleModals(interaction, sheets) {
         const ancienMessageId = interaction.customId.split(':')[1];
 
         try {
-            const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+            const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+            const mission = mission_rows[0];
             if (!mission) throw new Error("Aucune mission active en BDD");
 
             await interaction.reply({ content: "⏳ Mise à jour...", ephemeral: true });
@@ -146,12 +149,12 @@ module.exports = async function handleModals(interaction, sheets) {
                 textesSaisis.push(contenu.trim());
             }
 
-            const propActuelle = db.prepare('SELECT score, couleur, texte, texte_original FROM propositions WHERE message_id = ?')
-                .get(ancienMessageId);
+            const [propActuelle_rows] = await db.query('SELECT score, couleur, texte, texte_original FROM propositions WHERE message_id = ?', [ancienMessageId]);
+            const propActuelle = propActuelle_rows[0];
             const scoreActuel = propActuelle?.score ?? 0;
 
-                const votesExistants = db.prepare('SELECT COUNT(*) as total FROM votes WHERE message_id = ?')
-                    .get(ancienMessageId);
+                const [votesExistants_rows] = await db.query('SELECT COUNT(*) as total FROM votes WHERE message_id = ?', [ancienMessageId]);
+                const votesExistants = votesExistants_rows[0];
 
             if (votesExistants.total > 0) {
                 const stringSimilarity = require('string-similarity');
@@ -171,19 +174,19 @@ module.exports = async function handleModals(interaction, sheets) {
                     });
                 }
                 if (!propActuelle.texte_original) {
-                    db.prepare('UPDATE propositions SET texte_original = ? WHERE message_id = ?').run(propActuelle.texte, ancienMessageId);
+                    await db.query('UPDATE propositions SET texte_original = ? WHERE message_id = ?', [propActuelle.texte, ancienMessageId]);
                 }
             }
 
             let objetStockage = {};
-            lignes.forEach((numLigne, i) => {
+            lignes.forEachasync ((numLigne, i) => {
                 objetStockage[numLigne.trim()] = textesSaisis[i];
             });
             const jsonAStocker = JSON.stringify(objetStockage);
 
             const texteComplet = textesSaisis.join('\n---\n');
 
-            db.prepare('UPDATE propositions SET texte = ? WHERE message_id = ?').run(jsonAStocker, ancienMessageId);
+            await db.query('UPDATE propositions SET texte = ? WHERE message_id = ?', [jsonAStocker, ancienMessageId]);
 
             const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
             const ancienMessage = await targetChannel.messages.fetch(ancienMessageId);
