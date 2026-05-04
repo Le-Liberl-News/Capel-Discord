@@ -10,11 +10,10 @@ module.exports = {
             return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true });
         }
 
-        const [mesPropositions_rows] = await db.query(`
+        const [mesPropositions] = await db.query(`
             SELECT message_id, texte FROM propositions 
             WHERE user_id = ? AND sheet_id = ? AND ligne = ?
         `, [userId, mission.sheet_id, mission.ligne]);
-        const mesPropositions = mesPropositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
 
         const [bracerConfirme_rows] = await db.query(`SELECT xp FROM users_stats WHERE user_id = ?`, [userId]);
         const bracerConfirme = (bracerConfirme_rows[0] && bracerConfirme_rows[0].xp >= 1300);
