@@ -5,20 +5,13 @@ const {
     AudioPlayerStatus, 
     getVoiceConnection, 
     VoiceConnectionStatus,
-    entersState 
+    entersState,
+    StreamType // Ajouté ici pour l'utiliser plus bas
 } = require('@discordjs/voice');
 
 const path = require('path');
 const fs = require('fs');
-
 const ffmpeg = require('ffmpeg-static');
-const { createAudioResource } = require('@discordjs/voice');
-
-// Plus bas dans lancerPiste :
-const resource = createAudioResource(cheminMusique, { 
-    inlineVolume: true,
-    inputType: StreamType.Arbitrary, // On aide le moteur
-});
 
 const SALON_VOCAL_ID = "1500777104730755102";
 let currentPlayer = null;
@@ -26,7 +19,7 @@ let currentPlayer = null;
 async function jouerAmbianceMap(interaction, etage, state) {
     const guild = interaction.guild;
     
-    // 1. On nettoie TOUJOURS l'ancienne connexion si elle existe et qu'elle bugue
+    // 1. On nettoie TOUJOURS l'ancienne connexion si elle existe
     let connection = getVoiceConnection(guild.id);
     if (connection) {
         console.log("[Audio] Nettoyage d'une ancienne connexion...");
@@ -38,18 +31,16 @@ async function jouerAmbianceMap(interaction, etage, state) {
         channelId: SALON_VOCAL_ID,
         guildId: guild.id,
         adapterCreator: guild.voiceAdapterCreator,
-        selfDeaf: false, // Essaie de mettre false pour voir si ça débloque
+        selfDeaf: false,
         selfMute: false,
-        debug: true      // Active le debug pour voir ce qui bloque
+        debug: true
     });
 
-    // Ajoute ces logs pour voir l'état exact de la connexion
     connection.on('stateChange', (oldState, newState) => {
         console.log(`[Audio Connection] ${oldState.status} -> ${newState.status}`);
     });
 
     try {
-        // On attend que la connexion soit prête (on passe à 10s pour être large)
         console.log("[Audio] Tentative de connexion au salon...");
         await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
         console.log("[Audio] Connecté et prêt !");
@@ -78,7 +69,6 @@ async function jouerAmbianceMap(interaction, etage, state) {
 }
 
 function lancerPiste(etage) {
-    // Chemin corrigé (on remonte d'un cran si on est dans /rpg/)
     let cheminMusique = path.resolve(__dirname, '../assets/audio', `etage_${etage}.mp3`);
     const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'music_tower.mp3');
 
@@ -93,7 +83,12 @@ function lancerPiste(etage) {
     }
 
     try {
-        const resource = createAudioResource(cheminMusique, { inlineVolume: true });
+        // Utilisation de StreamType.Arbitrary pour aider prism-media à décoder via ffmpeg-static
+        const resource = createAudioResource(cheminMusique, { 
+            inlineVolume: true,
+            inputType: StreamType.Arbitrary 
+        });
+        
         resource.volume.setVolume(0.25); 
         currentPlayer.play(resource);
         console.log(`[Audio] Lecture en cours : ${path.basename(cheminMusique)}`);
