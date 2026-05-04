@@ -28,7 +28,14 @@ async function jouerAmbianceMap(interaction, etage, state) {
         channelId: SALON_VOCAL_ID,
         guildId: guild.id,
         adapterCreator: guild.voiceAdapterCreator,
-        selfDeaf: true, // Économise de la bande passante
+        selfDeaf: false, // Essaie de mettre false pour voir si ça débloque
+        selfMute: false,
+        debug: true      // Active le debug pour voir ce qui bloque
+    });
+
+    // Ajoute ces logs pour voir l'état exact de la connexion
+    connection.on('stateChange', (oldState, newState) => {
+        console.log(`[Audio Connection] ${oldState.status} -> ${newState.status}`);
     });
 
     try {
