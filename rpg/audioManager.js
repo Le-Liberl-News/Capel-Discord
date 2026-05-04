@@ -34,7 +34,7 @@ async function jouerAmbianceMap(interaction, etage, state) {
         selfDeaf: true,
         selfMute: false,
         // On force le bot à ne pas attendre une IP publique si le réseau est masqué
-        group: client.user.id 
+        group: interaction.client.user.id 
     });
 
     // On ajoute un listener spécifique sur les erreurs réseau
