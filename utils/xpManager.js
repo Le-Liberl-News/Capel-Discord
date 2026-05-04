@@ -36,10 +36,13 @@ async function ajouterXP(userId, montantXP, client) {
         await db.query(`
             INSERT INTO users_stats (user_id, xp, niveau) 
             VALUES (?, ?, 'Classe 10') 
-            ON CONFLICT(user_id) DO UPDATE SET xp = xp + ?
-        `, [userId, montantXP, montantXP]);
+            ON DUPLICATE KEY UPDATE xp = xp + VALUES(xp)
+        `, [userId, montantXP]);
+        
         console.log(`[XP-DEBUG] DB mise à jour avec succès.`);
-    } catch (dbErr) { console.error(`[XP-DEBUG] ❌ Erreur écriture DB :`, dbErr.message); }
+    } catch (dbErr) { 
+        console.error(`[XP-DEBUG] ❌ Erreur écriture DB :`, dbErr.message); 
+    }
 
     const [stats_rows] = await db.query('SELECT xp, niveau FROM users_stats WHERE user_id = ?', [userId]);
     const stats = stats_rows[0];
@@ -82,18 +85,22 @@ async function ajouterXP(userId, montantXP, client) {
             await member.roles.remove(tousLesIdsBracers).catch(e => console.error(`[PROMOTION] ❌ Erreur remove :`, e.message));
             
             console.log(`[PROMOTION] Attribution du rôle ${nouveauRang.nom} (${nouveauRang.roleId})...`);
-            await member.roles.add(nouveauRang.roleId)
-                .then(() => {
-                    console.log(`[PROMOTION] ✅ Rôle attribué avec succès sur Discord.`);
-                    await db.query('UPDATE users_stats SET niveau = ? WHERE user_id = ?', [nouveauRang.nom, userId]);
-                    console.log(`[PROMOTION] DB synchronisée : Niveau = ${nouveauRang.nom}`);
-                })
-                .catch(e => {
-                    console.error(`[PROMOTION] ❌ ÉCHEC CRITIQUE :`, e.message);
-                    if (e.message.includes("Missing Permissions")) {
-                        console.error(`[CONSEIL] Vérifie que mon rôle est BIEN AU-DESSUS du rôle ${nouveauRang.nom} !`);
-                    }
-                });
+            await member.roles.remove(tousLesIdsBracers).catch(e => console.error(`[PROMOTION] ❌ Erreur remove :`, e.message));
+            
+            // 2. Correction SyntaxError : On utilise await directement au lieu de .then()
+            try {
+                await member.roles.add(nouveauRang.roleId);
+                console.log(`[PROMOTION] ✅ Rôle attribué sur Discord.`);
+                
+                // On met à jour la DB seulement si le rôle a bien été ajouté
+                await db.query('UPDATE users_stats SET niveau = ? WHERE user_id = ?', [nouveauRang.nom, userId]);
+                console.log(`[PROMOTION] DB synchronisée : Niveau = ${nouveauRang.nom}`);
+            } catch (e) {
+                console.error(`[PROMOTION] ❌ ÉCHEC :`, e.message);
+                if (e.message.includes("Missing Permissions")) {
+                    console.error(`[CONSEIL] Vérifie que mon rôle est BIEN AU-DESSUS du rôle ${nouveauRang.nom} !`);
+                }
+            }
         } else {
             console.log(`[DISCORD-CHECK] ✅ ${member.user.tag} possède déjà le bon rôle.`);
         }
