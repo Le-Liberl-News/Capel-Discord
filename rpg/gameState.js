@@ -6,7 +6,8 @@ const databasePersos = require('./data/persos.json');
 const STATE_FILE = path.join(__dirname, 'map_state.json');
 const VISION_RADIUS = 2;
 const MAX_FLOOR = 10;
-const statutsPossibles = ["alcoolise", "paralysie", "saignement", "garde"];
+const { resoudreAction, construirePromptCombat } = require('./combatEngine.js');
+const { declencherTicksStatuts, getIconesStatutsHUD } = require('./systemeStatuts.js');
 
 let state = {
     layout: null,
@@ -352,7 +353,7 @@ async function jouerTourEnnemis(genAI) {
 
         if (enemyInstance.statuts && enemyInstance.statuts.some(s => s.nom === "paralysie")) {
             rapportTour += `\n⚡ **${baseEnemy.nom}** est paralysé et ne peut pas agir !`;
-            rapportTour += gererTicksStatuts(enemyInstance, baseEnemy.nom); 
+            rapportTour += declencherTicksStatuts(enemyInstance, baseEnemy.nom); // <-- Appel du nouveau système
             continue; 
         }
 
@@ -439,6 +440,7 @@ async function jouerTourEnnemis(genAI) {
         
         let ciblePseudo = pseudosVivants[Math.floor(Math.random() * pseudosVivants.length)];
 
+        // Gestion de l'interception (Garde)
         const gardien = pseudosVivants.find(p => 
             state.players[p].statuts && state.players[p].statuts.some(s => s.nom === "garde" && s.protege === ciblePseudo)
         );
@@ -451,97 +453,69 @@ async function jouerTourEnnemis(genAI) {
         const cibleInstance = state.players[ciblePseudo];
         const cibleStats = databasePersos[ciblePseudo] || databasePersos["default"];
 
+        // --- 1. PRÉPARATION DE L'ATTAQUE ---
         let infoAttaque = "Attaque de base (Puissance: 15, Coef: 1.0)."; 
         let nomAttaque = "une attaque";
-        let statutAAppliquer = null; 
         
         if (baseEnemy.attaques && baseEnemy.attaques.length > 0) {
             const attaqueAleatoire = baseEnemy.attaques[Math.floor(Math.random() * baseEnemy.attaques.length)];
             const coefficients = [0.5, 1.0, 1.5, 2.0];
             const coefAleatoire = coefficients[Math.floor(Math.random() * coefficients.length)];
             
-            nomAttaque = `*${attaqueAleatoire.nom}*`;
-            infoAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}.`;
-            if (attaqueAleatoire.effet && Math.random() < attaqueAleatoire.effet.chance) {
-                statutAAppliquer = attaqueAleatoire.effet;
-            }
+            nomAttaque = attaqueAleatoire.nom;
+            infoAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}. Effet possible: ${attaqueAleatoire.effet ? attaqueAleatoire.effet.nom : "Aucun"}.`;
         }
 
-        rapportTour += `\n\n⚠️ **${baseEnemy.nom} bondit sur ${ciblePseudo} et utilise ${nomAttaque} !**`;
-        
-        const prompt = `
-Tu es le moteur mathématique d'un RPG. L'ennemi attaque un joueur spécifique du groupe !
-Attaquant (Ennemi): ${baseEnemy.nom} (${baseEnemy.description}). Force: ${baseEnemy.attaquePhysique}, Magie: ${baseEnemy.attaqueMagique}.
-Cible (Joueur): ${ciblePseudo} (${cibleStats.description}). PV: ${cibleInstance.hpActuel}/${cibleStats.hpMax}. Résistance Phys: ${cibleStats.resistancePhysique || 30}, Résistance Mag: ${cibleStats.resistanceMagique || 30}, Esquive: 10.
-Action de l'ennemi : ${infoAttaque}
+        // --- 2. CRÉATION DES PACKETS POUR LE MOTEUR ---
+        const dataActeur = {
+            pseudo: baseEnemy.nom,
+            instance: enemyInstance,
+            stats: baseEnemy
+        };
 
-Calcule les dégâts infligés au joueur selon la formule stricte : (Puissance de base * Intensité générée) + Force/Magie de l'ennemi - Résistance du Joueur. (Minimum 1 dégât).
-Fais une narration TRÈS COURTE (< 200 caractères) de l'attaque sans inclure de chiffres.
+        const dataCible = {
+            type: "joueur",
+            nom: ciblePseudo,
+            instance: cibleInstance,
+            stats: cibleStats,
+            x: null, 
+            y: null
+        };
 
-Réponds UNIQUEMENT avec ce JSON strict :
-{
-    "esquive_joueur": boolean,
-    "degats_infliges": number,
-    "narration": "Texte court"
-}`;
+        const contexte = {
+            description: `Utilise l'attaque : ${nomAttaque}. ${infoAttaque}`,
+            messageAlcool: "", // Les monstres ne boivent pas (pas encore !)
+            estAlcoolise: false,
+            isSelf: false,
+            cibleDejaMorte: false,
+            infoArtLLM: ""
+        };
+
+        // --- 3. GÉNÉRATION DU PROMPT & APPEL LLM ---
+        const promptFinal = construirePromptCombat(dataActeur, dataCible, contexte);
 
         try {
             const model = genAI.getGenerativeModel({ model: "models/gemma-3-27b-it" });
-            const result = await model.generateContent(prompt);
+            const result = await model.generateContent(promptFinal);
             const outcome = JSON.parse(result.response.text().replace(/```json/g, '').replace(/```/g, '').trim());
 
-            rapportTour += `\n*${outcome.narration}*`;
+            // --- 4. RÉSOLUTION VIA LE MOTEUR CENTRAL ---
+            // On passe `null` à la place du client Discord, car un joueur qui meurt 
+            // sous les coups d'un monstre ne donne pas d'XP.
+            const resultatCombat = resoudreAction(outcome, dataActeur, dataCible, contexte, state, null);
 
-            if (!outcome.esquive_joueur) {
-                cibleInstance.hpActuel -= outcome.degats_infliges;
-                rapportTour += `\n💥 ${ciblePseudo} subit **${outcome.degats_infliges}** dégâts (PV restants: ${cibleInstance.hpActuel}/${cibleStats.hpMax}).`;
+            rapportTour += `\n\n${resultatCombat.message}`;
 
-               
-                if (statutAAppliquer && cibleInstance.hpActuel > 0) {
-                    cibleInstance.statuts.push({
-                        nom: statutAAppliquer.nom,
-                        duree: statutAAppliquer.duree,
-                        degats: statutAAppliquer.degats
-                    });
-                    rapportTour += `\n⚠️ ${ciblePseudo} souffre de **${statutAAppliquer.nom}** !`;
-                }
-                
-
-                if (cibleInstance.hpActuel <= 0) {
-                    rapportTour += `\n💀 **${ciblePseudo} s'effondre, vaincu !**`;
-                }
-            } else {
-                rapportTour += `\n💨 ${ciblePseudo} esquive l'attaque in extremis !`;
-            }
         } catch (e) {
             console.error("Erreur d'attaque auto", e);
+            rapportTour += `\n⚠️ *${baseEnemy.nom} trébuche et rate son attaque...*`;
         }
     }
 
     return rapportTour;
+
 }
 
-function gererTicksStatuts(instance, nomInstance) {
-    let log = "";
-    if (!instance.statuts || instance.statuts.length === 0) return log;
-
-    for (let i = instance.statuts.length - 1; i >= 0; i--) {
-        let statut = instance.statuts[i];
-        
-        if (statut.nom === "saignement") {
-            const degats = statut.degats || 5; 
-            instance.hpActuel -= degats;
-            log += `\n🩸 **${nomInstance}** perd ${degats} PV à cause du saignement.`;
-        }
-
-        statut.duree--;
-        if (statut.duree <= 0) {
-            log += `\n✨ L'effet **${statut.nom}** de ${nomInstance} s'est dissipé.`;
-            instance.statuts.splice(i, 1);
-        }
-    }
-    return log;
-}
 
 async function renderHUDImage() {
     const players = Object.keys(state.players);
@@ -589,14 +563,8 @@ async function renderHUDImage() {
         ctx.font = 'bold 16px Arial';
         ctx.fillText(pseudo, 15, y + 20);
 
-        // 2. DESSINER LES STATUTS (À côté du pseudo)
-        if (instance.statuts && instance.statuts.length > 0) {
-            const iconesStatuts = { 
-                'saignement': '🩸', 
-                'paralysie': '⚡', 
-                'garde': '🛡️' 
-            };
-            const statutsTexte = instance.statuts.map(s => iconesStatuts[s.nom] || s.nom).join(' ');
+        const statutsTexte = getIconesStatutsHUD(instance);
+        if (statutsTexte !== "") {
             ctx.font = '14px Arial';
             ctx.fillText(statutsTexte, 180, y + 20);
         }
@@ -636,4 +604,4 @@ async function renderHUDImage() {
     return canvas.toBuffer('image/png');
 }
 
-module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard, gererTicksStatuts, renderHUDImage };
+module.exports = { state, wait, generateMap, renderMapImage, saveState, jouerTourEnnemis, majBrouillard, renderHUDImage };

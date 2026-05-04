@@ -1,10 +1,11 @@
 const { AttachmentBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { state, renderMapImage, renderHUDImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, gererTicksStatuts, MAX_FLOOR } = require('../rpg/gameState.js');
+const { state, renderMapImage, renderHUDImage, wait, saveState, generateMap, jouerTourEnnemis, majBrouillard, MAX_FLOOR } = require('../rpg/gameState.js');
 const { getPseudoAnonyme,getIdFromPseudo } = require('./anonyme.js'); // Ajuste le chemin si nécessaire
 const bestiaire = require('../rpg/data/bestiaire.json');
 const databasePersos = require('../rpg/data/persos.json');
 const { actualiserRegenPassive} = require('../rpg/gestionFatigue.js');
+const {declencherTicksStatuts} = require('../rpg/systemeStatuts.js')
 
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 
@@ -108,7 +109,7 @@ module.exports = {
                 // --- DÉCLENCHEMENT DES TICKS DE STATUTS DES JOUEURS ---
                 const pseudosActifs = Object.keys(state.players).filter(p => state.players[p].hpActuel > 0);
                 for (const p of pseudosActifs) {
-                    const logStatut = gererTicksStatuts(state.players[p], p);
+                    const logStatut = declencherTicksStatuts(state.players[p], p);
                     if (logStatut !== "") {
                         rapportGlobal += logStatut;
                         
