@@ -85,8 +85,7 @@ module.exports = async function handleModals(interaction, sheets) {
             const jsonAStocker = JSON.stringify(objetStockage);
 
             console.log(">>> [DEBUG] Tentative d'insertion en BDD...");
-            // TODO: Remplacer le .async run() de stmt plus bas par : await db.query('INSERT INTO propositions (message_id, texte, score, sheet_id, ligne, user_id, couleur) VALUES (?, ?, 0, ?, ?, ?, ?)', [...])
-            stmt.async run(publicMessage.id, jsonAStocker, mission.sheet_id, mission.ligne, userId, couleur);
+            await db.query('INSERT INTO propositions (message_id, texte, score, sheet_id, ligne, user_id, couleur) VALUES (?, ?, 0, ?, ?, ?, ?)', [publicMessage.id, jsonAStocker, mission.sheet_id, mission.ligne, userId, couleur]);
             console.log(">>> [DEBUG] Insertion réussie");
 
             const [dejaSoumis_rows] = await db.query(`
