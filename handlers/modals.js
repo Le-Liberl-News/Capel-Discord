@@ -101,7 +101,7 @@ module.exports = async function handleModals(interaction, sheets) {
             if (!dejaSoumis) {
                 await db.query(`
                     INSERT INTO users_stats (user_id, total_soumissions) VALUES (?, 1) 
-                    ON CONFLICT(user_id) DO UPDATE SET total_soumissions = total_soumissions + 1
+                    ON DUPLICATE KEY UPDATE total_soumissions = total_soumissions + 1
                 `, [userId]);
 
                 await ajouterXP(userId, 20, interaction.client);
