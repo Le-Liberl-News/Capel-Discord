@@ -17,7 +17,6 @@ module.exports = async function handleButtons(interaction, sheets) {
             const [proposition] = await db.query('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
             if (!proposition) return interaction.followUp({ content: "Cette proposition n'est plus dans la base.", ephemeral: true });
             const [missionRows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
-            const mission = missionRows[0];
 
             const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
             const votePrecedent = votePrecedent_rows[0];
