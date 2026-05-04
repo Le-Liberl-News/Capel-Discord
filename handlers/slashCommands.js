@@ -155,24 +155,28 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
     }
 
     if (commandName === 'open') {
-        const feuille = options.getString('feuille');
-        const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
+    await interaction.deferReply({ ephemeral: false });
 
-        if (candidats.length === 0) return interaction.reply({ content: `❌ Feuille \`${feuille}\` introuvable.`, ephemeral: false });
+    const feuille = options.getString('feuille');
+    
+    const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
 
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
+    if (candidats.length === 0) {
+        return interaction.editReply({ content: `❌ Feuille \`${feuille}\` introuvable.` });
+    }
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
             .setLabel(`Ouvrir ${candidats[0].nom}`)
             .setStyle(ButtonStyle.Link)
             .setURL(candidats[0].lien)
-        );
+    );
 
-        await interaction.reply({
-            content: `🔗 <@${interaction.user.id}> a demandé l'accès rapide au script **${candidats[0].nom}** :`,
-            components: [row],
-            ephemeral: false
-        });
-    }
+    await interaction.editReply({
+        content: `🔗 <@${interaction.user.id}> a demandé l'accès rapide au script **${candidats[0].nom}** :`,
+        components: [row]
+    });
+}
 
     if (commandName === 'generer-map') {
         const cmdGenMap = require('../commands/generer_layout.js');

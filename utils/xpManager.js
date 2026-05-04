@@ -87,12 +87,10 @@ async function ajouterXP(userId, montantXP, client) {
             console.log(`[PROMOTION] Attribution du rôle ${nouveauRang.nom} (${nouveauRang.roleId})...`);
             await member.roles.remove(tousLesIdsBracers).catch(e => console.error(`[PROMOTION] ❌ Erreur remove :`, e.message));
             
-            // 2. Correction SyntaxError : On utilise await directement au lieu de .then()
             try {
                 await member.roles.add(nouveauRang.roleId);
                 console.log(`[PROMOTION] ✅ Rôle attribué sur Discord.`);
                 
-                // On met à jour la DB seulement si le rôle a bien été ajouté
                 await db.query('UPDATE users_stats SET niveau = ? WHERE user_id = ?', [nouveauRang.nom, userId]);
                 console.log(`[PROMOTION] DB synchronisée : Niveau = ${nouveauRang.nom}`);
             } catch (e) {
