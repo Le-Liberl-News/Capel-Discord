@@ -3,14 +3,13 @@ const db = require('../utils/db.js');
 
 module.exports = {
     async execute(interaction) {
-        const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+        const [missions] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
         const userId = interaction.user.id;
 
-        if (!mission) {
+        if (!missions) {
             return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true });
         }
-
-        console.log("Mission :", mission);
+        mission = missions[0];
 
         const [mesPropositions] = await db.query(`
             SELECT message_id, texte FROM propositions 
