@@ -283,7 +283,7 @@ const joursConsecutifs = joursConsecutifs_rows[0] ? joursConsecutifs_rows[0].jou
         await db.query(`
             INSERT INTO validations (message_id, texte, sheet_id, ligne, timestamp_debut, user_id)
             VALUES (?, ?, ?, ?, ?, ?)
-        `, [msgSecret.id, gagnante.texte, mission.sheet_id, mission.ligne, Date.now(]);, gagnante.user_id);
+        `, [msgSecret.id, gagnante.texte, mission.sheet_id, mission.ligne, Date.now(), gagnante.user_id]);
     }
 
     let messageComplet = "";
