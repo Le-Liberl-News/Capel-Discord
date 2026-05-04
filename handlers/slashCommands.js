@@ -82,7 +82,7 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
     }
     if (commandName === 'add-votes') {
         const cmdAddVotes = require('../commands/add_votes.js');
-        return cmdAddVotes.async execute(interaction);
+        return cmdAddVotes.execute(interaction);
     }
     if (commandName === 'creerthread') {
         const { createTheThread } = require('../utils/createThread.js');
