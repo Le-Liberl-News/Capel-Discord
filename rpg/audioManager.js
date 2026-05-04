@@ -7,8 +7,18 @@ const {
     VoiceConnectionStatus,
     entersState 
 } = require('@discordjs/voice');
+
 const path = require('path');
 const fs = require('fs');
+
+const ffmpeg = require('ffmpeg-static');
+const { createAudioResource } = require('@discordjs/voice');
+
+// Plus bas dans lancerPiste :
+const resource = createAudioResource(cheminMusique, { 
+    inlineVolume: true,
+    inputType: StreamType.Arbitrary, // On aide le moteur
+});
 
 const SALON_VOCAL_ID = "1500777104730755102";
 let currentPlayer = null;
@@ -70,7 +80,7 @@ async function jouerAmbianceMap(interaction, etage, state) {
 function lancerPiste(etage) {
     // Chemin corrigé (on remonte d'un cran si on est dans /rpg/)
     let cheminMusique = path.resolve(__dirname, '../assets/audio', `etage_${etage}.mp3`);
-    const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'donjon.mp3');
+    const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'music_tower.mp3');
 
     if (!fs.existsSync(cheminMusique)) {
         console.log(`[Audio] etage_${etage}.mp3 absent, test du défaut...`);
