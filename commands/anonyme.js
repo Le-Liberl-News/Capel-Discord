@@ -44,12 +44,11 @@ const COMBO = [
 ];
 
 async function getPseudoAnonyme(userId) {
-    const [existant_rows] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]).pop();
+    const [existant] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]).pop();
 
     if (existant) return PSEUDOS[existant.pseudo_index];
 
-    const [indexDejaAttribues_rows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
-    const existant = existant_rows.map(r => r.pseudo_index);
+    const [indexDejaAttribues] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
 
     const comboDisponibles = COMBO.filter((valeur, index) =>
     indexDejaAttribues.includes(index) &&
