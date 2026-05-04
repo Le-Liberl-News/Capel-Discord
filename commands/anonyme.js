@@ -115,7 +115,7 @@ async function execute(interaction) {
     // On passe texte en 'let' car on va potentiellement le modifier
     let texte = interaction.options.getString('message') || '';
     const image = interaction.options.getAttachment('image');
-    const pseudo = getPseudoAnonyme(interaction.user.id);
+    const pseudo = await getPseudoAnonyme(interaction.user.id);
     const BASE_URL = process.env.BASE_URL;
     const threadId = process.env.THREAD_ID;
 
