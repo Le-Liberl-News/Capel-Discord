@@ -15,93 +15,81 @@ let currentPlayer = null;
 
 async function jouerAmbianceMap(interaction, etage, state) {
     const guild = interaction.guild;
-    const voiceChannel = await guild.channels.fetch(SALON_VOCAL_ID).catch(() => null);
-
-    if (!voiceChannel) {
-        console.error("[Audio] Erreur : Salon fixe introuvable.");
-        return;
-    }
-
-    state.audio = { guildId: guild.id, currentEtage: etage };
-
+    
+    // 1. On nettoie TOUJOURS l'ancienne connexion si elle existe et qu'elle bugue
     let connection = getVoiceConnection(guild.id);
-    if (!connection) {
-        connection = joinVoiceChannel({
-            channelId: SALON_VOCAL_ID,
-            guildId: guild.id,
-            adapterCreator: guild.voiceAdapterCreator,
-        });
-        console.log("[Audio] Connexion au salon établie.");
+    if (connection) {
+        console.log("[Audio] Nettoyage d'une ancienne connexion...");
+        connection.destroy();
     }
 
-    // --- ÉTAPE CRUCIALE : Attendre que la connexion soit prête ---
+    // 2. Nouvelle tentative de connexion
+    connection = joinVoiceChannel({
+        channelId: SALON_VOCAL_ID,
+        guildId: guild.id,
+        adapterCreator: guild.voiceAdapterCreator,
+        selfDeaf: true, // Économise de la bande passante
+    });
+
     try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 5000);
-        console.log("[Audio] La connexion est prête à diffuser.");
+        // On attend que la connexion soit prête (on passe à 10s pour être large)
+        console.log("[Audio] Tentative de connexion au salon...");
+        await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
+        console.log("[Audio] Connecté et prêt !");
     } catch (error) {
-        console.error("[Audio] La connexion n'a pas pu s'établir en 5s:", error);
+        console.error("[Audio] Impossible de se connecter au salon vocal en 10s.");
+        connection.destroy();
         return;
     }
 
+    // 3. Gestion du lecteur audio
     if (!currentPlayer) {
         currentPlayer = createAudioPlayer();
-        // Log d'état du lecteur pour débugger
-        currentPlayer.on('stateChange', (oldState, newState) => {
-            console.log(`[Audio Player] ${oldState.status} -> ${newState.status}`);
-        });
         
         currentPlayer.on('error', error => {
-            console.error(`[Audio Player] Erreur : ${error.message} avec la ressource ${error.resource.metadata}`);
+            console.error(`[Audio Player] Erreur : ${error.message}`);
+        });
+
+        currentPlayer.on(AudioPlayerStatus.Idle, () => {
+            console.log("[Audio] Piste terminée, relance...");
+            lancerPiste(etage);
         });
     }
     
     connection.subscribe(currentPlayer);
+    lancerPiste(etage);
+}
 
-    const lancerPiste = () => {
-        let cheminMusique = path.join(__dirname, 'assets', 'audio', `etage_${etage}.mp3`);
-        
-        // Vérification du chemin (Attention au __dirname !)
-        // Si ton audioManager est dans /rpg/ et tes sons dans /assets/audio/
-        // le chemin devrait peut-être être '../assets/audio/...'
-        if (!fs.existsSync(cheminMusique)) {
-             console.log(`[Audio] Fichier etage_${etage}.mp3 non trouvé, repli sur donjon.mp3`);
-             cheminMusique = path.resolve(__dirname, '../assets/audio/donjon.mp3');
-        }
+function lancerPiste(etage) {
+    // Chemin corrigé (on remonte d'un cran si on est dans /rpg/)
+    let cheminMusique = path.resolve(__dirname, '../assets/audio', `etage_${etage}.mp3`);
+    const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'donjon.mp3');
 
-        if (!fs.existsSync(cheminMusique)) {
-            console.error(`[Audio] ERREUR CRITIQUE : Aucun fichier trouvé à ${cheminMusique}`);
-            return;
-        }
+    if (!fs.existsSync(cheminMusique)) {
+        console.log(`[Audio] etage_${etage}.mp3 absent, test du défaut...`);
+        cheminMusique = cheminParDefaut;
+    }
 
-        console.log(`[Audio] Lecture de : ${cheminMusique}`);
+    if (!fs.existsSync(cheminMusique)) {
+        console.error("[Audio] ERREUR : Aucun fichier audio trouvé !");
+        return;
+    }
 
-        try {
-            const resource = createAudioResource(cheminMusique, { 
-                inlineVolume: true,
-                metadata: cheminMusique
-            });
-            resource.volume.setVolume(0.4); // On augmente un peu pour le test
-            currentPlayer.play(resource);
-        } catch (e) {
-            console.error("[Audio] Erreur lors de la création de la ressource :", e);
-        }
-    };
-
-    currentPlayer.removeAllListeners(AudioPlayerStatus.Idle);
-    currentPlayer.on(AudioPlayerStatus.Idle, () => {
-        console.log("[Audio] Piste terminée, relance de la boucle...");
-        lancerPiste();
-    });
-
-    lancerPiste();
+    try {
+        const resource = createAudioResource(cheminMusique, { inlineVolume: true });
+        resource.volume.setVolume(0.25); 
+        currentPlayer.play(resource);
+        console.log(`[Audio] Lecture en cours : ${path.basename(cheminMusique)}`);
+    } catch (e) {
+        console.error("[Audio] Erreur lecture :", e);
+    }
 }
 
 async function relancerAudioApresCrash(client, state) {
     if (!state.audio || !state.audio.guildId) return;
     const guild = await client.guilds.fetch(state.audio.guildId).catch(() => null);
     if (guild) {
-        const mockInteraction = { guild: guild };
-        await jouerAmbianceMap(mockInteraction, state.audio.currentEtage, state);
+        await jouerAmbianceMap({ guild: guild }, state.audio.currentEtage, state);
     }
 }
 
