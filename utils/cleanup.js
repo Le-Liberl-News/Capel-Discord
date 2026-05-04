@@ -5,7 +5,7 @@ const SALON_READONLY_ID = "1493171302624657428";
 
 async function clearButtons(client, sheet_id, ligne) {
     try {
-        const propositions = db.prepare('SELECT message_id FROM propositions WHERE sheet_id = ? AND ligne = ?').all(sheet_id, ligne);
+        const [propositions] = await db.query('SELECT message_id FROM propositions WHERE sheet_id = ? AND ligne = ?', [sheet_id, ligne]);
         if (propositions.length === 0) return;
 
         const salon = await client.channels.fetch(SALON_READONLY_ID);
@@ -22,18 +22,18 @@ async function clearButtons(client, sheet_id, ligne) {
 
 async function purgeMission(sheetId, ligne, validationMessageId) {
     try {
-        db.prepare('DELETE FROM mission_actuelle WHERE sheet_id = ? AND ligne = ?').run(sheetId, ligne);
-        const props = db.prepare('SELECT message_id FROM propositions WHERE sheet_id = ? AND ligne = ?').all(sheetId, ligne);
+        await db.query('DELETE FROM mission_actuelle WHERE sheet_id = ? AND ligne = ?', [sheetId, ligne]);
+        const [props] = await db.query('SELECT message_id FROM propositions WHERE sheet_id = ? AND ligne = ?', [sheetId, ligne]);
 
         for (const p of props) {
-            db.prepare('DELETE FROM votes WHERE message_id = ?').run(p.message_id);
+            await db.query('DELETE FROM votes WHERE message_id = ?', [p.message_id]);
         }
 
-        db.prepare('DELETE FROM propositions WHERE sheet_id = ? AND ligne = ?').run(sheetId, ligne);
+        await db.query('DELETE FROM propositions WHERE sheet_id = ? AND ligne = ?', [sheetId, ligne]);
 
         if (validationMessageId) {
-            db.prepare('DELETE FROM validations WHERE message_id = ?').run(validationMessageId);
-            db.prepare('DELETE FROM votes_juges WHERE message_id = ?').run(validationMessageId);
+            await db.query('DELETE FROM validations WHERE message_id = ?', [validationMessageId]);
+            await db.query('DELETE FROM votes_juges WHERE message_id = ?', [validationMessageId]);
         }
         console.log(`🧹 [CLEANUP] Nettoyage parfait pour la ligne ${ligne} !`);
 

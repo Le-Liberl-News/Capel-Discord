@@ -136,7 +136,7 @@ async function updateRanking(client) {
     const guild = client.guilds.cache.get(process.env.GUILD_ID);
     if (!guild) return;
 
-    const rawTop10 = db.prepare('SELECT user_id, xp, victoires AS trads FROM users_stats ORDER BY xp DESC LIMIT 10').all();
+    const [rawTop10] = await db.query('SELECT user_id, xp, victoires AS trads FROM users_stats ORDER BY xp DESC LIMIT 10');
     let top10Formate = [];
 
     for (const ligne of rawTop10) {

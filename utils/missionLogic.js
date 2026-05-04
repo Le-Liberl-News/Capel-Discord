@@ -121,15 +121,16 @@ ${blocTexteJapEng}\`\`\`
 }
 
 async function genererMessageRecap(client) {
-    const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+    const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+    const mission = mission_rows[0];
     if (!mission) return null;
 
-    const tops = db.prepare(`
+    const [tops] = await db.query(`
         SELECT * FROM propositions 
         WHERE sheet_id = ? AND ligne = ?
         ORDER BY score DESC, message_id ASC 
         LIMIT 3
-    `).all(mission.sheet_id, mission.ligne);
+    `, [mission.sheet_id, mission.ligne]);
 
     const displayJap = mission.texte_jap.split(' |BR| ').map((t, i) => `    [${i+1}] ${t}`).join('\n');
     const displayEng = mission.texte_eng.split(' |BR| ').map((t, i) => `    [${i+1}] ${t}`).join('\n');
@@ -167,57 +168,60 @@ async function genererMessageRecap(client) {
 }
 
 async function cloreLeVoteActuel(client) {
-    const mission = db.prepare('SELECT * FROM mission_actuelle WHERE id = 1').get();
+    const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+    const mission = mission_rows[0];
     if (!mission) return "❌ Aucune mission en cours.";
 
     const recapFinal = await genererMessageRecap(client);
     const secretChannel = await client.channels.fetch(process.env.SECRET_CHANNEL_ID);
     const publicChannel = await client.channels.fetch(SALON_READONLY_ID);
 
-    const topScore = db.prepare(`
+    const [topScore_rows] = await db.query(`
         SELECT MAX(score) as maxScore FROM propositions
         WHERE sheet_id = ? AND ligne = ?
-    `).get(mission.sheet_id, mission.ligne);
+    `, [mission.sheet_id, mission.ligne]);
+    const topScore = topScore_rows[0];
 
     if (!topScore || topScore.maxScore <= 0) {
         cleanup.clearButtons(client, mission.sheet_id, mission.ligne);
         return "❌ Aucune proposition valide. Mission annulée.";
     }
     
-    const gagnantes = db.prepare(`
+    const [gagnantes] = await db.query(`
         SELECT * FROM propositions
         WHERE sheet_id = ? AND ligne = ? AND score = ?
-    `).all(mission.sheet_id, mission.ligne, topScore.maxScore);
+    `, [mission.sheet_id, mission.ligne, topScore.maxScore]);
     
-    const secondes = db.prepare(`
+    const [secondes] = await db.query(`
         SELECT user_id, MAX(score) as score FROM propositions
         WHERE sheet_id = ? AND ligne = ?
         GROUP BY user_id
-    `).all(mission.sheet_id, mission.ligne);
+    `, [mission.sheet_id, mission.ligne]);
 
-    const inactifs = db.prepare(`
+    const [inactifs] = await db.query(`
         SELECT user_id FROM users_stats
         WHERE user_id NOT IN (SELECT user_id FROM propositions WHERE sheet_id = ? AND ligne = ?)
         AND jours_consecutifs > 0
-    `).all(mission.sheet_id, mission.ligne);
+    `, [mission.sheet_id, mission.ligne]);
 
-    const votants = db.prepare(`
+    const [votants] = await db.query(`
         SELECT DISTINCT votes.user_id FROM votes
         JOIN propositions ON votes.message_id = propositions.message_id
         WHERE propositions.sheet_id = ? AND propositions.ligne = ?
-    `).all(mission.sheet_id, mission.ligne);
+    `, [mission.sheet_id, mission.ligne]);
 
     for (const votant of votants) {
         await ajouterXP(votant.user_id, 3, client);
     }
 
-    db.prepare(`UPDATE users_stats SET resultats_du_jour = NULL`).run();
+    await db.query(`UPDATE users_stats SET resultats_du_jour = NULL`);
     for (const seconde of secondes) {
-        const joursConsecutifs = db.prepare(`SELECT jours_consecutifs FROM users_stats WHERE user_id = ?`).get(seconde.user_id).jours_consecutifs;
+        const [joursConsecutifs_rows] = await db.query(`SELECT jours_consecutifs FROM users_stats WHERE user_id = ?`, [seconde.user_id]);
+const joursConsecutifs = joursConsecutifs_rows[0] ? joursConsecutifs_rows[0].jours_consecutifs : null;
         const consecutifXP = Math.max(Math.round(Math.pow(joursConsecutifs / 365, 1/5) * 70 - 19), 0);
         const voteXP = Math.round((1.2 * seconde.score) * (seconde.score + 5));
         await ajouterXP(seconde.user_id, voteXP + consecutifXP, client);
-        db.prepare(`UPDATE users_stats SET jours_consecutifs = jours_consecutifs + 1 WHERE user_id = ?`).run(seconde.user_id);
+        await db.query(`UPDATE users_stats SET jours_consecutifs = jours_consecutifs + 1 WHERE user_id = ?`, [seconde.user_id]);
         let messageXP = `Merci d'avoir envoyé une proposition de traduction aujourd'hui !\n`;
         if (seconde.score > 0) {
             if (seconde.score === topScore.maxScore) {
@@ -236,14 +240,15 @@ async function cloreLeVoteActuel(client) {
     }
 
     for (const inactif of inactifs) {
-        db.prepare('UPDATE users_stats SET jours_consecutifs = 0 WHERE user_id = ?').run(inactif.user_id);
+        await db.query('UPDATE users_stats SET jours_consecutifs = 0 WHERE user_id = ?', [inactif.user_id]);
     }
 
-    const dernierIdRow = db.prepare('SELECT MAX(id) AS maxId FROM palmares').get();
+    const [dernierIdRow_rows] = await db.query('SELECT MAX(id) AS maxId FROM palmares');
+    const dernierIdRow = dernierIdRow_rows[0];
     let prochainId = (dernierIdRow && dernierIdRow.maxId ? dernierIdRow.maxId : 0) + 1;
 
     for (const gagnante of gagnantes) {
-        db.prepare('INSERT INTO palmares (id, user_id) VALUES (?, ?)').run(prochainId, gagnante.user_id);
+        await db.query('INSERT INTO palmares (id, user_id) VALUES (?, ?)', [prochainId, gagnante.user_id]);
         prochainId++;
         
         let texteAffichageJuge = "";
@@ -273,12 +278,12 @@ async function cloreLeVoteActuel(client) {
         const msgSecret = await secretChannel.send({ embeds: [embedJuge], components: [row] });
     
         await ajouterXP(gagnante.user_id, 20, client);
-        db.prepare('UPDATE users_stats SET victoires = victoires + 1 WHERE user_id = ?').run(gagnante.user_id);
+        await db.query('UPDATE users_stats SET victoires = victoires + 1 WHERE user_id = ?', [gagnante.user_id]);
     
-        db.prepare(`
+        await db.query(`
             INSERT INTO validations (message_id, texte, sheet_id, ligne, timestamp_debut, user_id)
             VALUES (?, ?, ?, ?, ?, ?)
-        `).run(msgSecret.id, gagnante.texte, mission.sheet_id, mission.ligne, Date.now(), gagnante.user_id);
+        `, [msgSecret.id, gagnante.texte, mission.sheet_id, mission.ligne, Date.now(]);, gagnante.user_id);
     }
 
     let messageComplet = "";

@@ -33,15 +33,16 @@ async function ajouterXP(userId, montantXP, client) {
     if (montantXP === null) return console.error(`[XP-DEBUG] ❌ XP null, il va encore falloir faire des corrections.`);
 
     try {
-        db.prepare(`
+        await db.query(`
             INSERT INTO users_stats (user_id, xp, niveau) 
             VALUES (?, ?, 'Classe 10') 
             ON CONFLICT(user_id) DO UPDATE SET xp = xp + ?
-        `).run(userId, montantXP, montantXP);
+        `, [userId, montantXP, montantXP]);
         console.log(`[XP-DEBUG] DB mise à jour avec succès.`);
     } catch (dbErr) { console.error(`[XP-DEBUG] ❌ Erreur écriture DB :`, dbErr.message); }
 
-    const stats = db.prepare('SELECT xp, niveau FROM users_stats WHERE user_id = ?').get(userId);
+    const [stats_rows] = await db.query('SELECT xp, niveau FROM users_stats WHERE user_id = ?', [userId]);
+    const stats = stats_rows[0];
     if (!stats) {
         console.error(`[XP-DEBUG] ❌ Impossible de récupérer les stats après update.`);
         return;
@@ -84,7 +85,7 @@ async function ajouterXP(userId, montantXP, client) {
             await member.roles.add(nouveauRang.roleId)
                 .then(() => {
                     console.log(`[PROMOTION] ✅ Rôle attribué avec succès sur Discord.`);
-                    db.prepare('UPDATE users_stats SET niveau = ? WHERE user_id = ?').run(nouveauRang.nom, userId);
+                    await db.query('UPDATE users_stats SET niveau = ? WHERE user_id = ?', [nouveauRang.nom, userId]);
                     console.log(`[PROMOTION] DB synchronisée : Niveau = ${nouveauRang.nom}`);
                 })
                 .catch(e => {
