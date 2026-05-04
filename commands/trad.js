@@ -3,7 +3,7 @@ const db = require('../utils/db.js');
 
 module.exports = {
     async execute(interaction) {
-        const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1').get();
+        const [mission] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
         const userId = interaction.user.id;
 
         if (!mission) {
