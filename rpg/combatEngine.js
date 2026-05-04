@@ -1,7 +1,6 @@
 const { appliquerStatuts } = require('./systemeStatuts.js');
-const { getIdFromPseudo } = require('../commandes/anonyme.js'); 
 const { ajouterXP } = require('../utils/xpManager.js');
-const { getPseudoAnonyme } = require('../commandes/anonyme.js');
+const { getIdFromPseudo, getPseudoAnonyme } = require('../commands/anonyme.js');
 const databasePersos = require('./data/persos.json');
 const { detecterArt, consommerPE, genererInstructionsArt } = require('./arts.js');
 const { actualiserRegenPassive } = require('./gestionFatigue.js');
