@@ -152,8 +152,7 @@ module.exports = async function handleModals(interaction, sheets) {
             const propActuelle = propActuelle_rows[0];
             const scoreActuel = propActuelle?.score ?? 0;
 
-                const [votesExistants_rows] = await db.query('SELECT COUNT(*) as total FROM votes WHERE message_id = ?', [ancienMessageId]);
-                const votesExistants = votesExistants_rows[0];
+            const [votesExistants] = await db.query('SELECT COUNT(*) as total FROM votes WHERE message_id = ?', [ancienMessageId]);
 
             if (votesExistants.total > 0) {
                 const stringSimilarity = require('string-similarity');
