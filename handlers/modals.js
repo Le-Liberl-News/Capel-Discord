@@ -37,7 +37,7 @@ module.exports = async function handleModals(interaction, sheets) {
             }
 
             const texteActuel = textesSaisis.join(' ');
-            const [autresPropositions_rows] = await db.query('SELECT texte FROM propositions');
+            const [autresPropositions] = await db.query('SELECT texte FROM propositions');
             const stringSimilarity = require('string-similarity');
 
             for (autreProposition of autresPropositions) {
@@ -94,8 +94,7 @@ module.exports = async function handleModals(interaction, sheets) {
                 WHERE user_id = ? AND sheet_id = ? AND ligne = ? AND message_id != ? 
                 LIMIT 1
             `, [userId, mission.sheet_id, mission.ligne, publicMessage.id]);
-            const dejaSoumis = dejaSoumis_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
-            const autresPropositions = autresPropositions_rows[0];
+            const dejaSoumis = dejaSoumis_rows[0];
 
             let messageFinal = "✅ Ton bloc de propositions a été soumis !";
 
