@@ -57,6 +57,8 @@ module.exports = {
         const modal = new ModalBuilder()
             .setCustomId('modal_trad_groupe')
             .setTitle(`Traduction : ${mission.nom_perso || "Perso"}`);
+
+        console.log("Lignes, Jap, Eng:", mission.ligne, mission.texte_jap, mission.texte_eng);
         
         const lignes = String(mission.ligne).split(',');
         const textesJap = String(mission.texte_jap).split(' |BR| ');
