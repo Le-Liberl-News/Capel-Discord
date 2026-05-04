@@ -70,36 +70,31 @@ async function jouerAmbianceMap(interaction, etage, state) {
     lancerPiste(etage);
 }
 
+
 function lancerPiste(etage) {
-    const ffmpegPath = require('ffmpeg-static');
-    // On vérifie que le binaire existe bien là où npm l'a mis
-    console.log(`[Audio] Utilisation du binaire FFmpeg : ${ffmpegPath}`);
-    
+    // On force le chemin absolu du binaire ffmpeg
+    process.env.FFMPEG_PATH = ffmpegStatic; 
+    console.log(`[Audio] Binaire utilisé : ${ffmpegStatic}`);
+
     let cheminMusique = path.resolve(__dirname, '../assets/audio', `etage_${etage}.mp3`);
     const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'music_tower.mp3');
 
     if (!fs.existsSync(cheminMusique)) {
-        console.log(`[Audio] etage_${etage}.mp3 absent, test du défaut...`);
         cheminMusique = cheminParDefaut;
     }
 
-    if (!fs.existsSync(cheminMusique)) {
-        console.error("[Audio] ERREUR : Aucun fichier audio trouvé !");
-        return;
-    }
-
     try {
-        // Utilisation de StreamType.Arbitrary pour aider prism-media à décoder via ffmpeg-static
         const resource = createAudioResource(cheminMusique, { 
             inlineVolume: true,
-            inputType: StreamType.Arbitrary
+            // On force le moteur à utiliser FFmpeg de manière explicite
+            inputType: StreamType.Arbitrary 
         });
         
         resource.volume.setVolume(0.25); 
         currentPlayer.play(resource);
-        console.log(`[Audio] Lecture en cours : ${path.basename(cheminMusique)}`);
+        console.log(`[Audio] Lecture lancée pour : ${path.basename(cheminMusique)}`);
     } catch (e) {
-        console.error("[Audio] Erreur lecture :", e);
+        console.error("[Audio] Erreur critique lors de la lecture :", e);
     }
 }
 
