@@ -16,7 +16,8 @@ module.exports = async function handleButtons(interaction, sheets) {
         try {
             const [proposition] = await db.query('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
             if (!proposition) return interaction.followUp({ content: "Cette proposition n'est plus dans la base.", ephemeral: true });
-            const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1', [);
+            const [missionRows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+            const mission = missionRows[0];
 
             const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
             const votePrecedent = votePrecedent_rows[0];
@@ -31,7 +32,7 @@ module.exports = async function handleButtons(interaction, sheets) {
             let change = false;
       
             if (votePrecedent) {
-                await db.query('DELETE FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]]);
+                await db.query('DELETE FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
                 await db.query('UPDATE propositions SET score = score - 1 WHERE message_id = ?', [messageId]);
                 messageRetour = "Ton vote a été retiré ! 🔙";
                 change = true;
@@ -49,11 +50,12 @@ module.exports = async function handleButtons(interaction, sheets) {
             }
 
             if (change) {
-                const [nouveauScore] = await db.query('SELECT score FROM propositions WHERE message_id = ?', [messageId).score;
+                const [scoreRows] = await db.query('SELECT score FROM propositions WHERE message_id = ?', [messageId]);
+                const nouveauScore = scoreRows[0].score;
                 const componentsActuels = interaction.message.components;
 
-                const rowButtons = ActionRowBuilder.from(componentsActuels[0]]);
-            const nombreVotes = nombreVotes_rows[0];
+                const rowButtons = ActionRowBuilder.from(componentsActuels[0]);
+                const nombreVotes = nombreVotes_rows[0];
 
                 let texteAafficher = proposition.texte;
                 try {
