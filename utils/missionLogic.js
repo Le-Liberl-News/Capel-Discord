@@ -67,19 +67,19 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
 
     texteGemma = textePropre;
 
-    db.prepare(`
+    await db.execute(`
         INSERT INTO mission_actuelle (id, sheet_id, nom_feuille, endroit, ligne, texte_jap, texte_eng, nom_perso, context) 
         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?) 
-        ON CONFLICT(id) DO UPDATE SET 
-        sheet_id = excluded.sheet_id, 
-        nom_feuille = excluded.nom_feuille, 
-        endroit = excluded.endroit, 
-        ligne = excluded.ligne,
-        texte_jap = excluded.texte_jap,
-        texte_eng = excluded.texte_eng,
-        nom_perso = excluded.nom_perso,
-        context = excluded.context
-    `).run(
+        ON DUPLICATE KEY UPDATE 
+        sheet_id = VALUES(sheet_id), 
+        nom_feuille = VALUES(nom_feuille), 
+        endroit = VALUES(endroit), 
+        ligne = VALUES(ligne),
+        texte_jap = VALUES(texte_jap),
+        texte_eng = VALUES(texte_eng),
+        nom_perso = VALUES(nom_perso),
+        context = VALUES(context)
+    `, [
         mission.feuille.id, 
         mission.feuille.nom, 
         mission.feuille.endroit, 
@@ -88,7 +88,7 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
         mission.bulle.eng,
         mission.bulle.nom_perso,
         texteGemma
-    );
+    ]);
     
     let blocTexteJapEng = "";
     lignesArray.forEach((ligne, i) => {
