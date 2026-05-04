@@ -2,7 +2,7 @@
   "Estelle": {
     "hpMax": 150,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 45,
     "magie": 20,
     "agilite": 30,
@@ -10,13 +10,25 @@
     "endurance": 35,
     "resistancePhysique": 40,
     "resistanceMagique": 30,
-	
+    "titre": "Bracer Senior",
+    "arme": "Bâton long (Bo)",
+    "sexe": "F",
+    "date-naissance": "S. 1186",
+    "factions": ["Guilde des bracers", "Royaume de Liberl"],
+    "affinites": [
+        { "nom": "Cassius Bright", "relation": "Père et modèle absolu" },
+        { "nom": "Joshua Bright", "relation": "Frère adoptif, partenaire de combat et intérêt amoureux" },
+        { "nom": "Scherazard Harvey", "relation": "Mentor et figure de grande sœur" }
+    ],
+    "personnalite": "Énergique, profondément optimiste et souvent têtue. Elle agit généralement avant de réfléchir, préférant l'action aux longs discours. Elle possède cependant un cœur d'or et une empathie immense qui attire naturellement les autres vers elle.",
+    "apparence": "Jeune femme aux grands yeux ambrés et aux cheveux bruns volumineux attachés en deux couettes. Elle porte une tenue pratique de Bracer, avec des baskets et des gants en cuir.",
+    "style-dialogue": "Ton familier, direct et spontané. Un peu garçon manqué. Exprime ses émotions de manière très expressive et n'hésite pas à élever la voix.",
     "description": "Manie un long bâton. Excellente allonge et polyvalence."
-  },
+},
   "Joshua": {
     "hpMax": 120,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 35,
     "magie": 40,
     "agilite": 55,
@@ -24,12 +36,25 @@
     "endurance": 25,
     "resistancePhysique": 25,
     "resistanceMagique": 45,
+    "titre": "Croc Noir / Bracer",
+    "arme": "Doubles lames courtes",
+    "sexe": "M",
+    "date-naissance": "S. 1186",
+    "factions": ["Guilde des bracers", "Ouroboros (anciennement)"],
+    "affinites": [
+        { "nom": "Estelle Bright", "relation": "Sœur adoptive, partenaire et intérêt amoureux" },
+        { "nom": "Loewe", "relation": "Figure de grand frère, passé commun tragique" },
+        { "nom": "Cassius Bright", "relation": "Père adoptif et sauveur" }
+    ],
+    "personnalite": "Calme, analytique et très mature pour son âge. Il a tendance à cacher ses propres souffrances pour protéger ceux qu'il aime. Son passé d'assassin le rend parfois impitoyable au combat, contrastant avec sa douceur habituelle.",
+    "apparence": "Jeune homme mince aux cheveux noirs de jais et aux yeux ambrés profonds. Habillé de vêtements sombres et pratiques, portant souvent un foulard clair.",
+    "style-dialogue": "Poli, posé et réfléchi. Il sert souvent de voix de la raison pour tempérer l'énergie débordante d'Estelle.",
     "description": "Frappe avec deux lames courtes. Extrêmement rapide."
-  },
-  "Zin": {
+},
+"Zin": {
     "hpMax": 200,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 50,
     "magie": 10,
     "agilite": 40,
@@ -37,12 +62,24 @@
     "endurance": 50,
     "resistancePhysique": 55,
     "resistanceMagique": 20,
-    "description": "Zin a un grand gabarit musclé d'homme d'âge mûr. Il a de longs cheveux bruns attachés en arrière en une simple queue-de-cheval. Il s'habille dans le style de son pays natal, Calvard, arborant un pantalon ample resserré par des bandes métalliques, un tabard violet sans manches par-dessus une chemise à col ouvert, des chaussures plates à bout renforcé en acier et une grande écharpe jaune autour des épaules. Sa tenue comporte plusieurs éléments utiles pour les arts martiaux défensifs, comme des bandages autour de ses biceps et de ses tibias, des bandelettes violettes aux mains et des garnitures métalliques sur ses chaussures."
-  },
-  "Kloe": {
+    "titre": "L'Immuable",
+    "arme": "Gantelets (Arts martiaux Taito)",
+    "sexe": "M",
+    "date-naissance": "S. 1173",
+    "factions": ["Guilde des Bracers (Calvard)"],
+    "affinites": [
+        { "nom": "Kilika", "relation": "Collègue de Calvard et amie de longue date" },
+        { "nom": "Walter", "relation": "Ancien frère d'armes devenu ennemi" }
+    ],
+    "personnalite": "Détendu, fraternel et d'une fiabilité à toute épreuve. Il joue souvent le rôle de grand frère pour les plus jeunes. C'est un épicurien qui apprécie particulièrement l'alcool et les bons repas.",
+    "apparence": "Grand gabarit musclé d'homme d'âge mûr. Il a de longs cheveux bruns attachés en arrière. Il s'habille dans le style de Calvard, pantalon ample, tabard violet, et bandages de combat.",
+    "style-dialogue": "Amical, chaleureux et protecteur. Utilise souvent un ton de vieux briscard expérimenté qui a tout vu.",
+    "description": "Zin a un grand gabarit musclé. Il combat à mains nues en utilisant les arts martiaux de son pays natal, Calvard."
+},
+"Kloe": {
     "hpMax": 110,
     "PCMax": 100,
-	"PEMax": 300,
+    "PEMax": 300,
     "force": 20,
     "magie": 60,
     "agilite": 35,
@@ -50,12 +87,25 @@
     "endurance": 25,
     "resistancePhysique": 20,
     "resistanceMagique": 60,
-    "description": "Kloe est une jeune fille douce accompagnée de son fidèle faucon blanc, Sieg. Elle se bat avec une rapière, mais sa véritable spécialité réside dans les arts magiques, notamment les sorts de soin et de l'élément Eau. Elle est physiquement fragile mais possède une excellente défense magique."
-  },
-  "Scherazard": {
+    "titre": "Princesse héritière",
+    "arme": "Rapière",
+    "sexe": "F",
+    "date-naissance": "S. 1186",
+    "factions": ["Royaume de Liberl", "Académie Jenis"],
+    "affinites": [
+        { "nom": "Reine Alicia", "relation": "Grand-mère respectée" },
+        { "nom": "Julia Schwarz", "relation": "Garde du corps et amie fidèle" },
+        { "nom": "Sieg", "relation": "Faucon blanc de compagnie et partenaire" }
+    ],
+    "personnalite": "Profondément gentille, responsable et altruiste. Elle doute parfois de ses capacités à diriger mais fait preuve d'une détermination de fer quand ses amis ou son pays sont menacés.",
+    "apparence": "Jeune fille aux cheveux courts bleu clair. Souvent vêtue de l'uniforme scolaire de Jenis ou d'une tenue royale élégante mais modeste.",
+    "style-dialogue": "Très polie, douce et respectueuse. Elle s'excuse facilement mais sait se montrer ferme.",
+    "description": "Kloe est une jeune fille douce accompagnée de son fidèle faucon blanc, Sieg. Spécialisée dans les arts magiques de soin."
+},
+"Scherazard": {
     "hpMax": 130,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 35,
     "magie": 50,
     "agilite": 45,
@@ -63,12 +113,25 @@
     "endurance": 25,
     "resistancePhysique": 30,
     "resistanceMagique": 50,
-    "description": "Surnommée l'Éclair d'Argent, cette mentor au teint mat manie le fouet et les arts du vent. Protectrice mais stricte, sa lucidité n'a d'égale que sa tolérance légendaire à l'alcool."
-  },
-  "Olivier": {
+    "titre": "L'Éclair d'Argent",
+    "arme": "Fouet",
+    "sexe": "F",
+    "date-naissance": "S. 1175",
+    "factions": ["Guilde des Bracers"],
+    "affinites": [
+        { "nom": "Cassius Bright", "relation": "Mentor vénéré" },
+        { "nom": "Aina", "relation": "Meilleure amie de beuverie" },
+        { "nom": "Olivier", "relation": "Souffre-douleur comique et intérêt amoureux non-avoué" }
+    ],
+    "personnalite": "Une véritable tornade. Stricte au travail, protectrice envers ses cadets, elle se transforme en fêtarde redoutable une fois sa journée terminée. Sa tolérance à l'alcool est effrayante.",
+    "apparence": "Femme pulpeuse au teint mat et aux cheveux argentés. Tenue rappelant les danseuses ou voyantes orientales.",
+    "style-dialogue": "Taquin, autoritaire et piquant. Maltraite allégrement (mais avec affection) ceux qui la cherchent.",
+    "description": "Surnommée l'Éclair d'Argent, cette mentor manie le fouet et les arts du vent. Redoutable au combat comme au bar."
+},
+"Olivier": {
     "hpMax": 120,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 30,
     "magie": 65,
     "agilite": 35,
@@ -76,12 +139,24 @@
     "endurance": 25,
     "resistancePhysique": 25,
     "resistanceMagique": 60,
-    "description": "Utilise un pistolet orbal. Un génie des arts magiques dont l'imprévisibilité est aussi dangereuse que son ego est démesuré."
+    "titre": "Prince d'Érébonia / Barde",
+    "arme": "Pistolet orbal",
+    "sexe": "M",
+    "date-naissance": "S. 1177",
+    "factions": ["Empire d'Érébonia"],
+    "affinites": [
+        { "nom": "Mueller", "relation": "Garde du corps exaspéré et meilleur ami" },
+        { "nom": "Scherazard", "relation": "Terreur personnelle qu'il aime provoquer" }
+    ],
+    "personnalite": "Excentrique, romantique et incroyablement narcissique en apparence. Il cache cependant un esprit politique brillant et une véritable volonté d'empêcher les guerres.",
+    "apparence": "Beau jeune homme aux cheveux blonds dorés. Tenue de voyage extravagante et raffinée. Porte souvent un luth ou un bouquet de roses.",
+    "style-dialogue": "Extrêmement théâtral, poétique et mélodramatique. Adore les métaphores fleuries.",
+    "description": "Utilise un pistolet orbal. Un génie des arts magiques dont l'imprévisibilité cache un grand intellect."
 },
 "Agate": {
     "hpMax": 165,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 60,
     "magie": 10,
     "agilite": 20,
@@ -89,12 +164,24 @@
     "endurance": 55,
     "resistancePhysique": 50,
     "resistanceMagique": 20,
+    "titre": "Lame Lourde",
+    "arme": "Épée lourde (Zanbato)",
+    "sexe": "M",
+    "date-naissance": "S. 1178",
+    "factions": ["Guilde des Bracers"],
+    "affinites": [
+        { "nom": "Tita Russell", "relation": "Protégée, la considère comme sa petite sœur" },
+        { "nom": "Mischa", "relation": "Petite sœur décédée (traumatisme central)" }
+    ],
+    "personnalite": "Impulsif, colérique et bourru. Il masque son grand cœur et ses blessures du passé derrière une attitude agressive. Il est particulièrement protecteur envers les plus faibles.",
+    "apparence": "Jeune homme aux cheveux roux hérissés portant un bandana. Dégage une aura de brute épaisse.",
+    "style-dialogue": "Sec, agressif, s'énerve très vite, mais bafouille misérablement quand il est touché émotionnellement.",
     "description": "Manie une épée lourde dévastatrice. Une force brute capable d'encaisser les assauts les plus violents."
 },
 "Renne": {
     "hpMax": 110,
     "PCMax": 100,
-	"PEMax": 350,
+    "PEMax": 350,
     "force": 40,
     "magie": 75,
     "agilite": 50,
@@ -102,12 +189,25 @@
     "endurance": 20,
     "resistancePhysique": 20,
     "resistanceMagique": 65,
-    "description": "Génie précoce maniant une faux ornementée. Sa vitesse et sa puissance magique sont extrêmes, mais elle reste physiquement fragile."
+    "titre": "Ange de la Mort",
+    "arme": "Faux géante",
+    "sexe": "F",
+    "date-naissance": "S. 1191",
+    "factions": ["Ouroboros", "Royaume de Liberl"],
+    "affinites": [
+        { "nom": "Pater-Mater", "relation": "Robot géant, considéré comme sa vraie famille" },
+        { "nom": "Estelle", "relation": "Figure familiale idéalisée" },
+		{ "nom": "Joshua", "relation": "Figure familiale idéalisée" }
+    ],
+    "personnalite": "Un génie à l'intelligence terrifiante brisée par un passé cauchemardesque. Elle oscille entre une petite fille capricieuse en manque d'affection et une tueuse sadique au sang-froid glaçant.",
+    "apparence": "Petite fille aux longs cheveux violets, vêtue d'une robe lolita gothique avec de gros rubans.",
+    "style-dialogue": "Enfantin, hautain et parsemé de sous-entendus morbides ou cruels. Parle souvent d'elle à la troisième personne.",
+    "description": "Génie précoce maniant une faux ornementée. Sa puissance magique est extrême."
 },
 "Anelace": {
     "hpMax": 140,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 50,
     "magie": 25,
     "agilite": 40,
@@ -115,12 +215,24 @@
     "endurance": 30,
     "resistancePhysique": 35,
     "resistanceMagique": 35,
-    "description": "Pratiquante du style Huit Feuilles, Une Lame. Elle manie le katana avec précision et rapidité, compensant sa distraction par une ferveur au combat."
+    "titre": "Bracer Junior",
+    "arme": "Katana",
+    "sexe": "F",
+    "date-naissance": "S. 1184",
+    "factions": ["Guilde des Bracers"],
+    "affinites": [
+        { "nom": "Yun Ka-fai", "relation": "Grand-père et maître d'escrime" },
+        { "nom": "Estelle", "relation": "Amie et rivale amicale" }
+    ],
+    "personnalite": "Pleine d'entrain, positive et complètement obsédée par tout ce qui est mignon (peluches, animaux, enfants). Elle manque parfois de confiance en elle en tant qu'épéiste.",
+    "apparence": "Jeune fille dynamique avec des cheveux bruns courts surmontés d'un ruban. Tenue légère pour la mobilité.",
+    "style-dialogue": "Enthousiaste, familier. Peut perdre toute concentration si elle voit quelque chose de mignon.",
+    "description": "Pratiquante du style Huit Feuilles, Une Lame. Elle manie le katana avec précision et rapidité."
 },
 "Ries": {
     "hpMax": 155,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 45,
     "magie": 55,
     "agilite": 35,
@@ -128,12 +240,24 @@
     "endurance": 40,
     "resistancePhysique": 45,
     "resistanceMagique": 50,
-    "description": "Écuyère des Gralsritter maniant une épée segmentée. Un profil hybride puissant, doté d'une grande résistance et d'un appétit sans limites."
+    "titre": "Écuyère",
+    "arme": "Épée templière (segmentée)",
+    "sexe": "F",
+    "date-naissance": "S. 1184",
+    "factions": ["Église Septienne (Gralsritter)"],
+    "affinites": [
+        { "nom": "Kevin Graham", "relation": "Ami d'enfance et supérieur hiérarchique" },
+        { "nom": "Rufina", "relation": "Grande sœur défunte" }
+    ],
+    "personnalite": "Dévote, stoïque et d'un naturel pince-sans-rire. Elle prend son travail très au sérieux. Elle cache un appétit démesuré et devient effrayante si on interfère avec ses repas.",
+    "apparence": "Cheveux verts courts, tenue stricte de religieuse combattante de l'Église Septienne.",
+    "style-dialogue": "Vouvoiement strict, ton très monocorde et sarcastique, surtout lorsqu'elle réprimande Kevin.",
+    "description": "Écuyère des Gralsritter maniant une épée segmentée. Grande résistance et appétit sans limites."
 },
 "Gilbert": {
     "hpMax": 105,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 25,
     "magie": 5,
     "agilite": 40,
@@ -141,12 +265,23 @@
     "endurance": 20,
     "resistancePhysique": 20,
     "resistanceMagique": 15,
-    "description": "Ancien intendant devenu soldat d'Ouroboros. Son arrogance n'a d'égale que sa maladresse, faisant de lui un danger... principalement pour lui-même."
+    "titre": "Soldat d'élite (auto-proclamé)",
+    "arme": "Fusil et explosifs",
+    "sexe": "M",
+    "date-naissance": "S. 1180",
+    "factions": ["Ouroboros"],
+    "affinites": [
+        { "nom": "Campanella", "relation": "Tortionnaire régulier" }
+    ],
+    "personnalite": "Le stéréotype du lâche arrogant. Il surestime constamment ses capacités, se vante abondamment, puis supplie pour sa vie dès que la situation se retourne contre lui.",
+    "apparence": "Cheveux verts gominés, porte l'uniforme tactique standard des soldats d'Ouroboros.",
+    "style-dialogue": "Extrêmement prétentieux, glousse de manière diabolique, puis devient hystérique et pleurnichard face à la défaite.",
+    "description": "Ancien intendant devenu soldat d'Ouroboros. Son arrogance n'a d'égale que sa maladresse."
 },
-  "default": {
+"default": {
     "hpMax": 100,
     "PCMax": 100,
-	"PEMax": 50,
+    "PEMax": 50,
     "force": 25,
     "magie": 25,
     "agilite": 25,
@@ -154,6 +289,15 @@
     "endurance": 30,
     "resistancePhysique": 30,
     "resistanceMagique": 30,
+    "titre": "PNJ",
+    "arme": "Arme basique",
+    "sexe": "Inconnu",
+    "date-naissance": "Inconnue",
+    "factions": ["Neutre"],
+    "affinites": [],
+    "personnalite": "Une personne ordinaire vaquant à ses occupations.",
+    "apparence": "Une tenue passe-partout sans signes distinctifs.",
+    "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base."
-  }
+}
 }

@@ -72,22 +72,17 @@ async function jouerAmbianceMap(interaction, etage, state) {
 
 
 function lancerPiste(etage) {
-    // On force le chemin absolu du binaire ffmpeg
-    process.env.FFMPEG_PATH = ffmpegStatic; 
-    console.log(`[Audio] Binaire utilisé : ${ffmpegStatic}`);
-
-    let cheminMusique = path.resolve(__dirname, '../assets/audio', `etage_${etage}.mp3`);
-    const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'music_tower.mp3');
+    let cheminMusique = path.resolve(__dirname, '/assets/audio', `etage_${etage}.mp3`);
+    const cheminParDefaut = path.resolve(__dirname, '/assets/audio', 'music_tower.mp3');
 
     if (!fs.existsSync(cheminMusique)) {
         cheminMusique = cheminParDefaut;
     }
 
     try {
+        // On laisse Discord.js gérer le décodage tout seul (il est très fort pour ça en local)
         const resource = createAudioResource(cheminMusique, { 
-            inlineVolume: true,
-            // On force le moteur à utiliser FFmpeg de manière explicite
-            inputType: StreamType.Arbitrary 
+            inlineVolume: true 
         });
         
         resource.volume.setVolume(0.25); 

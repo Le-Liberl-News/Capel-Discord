@@ -10,7 +10,6 @@ const { actualiserRegenPassive } = require('./gestionFatigue.js');
  */
 function construirePromptCombat(acteur, cible, contexte) {
     // 1. Harmonisation des statistiques
-    // On s'assure d'avoir des valeurs par défaut solides si une stat manque
     const effVitesseActeur = acteur.stats.vitesse || 30; 
     const effEsquiveCible = cible.stats.esquive || cible.stats.agilite || cible.stats.vitesse || 10;
     const resPhysCible = cible.stats.resistancePhysique || 30;
@@ -33,13 +32,51 @@ function construirePromptCombat(acteur, cible, contexte) {
         infoContreAttaque = `Nom: "${attaqueAleatoire.nom}" (${attaqueAleatoire.description}). Puissance de base: ${attaqueAleatoire.puissance_base}. Intensité générée: ${coefAleatoire}. Force de l'ennemi: ${cible.stats.attaquePhysique || cible.stats.force || 10}`;
     }
 
-    // 4. Le Prompt Maître
+    // 4. --- NOUVEAU : Analyse relationnelle et Lore ---
+    let infoRelation = "";
+    let loreActeur = acteur.stats.personnalite ? `Personnalité: ${acteur.stats.personnalite} Apparence: ${acteur.stats.apparence || 'Inconnue'}` : "";
+    let loreCible = cible.stats && cible.stats.personnalite ? `Personnalité: ${cible.stats.personnalite} Apparence: ${cible.stats.apparence || 'Inconnue'}` : "";
+
+    if (!contexte.isSelf && cible.type !== "monstre") {
+        let relationsDetails = [];
+
+        // Vérification des factions communes
+        const factionsActeur = acteur.stats.factions || [];
+        const factionsCible = cible.stats.factions || [];
+        const factionsCommunes = factionsActeur.filter(f => factionsCible.includes(f));
+        if (factionsCommunes.length > 0) {
+            relationsDetails.push(`Ils partagent une allégeance : ${factionsCommunes.join(', ')}.`);
+        }
+
+        // Vérification des affinités (Acteur -> Cible)
+        const affiniteActeur = (acteur.stats.affinites || []).find(a => a.nom === cible.nom);
+        if (affiniteActeur) {
+            relationsDetails.push(`L'Acteur considère la Cible comme : ${affiniteActeur.relation}.`);
+        }
+
+        // Vérification des affinités (Cible -> Acteur)
+        const affiniteCible = (cible.stats.affinites || []).find(a => a.nom === acteur.pseudo);
+        if (affiniteCible) {
+            relationsDetails.push(`La Cible considère l'Acteur comme : ${affiniteCible.relation}.`);
+        }
+
+        if (relationsDetails.length > 0) {
+            infoRelation = `CONTEXTE RELATIONNEL CRUCIAL : ${relationsDetails.join(' ')} -> ADAPTE LA NARRATION pour refléter ces liens (hésitation dramatique, protection féroce, trahison, etc.).`;
+        }
+    }
+
+    // 5. Le Prompt Maître
     return `
-    Tu es le moteur mathématique d'un RPG.
+    Tu es le moteur mathématique et narratif d'un RPG.
     Acteur: ${acteur.pseudo} (${acteur.stats.description || 'Entité'}). PV: ${acteur.instance.hpActuel}/${acteur.stats.hpMax}. Force: ${acteur.stats.force || acteur.stats.attaquePhysique || 10}, Magie: ${acteur.stats.magie || acteur.stats.attaqueMagique || 10}, Vitesse: ${effVitesseActeur}.
+    ${loreActeur ? `Lore Acteur : ${loreActeur}` : ''}
+    
     Cible (${cible.type}): ${cible.nom} (${cible.stats.description || 'Entité'}). PV: ${cible.instance.hpActuel}/${hpMaxCible}. Esquive: ${effEsquiveCible}, Résistance Phys: ${resPhysCible}, Résistance Mag: ${resMagCible}.
+    ${loreCible ? `Lore Cible : ${loreCible}` : ''}
+    
     Jet d'esquive généré par le système (1-100) : ${jetEsquive}
     Action demandée : "${contexte.description}"
+    ${infoRelation}
     ${infoAlcool}
     ${infoSelf}
     ${infoMort}
