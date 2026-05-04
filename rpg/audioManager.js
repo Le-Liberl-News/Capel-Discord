@@ -31,13 +31,15 @@ async function jouerAmbianceMap(interaction, etage, state) {
         channelId: SALON_VOCAL_ID,
         guildId: guild.id,
         adapterCreator: guild.voiceAdapterCreator,
-        selfDeaf: false,
+        selfDeaf: true,
         selfMute: false,
-        debug: true
+        // On force le bot à ne pas attendre une IP publique si le réseau est masqué
+        group: client.user.id 
     });
 
-    connection.on('stateChange', (oldState, newState) => {
-        console.log(`[Audio Connection] ${oldState.status} -> ${newState.status}`);
+    // On ajoute un listener spécifique sur les erreurs réseau
+    connection.on('error', (error) => {
+        console.error("[Audio Connection] Erreur réseau :", error.message);
     });
 
     try {
@@ -69,6 +71,10 @@ async function jouerAmbianceMap(interaction, etage, state) {
 }
 
 function lancerPiste(etage) {
+    const ffmpegPath = require('ffmpeg-static');
+    // On vérifie que le binaire existe bien là où npm l'a mis
+    console.log(`[Audio] Utilisation du binaire FFmpeg : ${ffmpegPath}`);
+    
     let cheminMusique = path.resolve(__dirname, '../assets/audio', `etage_${etage}.mp3`);
     const cheminParDefaut = path.resolve(__dirname, '../assets/audio', 'music_tower.mp3');
 
@@ -86,7 +92,7 @@ function lancerPiste(etage) {
         // Utilisation de StreamType.Arbitrary pour aider prism-media à décoder via ffmpeg-static
         const resource = createAudioResource(cheminMusique, { 
             inlineVolume: true,
-            inputType: StreamType.Arbitrary 
+            inputType: StreamType.Arbitrary
         });
         
         resource.volume.setVolume(0.25); 
