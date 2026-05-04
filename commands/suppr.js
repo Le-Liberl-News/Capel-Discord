@@ -9,11 +9,10 @@ module.exports = {
         if (!missions) return interaction.reply({ content: "❌ Aucune mission n'est active pour le moment.", ephemeral: true });
         mission = missions[0];
 
-        const [mesPropositions_rows] = await db.query(`
-            SELECT message_id, texte FROM propositions 
+        const [mesPropositions] = await db.query(`
+            SELECT message_id, texte FROM propositions
             WHERE user_id = ? AND sheet_id = ? AND ligne = ?
         `, [userId, mission.sheet_id, mission.ligne]);
-        const mesPropositions = mesPropositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
 
         if (mesPropositions.length === 0) return interaction.reply({ content: "❌ Tu n'as aucune proposition à supprimer pour la mission en cours.", ephemeral: true });
 
