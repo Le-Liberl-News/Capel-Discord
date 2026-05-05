@@ -217,7 +217,7 @@ async function cloreLeVoteActuel(client) {
     await db.query(`UPDATE users_stats SET resultats_du_jour = NULL`);
     for (const seconde of secondes) {
         const [joursConsecutifs_rows] = await db.query(`SELECT jours_consecutifs FROM users_stats WHERE user_id = ?`, [seconde.user_id]);
-const joursConsecutifs = joursConsecutifs_rows[0] ? joursConsecutifs_rows[0].jours_consecutifs : null;
+        const joursConsecutifs = joursConsecutifs_rows[0] ? joursConsecutifs_rows[0].jours_consecutifs : null;
         const consecutifXP = Math.max(Math.round(Math.pow(joursConsecutifs / 365, 1/5) * 70 - 19), 0);
         const voteXP = Math.round((1.2 * seconde.score) * (seconde.score + 5));
         await ajouterXP(seconde.user_id, voteXP + consecutifXP, client);
@@ -235,7 +235,7 @@ const joursConsecutifs = joursConsecutifs_rows[0] ? joursConsecutifs_rows[0].jou
         if (joursConsecutifs > 0) {
             messageXP += ` C'est par ailleurs ton ${joursConsecutifs + 1}ème jour consécutif à participer. Tu reçois donc ${consecutifXP} PB en bonus.`
         }
-        try { db.prepare(`UPDATE users_stats SET resultats_du_jour = ? WHERE user_id = ?`).run(messageXP, seconde.user_id);
+        try { db.query(`UPDATE users_stats SET resultats_du_jour = ? WHERE user_id = ?`, [messageXP, seconde.user_id]);
         } catch (e) { console.error(`Echec de l'enregistrement du message de fin de journée.`, e.message, e.code); }
     }
 
