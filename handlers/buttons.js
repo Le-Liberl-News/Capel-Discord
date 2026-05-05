@@ -14,8 +14,9 @@ module.exports = async function handleButtons(interaction, sheets) {
         let messageRetour = "";
 
         try {
-            const [proposition] = await db.query('SELECT * FROM propositions WHERE message_id = ?').get(messageId);
-            if (!proposition) return interaction.followUp({ content: "Cette proposition n'est plus dans la base.", ephemeral: true });
+            const [propositions] = await db.query('SELECT * FROM propositions WHERE message_id = ?', messageId);
+            if (!propositions) return interaction.followUp({ content: "Cette proposition n'est plus dans la base.", ephemeral: true });
+            const proposition = propositions[0];
             const [missionRows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
 
             const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
@@ -166,7 +167,7 @@ module.exports = async function handleButtons(interaction, sheets) {
                         range: `Sheet1!F${ligneUnique}`,
                     });
                     let valeurExistanteF = (checkF.data.values && checkF.data.values[0][0]) ? checkF.data.values[0][0] : "";
-                    const [toutesLesPropsJSON_rows] = await db.query('SELECT texte FROM propositions WHERE sheet_id = ? AND ligne = ?', [v.sheet_id, v.ligne]);
+                    const [toutesLesPropsJSON] = await db.query('SELECT texte FROM propositions WHERE sheet_id = ? AND ligne = ?', [v.sheet_id, v.ligne]);
                     let archivesLigne = [];
                     toutesLesPropsJSON.forEach(async p => {
                         const objet = JSON.parse(p.texte);
@@ -192,17 +193,14 @@ module.exports = async function handleButtons(interaction, sheets) {
                         });
                     }
                 }
-        
-                // NETTOYAGE
+
                 const statusMsg = estValide  ? "validées et écrites en E" : estEgalite ? "écrites en E mais nécessitent correction" : "rejetées";
                 await interaction.channel.send(`✅ Système : Groupe de lignes [${v.ligne}] ${statusMsg}. Archivage en F terminé.`);
-        
-                const [validationsRestantes_rows] = await db.query(`
+
+                const [validationsRestantes] = await db.query(`
                     SELECT COUNT(*) as total FROM validations
                     WHERE sheet_id = ? AND ligne = ?
                 `, [v.sheet_id, v.ligne]);
-                const validationsRestantes = validationsRestantes_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
-                    const toutesLesPropsJSON = toutesLesPropsJSON_rows[0];
 
                 if (validationsRestantes.total <= 1) {
                     await cleanup.clearButtons(interaction.client, v.sheet_id, v.ligne);
@@ -311,8 +309,7 @@ module.exports = async function handleButtons(interaction, sheets) {
     if (interaction.customId === 'resultats') {
         await interaction.deferUpdate();
         userId = interaction.user.id;
-        const [resultats_rows] = await db.query(`SELECT * FROM users_stats WHERE user_id = ?`, [userId]);
-        resultats = resultats_rows[0];
+        const [resultats] = await db.query(`SELECT * FROM users_stats WHERE user_id = ?`, [userId]);
         if (!resultats || !resultats.resultats_du_jour) return interaction.followUp({ content: "Tu n'as pas proposé de traduction à la dernière mission ! (ou alors il y a un bug)", ephemeral: true });
         await interaction.followUp({ content : resultats.resultats_du_jour, ephemeral: true});
     }
