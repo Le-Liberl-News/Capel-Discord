@@ -43,7 +43,7 @@ module.exports = async function handleButtons(interaction, sheets) {
                 } else if (nombreVotes >= 3) {
                     messageRetour = "☝️ Maximum 3 votes simultanés ! Utilisez /votes pour retrouver vos votes actifs.";
                 } else {
-                    await db.query('INSERT INTO votes (message_id, user_id, valeur) VALUES (?, ?, 1)', [messageId, userId]);
+                    await db.query('INSERT INTO votes (message_id, user_id) VALUES (?, ?)', [messageId, userId]);
                     await db.query('UPDATE propositions SET score = score + 1 WHERE message_id = ?', [messageId]);
                     messageRetour = "Ton vote a été pris en compte ! 👍";
                     change = true;
@@ -109,7 +109,7 @@ module.exports = async function handleButtons(interaction, sheets) {
         const dejaVote = dejaVote_rows[0];
         if (dejaVote) return interaction.followUp({ content: "Tu as déjà voté, l'ami !", ephemeral: true });
         
-        await db.query('INSERT INTO votes_juges (message_id, juge_id, valeur) VALUES (?, ?, ?)', [msgId, interaction.user.id, val]);
+        await db.query('INSERT INTO votes_juges (message_id, juge_id) VALUES (?, ?)', [msgId, interaction.user.id, val]);
 
         if (val === 'OK') {
             await db.query('UPDATE validations SET votes_positifs = votes_positifs + 1 WHERE message_id = ?', [msgId]);

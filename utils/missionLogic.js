@@ -217,7 +217,7 @@ async function cloreLeVoteActuel(client) {
     await db.query(`UPDATE users_stats SET resultats_du_jour = NULL`);
     for (const seconde of secondes) {
         const [joursConsecutifs_rows] = await db.query(`SELECT jours_consecutifs FROM users_stats WHERE user_id = ?`, [seconde.user_id]);
-        const joursConsecutifs = joursConsecutifs_rows[0] ? joursConsecutifs_rows[0].jours_consecutifs : null;
+        const joursConsecutifs = joursConsecutifs_rows[0].jours_consecutifs ;
         const consecutifXP = Math.max(Math.round(Math.pow(joursConsecutifs / 365, 1/5) * 70 - 19), 0);
         const voteXP = Math.round((1.2 * seconde.score) * (seconde.score + 5));
         await ajouterXP(seconde.user_id, voteXP + consecutifXP, client);
