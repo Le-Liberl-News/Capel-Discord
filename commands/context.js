@@ -8,9 +8,7 @@ module.exports = {
         try {
             const [mission_rows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
             const mission = mission_rows[0];
-            if (!mission) {
-                return interaction.editReply("❌ Aucune réplique du jour n'est actuellement définie.");
-            }
+            if (!mission) return interaction.editReply("❌ Aucune réplique du jour n'est actuellement définie.");
 
             const lignesCibles = String(mission.ligne).split(',').map(l => parseInt(l.trim()));
             const premiereLigne = Math.min(...lignesCibles);
@@ -25,9 +23,7 @@ module.exports = {
             });
 
             const rows = sheetRes.data.values;
-            if (!rows || rows.length === 0) {
-                return interaction.editReply("❌ Impossible de récupérer le contexte depuis la feuille.");
-            }
+            if (!rows || rows.length === 0) return interaction.editReply("❌ Impossible de récupérer le contexte depuis la feuille.");
 
             const indexHeader = rows.findIndex(row => row[4] && row[4].toString().trim().toUpperCase() === 'TRADUCTION');
 

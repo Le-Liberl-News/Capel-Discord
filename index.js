@@ -355,14 +355,14 @@ cron.schedule('0 22 * * *', async () => {
 
 cron.schedule('0 19 * * *', async () => {
     const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
-    const [mission] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
-    const [propositions_rows] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
-    const propositions = propositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
+    const [missions] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`);
+    const mission = mission[0];
+    const [propositions] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
     );
 
-    for (proposition of propositions) {
+    for (const proposition of propositions) {
         try {
             const message = await targetChannel.messages.fetch(proposition.message_id);
             await message.edit({ components: [row] });

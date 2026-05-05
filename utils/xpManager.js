@@ -40,9 +40,8 @@ async function ajouterXP(userId, montantXP, client) {
         `, [userId, montantXP]);
         
         console.log(`[XP-DEBUG] DB mise à jour avec succès.`);
-    } catch (dbErr) { 
-        console.error(`[XP-DEBUG] ❌ Erreur écriture DB :`, dbErr.message); 
-    }
+
+    } catch (dbErr) { console.error(`[XP-DEBUG] ❌ Erreur écriture DB :`, dbErr.message); }
 
     const [stats_rows] = await db.query('SELECT xp, niveau FROM users_stats WHERE user_id = ?', [userId]);
     const stats = stats_rows[0];
@@ -95,9 +94,8 @@ async function ajouterXP(userId, montantXP, client) {
                 console.log(`[PROMOTION] DB synchronisée : Niveau = ${nouveauRang.nom}`);
             } catch (e) {
                 console.error(`[PROMOTION] ❌ ÉCHEC :`, e.message);
-                if (e.message.includes("Missing Permissions")) {
-                    console.error(`[CONSEIL] Vérifie que mon rôle est BIEN AU-DESSUS du rôle ${nouveauRang.nom} !`);
-                }
+
+                if (e.message.includes("Missing Permissions")) console.error(`[CONSEIL] Vérifie que mon rôle est BIEN AU-DESSUS du rôle ${nouveauRang.nom} !`);
             }
         } else {
             console.log(`[DISCORD-CHECK] ✅ ${member.user.tag} possède déjà le bon rôle.`);

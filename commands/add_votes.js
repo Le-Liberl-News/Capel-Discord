@@ -9,24 +9,18 @@ module.exports = {
         const estAutorise = ROLES_AUTORISES.some(async id => interaction.member.roles.cache.has(id));
         if (!estAutorise) return interaction.reply({ content: "🛑 Accès refusé.", ephemeral: true });
 
-        // 1. On met l'interaction en attente immédiatement
         await interaction.deferReply({ ephemeral: true });
 
         try {
             const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
-            const [mission] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`).get();
+            const [missions] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`);
             
-            // Sécurité anti-crash si la table est vide
-            if (!mission) {
-                return interaction.editReply({ content: "Aucune mission actuelle trouvée." });
-            }
+            if (!missions) return interaction.editReply({ content: "Aucune mission actuelle trouvée." });
+            const mission = missions[0];
 
-            const [propositions_rows] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
-            const propositions = propositions_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
+            const [propositions] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
             
-            if (propositions.length === 0) {
-                return interaction.editReply({ content: "Aucune proposition à mettre à jour." });
-            }
+            if (propositions.length === 0) return interaction.editReply({ content: "Aucune proposition à mettre à jour." });
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
@@ -39,12 +33,9 @@ module.exports = {
                     const message = await targetChannel.messages.fetch(proposition.message_id);
                     await message.edit({ components: [row] });
                     successCount++;
-                } catch (e) { 
-                    console.error(`❌ Erreur sur le message ${proposition.message_id}:`, e.message); 
-                }
-            }
 
-            // 2. On clôture l'interaction avec le bilan
+                } catch (e) { console.error(`❌ Erreur sur le message ${proposition.message_id}:`, e.message); }
+            }
             await interaction.editReply({ content: `✅ Opération terminée.` });
 
         } catch (error) {
