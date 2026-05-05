@@ -29,6 +29,7 @@ module.exports = async function handleButtons(interaction, sheets) {
                 AND propositions.sheet_id = ?
                 AND propositions.ligne = ?
                 `, [userId, mission.sheet_id, mission.ligne]);
+            const nombreVotes = nombreVotes_rows[0];
             let change = false;
       
             if (votePrecedent) {
@@ -55,7 +56,6 @@ module.exports = async function handleButtons(interaction, sheets) {
                 const componentsActuels = interaction.message.components;
 
                 const rowButtons = ActionRowBuilder.from(componentsActuels[0]);
-                const nombreVotes = nombreVotes_rows[0];
 
                 let texteAafficher = proposition.texte;
                 try {
