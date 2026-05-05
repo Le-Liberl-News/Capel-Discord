@@ -18,6 +18,7 @@ module.exports = async function handleButtons(interaction, sheets) {
             if (!propositions) return interaction.followUp({ content: "Cette proposition n'est plus dans la base.", ephemeral: true });
             const proposition = propositions[0];
             const [missionRows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
+            const mission = mission_rows[0] ? mission_rows[0] : null;
 
             const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
             const votePrecedent = votePrecedent_rows[0];
@@ -28,7 +29,6 @@ module.exports = async function handleButtons(interaction, sheets) {
                 AND propositions.sheet_id = ?
                 AND propositions.ligne = ?
                 `, [userId, mission.sheet_id, mission.ligne]);
-            const mission = mission_rows[0] ? mission_rows[0].length : null;
             let change = false;
       
             if (votePrecedent) {
@@ -131,7 +131,7 @@ module.exports = async function handleButtons(interaction, sheets) {
                 console.error("Impossible de supprimer les boutons :", e);
             }
             const [mission_rows] = await db.query('SELECT nom_feuille FROM mission_actuelle WHERE sheet_id = ? AND ligne = ?', [v.sheet_id, v.ligne]);
-            const mission = mission_rows[0];// 1. Initialisation des paramètres de la feuille
+            const mission = mission_rows[0];
             const nomFeuille = mission ? mission.nom_feuille.trim() : 'Sheet1';
         
             try {
