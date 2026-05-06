@@ -356,7 +356,7 @@ cron.schedule('0 22 * * *', async () => {
 cron.schedule('0 19 * * *', async () => {
     const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
     const [missions] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`);
-    const mission = mission[0];
+    const mission = missions[0];
     const [propositions] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
