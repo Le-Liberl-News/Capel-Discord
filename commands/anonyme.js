@@ -59,7 +59,7 @@ async function getPseudoAnonyme(userId) {
 
     let nouvelIndex = null;
 
-    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length, 0.5))) {
+    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length, 0.35))) {
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
             console.log(`Rôle attribué par combo : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
@@ -69,7 +69,7 @@ async function getPseudoAnonyme(userId) {
     if (nouvelIndex === null) {
         const indexDisponibles = PSEUDOS.map ((_, i) => i).filter(i => !indexDejaAttribues.includes(i));
         if (indexDisponibles.length > 0) {
-            nouvelIndex = indexDisponibles[Math.floor(Math.pow(Math.random(), 3) * indexDisponibles.length)];
+            nouvelIndex = indexDisponibles[Math.floor(Math.pow(Math.random(), 1.8) * indexDisponibles.length)];
             console.log(`Rôle attribué au hasard : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
         }
     }
