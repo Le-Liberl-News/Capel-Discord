@@ -310,7 +310,7 @@ module.exports = async function handleButtons(interaction, sheets) {
         await interaction.deferUpdate();
         userId = interaction.user.id;
         const [resultats] = await db.query(`SELECT * FROM users_stats WHERE user_id = ?`, [userId]);
-        if (!resultats || !resultats.resultats_du_jour) return interaction.followUp({ content: "Tu n'as pas proposé de traduction à la dernière mission ! (ou alors il y a un bug)", ephemeral: true });
-        await interaction.followUp({ content : resultats.resultats_du_jour, ephemeral: true});
+        if (!resultats.length < 1 || !resultats[0].resultats_du_jour) return interaction.followUp({ content: "Tu n'as pas proposé de traduction à la dernière mission ! (ou alors il y a un bug)", ephemeral: true });
+        await interaction.followUp({ content : resultats[0].resultats_du_jour, ephemeral: true});
     }
 }
