@@ -252,7 +252,7 @@ client.on('messageCreate', async message => {
         return;
     }
     const { getPseudoAnonyme } = require('./commands/anonyme.js');
-    const pseudo = getPseudoAnonyme(message.author.id);
+    const pseudo = await getPseudoAnonyme(message.author.id);
     const BASE_URL = process.env.BASE_URL;
     const texte = message.content;
     const fichiersTelecharges = await Promise.all(
