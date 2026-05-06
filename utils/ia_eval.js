@@ -45,7 +45,7 @@ ${contexte_texte}`;
         }
 
         console.log(`[DEBUG-SQL] Tentative d'UPDATE sur message_id: ${propositionId}`);
-        const result_db = db.prepare('UPDATE propositions SET gemma_eval = ? WHERE message_id = ?').run(texteFinal, String(propositionId));
+        const result_db = db.query('UPDATE propositions SET gemma_eval = ? WHERE message_id = ?',[texteFinal, String(propositionId)]);
         console.log(`[DEBUG-SQL] Lignes modifiées : ${result_db.changes}`);
 
         const ancienneRow = messageDiscord.components[0];
