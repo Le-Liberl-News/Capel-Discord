@@ -280,7 +280,7 @@ module.exports = async function handleModals(interaction, sheets) {
         const webhookUrl = isRoleplay ? process.env.WEBHOOK_ROLEPLAY_URL : process.env.WEBHOOK_URL;
         const webhook = new WebhookClient({ url: webhookUrl });
 
-        const pseudo = getPseudoAnonyme(interaction.user.id);
+        const pseudo = await getPseudoAnonyme(interaction.user.id);
 
         const targetChannel = await interaction.client.channels.fetch(threadId);
         const targetMsg = await targetChannel.messages.fetch(targetMessageId);

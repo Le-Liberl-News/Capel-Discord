@@ -45,10 +45,9 @@ const COMBO = [
 
 async function getPseudoAnonyme(userId) {
     const [existant_rows] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]);
-    const existant = existant_rows[0];
 
     console.log("id anonyme existant :", existant);
-    if (existant) return PSEUDOS[existant.pseudo_index];
+    if (existant_rows.length === 1) return PSEUDOS[existant_rows[0].pseudo_index];
 
     const [indexRows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
     const indexDejaAttribues = indexRows.map(r => r.pseudo_index);
