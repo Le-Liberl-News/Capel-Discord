@@ -59,7 +59,11 @@ async function getPseudoAnonyme(userId) {
 
     let nouvelIndex = null;
     const [coefs] = await db.query(`SELECT anon_coef FROM users_stats WHERE user_id = ?`, [userId]);
-    const coef = coefs[0];
+    if (coefs.length < 1) {
+        return;
+    } else {
+        const coef = coefs[0].anon_coef;
+    }
 
     if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length / 2, 0.5))) {
         if (comboDisponibles.length > 0) {
