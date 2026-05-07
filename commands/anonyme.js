@@ -61,7 +61,9 @@ async function getPseudoAnonyme(userId) {
     const [coefs] = await db.query(`SELECT anon_coef FROM users_stats WHERE user_id = ?`, [userId]);
     let coef;
     if (coefs.length < 1) {
-        return;
+        await db.query(`INSERT INTO users_stats (user_id, niveau) VALUES (?, 'Classe 10') `, [userId]);
+        console.log("Nouvel utilisateur dans anonyme:", userId);
+        coef = 0.5;
     } else {
         coef = coefs[0].anon_coef;
     }
