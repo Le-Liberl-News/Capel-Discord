@@ -122,7 +122,6 @@ async function execute(interaction) {
         webhook = new WebhookClient({ url: process.env.WEBHOOK_URL });
     }
     
-    // On passe texte en 'let' car on va potentiellement le modifier
     let texte = interaction.options.getString('message') || '';
     const image = interaction.options.getAttachment('image');
     const pseudo = await getPseudoAnonyme(interaction.user.id);
@@ -139,12 +138,10 @@ async function execute(interaction) {
         const playerInstance = state.players[pseudo];
         const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
 
-        // --- GESTION DES HICS ALÉATOIRES ---
         const estAlcoolise = playerInstance.statuts && playerInstance.statuts.some(s => s.nom === "alcoolise");
         if (estAlcoolise && texte.length > 0) {
             const mots = texte.split(' ');
 
-            // 15% de chance d'insérer un *hic* ou un *hips* après chaque mot
             texte = mots.map(mot => {
                 if (Math.random() < 0.15) {
                     const bruit = Math.random() < 0.5 ? "*hic*" : "*hips*";
@@ -153,12 +150,10 @@ async function execute(interaction) {
                 return mot;
             }).join(' ');
 
-            // Sécurité : si le message était très court et que le jet de 15% a échoué, on force un hoquet à la fin
             if (!texte.includes('*hic*') && !texte.includes('*hips*')) {
                 texte += ' ... *hic*';
             }
         }
-        // -----------------------------------
 
         const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
         saveState();

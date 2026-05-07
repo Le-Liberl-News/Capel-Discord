@@ -3,6 +3,7 @@ const { ajouterXP } = require('../utils/xpManager.js');
 const { evaluerProposition } = require('../utils/ia_eval.js');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, WebhookClient } = require('discord.js');
 const sheetManager = require('../utils/sheetManager.js');
+const stringSimilarity = require('string-similarity');
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
 
 const SALON_READONLY_ID = "1493171302624657428";
@@ -38,7 +39,6 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const texteActuel = textesSaisis.join(' ');
             const [autresPropositions] = await db.query('SELECT texte FROM propositions');
-            const stringSimilarity = require('string-similarity');
 
             for (const autreProposition of autresPropositions) {
                 let ancienTexte = "";
@@ -152,21 +152,34 @@ module.exports = async function handleModals(interaction, sheets) {
             const propActuelle = propActuelle_rows[0];
             const scoreActuel = propActuelle?.score ?? 0;
 
+            const texteActuel = textesSaisis.join(' ');
+            const [autresPropositions] = await db.query('SELECT texte FROM propositions');
+
+            for (const autreProposition of autresPropositions) {
+                let ancienTexte = "";
+                try { ancienTexte = Object.values(JSON.parse(autreProposition.texte)).join(' ');
+                } catch (e) { ancienTexte = autreProposition.texte; }
+
+                const ressemblance = stringSimilarity.compareTwoStrings(texteActuel, ancienTexte);
+                if (ressemblance > 0.8) {
+                    return interaction.editReply({
+                        content: `❌ Proposition refusée : ressemblance trop forte avec une autre proposition.\nSi tu n'en es pas l'auteur, n'hésite pas à en discuter sur un des salons dédiés.`
+                    });
+                }
+            }
+
             const [votesExistants] = await db.query('SELECT COUNT(*) as total FROM votes WHERE message_id = ?', [ancienMessageId]);
 
             if (votesExistants[0].total > 0) {
-                const stringSimilarity = require('string-similarity');
                 const texteReference = propActuelle.texte_original || propActuelle.texte;
 
                 let ancienTexte = "";
                 try { ancienTexte = Object.values(JSON.parse(texteReference)).join(' ');
                 } catch (e) { ancienTexte = texteReference; }
 
-                const nouveauTexte = textesSaisis.join(' ');
-                const score = stringSimilarity.compareTwoStrings(ancienTexte, nouveauTexte);
-                const SEUIL = 0.65;
+                const ressemblance = stringSimilarity.compareTwoStrings(texteActuel, ancienTexte);
 
-                if (score < SEUIL) {
+                if (ressemblance < 0.65) {
                     return interaction.editReply({
                         content: `❌ Modification refusée : ton texte est trop différent de l'original (similarité : ${Math.round(score * 100)}%). Seules les corrections mineures sont autorisées après réception d'un vote.`
                     });
