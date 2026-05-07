@@ -46,7 +46,7 @@ const COMBO = [
 async function getPseudoAnonyme(userId) {
     const [existant_rows] = await db.query('SELECT * FROM pseudos_anonymes WHERE user_id = ?', [userId]);
 
-    console.log("id anonyme existant :", existant);
+    console.log("id anonyme existant :", existants_rows);
     if (existant_rows.length === 1) return PSEUDOS[existant_rows[0].pseudo_index];
 
     const [indexRows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
