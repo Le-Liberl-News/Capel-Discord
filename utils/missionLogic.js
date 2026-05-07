@@ -219,15 +219,16 @@ async function cloreLeVoteActuel(client) {
         const [joursConsecutifs_rows] = await db.query(`SELECT jours_consecutifs FROM users_stats WHERE user_id = ?`, [seconde.user_id]);
         const joursConsecutifs = joursConsecutifs_rows[0].jours_consecutifs ;
         const consecutifXP = Math.max(Math.round(Math.pow(joursConsecutifs / 365, 1/5) * 70 - 19), 0);
-        const voteXP = Math.round((1.2 * seconde.score) * (seconde.score + 5));
+        const score = Number(seconde.score);
+        const voteXP = Math.round((1.2 * score) * (score + 5));
         await ajouterXP(seconde.user_id, voteXP + consecutifXP, client);
         await db.query(`UPDATE users_stats SET jours_consecutifs = jours_consecutifs + 1 WHERE user_id = ?`, [seconde.user_id]);
         let messageXP = `Merci d'avoir envoyé une proposition de traduction aujourd'hui !\n`;
-        if (seconde.score > 0) {
-            if (seconde.score === topScore.maxScore) {
-                messageXP += ` Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour les ${seconde.score} votes que tu as reçus, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
+        if (score > 0) {
+            if (score === topScore.maxScore) {
+                messageXP += `Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour les ${score} vote${(score > 1 ? "s" : "")} que tu as reçus, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
             } else {
-                messageXP += `Tu gagnes ${voteXP} PB pour les ${seconde.score} votes que tu as reçus !`;
+                messageXP += `Tu gagnes ${voteXP} PB pour les ${score} votes que tu as reçus !`;
             }
         } else {
             messageXP += "Tu n'a pas reçu de vote, malheureusement, mais n'hésite pas à retenter ta chance demain !\n";
