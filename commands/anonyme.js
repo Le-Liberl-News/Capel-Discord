@@ -66,7 +66,7 @@ async function getPseudoAnonyme(userId) {
         coef = coefs[0].anon_coef;
     }
 
-    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length / 2, 0.5))) {
+    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length * coef * 0.75, 0.5))) {
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
             console.log(`Rôle attribué par combo : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
