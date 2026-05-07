@@ -8,14 +8,13 @@ module.exports = {
 
         const userId = interaction.user.id;
 
-        const [mesVotes_rows] = await db.query(`
+        const [mesVotes] = await db.query(`
             SELECT votes.*, propositions.texte FROM votes
             JOIN propositions ON votes.message_id = propositions.message_id
             WHERE votes.user_id = ?
             AND propositions.sheet_id = ?
             AND propositions.ligne = ?
             `, [userId, mission.sheet_id, mission.ligne]);
-        const mesVotes = mesVotes_rows[0]; // TODO: Si c'était censé ramener plusieurs lignes, enlève le '_rows[0]'
 
         if (mesVotes.length === 0) {
             return interaction.reply({ content: "Tu n'as pas encore voté... ou alors tu as changé d'avis entre temps.", ephemeral: true });
