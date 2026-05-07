@@ -153,7 +153,7 @@ module.exports = async function handleModals(interaction, sheets) {
             const scoreActuel = propActuelle?.score ?? 0;
 
             const texteActuel = textesSaisis.join(' ');
-            const [autresPropositions] = await db.query('SELECT texte FROM propositions');
+            const [autresPropositions] = await db.query('SELECT texte FROM propositions WHERE message_id <> ?', [ancienMessageId]);
 
             for (const autreProposition of autresPropositions) {
                 let ancienTexte = "";
