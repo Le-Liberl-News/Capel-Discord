@@ -55,7 +55,7 @@ ${contexte_texte}`;
 
         const ancienneRow = messageDiscord.components[0];
         let row;
-        if (ancienRow) {
+        if (ancienneRow) {
             row = ActionRowBuilder.from(ancienneRow).addComponents(nouveauBouton);
         } else {
             row = new ActionRowBuilder().addComponents(nouveauBouton);
