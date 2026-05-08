@@ -48,14 +48,18 @@ ${contexte_texte}`;
         const result_db = db.query('UPDATE propositions SET gemma_eval = ? WHERE message_id = ?',[texteFinal, String(propositionId)]);
         console.log(`[DEBUG-SQL] Lignes modifiées : ${result_db.changes}`);
 
-        const ancienneRow = messageDiscord.components[0];
         const nouveauBouton = new ButtonBuilder()
             .setCustomId(`voir_rapport_${propositionId}`)
             .setLabel(`Langue`)
             .setStyle(ButtonStyle.Secondary);
 
-        const rowMiseAJour = ActionRowBuilder.from(ancienneRow).addComponents(nouveauBouton);
-
+        const ancienneRow = messageDiscord.components[0];
+        let row;
+        if (ancienRow) {
+            row = ActionRowBuilder.from(ancienneRow).addComponents(nouveauBouton);
+        } else {
+            row = new ActionRowBuilder().addComponents(nouveauBouton);
+        }
         await messageDiscord.edit({ components: [rowMiseAJour] });
 
     } catch (err) { console.error("❌ Échec de l'évaluation IA :", err); }
