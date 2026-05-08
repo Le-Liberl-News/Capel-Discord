@@ -45,8 +45,8 @@ ${contexte_texte}`;
         }
 
         console.log(`[DEBUG-SQL] Tentative d'UPDATE sur message_id: ${propositionId}`);
-        const result_db = db.query('UPDATE propositions SET gemma_eval = ? WHERE message_id = ?',[texteFinal, String(propositionId)]);
-        console.log(`[DEBUG-SQL] Lignes modifiées : ${result_db.changes}`);
+        const [result_db] = await db.query('UPDATE propositions SET gemma_eval = ? WHERE message_id = ?',[texteFinal, String(propositionId)]);
+        console.log(`[DEBUG-SQL] Lignes modifiées : ${result_db[0].changes}`);
 
         const nouveauBouton = new ButtonBuilder()
             .setCustomId(`voir_rapport_${propositionId}`)
