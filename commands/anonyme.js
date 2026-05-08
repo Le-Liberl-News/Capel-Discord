@@ -6,22 +6,23 @@ const { tenterRegenDiscussion } = require('../rpg/gestionFatigue.js');
 
 const PSEUDOS = [
 //   0-5                 1-6         2-7              3-8                   4-9
-    "Estelle"         , "Joshua"  , "Scherazard"   , "Olivier"           , "Kloe",                 //0-4
-    "Agate"           , "Tita"    , "Zin"          , "Nial"              , "Ries",                 //5-9
-    "Kevin"           , "Dorothy" , "Luciola"      , "Walter"            , "Bleublanc",            //10-14
-    "Campanella"      , "Loewe"   , "Weissmann"    , "Renne"             , "Professeur Russell",   //15-19
-    "Julia"           , "Josette" , "Anelace"      , "Cassius"           , "Maire Maybelle",       //20-24
-    "Richard"         , "Mueller" , "Grant"        , "Aina"              , "Proviseur Collins",    //25-29
-    "Jill"            , "Hans"    , "Carna"        , "Jean"              , "Général Morgan",       //30-34
-    "Lugran"          , "Kilika"  , "Kurt"         , "Elnan"             , "Majordome Philippe",   //35-39
-    "Duc Dunan"       , "Lila"    , "Kyle"         , "Don"               , "Reine Alicia",         //40-44
-    "Orvid"           , "Anton"   , "Kanone"       , "Chancelier Osborne", "Theresa",              //45-49
-    "Maire Klaus"     , "Mme Mao" , "Antoine"      , "Lt-colonel Cid"    , "Dalmore",              //50-54
-    "Sieg"            , "Clem"    , "Daniel"       , "Ambassadrice Elsa" , "Deen",                 //55-59
-    "Rocco"           , "Rais"    , "Jack"         , "Ambassadeur Davil" , "Halle",                //60-64
-    "Lucy"            , "Mary"    , "Erika Russell", "Lechter"           , "Ein Selnate",          //65-69
-    "Leo"             , "Phyllis" , "Dan Russell"  , "Rufina Argent"     , "Celeste von Auslese",  //70-74
-    "Intendante Hilda", "Gilbert" , "Polly"        , "Directeur Murdock" , "Chef-mécanicien Gustav"//75-79
+    "Estelle"         , "Joshua"  , "Scherazard"   , "Olivier"           , "Kloe",                  //0-4
+    "Agate"           , "Tita"    , "Zin"          , "Nial"              , "Ries",                  //5-9
+    "Kevin"           , "Dorothy" , "Luciola"      , "Walter"            , "Bleublanc",             //10-14
+    "Campanella"      , "Loewe"   , "Weissmann"    , "Renne"             , "Professeur Russell",    //15-19
+    "Julia"           , "Josette" , "Anelace"      , "Cassius"           , "Maire Maybelle",        //20-24
+    "Richard"         , "Mueller" , "Grant"        , "Aina"              , "Proviseur Collins",     //25-29
+    "Jill"            , "Hans"    , "Carna"        , "Jean"              , "Général Morgan",        //30-34
+    "Lugran"          , "Kilika"  , "Kurt"         , "Elnan"             , "Majordome Philippe",    //35-39
+    "Duc Dunan"       , "Lila"    , "Kyle"         , "Don"               , "Reine Alicia",          //40-44
+    "Orvid"           , "Anton"   , "Kanone"       , "Chancelier Osborne", "Theresa",               //45-49
+    "Maire Klaus"     , "Mme Mao" , "Antoine"      , "Lt-colonel Cid"    , "Dalmore",               //50-54
+    "Sieg"            , "Clem"    , "Daniel"       , "Ambassadrice Elsa" , "Deen",                  //55-59
+    "Rocco"           , "Rais"    , "Jack"         , "Ambassadeur Davil" , "Halle",                 //60-64
+    "Lucy"            , "Mary"    , "Erika Russell", "Lechter"           , "Ein Selnate",           //65-69
+    "Leo"             , "Phyllis" , "Dan Russell"  , "Rufina Argent"     , "Celeste von Auslese",   //70-74
+    "Intendante Hilda", "Gilbert" , "Polly"        , "Directeur Murdock" , "Chef-mécanicien Gustav",//75-79
+    "Ray"             , "Terry"   , "Luke"         , "Pat"                                          //80-83
 ];
 
 const COMBO = [
@@ -35,12 +36,13 @@ const COMBO = [
     3,  13, 38, 37, 40,
     39, 24, 43, 42, 55,
     0,  28, 25, 3,  4,
-    28, 11, 79, 23, 76,
+    28, 11, 81, 23, 76,
     4,  49, 56, 7,  60,
     5,  60, 64, 26, 62,
     31, 49, 72, 65, 10,
     68, 22, 6,  9,  4,
-    44, 15, 66, 19, 78
+    44, 15, 66, 19, 78,
+    52, 80, 83, 82
 ];
 
 async function getPseudoAnonyme(userId) {
