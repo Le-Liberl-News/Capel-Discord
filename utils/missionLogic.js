@@ -165,6 +165,7 @@ async function genererMessageRecap(client) {
                 texteAafficher = Object.values(objetTrad)
                     .map((traduction, i) => `[${i+1}] ${traduction}`)
                     .join('\n');
+                if (texteAafficher.length > 500) texteAafficher = texteAafficher.substring(0,497) + '...';
             } catch (e) { texteAafficher = p.texte; }
 
             const texteIndente = texteAafficher.split('\n').map(l => `   ${l}`).join('\n');
