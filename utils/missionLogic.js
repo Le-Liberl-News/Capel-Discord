@@ -238,8 +238,9 @@ async function cloreLeVoteActuel(client) {
         await db.query(`UPDATE users_stats SET jours_consecutifs = jours_consecutifs + 1 WHERE user_id = ?`, [seconde.user_id]);
         let messageXP = `Merci d'avoir envoyé une proposition de traduction aujourd'hui !\n`;
         if (score > 0) {
+            const plural = (score > 1);
             if (score === topScore.maxScore) {
-                messageXP += `Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour les ${score} vote${(score > 1 ? "s" : "")} que tu as reçus, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
+                messageXP += `Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour le${plural ? "s " + score : ""} vote${plural ? "s" : ""} que tu as reçu${plural ? "s" : ""}, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
             } else {
                 messageXP += `Tu gagnes ${voteXP} PB pour les ${score} votes que tu as reçus !`;
             }
