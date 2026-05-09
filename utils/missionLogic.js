@@ -9,6 +9,13 @@ const cleanup = require('./cleanup.js');
 const genAI = new GoogleGenerativeAI(process.env.API_GEMINI);
 const SALON_READONLY_ID = "1493171302624657428";
 
+function countChar (text) {
+    let differentChars = "";
+    const ascii = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+    for (const char of text) if (!differentChars.includes(char) && !ascii.includes(char)) differentChars += char;
+    return differentChars.length;
+}
+
 async function declencherNouvelleMission(sheets, tableId, channelId) {
     console.log("🕵️ Recherche d'une nouvelle mission...");
     const mission = await trouverMissionDuJour(sheets, tableId);
@@ -20,6 +27,15 @@ async function declencherNouvelleMission(sheets, tableId, channelId) {
     const japsArray = mission.bulle.jap.split(' |BR| ');
     const engsArray = mission.bulle.eng.split(' |BR| ');
     console.log(`Mission trouvée (${lignesArray.length} bulles). Début de l'analyse orbale...`);
+
+    const multiplicateur = Math.max(1,
+        Math.round(
+            Math.pow(
+                (countChar(japsArray.join('')) - 10) / 25,
+                2/3
+            ) * 2
+        ) / 2
+    );
 
     let texteGemma = "⚠️ *L'analyse contextuelle est indisponible pour le moment.*";
 
@@ -68,8 +84,8 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
     texteGemma = textePropre;
 
     await db.execute(`
-        INSERT INTO mission_actuelle (id, sheet_id, nom_feuille, endroit, ligne, texte_jap, texte_eng, nom_perso, context) 
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?) 
+        INSERT INTO mission_actuelle (id, sheet_id, nom_feuille, endroit, ligne, texte_jap, texte_eng, nom_perso, context, multiplicateur)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
         sheet_id = VALUES(sheet_id), 
         nom_feuille = VALUES(nom_feuille), 
@@ -78,7 +94,8 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
         texte_jap = VALUES(texte_jap),
         texte_eng = VALUES(texte_eng),
         nom_perso = VALUES(nom_perso),
-        context = VALUES(context)
+        context = VALUES(context),
+        multiplicateur = VALUES(multiplicateur)
     `, [
         mission.feuille.id, 
         mission.feuille.nom, 
@@ -87,7 +104,8 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
         mission.bulle.jap, 
         mission.bulle.eng,
         mission.bulle.nom_perso,
-        texteGemma
+        texteGemma,
+        multiplicateur
     ]);
     
     let blocTexteJapEng = "";
@@ -96,6 +114,7 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
         blocTexteJapEng += `>> JAP : ${japsArray[i].replaceAll("\n", "\n         ")}\n`;
         blocTexteJapEng += `>> ENG : ${engsArray[i].replaceAll("\n", "\n         ")}\n\n`;
     });
+
 
     const messagePrincipal = `\`\`\`text
       The Orbal Calculator
@@ -109,15 +128,8 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
 
 ${blocTexteJapEng}\`\`\`
     `;
-
-    const premierJap = japsArray[0] || "";
-    const motsJap = premierJap.replace(/\n/g, ' ').trim().split(/\s+/).slice(0, 10).join(' ');
-    const nomThread = `${motsJap}…`;
     
-    return {
-        principal: messagePrincipal,
-        nomThread: nomThread
-    };
+    return { principal: messagePrincipal };
 }
 
 async function genererMessageRecap(client) {
@@ -210,17 +222,17 @@ async function cloreLeVoteActuel(client) {
         WHERE propositions.sheet_id = ? AND propositions.ligne = ?
     `, [mission.sheet_id, mission.ligne]);
 
-    for (const votant of votants) {
-        await ajouterXP(votant.user_id, 3, client);
-    }
+    const multiplicateur = mission.multiplicateur || 1;
+
+    for (const votant of votants) await ajouterXP(votant.user_id, 3, client);
 
     await db.query(`UPDATE users_stats SET resultats_du_jour = NULL`);
     for (const seconde of secondes) {
         const [joursConsecutifs_rows] = await db.query(`SELECT jours_consecutifs FROM users_stats WHERE user_id = ?`, [seconde.user_id]);
         const joursConsecutifs = joursConsecutifs_rows[0].jours_consecutifs ;
-        const consecutifXP = Math.max(Math.round(Math.pow(joursConsecutifs / 365, 1/5) * 70 - 19), 0);
+        const consecutifXP = Math.max(Math.round((Math.pow(joursConsecutifs / 365, 1/5) * 70 - 19) * multiplicateur), 0);
         const score = Number(seconde.score);
-        const voteXP = Math.round((1.2 * score) * (score + 5));
+        const voteXP = Math.round((1.2 * score) * (score + 5) * multiplicateur);
         await ajouterXP(seconde.user_id, voteXP + consecutifXP, client);
         await db.query(`UPDATE users_stats SET jours_consecutifs = jours_consecutifs + 1 WHERE user_id = ?`, [seconde.user_id]);
         let messageXP = `Merci d'avoir envoyé une proposition de traduction aujourd'hui !\n`;
@@ -300,5 +312,4 @@ async function cloreLeVoteActuel(client) {
 }
 
 
-
-module.exports = { declencherNouvelleMission, cloreLeVoteActuel,genererMessageRecap };
+module.exports = { declencherNouvelleMission, cloreLeVoteActuel, genererMessageRecap };

@@ -314,6 +314,9 @@ cron.schedule('0 0 * * *', async () => {
         const missionMsg = await channel.send({ content: result.principal });
 
         const lienMission = `https://discord.com/channels/${process.env.GUILD_ID}/${SALON_READONLY_ID}/${missionMsg.id}`;
+        const [multiplicateurs] = await db.query(`SELECT multiplicateur FROM mission_actuelle WHERE id = 1`);
+        const bonus = (multiplicateurs[0].multiplicateur - 1) * 100;
+        const bonusMessage = (bonus > 0) ? `\nBonus de ${bonus} % sur les propositions soumises aujourd'hui !` : "";
         const messageAnnonce = `\`\`\`text
     The Orbal Calculator
     CAPEL SYSTEM Ver.7.0
@@ -329,7 +332,7 @@ cron.schedule('0 0 * * *', async () => {
     > \`/trad\`    : Transférer vos propositions dans la base de données.
     > \`/context\` : Extraire le script environnant et l'analyse de la situation.
     > (les autres commandes sont détaillées dans le message épinglé sur ce salon)
-
+    ${bonusMessage}
     *Bonne chance aux participants !*`;
 
         const tutoMsg = await discu_channel.send({ content: messageAnnonce });
