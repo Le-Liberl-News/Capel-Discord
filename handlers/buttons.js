@@ -22,25 +22,28 @@ module.exports = async function handleButtons(interaction, sheets) {
 
             const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
             const votePrecedent = votePrecedent_rows[0];
-            const [nombreVotes_rows] = await db.query(`
-                SELECT votes.* FROM votes
+            const [votes] = await db.query(`
+                SELECT votes.*, propositions.user_id AS author_id FROM votes
                 JOIN propositions ON votes.message_id = propositions.message_id
                 WHERE votes.user_id = ?
                 AND propositions.sheet_id = ?
                 AND propositions.ligne = ?
                 `, [userId, mission.sheet_id, mission.ligne]);
-            const nombreVotes = nombreVotes_rows[0];
             let change = false;
       
             if (votePrecedent) {
-                await db.query('DELETE FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
-                await db.query('UPDATE propositions SET score = score - 1 WHERE message_id = ?', [messageId]);
-                messageRetour = "Ton vote a été retiré ! 🔙";
-                change = true;
+                if (proposition.user_id !== userId && votes.filter((l) => l.author_id !== userId).length === 1 && votes.length > 1) {
+                    messageRetour = "Bien essayé, mais non.";
+                } else {
+                    await db.query('DELETE FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
+                    await db.query('UPDATE propositions SET score = score - 1 WHERE message_id = ?', [messageId]);
+                    messageRetour = "Ton vote a été retiré ! 🔙";
+                    change = true;
+                }
             } else {
-                if (proposition.user_id === userId) {
-                    messageRetour = "☝️ Interdit de voter pour sa propre proposition !";
-                } else if (nombreVotes >= 3) {
+                if (proposition.user_id === userId && votes.filter((l) => l.author_id !== userId).length === 0) {
+                    messageRetour = "☝️ Interdit de voter pour sa propre proposition sans avoir voté pour quelqu'un d'autre !";
+                } else if (votes.length >= 3) {
                     messageRetour = "☝️ Maximum 3 votes simultanés ! Utilisez /votes pour retrouver vos votes actifs.";
                 } else {
                     await db.query('INSERT INTO votes (message_id, user_id) VALUES (?, ?)', [messageId, userId]);
