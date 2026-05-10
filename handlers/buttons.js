@@ -197,10 +197,8 @@ module.exports = async function handleButtons(interaction, sheets) {
                 const statusMsg = estValide  ? "validées et écrites en E" : estEgalite ? "écrites en E mais nécessitent correction" : "rejetées";
                 await interaction.channel.send(`✅ Système : Groupe de lignes [${v.ligne}] ${statusMsg}. Archivage en F terminé.`);
 
-                const [validationsRestantes] = await db.query(`
-                    SELECT COUNT(*) as total FROM validations
-                    WHERE sheet_id = ? AND ligne = ?
-                `, [v.sheet_id, v.ligne]);
+                const [validationsRestantes_rows] = await db.query(`SELECT COUNT(*) as total FROM validations WHERE sheet_id = ? AND ligne = ?`, [v.sheet_id, v.ligne]);
+                const validationsRestantes = validationsRestantes_rows[0];
 
                 if (validationsRestantes.total <= 1) {
                     await cleanup.clearButtons(interaction.client, v.sheet_id, v.ligne);
@@ -287,7 +285,7 @@ module.exports = async function handleButtons(interaction, sheets) {
         }
     }
 
-    if (interaction.customId.startsWith('btn_revert_')) { //Clic sur le bouton rouge "Annuler" -> Restaure l'original
+    if (interaction.customId.startsWith('btn_revert_')) {
         const baseName = interaction.customId.split('_')[2];
 
         const parentMessage = await interaction.channel.messages.fetch(interaction.message.reference.messageId);
