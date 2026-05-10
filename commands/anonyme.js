@@ -54,14 +54,15 @@ async function getPseudoAnonyme(userId) {
     const [indexRows] = await db.query('SELECT pseudo_index FROM pseudos_anonymes');
     const indexDejaAttribues = indexRows.map(r => r.pseudo_index);
 
-    const comboDisponibles = COMBO.filter((valeur, index) =>
-    indexDejaAttribues.includes(index) &&
-    !indexDejaAttribues.includes(valeur));
+    const comboDisponibles = [
+        ...COMBO.filter((valeur, index) => indexDejaAttribues.includes(index) && !indexDejaAttribues.includes(valeur)),
+        ...COMBO.map((valeur, index) => !indexDejaAttribues.includes(index) && indexDejaAttribues.includes(valeur) ? index : null).filter(v => v !== null)
+    ];
 
     let nouvelIndex = null;
     const [coefs] = await db.query(`SELECT anon_coef FROM users_stats WHERE user_id = ?`, [userId]);
     let coef;
-    if (coefs.length < 1) {
+    if (coefs.length === 0) {
         await db.query(`INSERT INTO users_stats (user_id, niveau) VALUES (?, 'Classe 10') `, [userId]);
         console.log("Nouvel utilisateur dans anonyme:", userId);
         coef = 0.5;
@@ -69,7 +70,7 @@ async function getPseudoAnonyme(userId) {
         coef = coefs[0].anon_coef;
     }
 
-    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length * coef / 2, 0.5))) {
+    if (Math.random() > Math.pow(0.5, Math.pow(comboDisponibles.length * coef / 4, 0.5))) {
         if (comboDisponibles.length > 0) {
             nouvelIndex = comboDisponibles[Math.floor(Math.random() * comboDisponibles.length)];
             console.log(`Rôle attribué par combo : "${PSEUDOS[nouvelIndex]}" pour l'utilisateur ${userId}`);
