@@ -70,6 +70,7 @@ module.exports = {
         if (tentativePrecedente.length > 0) {
             try { textePrerempli = Object.values(JSON.parse(tentativePrecedente[0].texte)).join(' ');
             } catch (e) { textePrerempli = tentativePrecedente[0].texte; }
+            console.log("Tentative précédente détectée:", textePrerempli);
         }
 
         lignes.forEach((numLigne, index) => {
