@@ -68,7 +68,7 @@ module.exports = {
         const  [tentativePrecedente] = await db.query(`SELECT * FROM tentatives WHERE user_id = ?`, [userId]);
         let textePrerempli = null;
         if (tentativePrecedente.length > 0) {
-            try { textePrerempli = Object.values(JSON.parse(tentativePrecedente[0].texte)).join(' ');
+            try { textePrerempli = Object.values(JSON.parse(tentativePrecedente[0].texte));
             } catch (e) { textePrerempli = tentativePrecedente[0].texte; }
             console.log("Tentative précédente détectée:", textePrerempli);
         }
