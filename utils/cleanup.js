@@ -5,6 +5,7 @@ const SALON_READONLY_ID = "1493171302624657428";
 
 async function clearButtons(client, sheet_id, ligne) {
     try {
+        db.query(`DELETE FROM tentatives`);
         const [propositions] = await db.query('SELECT message_id FROM propositions WHERE sheet_id = ? AND ligne = ?', [sheet_id, ligne]);
         if (propositions.length === 0) return;
 
@@ -13,7 +14,6 @@ async function clearButtons(client, sheet_id, ligne) {
         for (const prop of propositions) {
             try {
                 const msg = await salon.messages.fetch(prop.message_id);
-                // Éditer le message avec un tableau vide supprime tous les boutons
                 await msg.edit({ components: [] });
             } catch (errMsg) { console.error(`[ClearButtons] Message ${prop.message_id} introuvable ou déjà supprimé.`); }
         }
@@ -35,7 +35,7 @@ async function purgeMission(sheetId, ligne, validationMessageId) {
             await db.query('DELETE FROM validations WHERE message_id = ?', [validationMessageId]);
             await db.query('DELETE FROM votes_juges WHERE message_id = ?', [validationMessageId]);
         }
-        console.log(`🧹 [CLEANUP] Nettoyage parfait pour la ligne ${ligne} !`);
+        console.log(`🧹 [CLEANUP] Nettoyage terminé pour la ligne ${ligne} !`);
 
     } catch (err) { console.error(`❌ [CLEANUP] Erreur lors du nettoyage :`, err); }
 }

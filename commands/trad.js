@@ -65,13 +65,20 @@ module.exports = {
         const textesJap = String(mission.texte_jap).split(' |BR| ');
         const textesEng = String(mission.texte_eng).split(' |BR| ');
 
+        const tentativePrecedente = db.query(`SELECT FROM tentatives WHERE user_id = ?`, [userId]);
+        let textePrerempli = null;
+        if (tentativePrecedente.length > 0) {
+            try { textePrerempli = Object.values(JSON.parse(tentativePrecedente[0].texte)).join(' ');
+            } catch (e) { textePrerempli = tentativePrecedente[0].texte; }
+        }
+
         lignes.forEach((numLigne, index) => {
             const input = new TextInputBuilder()
                 .setCustomId(`bulle_${index}`)
                 .setLabel(`Bulle ${index + 1} (Ligne ${numLigne.trim()})`)
                 .setPlaceholder(`JAP: ${textesJap[index] ? textesJap[index].substring(0, 45) : "..."}`)
                 .setStyle(TextInputStyle.Paragraph)
-                .setValue(`JAP: ${textesJap[index]}\nEN: ${textesEng[index]}`)
+                .setValue(textePrerempli ? textePrerempli[index] : `JAP: ${textesJap[index]}\nEN: ${textesEng[index]}`)
                 .setRequired(true);
 
             modal.addComponents(new ActionRowBuilder().addComponents(input));

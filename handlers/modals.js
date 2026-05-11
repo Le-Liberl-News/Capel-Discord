@@ -40,6 +40,12 @@ module.exports = async function handleModals(interaction, sheets) {
             const texteActuel = textesSaisis.join(' ');
             const [autresPropositions] = await db.query('SELECT texte FROM propositions');
 
+            let objetStockage = {};
+            lignes.forEach((numLigne, i) => {
+                objetStockage[numLigne.trim()] = textesSaisis[i];
+            });
+            const jsonAStocker = JSON.stringify(objetStockage);
+
             for (const autreProposition of autresPropositions) {
                 let ancienTexte = "";
                 try { ancienTexte = Object.values(JSON.parse(autreProposition.texte)).join(' ');
@@ -47,10 +53,12 @@ module.exports = async function handleModals(interaction, sheets) {
 
                 const ressemblance = stringSimilarity.compareTwoStrings(texteActuel, ancienTexte);
                 if (ressemblance > 0.8) {
+                    db.query(`INSERT INTO tentatives (user_id, texte) VALUES(?, ?) ON DUPLICATE KEY UPDATE texte = VALUES(texte)`, [userId, jsonAStocker]);
                     return interaction.editReply({
                         content: `❌ Proposition refusée : ressemblance trop forte avec une proposition précédente.\nSi tu en es l'auteur, modifie-la avec /edition. Sinon, discutes-en sur un des salons dédiés.`
                     });
-                }
+
+                } else { db.query('DELETE FROM tentatives WHERE user_id = ?', [userId]); }
             }
 
             const texteComplet = textesSaisis.join('\n---\n');
@@ -78,12 +86,6 @@ module.exports = async function handleModals(interaction, sheets) {
                 reply: { messageReference: mission.mission_message_id, failIfNotExists: false },
                 components: row ? [row] : []
             });
-
-            let objetStockage = {};
-            lignes.forEach((numLigne, i) => {
-                objetStockage[numLigne.trim()] = textesSaisis[i];
-            });
-            const jsonAStocker = JSON.stringify(objetStockage);
 
             console.log(">>> [DEBUG] Tentative d'insertion en BDD...");
             await db.query('INSERT INTO propositions (message_id, texte, score, sheet_id, ligne, user_id, couleur) VALUES (?, ?, 0, ?, ?, ?, ?)', [publicMessage.id, jsonAStocker, mission.sheet_id, mission.ligne, userId, couleur]);
