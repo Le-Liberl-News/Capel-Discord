@@ -65,7 +65,7 @@ module.exports = {
         const textesJap = String(mission.texte_jap).split(' |BR| ');
         const textesEng = String(mission.texte_eng).split(' |BR| ');
 
-        const tentativePrecedente = db.query(`SELECT * FROM tentatives WHERE user_id = ?`, [userId]);
+        const  [tentativePrecedente] = await db.query(`SELECT * FROM tentatives WHERE user_id = ?`, [userId]);
         let textePrerempli = null;
         if (tentativePrecedente.length > 0) {
             try { textePrerempli = Object.values(JSON.parse(tentativePrecedente[0].texte)).join(' ');
