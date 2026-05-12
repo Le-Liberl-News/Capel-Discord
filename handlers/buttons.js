@@ -53,31 +53,6 @@ module.exports = async function handleButtons(interaction, sheets) {
                 }
             }
 
-            if (change) {
-                const [scoreRows] = await db.query('SELECT score FROM propositions WHERE message_id = ?', [messageId]);
-                const nouveauScore = scoreRows[0].score;
-                const componentsActuels = interaction.message.components;
-
-                const rowButtons = ActionRowBuilder.from(componentsActuels[0]);
-
-                let texteAafficher = proposition.texte;
-                try {
-                    const objetTrad = JSON.parse(proposition.texte);
-                    texteAafficher = Object.values(objetTrad).join('\n---\n');
-                } catch (e) {
-                    texteAafficher = proposition.texte;// Fallback de sécurité si ancienne version
-                }
-
-                const embedMisAJour = new EmbedBuilder()
-                .setColor(proposition.couleur || '#2F3136')
-                .setDescription(`${texteAafficher}\n### **Score actuel :** \`${nouveauScore}\``);
-
-                await interaction.message.edit({
-                    content: '',
-                    embeds: [embedMisAJour],
-                    components: [rowButtons]
-                });
-            }
             await interaction.followUp({ content: messageRetour, ephemeral: true });
 
         } catch (err) {

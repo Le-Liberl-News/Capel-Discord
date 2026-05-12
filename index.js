@@ -376,23 +376,3 @@ cron.schedule('0 19 * * *', async () => {
     await discu_channel.send({ content: "**Les votes sont ouverts !**" });
 
 }, { timezone: "Europe/Paris"})
-
-const heuresRappel = ['0 21 * * *'];
-
-heuresRappel.forEach(schedule => {
-    cron.schedule(schedule, async () => {
-        try {
-            const recap = await genererMessageRecap(client);
-            if (!recap) return;
-
-            const channel = await client.channels.fetch(SALON_VOTE_ID);
-            await channel.send({
-                content: `🔔 **RAPPEL AUTOMATIQUE**\n${recap}`
-            });
-            console.log(`[CAPEL-LOG] Rappel envoyé via le programme ${schedule}`);
-
-        } catch (error) { console.error("❌ Erreur lors du rappel automatique :", error); }
-
-    }, { timezone: "Europe/Paris" });
-});
-

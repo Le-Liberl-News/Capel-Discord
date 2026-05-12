@@ -79,7 +79,6 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const embedProposition = new EmbedBuilder()
             .setColor(couleur)
-            .setDescription(`${texteComplet}\n### **Score actuel :** \`0\``);
 
             const publicMessage = await targetChannel.send({
                 embeds: [embedProposition],
@@ -152,7 +151,6 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const [propActuelle_rows] = await db.query('SELECT score, couleur, texte, texte_original FROM propositions WHERE message_id = ?', [ancienMessageId]);
             const propActuelle = propActuelle_rows[0];
-            const scoreActuel = propActuelle?.score ?? 0;
 
             const texteActuel = textesSaisis.join(' ');
             const [autresPropositions] = await db.query('SELECT texte FROM propositions WHERE message_id <> ?', [ancienMessageId]);
@@ -206,7 +204,6 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const embedEdite = new EmbedBuilder()
                 .setColor(propActuelle?.couleur || '#2F3136')
-                .setDescription(`${texteComplet}\n### **Score actuel :** \`${scoreActuel}\``);
             await ancienMessage.edit({ embeds: [embedEdite] });
 
             await interaction.editReply({ content: "✅ Ta proposition a été mise à jour !" });
