@@ -1,21 +1,30 @@
 const db = require('./db.js');
-
+const { EmbedBuilder } = require('discord.js');
 
 const SALON_READONLY_ID = "1493171302624657428";
 
 async function clearButtons(client, sheet_id, ligne) {
     try {
         db.query(`DELETE FROM tentatives`);
-        const [propositions] = await db.query('SELECT message_id FROM propositions WHERE sheet_id = ? AND ligne = ?', [sheet_id, ligne]);
+        const [propositions] = await db.query('SELECT message_id, score, couleur, texte FROM propositions WHERE sheet_id = ? AND ligne = ?', [sheet_id, ligne]);
         if (propositions.length === 0) return;
 
         const salon = await client.channels.fetch(SALON_READONLY_ID);
 
         for (const prop of propositions) {
+            let texte = "";
+            try { texte = Object.values(JSON.parse(prop.texte)).join('\n---\n');
+            } catch (e) { texte = prop.texte; }
+
+            const scoreActuel = prop?.score ?? 0;
+            const embedEdite = new EmbedBuilder()
+                .setColor(prop?.couleur || '#2F3136')
+                .setDescription(`${texte}\n### **Score actuel :** \`${scoreActuel}\``);
+
             try {
                 const msg = await salon.messages.fetch(prop.message_id);
-                await msg.edit({ components: [] });
-            } catch (errMsg) { console.error(`[ClearButtons] Message ${prop.message_id} introuvable ou déjà supprimé.`); }
+                await msg.edit({ embeds: [embedEdite], components: [] });
+            } catch {console.error(`[ClearButtons] Message ${prop.message_id} introuvable ou déjà supprimé.`)}
         }
     } catch (erreur) { console.error("❌ Erreur critique dans clearButtons :", erreur); }
 }
