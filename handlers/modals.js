@@ -79,6 +79,7 @@ module.exports = async function handleModals(interaction, sheets) {
 
             const embedProposition = new EmbedBuilder()
             .setColor(couleur)
+            .setDescription(texteComplet);
 
             const publicMessage = await targetChannel.send({
                 embeds: [embedProposition],
@@ -203,7 +204,8 @@ module.exports = async function handleModals(interaction, sheets) {
             const ancienMessage = await targetChannel.messages.fetch(ancienMessageId);
 
             const embedEdite = new EmbedBuilder()
-                .setColor(propActuelle?.couleur || '#2F3136')
+            .setColor(propActuelle?.couleur || '#2F3136')
+            .setDescription(texteComplet);
             await ancienMessage.edit({ embeds: [embedEdite] });
 
             await interaction.editReply({ content: "✅ Ta proposition a été mise à jour !" });
