@@ -242,7 +242,7 @@ async function cloreLeVoteActuel(client) {
             if (score === topScore.maxScore) {
                 messageXP += `Tu es en tête du classement, félicitations !\nTu gagnes ainsi ${voteXP} PB pour le${plural ? "s " + score : ""} vote${plural ? "s" : ""} que tu as reçu${plural ? "s" : ""}, ainsi que 20 PB pour ta victoire.\nDes points supplémentaires peuvent t'être attribués selon l'avis des juges.`;
             } else {
-                messageXP += `Tu gagnes ${voteXP} PB pour les ${score} votes que tu as reçus !`;
+                messageXP += `Tu gagnes ${voteXP} PB pour le${plural ? "s " + score : ""} vote${plural ? "s" : ""} que tu as reçu${plural ? "s" : ""} !`;
             }
         } else {
             messageXP += "Tu n'a pas reçu de vote, malheureusement, mais n'hésite pas à retenter ta chance demain !\n";
