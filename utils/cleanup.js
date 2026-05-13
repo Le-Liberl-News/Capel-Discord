@@ -19,7 +19,7 @@ async function clearButtons(client, sheet_id, ligne) {
             const scoreActuel = prop?.score ?? 0;
             const embedEdite = new EmbedBuilder()
                 .setColor(prop?.couleur || '#2F3136')
-                .setDescription(`${texte}\n### **Score actuel :** \`${scoreActuel}\``);
+                .setDescription(`${texte}\n### **Score final :** \`${scoreActuel}\``);
 
             try {
                 const msg = await salon.messages.fetch(prop.message_id);
