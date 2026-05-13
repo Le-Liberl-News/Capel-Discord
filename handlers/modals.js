@@ -69,7 +69,7 @@ module.exports = async function handleModals(interaction, sheets) {
             const heure = heureParis.getHours();
 
             let row = null;
-            if (heure >= 19 && heure < 22) {
+            if (mission.voting) {
                 row = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
                 );

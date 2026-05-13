@@ -301,78 +301,82 @@ app.listen(3000, () => {
 
 cron.schedule('0 0 * * *', async () => {
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
-    try {
-        console.log("🕒 [CRON] Lancement de la mission de minuit...");
+    const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
+    const voting = voting_rows[0]?.voting;
+    if (!voting) {
+        try {
+            console.log("🕒 [CRON] Lancement de la mission de minuit...");
 
-        const channel = await client.channels.fetch(SALON_READONLY_ID);
-        const result = await declencherNouvelleMission(sheets, TABLE_ID, SALON_READONLY_ID);
-        const capelAvatar = new AttachmentBuilder('./capel.gif');
+            const channel = await client.channels.fetch(SALON_READONLY_ID);
+            const result = await declencherNouvelleMission(sheets, TABLE_ID, SALON_READONLY_ID);
+            const capelAvatar = new AttachmentBuilder('./capel.gif');
 
-        if (typeof result === 'string') { return channel.send(result); }
+            if (typeof result === 'string') { return channel.send(result); }
 
-        await channel.send({ files: [capelAvatar] });
-        const missionMsg = await channel.send({ content: result.principal });
+            await channel.send({ files: [capelAvatar] });
+            const missionMsg = await channel.send({ content: result.principal });
 
-        const lienMission = `https://discord.com/channels/${process.env.GUILD_ID}/${SALON_READONLY_ID}/${missionMsg.id}`;
-        const [multiplicateurs] = await db.query(`SELECT multiplicateur FROM mission_actuelle WHERE id = 1`);
-        const bonus = (multiplicateurs[0].multiplicateur - 1) * 100;
-        const bonusMessage = (bonus > 0) ? `\nBonus de ${bonus} % sur les propositions soumises aujourd'hui !` : "";
-        const messageAnnonce = `\`\`\`text
-    The Orbal Calculator
-    CAPEL SYSTEM Ver.7.0
-    COPYRIGHT C.T.Z.
-    ----------------------------------
-    [STATUT]  : NOUVELLE ENTREE DETECTEE
-    [REQUETE] : SOUMISSIONS OUVERTES
-    ----------------------------------\`\`\`
-    **Cible localisée :**
-    🔗 [Accéder au bloc de répliques du jour](${lienMission})
+            const lienMission = `https://discord.com/channels/${process.env.GUILD_ID}/${SALON_READONLY_ID}/${missionMsg.id}`;
+            const [multiplicateurs] = await db.query(`SELECT multiplicateur FROM mission_actuelle WHERE id = 1`);
+            const bonus = (multiplicateurs[0].multiplicateur - 1) * 100;
+            const bonusMessage = (bonus > 0) ? `\nBonus de ${bonus} % sur les propositions soumises aujourd'hui !` : "";
+            const messageAnnonce = `\`\`\`text
+        The Orbal Calculator
+        CAPEL SYSTEM Ver.7.0
+        COPYRIGHT C.T.Z.
+        ----------------------------------
+        [STATUT]  : NOUVELLE ENTREE DETECTEE
+        [REQUETE] : SOUMISSIONS OUVERTES
+        ----------------------------------\`\`\`
+        **Cible localisée :**
+        🔗 [Accéder au bloc de répliques du jour](${lienMission})
 
-    **Fonctions système disponibles :**
-    > \`/trad\`    : Transférer vos propositions dans la base de données.
-    > \`/context\` : Extraire le script environnant et l'analyse de la situation.
-    > (les autres commandes sont détaillées dans le message épinglé sur ce salon)
-    ${bonusMessage}
-    *Bonne chance aux participants !*`;
+        **Fonctions système disponibles :**
+        > \`/trad\`    : Transférer vos propositions dans la base de données.
+        > \`/context\` : Extraire le script environnant et l'analyse de la situation.
+        > (les autres commandes sont détaillées dans le message épinglé sur ce salon)
+        ${bonusMessage}
+        *Bonne chance aux participants !*`;
 
-        const tutoMsg = await discu_channel.send({ content: messageAnnonce });
+            const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
-        await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
-        await db.query('DELETE FROM pseudos_anonymes');
+            await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
+            await db.query('DELETE FROM pseudos_anonymes');
 
-        console.log("✅ [CRON] Mission de minuit déployée avec succès.");
+            console.log("✅ [CRON] Mission de minuit déployée avec succès.");
 
-    } catch (error) { console.error("❌ Erreur lors du Cron de minuit :", error); }
+        } catch (error) { console.error("❌ Erreur lors du Cron de minuit :", error); }
 
-    try { await updateRanking(client);
-    } catch (errTop) { console.error("[XP-DEBUG] ❌ Erreur classement :", errTop.message); }
+        try { await updateRanking(client);
+        } catch (errTop) { console.error("[XP-DEBUG] ❌ Erreur classement :", errTop.message); }
+    } else {
+        const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
+        const [missions] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`);
+        const mission = missions[0];
+        const [propositions] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
+        );
 
+        for (const proposition of propositions) {
+            try {
+                const message = await targetChannel.messages.fetch(proposition.message_id);
+                await message.edit({ components: [row] });
+            } catch (e) { console.error("❌ Erreur à l'ajout des boutons de vote:", e) }
+        }
+
+        await discu_channel.send({ content: "**Les votes sont ouverts !**" });
+        await db.query(`UPDATE mission_actuelle SET voting = 1 WHERE id = 1`);
+    }
 }, {
     timezone: "Europe/Paris"
 });
 
 cron.schedule('0 22 * * *', async () => {
-    try { const resultat = await cloreLeVoteActuel(client);
-    } catch (error) { console.error("❌ Erreur lors de la clôture de 22h :", error); }
-}, { timezone: "Europe/Paris" });
-
-cron.schedule('0 19 * * *', async () => {
-    const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
-    const [missions] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`);
-    const mission = missions[0];
-    const [propositions] = await db.query(`SELECT message_id FROM propositions WHERE (sheet_id, ligne) = (?, ?)`, [mission.sheet_id, mission.ligne]);
-    const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('upvote').setStyle(ButtonStyle.Success).setLabel('👍')
-    );
-
-    for (const proposition of propositions) {
-        try {
-            const message = await targetChannel.messages.fetch(proposition.message_id);
-            await message.edit({ components: [row] });
-        } catch (e) { console.error("❌ Erreur à l'ajout des boutons de vote:", e) }
+    const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
+    const voting = voting_rows[0]?.voting;
+    if (voting) {
+        try { const resultat = await cloreLeVoteActuel(client);
+        } catch (error) { console.error("❌ Erreur lors de la clôture de 22h :", error); }
     }
-
-    const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
-    await discu_channel.send({ content: "**Les votes sont ouverts !**" });
-
-}, { timezone: "Europe/Paris"})
+}, { timezone: "Europe/Paris" });
