@@ -303,7 +303,7 @@ cron.schedule('0 0 * * *', async () => {
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
     const voting = voting_rows[0]?.voting;
-    if (!voting) {
+    if (voting === 1) {
         try {
             console.log("🕒 [CRON] Lancement de la mission de minuit...");
 
@@ -375,7 +375,7 @@ cron.schedule('0 0 * * *', async () => {
 cron.schedule('0 22 * * *', async () => {
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
     const voting = voting_rows[0]?.voting;
-    if (voting) {
+    if (voting === 1) {
         try { const resultat = await cloreLeVoteActuel(client);
         } catch (error) { console.error("❌ Erreur lors de la clôture de 22h :", error); }
     }
