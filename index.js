@@ -300,6 +300,7 @@ app.listen(3000, () => {
 
 
 cron.schedule('0 0 * * *', async () => {
+    await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
     const voting = voting_rows[0]?.voting;
@@ -341,7 +342,6 @@ cron.schedule('0 0 * * *', async () => {
             const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
             await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
-            await db.query('DELETE FROM pseudos_anonymes');
 
             console.log("✅ [CRON] Mission de minuit déployée avec succès.");
 
