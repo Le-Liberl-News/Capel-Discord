@@ -95,7 +95,8 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
         texte_eng = VALUES(texte_eng),
         nom_perso = VALUES(nom_perso),
         context = VALUES(context),
-        multiplicateur = VALUES(multiplicateur)
+        multiplicateur = VALUES(multiplicateur),
+        voting = FALSE
     `, [
         mission.feuille.id, 
         mission.feuille.nom, 

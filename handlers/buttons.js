@@ -19,6 +19,7 @@ module.exports = async function handleButtons(interaction, sheets) {
             const proposition = propositions[0];
             const [missionRows] = await db.query('SELECT * FROM mission_actuelle WHERE id = 1');
             const mission = missionRows[0] ? missionRows[0] : null;
+            if (!mission.voting) return interaction.followUp({ content: "Les votes ne sont pas encore ouverts !\nAttendez demain (oui, c'est un bug que ce bouton soit déjà présent).", ephemeral: true });
 
             const [votePrecedent_rows] = await db.query('SELECT 1 FROM votes WHERE message_id = ? AND user_id = ?', [messageId, userId]);
             const votePrecedent = votePrecedent_rows[0];
