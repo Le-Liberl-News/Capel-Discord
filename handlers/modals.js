@@ -182,7 +182,7 @@ module.exports = async function handleModals(interaction, sheets) {
 
                 if (ressemblance < 0.65) {
                     return interaction.editReply({
-                        content: `❌ Modification refusée : ton texte est trop différent de l'original (similarité : ${Math.round(score * 100)}%). Seules les corrections mineures sont autorisées après réception d'un vote.`
+                        content: `❌ Modification refusée : ton texte est trop différent de l'original (similarité : ${Math.round(ressemblance * 100)}%). Seules les corrections mineures sont autorisées après réception d'un vote.`
                     });
                 }
                 if (!propActuelle.texte_original) {
