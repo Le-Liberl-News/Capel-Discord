@@ -246,7 +246,7 @@ async function cloreLeVoteActuel(client) {
                 messageXP += `Tu gagnes ${voteXP} PB pour le${plural ? "s " + score : ""} vote${plural ? "s" : ""} que tu as reçu${plural ? "s" : ""} !`;
             }
         } else {
-            messageXP += "Tu n'a pas reçu de vote, malheureusement, mais n'hésite pas à retenter ta chance demain !\n";
+            messageXP += "Tu n'as pas reçu de vote, malheureusement, mais n'hésite pas à retenter ta chance demain !\n";
         }
         if (joursConsecutifs > 0) {
             messageXP += ` C'est par ailleurs ton ${joursConsecutifs + 1}ème jour consécutif à participer. Tu reçois donc ${consecutifXP} PB en bonus.`
