@@ -110,7 +110,7 @@ module.exports = async function handleModals(interaction, sheets) {
                 messageFinal = "✅ Bloc soumis ! Tu as gagné **20 PB** ! 🎖️";
             }
 
-            await interaction.editReply({ content: "✅ Bloc de propositions soumis avec succès !" });
+            await interaction.editReply({ content: "✅ Bloc de propositions soumis avec succès !\nRappel : tu peux voter pour ta propre proposition à une condition = avoir voter pour quelqu'un d'autre." });
 
             if (typeof sheets !== 'undefined') {
                 console.log(">>> [DEBUG] Lancement de l'évaluation IA...");
