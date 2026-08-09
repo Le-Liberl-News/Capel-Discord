@@ -11,6 +11,7 @@ const MAX_AUTHOR_LENGTH = 100;
 const MAX_SCRIPT_LENGTH = 128;
 const MAX_DIALOGUE_LENGTH = 8000;
 const MAX_COMMENT_LENGTH = 1000;
+const MAX_TRANSLATION_LENGTH = 8000;
 const MAX_DISCORD_CONTENT_LENGTH = 2000;
 
 function requireString(value, fieldName, maxLength, allowEmpty = false) {
@@ -36,12 +37,27 @@ function validateDebugReport(rawReport) {
         throw new Error(`Version de rapport non prise en charge : ${rawReport.schema}.`);
     }
 
+    let sheetUpdate = null;
+    if (rawReport.sheetUpdate !== undefined && rawReport.sheetUpdate !== null) {
+        if (typeof rawReport.sheetUpdate !== 'object' || Array.isArray(rawReport.sheetUpdate)) {
+            throw new Error('Le champ sheetUpdate est invalide.');
+        }
+        sheetUpdate = {
+            replacement: requireString(
+                rawReport.sheetUpdate.replacement,
+                'sheetUpdate.replacement',
+                MAX_TRANSLATION_LENGTH
+            )
+        };
+    }
+
     return {
         schema: 1,
         author: requireString(rawReport.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
         script: requireString(rawReport.script, 'script', MAX_SCRIPT_LENGTH),
         dialogue: requireString(rawReport.dialogue, 'dialogue', MAX_DIALOGUE_LENGTH),
         comment: requireString(rawReport.comment || '', 'comment', MAX_COMMENT_LENGTH, true),
+        sheetUpdate,
         clientReportId: requireString(
             rawReport.clientReportId,
             'clientReportId',
@@ -87,6 +103,15 @@ async function publishDebugReport({
         baseName,
         validated.dialogue
     );
+    let updatedRows = 0;
+    if (validated.sheetUpdate && matches.length > 0) {
+        updatedRows = await sheetManager.updateOccurrencesVerified(
+            sheets,
+            matches,
+            validated.dialogue,
+            validated.sheetUpdate.replacement
+        );
+    }
     const channel = await client.channels.fetch(destinationChannelId);
     if (!channel || !channel.isTextBased()) {
         throw new Error('Le salon de destination des signalements est introuvable.');
@@ -107,14 +132,22 @@ async function publishDebugReport({
             content += `- Feuille **${match.feuille}** (ligne ${match.ligne}) | *${match.perso}*\n`;
         });
 
-        const fixButton = new ButtonBuilder()
-            .setCustomId(`btn_fix_${baseName}`)
-            .setLabel('Corriger ces lignes')
-            .setStyle(ButtonStyle.Success)
-            .setEmoji('✍️');
-        components.push(new ActionRowBuilder().addComponents(fixButton));
+        if (validated.sheetUpdate) {
+            content += `\n📝 **Écriture Google Sheets vérifiée sur ${updatedRows} ligne(s).**\n`;
+            content += `**Nouveau texte :**\n> ${validated.sheetUpdate.replacement.replace(/\n/g, '\n> ')}\n`;
+        } else {
+            const fixButton = new ButtonBuilder()
+                .setCustomId(`btn_fix_${baseName}`)
+                .setLabel('Corriger ces lignes')
+                .setStyle(ButtonStyle.Success)
+                .setEmoji('✍️');
+            components.push(new ActionRowBuilder().addComponents(fixButton));
+        }
     } else {
         content += '❌ **Aucun match exact trouvé.** (Réplique vide, tag caché ou erreur ?)\n🔎 Inspectez manuellement les feuilles liées :';
+        if (validated.sheetUpdate) {
+            content += '\n⛔ **Aucune écriture Google Sheets n’a été effectuée.**';
+        }
         const linkedSheets = await sheetManager.getFeuillesParNom(sheets, tableId, baseName);
 
         if (linkedSheets.length > 0) {

@@ -332,6 +332,45 @@ async function updateTranslation(sheets, tableId, baseName, texteCherche, nouvea
     return modifs;
 }
 
+async function updateOccurrencesVerified(sheets, occurrences, originalText, newText) {
+    const completed = [];
+    try {
+        for (const occurrence of occurrences) {
+            await ecrireEtVerifier(
+                sheets,
+                occurrence.sheetId,
+                'E',
+                occurrence.ligne,
+                newText
+            );
+            completed.push(occurrence);
+        }
+    } catch (error) {
+        const rollbackErrors = [];
+        for (const occurrence of completed.reverse()) {
+            try {
+                await ecrireEtVerifier(
+                    sheets,
+                    occurrence.sheetId,
+                    'E',
+                    occurrence.ligne,
+                    originalText
+                );
+            } catch (rollbackError) {
+                rollbackErrors.push(`${occurrence.feuille} ligne ${occurrence.ligne}`);
+            }
+        }
+        if (rollbackErrors.length > 0) {
+            throw new Error(
+                `Écriture Sheets interrompue et restauration incomplète (${rollbackErrors.join(', ')}).`,
+                { cause: error }
+            );
+        }
+        throw error;
+    }
+    return completed.length;
+}
+
 async function recupererLexique(sheets) {
     try {
         const lexiqueResponse = await sheets.spreadsheets.values.batchGet({
@@ -403,6 +442,7 @@ module.exports = {
     trouverOccurrencesBug,
     getFeuillesParNom,
     updateTranslation,
+    updateOccurrencesVerified,
     lireLigne,
     ecrireEtVerifier,
     formaterLigneDiscord,
