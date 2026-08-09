@@ -28,15 +28,14 @@ publication final.
 
 ### Écriture Sheets depuis le jeu
 
-Les modifications Sheets utilisent un message distinct du signalement : marqueur
-`LIBERLNEWS_SHEET_UPDATE_V1` et unique pièce jointe `sheet-update.json`. Aucune capture
-d'écran et aucun rapport de bug ne sont produits pour cette commande.
+La DLL écrit désormais directement dans Google Sheets et vérifie la cellule relue. Après
+réussite, elle envoie uniquement un journal distinct du signalement : marqueur
+`LIBERLNEWS_SHEET_AUDIT_V1` et pièce jointe `sheet-audit.json`. Aucune capture d'écran et
+aucun rapport de bug ne sont produits pour cette commande.
 
-Capel recherche les occurrences dont la colonne française correspond exactement au texte
-original, écrit le nouveau texte sur ces seules lignes, puis relit chaque cellule. En cas
-d'échec partiel, les lignes déjà modifiées sont restaurées avant que la commande soit
-rejetée. Une modification réussie publie uniquement un court message de journalisation
-contenant l'auteur, le script, l'ancien texte, le nouveau texte et les lignes modifiées.
+Capel ne modifie aucune cellule pour ce nouveau protocole. Il publie seulement un court
+message contenant l'auteur, le script, l'ancien texte et le nouveau texte. Le protocole
+`LIBERLNEWS_SHEET_UPDATE_V1` reste accepté temporairement pour les anciennes DLL.
 
 Cette fonction est immédiate et ne demande pas de validation Discord. L'URL du webhook
 doit donc être traitée comme un secret donnant indirectement un droit d'écriture sur les

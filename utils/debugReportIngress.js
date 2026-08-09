@@ -1,18 +1,22 @@
 const {
     applySheetUpdate,
     publishDebugReport,
+    publishSheetAudit,
     validateDebugReport,
-    validateSheetUpdateRequest
+    validateSheetUpdateRequest,
+    validateSheetAudit
 } = require('./debugReportService');
 
 const REPORT_FILE_NAME = 'report.json';
 const SHEET_UPDATE_FILE_NAME = 'sheet-update.json';
+const SHEET_AUDIT_FILE_NAME = 'sheet-audit.json';
 const SCREENSHOT_FILE_NAME = 'capture.png';
 const MAX_REPORT_BYTES = 64 * 1024;
 const MAX_SCREENSHOT_BYTES = 12 * 1024 * 1024;
 const COMPLETED_REACTION = '✅';
 const REPORT_MARKER = 'LIBERLNEWS_DEBUG_REPORT_V1';
 const SHEET_UPDATE_MARKER = 'LIBERLNEWS_SHEET_UPDATE_V1';
+const SHEET_AUDIT_MARKER = 'LIBERLNEWS_SHEET_AUDIT_V1';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function isDiscordAttachmentUrl(rawUrl) {
@@ -70,7 +74,7 @@ function createDebugReportIngress({
         return enabled()
             && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
-            && [REPORT_MARKER, SHEET_UPDATE_MARKER].includes(message.content);
+            && [REPORT_MARKER, SHEET_UPDATE_MARKER, SHEET_AUDIT_MARKER].includes(message.content);
     }
 
     async function processDebugReport(message) {
@@ -135,6 +139,24 @@ function createDebugReportIngress({
         return request.clientRequestId;
     }
 
+    async function processSheetAudit(message) {
+        if (message.attachments.size !== 1) {
+            throw new Error('Un journal Sheets doit contenir uniquement sheet-audit.json.');
+        }
+        const attachment = findAttachment(message, SHEET_AUDIT_FILE_NAME);
+        if (!attachment) throw new Error('Le fichier sheet-audit.json est absent.');
+        const buffer = await downloadAttachment(attachment, MAX_REPORT_BYTES);
+        let rawAudit;
+        try {
+            rawAudit = JSON.parse(buffer.toString('utf8'));
+        } catch {
+            throw new Error('Le fichier sheet-audit.json ne contient pas un JSON valide.');
+        }
+        const audit = validateSheetAudit(rawAudit);
+        await publishSheetAudit({ client, destinationChannelId, audit });
+        return audit.clientRequestId;
+    }
+
     async function processMessage(message) {
         if (!accepts(message) || processing.has(message.id)) return false;
         processing.add(message.id);
@@ -148,7 +170,9 @@ function createDebugReportIngress({
 
             const requestId = message.content === REPORT_MARKER
                 ? await processDebugReport(message)
-                : await processSheetUpdate(message);
+                : (message.content === SHEET_AUDIT_MARKER
+                    ? await processSheetAudit(message)
+                    : await processSheetUpdate(message));
 
             await message.react(COMPLETED_REACTION);
             await message.delete();

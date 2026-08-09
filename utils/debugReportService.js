@@ -72,6 +72,20 @@ function validateSheetUpdateRequest(rawRequest) {
     };
 }
 
+function validateSheetAudit(rawAudit) {
+    if (!rawAudit || typeof rawAudit !== 'object' || Array.isArray(rawAudit) ||
+        rawAudit.schema !== 1) {
+        throw new Error('Le journal de modification Sheets est invalide.');
+    }
+    return {
+        author: requireString(rawAudit.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
+        script: requireString(rawAudit.script, 'script', MAX_SCRIPT_LENGTH),
+        previous: requireString(rawAudit.previous || '', 'previous', MAX_TRANSLATION_LENGTH, true),
+        replacement: requireString(rawAudit.replacement, 'replacement', MAX_TRANSLATION_LENGTH),
+        clientRequestId: requireString(rawAudit.clientRequestId, 'clientRequestId', 128)
+    };
+}
+
 function legacyHttpReport(body) {
     return validateDebugReport({
         schema: 1,
@@ -220,10 +234,31 @@ async function applySheetUpdate({
     });
 }
 
+async function publishSheetAudit({ client, destinationChannelId, audit }) {
+    const validated = validateSheetAudit(audit);
+    const channel = await client.channels.fetch(destinationChannelId);
+    if (!channel || !channel.isTextBased()) {
+        throw new Error('Le salon de journalisation est introuvable.');
+    }
+    const baseName = validated.script.replace(/\.[^/.]+$/, '');
+    let content = '📝 **Modification Sheets effectuée depuis le jeu**\n';
+    content += `**Auteur :** ${validated.author}\n`;
+    content += `**Script :** \`${baseName}\`\n`;
+    content += `**Ancien texte :**\n> ${quotedPreview(validated.previous || '*vide*')}\n`;
+    content += `**Nouveau texte :**\n> ${quotedPreview(validated.replacement)}`;
+    await channel.send({
+        content: truncateDiscordContent(content),
+        allowedMentions: { parse: [] }
+    });
+    return validated;
+}
+
 module.exports = {
     applySheetUpdate,
     legacyHttpReport,
     publishDebugReport,
+    publishSheetAudit,
     validateDebugReport,
-    validateSheetUpdateRequest
+    validateSheetUpdateRequest,
+    validateSheetAudit
 };
