@@ -10,6 +10,7 @@ const sheetManager = require('./sheetManager');
 const MAX_AUTHOR_LENGTH = 100;
 const MAX_SCRIPT_LENGTH = 128;
 const MAX_DIALOGUE_LENGTH = 8000;
+const MAX_COMMENT_LENGTH = 1000;
 const MAX_DISCORD_CONTENT_LENGTH = 2000;
 
 function requireString(value, fieldName, maxLength, allowEmpty = false) {
@@ -40,6 +41,7 @@ function validateDebugReport(rawReport) {
         author: requireString(rawReport.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
         script: requireString(rawReport.script, 'script', MAX_SCRIPT_LENGTH),
         dialogue: requireString(rawReport.dialogue, 'dialogue', MAX_DIALOGUE_LENGTH),
+        comment: requireString(rawReport.comment || '', 'comment', MAX_COMMENT_LENGTH, true),
         clientReportId: requireString(
             rawReport.clientReportId,
             'clientReportId',
@@ -54,6 +56,7 @@ function legacyHttpReport(body) {
         author: body.auteur || 'Reporter Inconnu',
         script: body.fichier || '',
         dialogue: body.replique || '',
+        comment: body.commentaire || '',
         clientReportId: `legacy-http-${Date.now()}`
     });
 }
@@ -93,6 +96,9 @@ async function publishDebugReport({
         name: screenshot.name || 'capture.png'
     });
     let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n**Script :** \`${baseName}\`\n**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
+    if (validated.comment) {
+        content += `**Commentaire :**\n> ${validated.comment.replace(/\n/g, '\n> ')}\n\n`;
+    }
     const components = [];
 
     if (matches.length > 0) {
