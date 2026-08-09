@@ -18,24 +18,34 @@ jobs:
         VPS_USER: ${{ secrets.VPS_USERNAME }}
         VPS_HOST: ${{ secrets.VPS_HOST }}
         VPS_PORT: ${{ secrets.VPS_PORT }}
-        # Ton chemin exact :
-        TARGET_DIR: "/home/twnkek290001/Nial_Bot" 
+        TARGET_DIR: "/home/twnkek290001/LN-Bot"
       run: |
+        set -euo pipefail
         sudo apt-get install -y sshpass
         
         echo "🚀 Début du transfert des fichiers..."
-        sshpass -p "$VPS_PASS" rsync -avz --exclude='.git/' --exclude='.github/' -e "ssh -o StrictHostKeyChecking=no -p $VPS_PORT" ./ $VPS_USER@$VPS_HOST:$TARGET_DIR/
+        sshpass -p "$VPS_PASS" rsync -avz \
+          --exclude='.git/' \
+          --exclude='.github/' \
+          --exclude='.env' \
+          --exclude='credentials.json' \
+          --exclude='node_modules/' \
+          --exclude='uploads/' \
+          -e "ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -p $VPS_PORT" \
+          ./ "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
         
         echo "🔄 Redémarrage du bot avec le moteur Orbal..."
-        # On utilise << 'EOF' pour envoyer un bloc de commandes complet via SSH
-        sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
-          # 1. On réveille NVM de force pour cette session robot
+        sshpass -p "$VPS_PASS" ssh \
+          -o StrictHostKeyChecking=no \
+          -o ServerAliveInterval=30 \
+          -o ServerAliveCountMax=10 \
+          -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" << 'EOF'
+          set -euo pipefail
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          
-          # 2. On exécute le reste
-          cd /home/twnkek290001/Nial_Bot
-          npm install
+
+          cd /home/twnkek290001/LN-Bot
+          npm install --omit=dev --no-audit --no-fund
           chmod +x maj.sh
           ./maj.sh
         EOF
