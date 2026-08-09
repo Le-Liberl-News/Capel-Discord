@@ -22,23 +22,38 @@ jobs:
       run: |
         set -euo pipefail
         sudo apt-get install -y sshpass
+
+        SSH_CONTROL_PATH="$RUNNER_TEMP/capel-ssh-%C"
+        SSH_TARGET="$VPS_USER@$VPS_HOST"
+        sshpass -p "$VPS_PASS" ssh \
+          -o StrictHostKeyChecking=no \
+          -o ServerAliveInterval=30 \
+          -o ServerAliveCountMax=10 \
+          -o ControlMaster=yes \
+          -o ControlPersist=600 \
+          -o ControlPath="$SSH_CONTROL_PATH" \
+          -p "$VPS_PORT" -Nf "$SSH_TARGET"
+        cleanup_ssh() {
+          ssh -o ControlPath="$SSH_CONTROL_PATH" -p "$VPS_PORT" \
+            -O exit "$SSH_TARGET" >/dev/null 2>&1 || true
+        }
+        trap cleanup_ssh EXIT
         
         echo "🚀 Début du transfert des fichiers..."
-        sshpass -p "$VPS_PASS" rsync -avz \
+        rsync -avz \
           --exclude='.git/' \
           --exclude='.github/' \
           --exclude='.env' \
           --exclude='credentials.json' \
           --exclude='node_modules/' \
           --exclude='uploads/' \
-          -e "ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -p $VPS_PORT" \
-          ./ "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
+          -e "ssh -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
+          ./ "$SSH_TARGET:$TARGET_DIR/"
         
         echo "🔄 Redémarrage du bot avec le moteur Orbal..."
-        sshpass -p "$VPS_PASS" ssh \
-          -o StrictHostKeyChecking=no \
-          -o ServerAliveInterval=30 \
-          -o ServerAliveCountMax=10 \
+        ssh \
+          -o ControlMaster=no \
+          -o ControlPath="$SSH_CONTROL_PATH" \
           -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" << 'EOF'
           set -euo pipefail
           export NVM_DIR="$HOME/.nvm"
