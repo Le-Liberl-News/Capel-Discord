@@ -28,11 +28,15 @@ publication final.
 
 ### Écriture Sheets depuis le jeu
 
-Le même format versionné accepte un objet optionnel `sheetUpdate` contenant
-`replacement`. Lorsqu'il est présent, Capel recherche d'abord les occurrences dont la
-colonne française correspond exactement à la réplique originale, écrit le nouveau texte
-sur ces seules lignes, puis relit chaque cellule. En cas d'échec partiel, les lignes déjà
-modifiées sont restaurées avant que le rapport soit rejeté.
+Les modifications Sheets utilisent un message distinct du signalement : marqueur
+`LIBERLNEWS_SHEET_UPDATE_V1` et unique pièce jointe `sheet-update.json`. Aucune capture
+d'écran et aucun rapport de bug ne sont produits pour cette commande.
+
+Capel recherche les occurrences dont la colonne française correspond exactement au texte
+original, écrit le nouveau texte sur ces seules lignes, puis relit chaque cellule. En cas
+d'échec partiel, les lignes déjà modifiées sont restaurées avant que la commande soit
+rejetée. Une modification réussie publie uniquement un court message de journalisation
+contenant l'auteur, le script, l'ancien texte, le nouveau texte et les lignes modifiées.
 
 Cette fonction est immédiate et ne demande pas de validation Discord. L'URL du webhook
 doit donc être traitée comme un secret donnant indirectement un droit d'écriture sur les

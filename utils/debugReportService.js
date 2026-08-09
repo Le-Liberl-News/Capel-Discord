@@ -36,19 +36,8 @@ function validateDebugReport(rawReport) {
     if (rawReport.schema !== 1) {
         throw new Error(`Version de rapport non prise en charge : ${rawReport.schema}.`);
     }
-
-    let sheetUpdate = null;
-    if (rawReport.sheetUpdate !== undefined && rawReport.sheetUpdate !== null) {
-        if (typeof rawReport.sheetUpdate !== 'object' || Array.isArray(rawReport.sheetUpdate)) {
-            throw new Error('Le champ sheetUpdate est invalide.');
-        }
-        sheetUpdate = {
-            replacement: requireString(
-                rawReport.sheetUpdate.replacement,
-                'sheetUpdate.replacement',
-                MAX_TRANSLATION_LENGTH
-            )
-        };
+    if (rawReport.sheetUpdate !== undefined) {
+        throw new Error('Une modification Sheets doit utiliser le protocole dédié.');
     }
 
     return {
@@ -57,12 +46,29 @@ function validateDebugReport(rawReport) {
         script: requireString(rawReport.script, 'script', MAX_SCRIPT_LENGTH),
         dialogue: requireString(rawReport.dialogue, 'dialogue', MAX_DIALOGUE_LENGTH),
         comment: requireString(rawReport.comment || '', 'comment', MAX_COMMENT_LENGTH, true),
-        sheetUpdate,
         clientReportId: requireString(
             rawReport.clientReportId,
             'clientReportId',
             128
         )
+    };
+}
+
+function validateSheetUpdateRequest(rawRequest) {
+    if (!rawRequest || typeof rawRequest !== 'object' || Array.isArray(rawRequest)) {
+        throw new Error('La demande de modification JSON est invalide.');
+    }
+    if (rawRequest.schema !== 1) {
+        throw new Error(`Version de modification non prise en charge : ${rawRequest.schema}.`);
+    }
+
+    return {
+        schema: 1,
+        author: requireString(rawRequest.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
+        script: requireString(rawRequest.script, 'script', MAX_SCRIPT_LENGTH),
+        originalDialogue: requireString(rawRequest.originalDialogue, 'originalDialogue', MAX_DIALOGUE_LENGTH),
+        replacement: requireString(rawRequest.replacement, 'replacement', MAX_TRANSLATION_LENGTH),
+        clientRequestId: requireString(rawRequest.clientRequestId, 'clientRequestId', 128)
     };
 }
 
@@ -103,15 +109,6 @@ async function publishDebugReport({
         baseName,
         validated.dialogue
     );
-    let updatedRows = 0;
-    if (validated.sheetUpdate && matches.length > 0) {
-        updatedRows = await sheetManager.updateOccurrencesVerified(
-            sheets,
-            matches,
-            validated.dialogue,
-            validated.sheetUpdate.replacement
-        );
-    }
     const channel = await client.channels.fetch(destinationChannelId);
     if (!channel || !channel.isTextBased()) {
         throw new Error('Le salon de destination des signalements est introuvable.');
@@ -132,22 +129,14 @@ async function publishDebugReport({
             content += `- Feuille **${match.feuille}** (ligne ${match.ligne}) | *${match.perso}*\n`;
         });
 
-        if (validated.sheetUpdate) {
-            content += `\n📝 **Écriture Google Sheets vérifiée sur ${updatedRows} ligne(s).**\n`;
-            content += `**Nouveau texte :**\n> ${validated.sheetUpdate.replacement.replace(/\n/g, '\n> ')}\n`;
-        } else {
-            const fixButton = new ButtonBuilder()
-                .setCustomId(`btn_fix_${baseName}`)
-                .setLabel('Corriger ces lignes')
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('✍️');
-            components.push(new ActionRowBuilder().addComponents(fixButton));
-        }
+        const fixButton = new ButtonBuilder()
+            .setCustomId(`btn_fix_${baseName}`)
+            .setLabel('Corriger ces lignes')
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('✍️');
+        components.push(new ActionRowBuilder().addComponents(fixButton));
     } else {
         content += '❌ **Aucun match exact trouvé.** (Réplique vide, tag caché ou erreur ?)\n🔎 Inspectez manuellement les feuilles liées :';
-        if (validated.sheetUpdate) {
-            content += '\n⛔ **Aucune écriture Google Sheets n’a été effectuée.**';
-        }
         const linkedSheets = await sheetManager.getFeuillesParNom(sheets, tableId, baseName);
 
         if (linkedSheets.length > 0) {
@@ -174,8 +163,67 @@ async function publishDebugReport({
     });
 }
 
+function quotedPreview(value, maxLength = 500) {
+    const normalized = value.length > maxLength
+        ? `${value.slice(0, maxLength - 1)}…`
+        : value;
+    return normalized.replace(/\n/g, '\n> ');
+}
+
+async function applySheetUpdate({
+    client,
+    sheets,
+    tableId,
+    destinationChannelId,
+    request
+}) {
+    const validated = validateSheetUpdateRequest(request);
+    if (validated.originalDialogue === validated.replacement) {
+        throw new Error('Le nouveau texte est identique au texte actuel.');
+    }
+
+    const baseName = validated.script.replace(/\.[^/.]+$/, '');
+    const matches = await sheetManager.trouverOccurrencesBug(
+        sheets,
+        tableId,
+        baseName,
+        validated.originalDialogue
+    );
+    if (matches.length === 0) {
+        throw new Error(`Aucune occurrence exacte trouvée pour le script ${baseName}.`);
+    }
+
+    const channel = await client.channels.fetch(destinationChannelId);
+    if (!channel || !channel.isTextBased()) {
+        throw new Error('Le salon de journalisation est introuvable.');
+    }
+    const updatedRows = await sheetManager.updateOccurrencesVerified(
+        sheets,
+        matches,
+        validated.originalDialogue,
+        validated.replacement
+    );
+
+    const locations = matches.slice(0, 10)
+        .map(match => `- **${match.feuille}**, ligne ${match.ligne}`)
+        .join('\n');
+    let content = '📝 **Modification Sheets depuis le jeu**\n';
+    content += `**Auteur :** ${validated.author}\n`;
+    content += `**Script :** \`${baseName}\`\n`;
+    content += `**Ancien texte :**\n> ${quotedPreview(validated.originalDialogue)}\n`;
+    content += `**Nouveau texte :**\n> ${quotedPreview(validated.replacement)}\n`;
+    content += `**Lignes modifiées :** ${updatedRows}\n${locations}`;
+
+    return channel.send({
+        content: truncateDiscordContent(content),
+        allowedMentions: { parse: [] }
+    });
+}
+
 module.exports = {
+    applySheetUpdate,
     legacyHttpReport,
     publishDebugReport,
-    validateDebugReport
+    validateDebugReport,
+    validateSheetUpdateRequest
 };

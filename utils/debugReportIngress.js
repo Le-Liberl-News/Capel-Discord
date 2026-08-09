@@ -1,11 +1,18 @@
-const { publishDebugReport, validateDebugReport } = require('./debugReportService');
+const {
+    applySheetUpdate,
+    publishDebugReport,
+    validateDebugReport,
+    validateSheetUpdateRequest
+} = require('./debugReportService');
 
 const REPORT_FILE_NAME = 'report.json';
+const SHEET_UPDATE_FILE_NAME = 'sheet-update.json';
 const SCREENSHOT_FILE_NAME = 'capture.png';
 const MAX_REPORT_BYTES = 64 * 1024;
 const MAX_SCREENSHOT_BYTES = 12 * 1024 * 1024;
 const COMPLETED_REACTION = '✅';
 const REPORT_MARKER = 'LIBERLNEWS_DEBUG_REPORT_V1';
+const SHEET_UPDATE_MARKER = 'LIBERLNEWS_SHEET_UPDATE_V1';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function isDiscordAttachmentUrl(rawUrl) {
@@ -63,7 +70,69 @@ function createDebugReportIngress({
         return enabled()
             && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
-            && message.content === REPORT_MARKER;
+            && [REPORT_MARKER, SHEET_UPDATE_MARKER].includes(message.content);
+    }
+
+    async function processDebugReport(message) {
+        if (message.attachments.size !== 2) {
+            throw new Error('Un signalement doit contenir exactement deux pièces jointes.');
+        }
+        const reportAttachment = findAttachment(message, REPORT_FILE_NAME);
+        const screenshotAttachment = findAttachment(message, SCREENSHOT_FILE_NAME);
+        if (!reportAttachment || !screenshotAttachment) {
+            throw new Error('Le message doit contenir report.json et capture.png.');
+        }
+
+        const [reportBuffer, screenshotBuffer] = await Promise.all([
+            downloadAttachment(reportAttachment, MAX_REPORT_BYTES),
+            downloadAttachment(screenshotAttachment, MAX_SCREENSHOT_BYTES)
+        ]);
+        if (!screenshotBuffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+            throw new Error('La pièce jointe capture.png n’est pas un fichier PNG valide.');
+        }
+        let rawReport;
+        try {
+            rawReport = JSON.parse(reportBuffer.toString('utf8'));
+        } catch {
+            throw new Error('Le fichier report.json ne contient pas un JSON valide.');
+        }
+        const report = validateDebugReport(rawReport);
+        await publishDebugReport({
+            client,
+            sheets,
+            tableId,
+            destinationChannelId,
+            report,
+            screenshot: { data: screenshotBuffer, name: SCREENSHOT_FILE_NAME }
+        });
+        return report.clientReportId;
+    }
+
+    async function processSheetUpdate(message) {
+        if (message.attachments.size !== 1) {
+            throw new Error('Une modification Sheets ne doit contenir que sheet-update.json.');
+        }
+        const requestAttachment = findAttachment(message, SHEET_UPDATE_FILE_NAME);
+        if (!requestAttachment) {
+            throw new Error('Le message doit contenir sheet-update.json.');
+        }
+
+        const requestBuffer = await downloadAttachment(requestAttachment, MAX_REPORT_BYTES);
+        let rawRequest;
+        try {
+            rawRequest = JSON.parse(requestBuffer.toString('utf8'));
+        } catch {
+            throw new Error('Le fichier sheet-update.json ne contient pas un JSON valide.');
+        }
+        const request = validateSheetUpdateRequest(rawRequest);
+        await applySheetUpdate({
+            client,
+            sheets,
+            tableId,
+            destinationChannelId,
+            request
+        });
+        return request.clientRequestId;
     }
 
     async function processMessage(message) {
@@ -77,44 +146,18 @@ function createDebugReportIngress({
                 return true;
             }
 
-            const reportAttachment = findAttachment(message, REPORT_FILE_NAME);
-            const screenshotAttachment = findAttachment(message, SCREENSHOT_FILE_NAME);
-            if (!reportAttachment || !screenshotAttachment) {
-                throw new Error('Le message doit contenir report.json et capture.png.');
-            }
-
-            const [reportBuffer, screenshotBuffer] = await Promise.all([
-                downloadAttachment(reportAttachment, MAX_REPORT_BYTES),
-                downloadAttachment(screenshotAttachment, MAX_SCREENSHOT_BYTES)
-            ]);
-            if (!screenshotBuffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
-                throw new Error('La pièce jointe capture.png n’est pas un fichier PNG valide.');
-            }
-            let rawReport;
-            try {
-                rawReport = JSON.parse(reportBuffer.toString('utf8'));
-            } catch {
-                throw new Error('Le fichier report.json ne contient pas un JSON valide.');
-            }
-            const report = validateDebugReport(rawReport);
-
-            await publishDebugReport({
-                client,
-                sheets,
-                tableId,
-                destinationChannelId,
-                report,
-                screenshot: { data: screenshotBuffer, name: SCREENSHOT_FILE_NAME }
-            });
+            const requestId = message.content === REPORT_MARKER
+                ? await processDebugReport(message)
+                : await processSheetUpdate(message);
 
             await message.react(COMPLETED_REACTION);
             await message.delete();
-            console.log(`[Debug ingress] Rapport ${report.clientReportId} traité.`);
+            console.log(`[Debug ingress] Message ${requestId} traité.`);
             return true;
         } catch (error) {
             console.error(`[Debug ingress] Message ${message.id} rejeté :`, error);
             await message.reply({
-                content: `❌ Rapport non traité : ${error.message}`,
+                content: `❌ Message non traité : ${error.message}`,
                 allowedMentions: { parse: [] }
             }).catch(() => {});
             return false;
