@@ -45,7 +45,8 @@ const debugReportIngress = createDebugReportIngress({
     tableId: TABLE_ID,
     destinationChannelId: process.env.SECRET_CHANNEL_ID,
     ingressChannelId: process.env.DEBUG_INGRESS_CHANNEL_ID,
-    ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID
+    ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID,
+    ingressWebhookUrl: process.env.DEBUG_INGRESS_WEBHOOK_URL
 });
 
 const commands = [

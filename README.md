@@ -14,11 +14,14 @@ de route HTTP publique :
 ```dotenv
 DEBUG_INGRESS_CHANNEL_ID=identifiant_du_salon
 DEBUG_INGRESS_WEBHOOK_ID=identifiant_du_webhook
+DEBUG_INGRESS_WEBHOOK_URL=https://discord.com/api/webhooks/identifiant/token
 ```
 
 L'identifiant du webhook est le nombre situé immédiatement après `/api/webhooks/` dans
 son URL. L'URL complète, qui contient un secret, ne doit pas être ajoutée au dépôt : elle
-est configurée dans le `reporter_config.txt` livré avec la DLL.
+est configurée dans le `reporter_config.txt` livré avec la DLL et dans le `.env` privé de
+Capel. Capel en a besoin pour renvoyer à l'overlay le contexte japonais et anglais des
+feuilles qui ne sont pas publiques.
 
 Chaque message accepté doit provenir exactement de ce salon et de ce webhook, et contenir
 les pièces jointes `report.json` et `capture.png`. Au démarrage, Capel reprend également
