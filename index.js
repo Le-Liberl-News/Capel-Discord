@@ -19,6 +19,8 @@ const { relancerAudioApresCrash } = require('./rpg/audioManager.js');
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
 const { updateRanking } = require('./utils/rankings.js')
+const { createDebugReportIngress } = require('./utils/debugReportIngress.js');
+const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportService.js');
 const { state, saveState } = require('./rpg/gameState.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
@@ -36,6 +38,14 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildVoiceStates
     ]
+});
+const debugReportIngress = createDebugReportIngress({
+    client,
+    sheets,
+    tableId: TABLE_ID,
+    destinationChannelId: process.env.SECRET_CHANNEL_ID,
+    ingressChannelId: process.env.DEBUG_INGRESS_CHANNEL_ID,
+    ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID
 });
 
 const commands = [
@@ -99,9 +109,14 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     } catch (e) { console.error(e); }
 })();
 
-client.once('clientReady', () => {
+client.once('clientReady', async () => {
     console.log(`Connecté en tant que ${client.user.tag}`);
     relancerAudioApresCrash(client, state);
+    try {
+        await debugReportIngress.scanPendingMessages();
+    } catch (error) {
+        console.error('[Debug ingress] Reprise des rapports impossible :', error);
+    }
 });
 
 client.on('interactionCreate', async interaction => {
@@ -154,7 +169,6 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const sheetManager = require('./utils/sheetManager');
 
 const app = express();
 app.use('/img', express.static('./img'));
@@ -165,70 +179,33 @@ const upload = multer({ dest: 'uploads/' });
 
 app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
     try {
-        const auteur = req.body.auteur || "Reporter Inconnu";
-        const fichierBrut = req.body.fichier || "";
-        const replique = req.body.replique || "";
-
-        // 1. On nettoie le nom du fichier (on enlève le .v0 ou .x)
-        const baseName = fichierBrut.replace(/\.[^/.]+$/, "");
-
-        // 2. On lance la recherche massive via le sheetManager
-        const matchs = await sheetManager.trouverOccurrencesBug(sheets, TABLE_ID, baseName, replique);
-
-        const channel = await client.channels.fetch(process.env.SECRET_CHANNEL_ID);
-        const attachment = new AttachmentBuilder(req.file.path, { name: 'capture.png' });
-
-        let content = `**Nouveau bug report**\n**Auteur :** ${auteur}\nScript :** \`${baseName}\`\n**Réplique :**\n> ${replique}\n\n`;
-        const components = [];
-
-        if (matchs.length > 0) {
-            content += `✅ **Match exact trouvé (${matchs.length} occurrence(s)) :**\n`;
-            matchs.slice(0, 10).forEach(m => {
-                content += `- Feuille **${m.feuille}** (Ligne ${m.ligne}) | *${m.perso}*\n`;
-            });
-
-            const fixButton = new ButtonBuilder()
-                .setCustomId(`btn_fix_${baseName}`)
-                .setLabel('Corriger ces lignes')
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('✏️');
-
-            components.push(new ActionRowBuilder().addComponents(fixButton));
-
-        } else {
-            content += `❌ **Aucun match exact trouvé.** (Réplique vide, tag caché, ou erreur ?)\n🔍 Inspectez manuellement les feuilles liées :`;
-
-            const feuillesLiees = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, baseName);
-
-            if (feuillesLiees.length > 0) {
-                const linkRow = new ActionRowBuilder();
-                feuillesLiees.slice(0, 5).forEach(f => {
-                    linkRow.addComponents(
-                        new ButtonBuilder()
-                            .setLabel(`Ouvrir ${f.nom}`)
-                            .setStyle(ButtonStyle.Link)
-                            .setURL(f.lien)
-                    );
-                });
-                components.push(linkRow);
-            } else {
-                 content += `\n⚠️ *Le script ${baseName} n'a pas été trouvé dans le Sommaire.*`;
-            }
-        }
-
-        await channel.send({ content, files: [attachment], components });
-
-        const fs = require('fs');
-        fs.unlinkSync(req.file.path);
+        if (!req.file) throw new Error('La capture PNG est absente.');
+        const report = legacyHttpReport(req.body);
+        const screenshot = await fs.promises.readFile(req.file.path);
+        await publishDebugReport({
+            client,
+            sheets,
+            tableId: TABLE_ID,
+            destinationChannelId: process.env.SECRET_CHANNEL_ID,
+            report,
+            screenshot: { data: screenshot, name: 'capture.png' }
+        });
         res.status(200).send('OK');
-
     } catch (error) {
         console.error("❌ Erreur Route :", error);
         res.status(500).send('Erreur interne.');
+    } finally {
+        if (req.file?.path) fs.promises.unlink(req.file.path).catch(() => {});
     }
 });
 
 const cooldownsXP = new Map();
+
+client.on('messageCreate', message => {
+    if (debugReportIngress.accepts(message)) {
+        void debugReportIngress.processMessage(message);
+    }
+});
 
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
