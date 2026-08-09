@@ -4,20 +4,15 @@ const {
     validateDebugReport,
     validateSheetUpdateRequest
 } = require('./debugReportService');
-const { WebhookClient } = require('discord.js');
-const sheetManager = require('./sheetManager');
 
 const REPORT_FILE_NAME = 'report.json';
 const SHEET_UPDATE_FILE_NAME = 'sheet-update.json';
-const SHEET_CONTEXT_FILE_NAME = 'sheet-context.json';
 const SCREENSHOT_FILE_NAME = 'capture.png';
 const MAX_REPORT_BYTES = 64 * 1024;
 const MAX_SCREENSHOT_BYTES = 12 * 1024 * 1024;
 const COMPLETED_REACTION = '✅';
 const REPORT_MARKER = 'LIBERLNEWS_DEBUG_REPORT_V1';
 const SHEET_UPDATE_MARKER = 'LIBERLNEWS_SHEET_UPDATE_V1';
-const SHEET_CONTEXT_MARKER = 'LIBERLNEWS_SHEET_CONTEXT_V1';
-const SHEET_CONTEXT_RESULT_MARKER = 'LIBERLNEWS_SHEET_CONTEXT_RESULT_V1';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function isDiscordAttachmentUrl(rawUrl) {
@@ -63,11 +58,9 @@ function createDebugReportIngress({
     tableId,
     destinationChannelId,
     ingressChannelId,
-    ingressWebhookId,
-    ingressWebhookUrl
+    ingressWebhookId
 }) {
     const processing = new Set();
-    const ingressWebhook = ingressWebhookUrl ? new WebhookClient({ url: ingressWebhookUrl }) : null;
 
     function enabled() {
         return Boolean(ingressChannelId && ingressWebhookId);
@@ -77,7 +70,7 @@ function createDebugReportIngress({
         return enabled()
             && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
-            && [REPORT_MARKER, SHEET_UPDATE_MARKER, SHEET_CONTEXT_MARKER].includes(message.content);
+            && [REPORT_MARKER, SHEET_UPDATE_MARKER].includes(message.content);
     }
 
     async function processDebugReport(message) {
@@ -142,49 +135,6 @@ function createDebugReportIngress({
         return request.clientRequestId;
     }
 
-    async function processSheetContext(message) {
-        if (!ingressWebhook) {
-            throw new Error('DEBUG_INGRESS_WEBHOOK_URL est absent du serveur.');
-        }
-        if (message.attachments.size !== 1) {
-            throw new Error('Une demande de contexte doit contenir uniquement sheet-context.json.');
-        }
-        const attachment = findAttachment(message, SHEET_CONTEXT_FILE_NAME);
-        if (!attachment) throw new Error('Le fichier sheet-context.json est absent.');
-        const buffer = await downloadAttachment(attachment, MAX_REPORT_BYTES);
-        let query;
-        try {
-            query = JSON.parse(buffer.toString('utf8'));
-        } catch {
-            throw new Error('Le fichier sheet-context.json ne contient pas un JSON valide.');
-        }
-        if (query.schema !== 1 || typeof query.script !== 'string' ||
-            typeof query.dialogue !== 'string' || typeof query.clientRequestId !== 'string') {
-            throw new Error('La demande de contexte est invalide.');
-        }
-        const baseName = query.script.replace(/\.[^/.]+$/, '');
-        const context = await sheetManager.findDialogueContext(
-            sheets, tableId, baseName, query.dialogue
-        );
-        const result = context
-            ? {
-                schema: 1,
-                status: 'ready',
-                japanese: context.japanese.slice(0, 450),
-                english: context.english.slice(0, 450),
-                sheetUrl: context.sheetUrl,
-                line: context.line
-            }
-            : { schema: 1, status: 'not_found', message: 'Réplique exacte introuvable dans Sheets.' };
-        const encoded = Buffer.from(JSON.stringify(result), 'utf8').toString('base64');
-        await ingressWebhook.editMessage(message.id, {
-            content: `${SHEET_CONTEXT_RESULT_MARKER}\n${encoded}`,
-            attachments: []
-        });
-        console.log(`[Debug ingress] Contexte ${query.clientRequestId} traité.`);
-        return query.clientRequestId;
-    }
-
     async function processMessage(message) {
         if (!accepts(message) || processing.has(message.id)) return false;
         processing.add(message.id);
@@ -196,10 +146,6 @@ function createDebugReportIngress({
                 return true;
             }
 
-            if (message.content === SHEET_CONTEXT_MARKER) {
-                await processSheetContext(message);
-                return true;
-            }
             const requestId = message.content === REPORT_MARKER
                 ? await processDebugReport(message)
                 : await processSheetUpdate(message);
@@ -210,18 +156,6 @@ function createDebugReportIngress({
             return true;
         } catch (error) {
             console.error(`[Debug ingress] Message ${message.id} rejeté :`, error);
-            if (message.content === SHEET_CONTEXT_MARKER && ingressWebhook) {
-                const result = Buffer.from(JSON.stringify({
-                    schema: 1,
-                    status: 'failed',
-                    message: error.message
-                }), 'utf8').toString('base64');
-                await ingressWebhook.editMessage(message.id, {
-                    content: `${SHEET_CONTEXT_RESULT_MARKER}\n${result}`,
-                    attachments: []
-                }).catch(() => {});
-                return false;
-            }
             await message.reply({
                 content: `❌ Message non traité : ${error.message}`,
                 allowedMentions: { parse: [] }

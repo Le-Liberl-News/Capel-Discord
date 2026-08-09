@@ -243,8 +243,7 @@ async function getFeuillesParNom(sheets, tableId, baseName) {
             const nomFeuille = row[0];
             const lien = row[5];
 
-            if (nomFeuille && lien &&
-                nomFeuille.trim().toUpperCase().startsWith(baseName.trim().toUpperCase())) {
+            if (nomFeuille && lien && nomFeuille.startsWith(baseName)) {
                 const sheetId = extractSheetId(lien);
                 if (sheetId) candidats.push({ nom: nomFeuille, id: sheetId, lien: lien });
             }
@@ -331,34 +330,6 @@ async function updateTranslation(sheets, tableId, baseName, texteCherche, nouvea
         } catch (error) { console.error(`Erreur d'écriture sur la feuille ${occ.sheetId} ligne ${occ.ligne}:`, error); }
     }
     return modifs;
-}
-
-async function findDialogueContext(sheets, tableId, baseName, text) {
-    const candidates = await getFeuillesParNom(sheets, tableId, baseName);
-    for (const candidate of candidates) {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: candidate.id,
-            range: 'A1:E2000'
-        });
-        const rows = response.data.values || [];
-        const normalized = text.trim();
-        let rowIndex = rows.findIndex(row => (row[4] || '').trim() === normalized);
-        if (rowIndex < 0) {
-            rowIndex = rows.findIndex(row => (row[3] || '').trim() === normalized);
-        }
-        if (rowIndex >= 0) {
-            const row = rows[rowIndex];
-            return {
-                sheetName: candidate.nom,
-                sheetUrl: candidate.lien,
-                line: rowIndex + 1,
-                japanese: row[2] || '',
-                english: row[3] || '',
-                french: row[4] || ''
-            };
-        }
-    }
-    return null;
 }
 
 async function updateOccurrencesVerified(sheets, occurrences, originalText, newText) {
@@ -467,7 +438,6 @@ async function recupererScript(sheets, spreadsheetId, targetLines) {
     }
 }
 module.exports = {
-    findDialogueContext,
     trouverMissionDuJour,
     trouverOccurrencesBug,
     getFeuillesParNom,
