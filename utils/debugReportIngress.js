@@ -214,6 +214,11 @@ function createDebugReportIngress({
             if (batch.size === 0) break;
             const ordered = [...batch.values()].reverse();
             for (const message of ordered) {
+                if (message.author.id === client.user.id &&
+                    message.content === '❌ Message non traité : Le journal de modification Sheets est invalide.') {
+                    await message.delete().catch(() => {});
+                    continue;
+                }
                 await processMessage(message);
             }
             before = batch.last().id;
