@@ -17,6 +17,7 @@ const COMPLETED_REACTION = '✅';
 const REPORT_MARKER = 'LIBERLNEWS_DEBUG_REPORT_V1';
 const SHEET_UPDATE_MARKER = 'LIBERLNEWS_SHEET_UPDATE_V1';
 const SHEET_AUDIT_MARKER = 'LIBERLNEWS_SHEET_AUDIT_V1';
+const LEGACY_SHEET_CONTEXT_MARKER = 'LIBERLNEWS_SHEET_CONTEXT_V1';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function isDiscordAttachmentUrl(rawUrl) {
@@ -74,7 +75,8 @@ function createDebugReportIngress({
         return enabled()
             && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
-            && [REPORT_MARKER, SHEET_UPDATE_MARKER, SHEET_AUDIT_MARKER].includes(message.content);
+            && [REPORT_MARKER, SHEET_UPDATE_MARKER, SHEET_AUDIT_MARKER,
+                LEGACY_SHEET_CONTEXT_MARKER].includes(message.content);
     }
 
     async function processDebugReport(message) {
@@ -165,6 +167,11 @@ function createDebugReportIngress({
             const alreadyCompleted = message.reactions.cache.get(COMPLETED_REACTION)?.me;
             if (alreadyCompleted) {
                 await message.delete().catch(() => {});
+                return true;
+            }
+            if (message.content === LEGACY_SHEET_CONTEXT_MARKER) {
+                await message.delete();
+                console.log(`[Debug ingress] Ancienne demande de contexte ${message.id} supprimée.`);
                 return true;
             }
 

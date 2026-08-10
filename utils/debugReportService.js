@@ -78,6 +78,7 @@ function validateSheetAudit(rawAudit) {
         throw new Error('Le journal de modification Sheets est invalide.');
     }
     return {
+        schema: 1,
         author: requireString(rawAudit.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
         script: requireString(rawAudit.script, 'script', MAX_SCRIPT_LENGTH),
         previous: requireString(rawAudit.previous || '', 'previous', MAX_TRANSLATION_LENGTH, true),

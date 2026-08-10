@@ -243,7 +243,8 @@ async function getFeuillesParNom(sheets, tableId, baseName) {
             const nomFeuille = row[0];
             const lien = row[5];
 
-            if (nomFeuille && lien && nomFeuille.startsWith(baseName)) {
+            if (nomFeuille && lien &&
+                nomFeuille.trim().toUpperCase().startsWith(baseName.trim().toUpperCase())) {
                 const sheetId = extractSheetId(lien);
                 if (sheetId) candidats.push({ nom: nomFeuille, id: sheetId, lien: lien });
             }
@@ -273,13 +274,15 @@ async function chercherTexteExact(sheets, sheetId, texteRecherche) {
 
         const matchs = [];
         for (let i = startLine; i < rows.length; i++) {
+            const colD = rows[i][3];
             const colE = rows[i][4];
 
-            if (colE && colE.trim() === texteRecherche.trim()) {
+            if ((colE && colE.trim() === texteRecherche.trim()) ||
+                (colD && colD.trim() === texteRecherche.trim())) {
                 matchs.push({
                     ligne: i + 1,
                     perso: rows[i][1] || "*Inconnu*",
-                    texte_fr: colE
+                    texte_fr: colE || ''
                 });
             }
         }
@@ -303,7 +306,8 @@ async function trouverOccurrencesBug(sheets, tableId, baseName, texteRecherche) 
                 sheetId: candidat.id,
                 lien: candidat.lien,
                 ligne: match.ligne,
-                perso: match.perso
+                perso: match.perso,
+                texte_fr: match.texte_fr
             });
         });
     }
@@ -354,7 +358,7 @@ async function updateOccurrencesVerified(sheets, occurrences, originalText, newT
                     occurrence.sheetId,
                     'E',
                     occurrence.ligne,
-                    originalText
+                    occurrence.texte_fr ?? originalText
                 );
             } catch (rollbackError) {
                 rollbackErrors.push(`${occurrence.feuille} ligne ${occurrence.ligne}`);
