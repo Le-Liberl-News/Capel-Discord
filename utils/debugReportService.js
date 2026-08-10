@@ -29,6 +29,30 @@ function requireString(value, fieldName, maxLength, allowEmpty = false) {
     return normalized;
 }
 
+function requireSheetUrl(value) {
+    if (value === undefined || value === null || value === '') return '';
+    const normalized = requireString(value, 'sheetUrl', 2048);
+    let parsed;
+    try {
+        parsed = new URL(normalized);
+    } catch {
+        throw new Error('Le lien Google Sheets est invalide.');
+    }
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'docs.google.com' ||
+        !/^\/spreadsheets\/d\/[a-zA-Z0-9_-]+(?:\/|$)/.test(parsed.pathname)) {
+        throw new Error('Le lien doit cibler un classeur Google Sheets.');
+    }
+    return parsed.toString();
+}
+
+function targetSheetUrl(baseUrl, line) {
+    const parsed = new URL(baseUrl);
+    const fragment = new URLSearchParams(parsed.hash.slice(1));
+    fragment.set('range', `E${line}`);
+    parsed.hash = fragment.toString();
+    return parsed.toString();
+}
+
 function validateDebugReport(rawReport) {
     if (!rawReport || typeof rawReport !== 'object' || Array.isArray(rawReport)) {
         throw new Error('Le rapport JSON est invalide.');
@@ -43,8 +67,9 @@ function validateDebugReport(rawReport) {
     return {
         schema: 1,
         author: requireString(rawReport.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
-        script: requireString(rawReport.script, 'script', MAX_SCRIPT_LENGTH),
-        dialogue: requireString(rawReport.dialogue, 'dialogue', MAX_DIALOGUE_LENGTH),
+        script: requireString(rawReport.script || '', 'script', MAX_SCRIPT_LENGTH, true),
+        dialogue: requireString(rawReport.dialogue || '', 'dialogue', MAX_DIALOGUE_LENGTH, true),
+        sheetUrl: requireSheetUrl(rawReport.sheetUrl),
         comment: requireString(rawReport.comment || '', 'comment', MAX_COMMENT_LENGTH, true),
         clientReportId: requireString(
             rawReport.clientReportId,
@@ -81,6 +106,7 @@ function validateSheetAudit(rawAudit) {
         schema: 1,
         author: requireString(rawAudit.author || 'Anonyme', 'author', MAX_AUTHOR_LENGTH),
         script: requireString(rawAudit.script, 'script', MAX_SCRIPT_LENGTH),
+        sheetUrl: requireSheetUrl(rawAudit.sheetUrl),
         previous: requireString(rawAudit.previous || '', 'previous', MAX_TRANSLATION_LENGTH, true),
         replacement: requireString(rawAudit.replacement, 'replacement', MAX_TRANSLATION_LENGTH),
         clientRequestId: requireString(rawAudit.clientRequestId, 'clientRequestId', 128)
@@ -118,12 +144,15 @@ async function publishDebugReport({
     }
 
     const baseName = validated.script.replace(/\.[^/.]+$/, '');
-    const matches = await sheetManager.trouverOccurrencesBug(
-        sheets,
-        tableId,
-        baseName,
-        validated.dialogue
-    );
+    const hasDialogueContext = Boolean(baseName && validated.dialogue);
+    const matches = hasDialogueContext
+        ? await sheetManager.trouverOccurrencesBug(
+            sheets,
+            tableId,
+            baseName,
+            validated.dialogue
+        )
+        : [];
     const channel = await client.channels.fetch(destinationChannelId);
     if (!channel || !channel.isTextBased()) {
         throw new Error('Le salon de destination des signalements est introuvable.');
@@ -132,16 +161,28 @@ async function publishDebugReport({
     const attachment = new AttachmentBuilder(screenshot.data, {
         name: screenshot.name || 'capture.png'
     });
-    let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n**Script :** \`${baseName}\`\n**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
+    let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
+    if (baseName) content += `**Script :** \`${baseName}\`\n`;
+    if (validated.dialogue) {
+        content += `**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
+    } else {
+        content += '**Réplique :** aucune — signalement général\n\n';
+    }
     if (validated.comment) {
         content += `**Commentaire :**\n> ${validated.comment.replace(/\n/g, '\n> ')}\n\n`;
     }
     const components = [];
 
+    let dialogueUrl = validated.sheetUrl;
+    if (!dialogueUrl && matches.length > 0) {
+        dialogueUrl = targetSheetUrl(matches[0].lien, matches[0].ligne);
+    }
+
     if (matches.length > 0) {
         content += `✅ **Match exact trouvé (${matches.length} occurrence(s)) :**\n`;
         matches.slice(0, 10).forEach(match => {
-            content += `- Feuille **${match.feuille}** (ligne ${match.ligne}) | *${match.perso}*\n`;
+            const url = targetSheetUrl(match.lien, match.ligne);
+            content += `- [Feuille **${match.feuille}**, ligne ${match.ligne}](${url}) | *${match.perso}*\n`;
         });
 
         const fixButton = new ButtonBuilder()
@@ -150,7 +191,7 @@ async function publishDebugReport({
             .setStyle(ButtonStyle.Success)
             .setEmoji('✍️');
         components.push(new ActionRowBuilder().addComponents(fixButton));
-    } else {
+    } else if (hasDialogueContext) {
         content += '❌ **Aucun match exact trouvé.** (Réplique vide, tag caché ou erreur ?)\n🔎 Inspectez manuellement les feuilles liées :';
         const linkedSheets = await sheetManager.getFeuillesParNom(sheets, tableId, baseName);
 
@@ -168,6 +209,15 @@ async function publishDebugReport({
         } else {
             content += `\n⚠️ *Le script ${baseName} n'a pas été trouvé dans le Sommaire.*`;
         }
+    }
+
+    if (dialogueUrl) {
+        components.push(new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel('Ouvrir la réplique dans Sheets')
+                .setStyle(ButtonStyle.Link)
+                .setURL(dialogueUrl)
+        ));
     }
 
     return channel.send({
@@ -247,8 +297,17 @@ async function publishSheetAudit({ client, destinationChannelId, audit }) {
     content += `**Script :** \`${baseName}\`\n`;
     content += `**Ancien texte :**\n> ${quotedPreview(validated.previous || '*vide*')}\n`;
     content += `**Nouveau texte :**\n> ${quotedPreview(validated.replacement)}`;
+    const components = validated.sheetUrl
+        ? [new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel('Ouvrir la réplique dans Sheets')
+                .setStyle(ButtonStyle.Link)
+                .setURL(validated.sheetUrl)
+        )]
+        : [];
     await channel.send({
         content: truncateDiscordContent(content),
+        components,
         allowedMentions: { parse: [] }
     });
     return validated;
