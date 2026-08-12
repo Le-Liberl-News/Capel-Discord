@@ -11,6 +11,7 @@ const MAX_AUTHOR_LENGTH = 100;
 const MAX_SCRIPT_LENGTH = 128;
 const MAX_DIALOGUE_LENGTH = 8000;
 const MAX_COMMENT_LENGTH = 1000;
+const MAX_PATCH_VERSION_LENGTH = 64;
 const MAX_TRANSLATION_LENGTH = 8000;
 const MAX_DISCORD_CONTENT_LENGTH = 2000;
 
@@ -71,6 +72,11 @@ function validateDebugReport(rawReport) {
         dialogue: requireString(rawReport.dialogue || '', 'dialogue', MAX_DIALOGUE_LENGTH, true),
         sheetUrl: requireSheetUrl(rawReport.sheetUrl),
         comment: requireString(rawReport.comment || '', 'comment', MAX_COMMENT_LENGTH, true),
+        patchVersion: requireString(
+            rawReport.patchVersion || 'inconnue',
+            'patchVersion',
+            MAX_PATCH_VERSION_LENGTH
+        ),
         clientReportId: requireString(
             rawReport.clientReportId,
             'clientReportId',
@@ -162,6 +168,7 @@ async function publishDebugReport({
         name: screenshot.name || 'capture.png'
     });
     let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
+    content += `**Version du patch FR :** \`${validated.patchVersion}\`\n`;
     if (baseName) content += `**Script :** \`${baseName}\`\n`;
     if (validated.dialogue) {
         content += `**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
