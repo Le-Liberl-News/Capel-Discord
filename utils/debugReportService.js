@@ -12,6 +12,7 @@ const MAX_SCRIPT_LENGTH = 128;
 const MAX_DIALOGUE_LENGTH = 8000;
 const MAX_COMMENT_LENGTH = 1000;
 const MAX_PATCH_VERSION_LENGTH = 64;
+const MAX_DIRECTX_VERSION_LENGTH = 16;
 const MAX_TRANSLATION_LENGTH = 8000;
 const MAX_DISCORD_CONTENT_LENGTH = 2000;
 
@@ -76,6 +77,11 @@ function validateDebugReport(rawReport) {
             rawReport.patchVersion || 'inconnue',
             'patchVersion',
             MAX_PATCH_VERSION_LENGTH
+        ),
+        directXVersion: requireString(
+            rawReport.directXVersion || 'inconnue',
+            'directXVersion',
+            MAX_DIRECTX_VERSION_LENGTH
         ),
         clientReportId: requireString(
             rawReport.clientReportId,
@@ -169,6 +175,7 @@ async function publishDebugReport({
     });
     let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
     content += `**Version du patch FR :** \`${validated.patchVersion}\`\n`;
+    content += `**Version DirectX :** \`${validated.directXVersion}\`\n`;
     if (baseName) content += `**Script :** \`${baseName}\`\n`;
     if (validated.dialogue) {
         content += `**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
