@@ -4,7 +4,8 @@ const { google } = require('googleapis');
 
 const db = require('./utils/db.js');
 const cron = require('node-cron');
-const { declencherNouvelleMission, cloreLeVoteActuel, genererMessageRecap } = require('./utils/missionLogic.js');
+const { declencherNouvelleMission, enregistrerMission, cloreLeVoteActuel, genererMessageRecap } = require('./utils/missionLogic.js');
+const { verifierSalonPublication } = require('./utils/discordPublication.js');
 
 const SALON_VOTE_ID = "1492972991418732685";
 const SALON_READONLY_ID = "1493171302624657428";
@@ -290,6 +291,8 @@ cron.schedule('0 0 * * *', async () => {
             console.log("🕒 [CRON] Lancement de la mission de minuit...");
 
             const channel = await client.channels.fetch(SALON_READONLY_ID);
+            verifierSalonPublication(discu_channel, client, { attachmentOptional: true });
+            const permissionsMission = verifierSalonPublication(channel, client, { attachmentOptional: true });
             const result = await declencherNouvelleMission(
                 sheets,
                 DAILY_TABLE_ID,
@@ -300,12 +303,15 @@ cron.schedule('0 0 * * *', async () => {
 
             if (typeof result === 'string') { return channel.send(result); }
 
-            await channel.send({ files: [capelAvatar] });
+            if (permissionsMission.peutJoindre) {
+                await channel.send({ files: [capelAvatar] });
+            } else {
+                console.warn(`[PERMISSIONS] capel.gif ignoré : permission Joindre des fichiers absente dans ${SALON_READONLY_ID}.`);
+            }
             const missionMsg = await channel.send({ content: result.principal });
 
             const lienMission = `https://discord.com/channels/${process.env.GUILD_ID}/${SALON_READONLY_ID}/${missionMsg.id}`;
-            const [multiplicateurs] = await db.query(`SELECT multiplicateur FROM mission_actuelle WHERE id = 1`);
-            const bonus = (multiplicateurs[0].multiplicateur - 1) * 100;
+            const bonus = (result.mission.multiplicateur - 1) * 100;
             const bonusMessage = (bonus > 0) ? `\nBonus de ${bonus} % sur les propositions soumises aujourd'hui !` : "";
             const messageAnnonce = `\`\`\`text
         The Orbal Calculator
@@ -327,7 +333,7 @@ cron.schedule('0 0 * * *', async () => {
 
             const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
-            await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
+            await enregistrerMission(result.mission, missionMsg.id);
 
             console.log("✅ [CRON] Mission de minuit déployée avec succès.");
 

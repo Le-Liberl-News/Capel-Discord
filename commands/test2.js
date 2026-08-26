@@ -1,4 +1,5 @@
-const { declencherNouvelleMission } = require('../utils/missionLogic.js');
+const { declencherNouvelleMission, enregistrerMission } = require('../utils/missionLogic.js');
+const { verifierSalonPublication } = require('../utils/discordPublication.js');
 const { AttachmentBuilder } = require('discord.js');
 const db = require('../utils/db.js');
 const { decouperTexte } = require('../utils/strings.js');
@@ -18,20 +19,26 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            const result = await declencherNouvelleMission(sheets, tableId, SALON_READONLY_ID, tableOptions);
-
-            console.log(`[CAPEL-LOG] Redirection de la mission vers le salon : ${SALON_READONLY_ID}`);
             const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);
+            const discu_channel = await interaction.client.channels.fetch(SALON_VOTE_ID);
+            const permissionsMission = verifierSalonPublication(targetChannel, interaction.client, { attachmentOptional: true });
+            verifierSalonPublication(discu_channel, interaction.client, { attachmentOptional: true });
+
+            const result = await declencherNouvelleMission(sheets, tableId, SALON_READONLY_ID, tableOptions);
+            console.log(`[CAPEL-LOG] Redirection de la mission vers le salon : ${SALON_READONLY_ID}`);
             
             const capelAvatar = new AttachmentBuilder('./capel.gif');
             
             if (typeof result === 'string') return targetChannel.send(result);
 
-            await targetChannel.send({ files: [capelAvatar] });
+            if (permissionsMission.peutJoindre) {
+                await targetChannel.send({ files: [capelAvatar] });
+            } else {
+                console.warn(`[PERMISSIONS] capel.gif ignoré : permission Joindre des fichiers absente dans ${SALON_READONLY_ID}.`);
+            }
 
 
             const missionMsg = await targetChannel.send({ content: result.principal });
-            const discu_channel = await interaction.client.channels.fetch(SALON_VOTE_ID);
             const lienMission = `https://discord.com/channels/${interaction.guildId}/${SALON_READONLY_ID}/${missionMsg.id}`;
 
             const messageAnnonce = `\`\`\`text
@@ -54,7 +61,7 @@ module.exports = {
 
             const tutoMsg = await discu_channel.send({ content: messageAnnonce });
 
-            await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMsg.id]);
+            await enregistrerMission(result.mission, missionMsg.id);
 
             await interaction.editReply(`✅ Mission déployée avec succès dans <#${SALON_READONLY_ID}> !`);
 

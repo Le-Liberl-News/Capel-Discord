@@ -83,32 +83,18 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
 
     texteGemma = textePropre;
 
-    await db.execute(`
-        INSERT INTO mission_actuelle (id, sheet_id, nom_feuille, endroit, ligne, texte_jap, texte_eng, nom_perso, context, multiplicateur)
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-        sheet_id = VALUES(sheet_id), 
-        nom_feuille = VALUES(nom_feuille), 
-        endroit = VALUES(endroit), 
-        ligne = VALUES(ligne),
-        texte_jap = VALUES(texte_jap),
-        texte_eng = VALUES(texte_eng),
-        nom_perso = VALUES(nom_perso),
-        context = VALUES(context),
-        multiplicateur = VALUES(multiplicateur),
-        voting = FALSE
-    `, [
-        mission.feuille.id, 
-        mission.feuille.nom, 
-        mission.feuille.endroit, 
-        mission.bulle.lignes,
-        mission.bulle.jap, 
-        mission.bulle.eng,
-        mission.bulle.nom_perso,
-        texteGemma,
+    const missionAEnregistrer = {
+        sheetId: mission.feuille.id,
+        nomFeuille: mission.feuille.nom,
+        endroit: mission.feuille.endroit,
+        lignes: mission.bulle.lignes,
+        japonais: mission.bulle.jap,
+        anglais: mission.bulle.eng,
+        personnage: mission.bulle.nom_perso,
+        contexte: texteGemma,
         multiplicateur
-    ]);
-    
+    };
+
     let blocTexteJapEng = "";
     lignesArray.forEach((ligne, i) => {
         blocTexteJapEng += `    - LIGNE ${ligne} -\n`;
@@ -129,8 +115,36 @@ Tu dois répondre UNIQUEMENT sous cette forme, dans un court paragraphe, sans ri
 
 ${blocTexteJapEng}\`\`\`
     `;
-    
-    return { principal: messagePrincipal };
+    return { principal: messagePrincipal, mission: missionAEnregistrer };
+}
+
+async function enregistrerMission(mission, missionMessageId) {
+    await db.execute(`
+        INSERT INTO mission_actuelle (id, sheet_id, nom_feuille, endroit, ligne, texte_jap, texte_eng, nom_perso, context, multiplicateur)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        sheet_id = VALUES(sheet_id),
+        nom_feuille = VALUES(nom_feuille),
+        endroit = VALUES(endroit),
+        ligne = VALUES(ligne),
+        texte_jap = VALUES(texte_jap),
+        texte_eng = VALUES(texte_eng),
+        nom_perso = VALUES(nom_perso),
+        context = VALUES(context),
+        multiplicateur = VALUES(multiplicateur),
+        voting = FALSE
+    `, [
+        mission.sheetId,
+        mission.nomFeuille,
+        mission.endroit,
+        mission.lignes,
+        mission.japonais,
+        mission.anglais,
+        mission.personnage,
+        mission.contexte,
+        mission.multiplicateur
+    ]);
+    await db.query('UPDATE mission_actuelle SET mission_message_id = ? WHERE id = 1', [missionMessageId]);
 }
 
 async function genererMessageRecap(client) {
@@ -315,4 +329,4 @@ async function cloreLeVoteActuel(client) {
 }
 
 
-module.exports = { declencherNouvelleMission, cloreLeVoteActuel, genererMessageRecap };
+module.exports = { declencherNouvelleMission, enregistrerMission, cloreLeVoteActuel, genererMessageRecap };
