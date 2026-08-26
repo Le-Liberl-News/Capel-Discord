@@ -10,7 +10,7 @@ const SALON_READONLY_ID = "1493171302624657428";
 const SALON_VOTE_ID = "1492972991418732685";
 
 module.exports = {
-    async execute(interaction, sheets, tableId) {
+    async execute(interaction, sheets, tableId, tableOptions = {}) {
         const membreRoles = interaction.member.roles.cache;
         const estAutorise = ROLES_AUTORISES.some(async roleId => membreRoles.has(roleId));
         if (!estAutorise) return interaction.reply({ content: "🛑 Tu n'as pas le rôle requis.", ephemeral: true });
@@ -18,7 +18,7 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            const result = await declencherNouvelleMission(sheets, tableId, SALON_READONLY_ID);
+            const result = await declencherNouvelleMission(sheets, tableId, SALON_READONLY_ID, tableOptions);
 
             console.log(`[CAPEL-LOG] Redirection de la mission vers le salon : ${SALON_READONLY_ID}`);
             const targetChannel = await interaction.client.channels.fetch(SALON_READONLY_ID);

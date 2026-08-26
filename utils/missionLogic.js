@@ -16,9 +16,9 @@ function countChar (text) {
     return differentChars.length;
 }
 
-async function declencherNouvelleMission(sheets, tableId, channelId) {
+async function declencherNouvelleMission(sheets, tableId, channelId, tableOptions = {}) {
     console.log("🕵️ Recherche d'une nouvelle mission...");
-    const mission = await trouverMissionDuJour(sheets, tableId);
+    const mission = await trouverMissionDuJour(sheets, tableId, tableOptions);
 
     if (!mission) { return "❌ Fin du jeu : Absolument toutes les feuilles candidates sont déjà traduites à 100% !"; }
 

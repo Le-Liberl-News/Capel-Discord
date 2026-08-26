@@ -1,5 +1,22 @@
 # Capel-Discord
 
+## Table de la mission quotidienne
+
+La mission « une traduction par jour » utilise par défaut la table Sky the 3rd
+(`1JZm08gB7IdSR9cvdPCQ0G2t9ymI8nF45RwMQ0d7wWjY`, onglet repère
+`gid=824641947`).
+Ces deux valeurs peuvent être remplacées avec `DAILY_TABLE_ID` et
+`DAILY_TABLE_GID`. La table SC historique reste utilisée par les commandes de
+consultation/correction et par les rapports.
+
+Tous les onglets visibles sont découverts automatiquement, mais seuls ceux dont
+le header contient exactement, de B à K, `DESCRIPTION`, `STATUT`, `TRADUCTEURS`,
+`RELECTEURS`, `SHEET DRIVE`, `BULLES TRADUITES`, `BULLES TOTALES`, `COMPLÉTION`,
+`RELECTURE`, `VALIDATION` sont parcourus. Le header peut se trouver à n'importe
+quelle ligne. Le nom reste lu en A et le lien Google Sheet en F. Seules les
+lignes au statut `Non commencée` sont candidates. Le compte de service de
+`credentials.json` doit avoir accès à la table et aux feuilles liées.
+
 ## Entrée des signalements en jeu
 
 Les signalements de la DLL peuvent transiter par un webhook Discord entrant, sans exposer

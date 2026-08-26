@@ -4,6 +4,8 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const ROLES_AUTORISES = ["1306002617725353997", "1020694737725956106"];
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
+const DAILY_TABLE_ID = process.env.DAILY_TABLE_ID || '1JZm08gB7IdSR9cvdPCQ0G2t9ymI8nF45RwMQ0d7wWjY';
+const DAILY_TABLE_GID = Number(process.env.DAILY_TABLE_GID || '824641947');
 
 module.exports = async function handleSlashCommands(interaction, sheets) {
     const { commandName, options, member } = interaction;
@@ -62,7 +64,10 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
     }
     if (commandName === 'runtrad') {
         const cmdTest2 = require('../commands/test2.js');
-        return cmdTest2.execute(interaction, sheets, TABLE_ID);
+        return cmdTest2.execute(interaction, sheets, DAILY_TABLE_ID, {
+            discoverSheets: true,
+            sheetGid: DAILY_TABLE_GID
+        });
     }
     if (commandName === 'closetrad') {
         const cmdTest3 = require('../commands/test3.js');

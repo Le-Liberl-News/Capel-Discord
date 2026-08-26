@@ -57,18 +57,85 @@ function formaterLigneDiscord(row, ligne, feuille, userId = null, isUpdate = fal
 
 
 function extractSheetId(url) {
+    if (!url) return null;
     const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
     return match ? match[1] : null;
 }
 
-async function getToutesLesFeuillesCandidates(sheets, tableId) {
-    const onglets = ["Prolog.", "Ch. 1", "Ch. 2", "Ch. 3", "Ch. 4", "Ch. 5", "Ch. 6", "Ch. 7", "Final"];
-    const rangesToFetch = onglets.map(onglet => `'${onglet}'!A3:F`);
+async function getOngletsTable(sheets, tableId, sheetGid) {
+    const metadata = await sheets.spreadsheets.get({
+        spreadsheetId: tableId,
+        fields: 'sheets.properties(sheetId,title,hidden)'
+    });
+    const proprietes = (metadata.data.sheets || []).map(sheet => sheet.properties);
+    if (sheetGid !== undefined && sheetGid !== null) {
+        const ongletRepere = proprietes.find(sheet => Number(sheet.sheetId) === Number(sheetGid));
+        if (!ongletRepere) throw new Error(`Onglet repère gid=${sheetGid} introuvable dans la table ${tableId}.`);
+    }
+    return proprietes.filter(sheet => !sheet.hidden).map(sheet => sheet.title);
+}
+
+function normaliserEntete(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toUpperCase();
+}
+
+function estHeaderTableTraduction(row) {
+    const attendus = [
+        'DESCRIPTION',
+        'STATUT',
+        'TRADUCTEURS',
+        'RELECTEURS',
+        'SHEET DRIVE',
+        'BULLES TRADUITES',
+        'BULLES TOTALES',
+        'COMPLETION',
+        'RELECTURE',
+        'VALIDATION'
+    ];
+    return attendus.every((entete, index) => normaliserEntete(row[index + 1]) === entete);
+}
+
+function extraireCandidatsTableTraduction(valueRanges) {
+    const candidats = [];
+    for (const rangeData of valueRanges) {
+        const rows = rangeData.values || [];
+        const headerIndex = rows.findIndex(estHeaderTableTraduction);
+        if (headerIndex < 0) continue;
+        for (const row of rows.slice(headerIndex + 1)) {
+            const nomFeuille = row[0];
+            const endroit = row[1];
+            const statut = row[2];
+            const lien = row[5];
+            if (nomFeuille && lien && statut === 'Non commencée') {
+                const sheetId = extractSheetId(lien);
+                if (sheetId) candidats.push({ nom: nomFeuille, endroit, statut, id: sheetId, lien });
+            }
+        }
+    }
+    return candidats;
+}
+
+async function getToutesLesFeuillesCandidates(sheets, tableId, options = {}) {
+    const onglets = options.discoverSheets
+        ? await getOngletsTable(sheets, tableId, options.sheetGid)
+        : ["Prolog.", "Ch. 1", "Ch. 2", "Ch. 3", "Ch. 4", "Ch. 5", "Ch. 6", "Ch. 7", "Final"];
+    const rangesToFetch = onglets.map(onglet => {
+        const titre = onglet.replace(/'/g, "''");
+        return options.discoverSheets ? `'${titre}'!A:K` : `'${titre}'!A3:F`;
+    });
 
     const tableRes = await sheets.spreadsheets.values.batchGet({
         spreadsheetId: tableId,
         ranges: rangesToFetch,
     });
+
+    if (options.discoverSheets) {
+        return extraireCandidatsTableTraduction(tableRes.data.valueRanges || []);
+    }
 
     const candidats = [];
     tableRes.data.valueRanges.forEach(rangeData => {
@@ -211,8 +278,8 @@ async function determinerGroupe(sheets, sheetName, spreadsheetId) {
     };
 }
 
-async function trouverMissionDuJour(sheets, tableId) {
-    const candidats = await getToutesLesFeuillesCandidates(sheets, tableId);
+async function trouverMissionDuJour(sheets, tableId, options = {}) {
+    const candidats = await getToutesLesFeuillesCandidates(sheets, tableId, options);
     if (candidats.length === 0) return null;
 
     for (let i = candidats.length - 1; i > 0; i--) {
@@ -443,6 +510,7 @@ async function recupererScript(sheets, spreadsheetId, targetLines) {
 }
 module.exports = {
     trouverMissionDuJour,
+    getToutesLesFeuillesCandidates,
     trouverOccurrencesBug,
     getFeuillesParNom,
     updateTranslation,

@@ -24,6 +24,10 @@ const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportSer
 const { state, saveState } = require('./rpg/gameState.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
+// Seule la mission quotidienne utilise la table de Sky the 3rd. Les commandes
+// de consultation/correction et les rapports restent branchés sur SC.
+const DAILY_TABLE_ID = process.env.DAILY_TABLE_ID || '1JZm08gB7IdSR9cvdPCQ0G2t9ymI8nF45RwMQ0d7wWjY';
+const DAILY_TABLE_GID = Number(process.env.DAILY_TABLE_GID || '824641947');
 
 const auth = new google.auth.GoogleAuth({
     keyFile: KEY_FILE,
@@ -286,7 +290,12 @@ cron.schedule('0 0 * * *', async () => {
             console.log("🕒 [CRON] Lancement de la mission de minuit...");
 
             const channel = await client.channels.fetch(SALON_READONLY_ID);
-            const result = await declencherNouvelleMission(sheets, TABLE_ID, SALON_READONLY_ID);
+            const result = await declencherNouvelleMission(
+                sheets,
+                DAILY_TABLE_ID,
+                SALON_READONLY_ID,
+                { discoverSheets: true, sheetGid: DAILY_TABLE_GID }
+            );
             const capelAvatar = new AttachmentBuilder('./capel.gif');
 
             if (typeof result === 'string') { return channel.send(result); }
