@@ -22,6 +22,7 @@ const { ajouterXP } = require('./utils/xpManager');
 const { updateRanking } = require('./utils/rankings.js')
 const { createDebugReportIngress } = require('./utils/debugReportIngress.js');
 const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportService.js');
+const { createPatchReleaseService } = require('./utils/patchReleaseService.js');
 const { state, saveState } = require('./rpg/gameState.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
@@ -51,6 +52,11 @@ const debugReportIngress = createDebugReportIngress({
     destinationChannelId: process.env.SECRET_CHANNEL_ID,
     ingressChannelId: process.env.DEBUG_INGRESS_CHANNEL_ID,
     ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID
+});
+const patchReleaseService = createPatchReleaseService({
+    client,
+    token: process.env.PATCHSC_GITHUB_TOKEN,
+    channelId: process.env.PATCH_RELEASE_CHANNEL_ID,
 });
 
 const commands = [
@@ -122,10 +128,18 @@ client.once('clientReady', async () => {
     } catch (error) {
         console.error('[Debug ingress] Reprise des rapports impossible :', error);
     }
+    try {
+        await patchReleaseService.ensurePanel();
+    } catch (error) {
+        console.error('[PatchSC release] Initialisation du panneau impossible :', error);
+    }
 });
 
 client.on('interactionCreate', async interaction => {
-    if (interaction.isButton()) return handleButtons(interaction, sheets);
+    if (interaction.isButton()) {
+        if (await patchReleaseService.handleButton(interaction)) return;
+        return handleButtons(interaction, sheets);
+    }
     if (interaction.isStringSelectMenu()) return handleSelectMenus(interaction);
     if (interaction.isModalSubmit()) return handleModals(interaction, sheets);
     if (interaction.isChatInputCommand()) return handleSlashCommands(interaction, sheets);

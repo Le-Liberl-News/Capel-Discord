@@ -58,3 +58,24 @@ Cette fonction est immédiate et ne demande pas de validation Discord. L'URL du 
 doit donc être traitée comme un secret donnant indirectement un droit d'écriture sur les
 feuilles de traduction. Sa révocation s'effectue en régénérant ou supprimant le webhook
 Discord.
+
+## Bouton de publication PatchSC
+
+Capel peut maintenir un panneau persistant permettant à tout membre ayant accès au salon
+de lancer la chaîne de publication PatchSC. Le bouton déclenche
+`nightly-translation.yml` avec `publish=true` : récupération Drive, réinjection et
+vérifications, incrémentation de version, puis construction de la release.
+
+Ajouter au `.env` du serveur :
+
+```dotenv
+PATCH_RELEASE_CHANNEL_ID=identifiant_du_salon
+PATCHSC_GITHUB_TOKEN=token_finement_scopé
+```
+
+Le token doit avoir accès au dépôt privé `Le-Liberl-News/PatchSC`, avec
+`Actions: Read and write` et `Contents: Read`. Il ne doit jamais être placé dans le dépôt.
+Si une réinjection ou une construction est déjà active sur GitHub, Capel refuse une
+nouvelle demande. Le verrou est donc conservé même après un redémarrage du bot. Le
+panneau est désactivé pendant le traitement et le salon reçoit le lien de la release,
+le lien de l'action en échec, ou l'indication qu'aucun changement n'était à publier.
