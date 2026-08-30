@@ -72,11 +72,15 @@ function createDebugReportIngress({
     }
 
     function accepts(message) {
+        const recognizedContent = message.content === SHEET_UPDATE_MARKER ||
+            message.content === SHEET_AUDIT_MARKER ||
+            message.content === LEGACY_SHEET_CONTEXT_MARKER ||
+            message.content === REPORT_MARKER ||
+            message.content.startsWith(`${REPORT_MARKER}\n`);
         return enabled()
             && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
-            && [REPORT_MARKER, SHEET_UPDATE_MARKER, SHEET_AUDIT_MARKER,
-                LEGACY_SHEET_CONTEXT_MARKER].includes(message.content);
+            && recognizedContent;
     }
 
     async function processDebugReport(message) {
@@ -175,7 +179,8 @@ function createDebugReportIngress({
                 return true;
             }
 
-            const requestId = message.content === REPORT_MARKER
+            const requestId = message.content === REPORT_MARKER ||
+                message.content.startsWith(`${REPORT_MARKER}\n`)
                 ? await processDebugReport(message)
                 : (message.content === SHEET_AUDIT_MARKER
                     ? await processSheetAudit(message)

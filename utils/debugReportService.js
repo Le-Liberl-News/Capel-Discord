@@ -12,7 +12,10 @@ const MAX_SCRIPT_LENGTH = 128;
 const MAX_DIALOGUE_LENGTH = 8000;
 const MAX_COMMENT_LENGTH = 1000;
 const MAX_PATCH_VERSION_LENGTH = 64;
+const MAX_DLL_VERSION_LENGTH = 64;
 const MAX_DIRECTX_VERSION_LENGTH = 16;
+const MAX_SCENE_FILE_LENGTH = 128;
+const MAX_MAP_NAME_LENGTH = 256;
 const MAX_TRANSLATION_LENGTH = 8000;
 const MAX_DISCORD_CONTENT_LENGTH = 2000;
 
@@ -78,10 +81,27 @@ function validateDebugReport(rawReport) {
             'patchVersion',
             MAX_PATCH_VERSION_LENGTH
         ),
+        dllVersion: requireString(
+            rawReport.dllVersion || 'inconnue',
+            'dllVersion',
+            MAX_DLL_VERSION_LENGTH
+        ),
         directXVersion: requireString(
             rawReport.directXVersion || 'inconnue',
             'directXVersion',
             MAX_DIRECTX_VERSION_LENGTH
+        ),
+        sceneFile: requireString(
+            rawReport.sceneFile || '',
+            'sceneFile',
+            MAX_SCENE_FILE_LENGTH,
+            true
+        ),
+        mapName: requireString(
+            rawReport.mapName || '',
+            'mapName',
+            MAX_MAP_NAME_LENGTH,
+            true
         ),
         clientReportId: requireString(
             rawReport.clientReportId,
@@ -174,9 +194,12 @@ async function publishDebugReport({
         name: screenshot.name || 'capture.png'
     });
     let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
+    content += `**Version de la DLL :** \`${validated.dllVersion}\`\n`;
     content += `**Version du patch FR :** \`${validated.patchVersion}\`\n`;
     content += `**Version DirectX :** \`${validated.directXVersion}\`\n`;
     if (baseName) content += `**Script :** \`${baseName}\`\n`;
+    if (validated.sceneFile) content += `**Fichier scène :** \`${validated.sceneFile}\`\n`;
+    if (validated.mapName) content += `**Map :** ${validated.mapName}\n`;
     if (validated.dialogue) {
         content += `**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
     } else {
