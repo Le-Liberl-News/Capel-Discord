@@ -75,7 +75,7 @@ PATCHSC_GITHUB_TOKEN=token_finement_scopé
 
 Le token doit avoir accès au dépôt privé `Le-Liberl-News/PatchSC`, avec
 `Actions: Read and write` et `Contents: Read`. Il ne doit jamais être placé dans le dépôt.
-Si une réinjection ou une construction est déjà active sur GitHub, Capel refuse une
+Si une publication est déjà active sur GitHub, Capel refuse une
 nouvelle demande. Le verrou est donc conservé même après un redémarrage du bot. Le
 panneau est désactivé pendant le traitement et le salon reçoit le lien de la release,
 le lien de l'action en échec, ou l'indication qu'aucun changement n'était à publier.

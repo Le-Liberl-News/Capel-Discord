@@ -4,7 +4,6 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('
 const OWNER = 'Le-Liberl-News';
 const REPOSITORY = 'PatchSC';
 const NIGHTLY_WORKFLOW = 'nightly-translation.yml';
-const BUILD_WORKFLOW = 'build-release.yml';
 const BUTTON_ID = 'patch_release_start';
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -68,11 +67,8 @@ class PatchReleaseService {
     }
 
     async activeRun() {
-        const [nightly, build] = await Promise.all([
-            this.workflowRuns(NIGHTLY_WORKFLOW), this.workflowRuns(BUILD_WORKFLOW),
-        ]);
-        return [...nightly.map(run => ({ ...run, stage: 'injection' })),
-            ...build.map(run => ({ ...run, stage: 'construction' }))]
+        const nightly = await this.workflowRuns(NIGHTLY_WORKFLOW);
+        return nightly.map(run => ({ ...run, stage: 'publication' }))
             .filter(run => ACTIVE_STATUSES.has(run.status))
             .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0] || null;
     }
@@ -177,35 +173,19 @@ class PatchReleaseService {
     }
 
     async monitorPipeline(initialRun, baselineReleaseId) {
-        let nightlyRun = initialRun.stage === 'injection' ? initialRun : null;
-        let buildRun = initialRun.stage === 'construction' ? initialRun : null;
-        const startedAt = new Date(initialRun.created_at).getTime();
-        if (nightlyRun) {
-            nightlyRun = await this.waitForCompletion(nightlyRun, 'Réinjection depuis Drive');
-            if (nightlyRun.conclusion !== 'success') {
-                throw new Error(`la réinjection a échoué (${nightlyRun.html_url})`);
-            }
-            buildRun = await this.waitForRun(BUILD_WORKFLOW, startedAt, 180_000);
-            if (!buildRun) {
-                const release = await this.latestRelease();
-                if (release && baselineReleaseId && release.id !== baselineReleaseId) {
-                    await this.finishSuccess(release);
-                    return;
-                }
-                await this.updatePanel({
-                    description: 'Vérification terminée : aucun fichier binaire n’a changé, aucune release créée.',
-                });
-                if (this.panelMessage) await this.panelMessage.channel.send(
-                    'ℹ️ PatchSC vérifié : aucun changement à publier.');
-                return;
-            }
-        }
-        buildRun = await this.waitForCompletion(buildRun, 'Construction de la release');
-        if (buildRun.conclusion !== 'success') {
-            throw new Error(`la construction a échoué (${buildRun.html_url})`);
+        const run = await this.waitForCompletion(initialRun, 'Publication complète');
+        if (run.conclusion !== 'success') {
+            throw new Error(`la publication a échoué (${run.html_url})`);
         }
         const release = await this.latestRelease();
-        if (!release) throw new Error('GitHub annonce un succès mais aucune release n’est disponible.');
+        if (!release || (baselineReleaseId && release.id === baselineReleaseId)) {
+            await this.updatePanel({
+                description: 'Vérification terminée : aucun fichier binaire n’a changé, aucune release créée.',
+            });
+            if (this.panelMessage) await this.panelMessage.channel.send(
+                'ℹ️ PatchSC vérifié : aucun changement à publier.');
+            return;
+        }
         await this.finishSuccess(release);
     }
 
@@ -251,7 +231,7 @@ class PatchReleaseService {
             await interaction.editReply('✅ Publication PatchSC demandée. Le bouton restera verrouillé jusqu’au résultat.');
             const run = await this.waitForRun(NIGHTLY_WORKFLOW, requestedAt, 120_000);
             if (!run) throw new Error('GitHub a accepté la demande mais le workflow n’est pas apparu.');
-            run.stage = 'injection';
+            run.stage = 'publication';
             this.startMonitor(run, baseline ? baseline.id : null, interaction.user.id);
             return true;
         } catch (error) {

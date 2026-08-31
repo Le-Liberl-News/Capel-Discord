@@ -35,16 +35,14 @@ function interaction() {
     };
 }
 
-test('activeRun locks on either GitHub workflow', async () => {
+test('activeRun locks on the single publishing workflow', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     service.workflowRuns = async workflow => workflow === 'nightly-translation.yml' ? [{
         id: 10, status: 'in_progress', created_at: '2026-08-30T10:00:00Z', html_url: 'nightly',
-    }] : [{
-        id: 9, status: 'completed', conclusion: 'success', created_at: '2026-08-30T09:00:00Z',
-    }];
+    }] : [];
     const active = await service.activeRun();
     assert.equal(active.id, 10);
-    assert.equal(active.stage, 'injection');
+    assert.equal(active.stage, 'publication');
 });
 
 test('button dispatches the publishing workflow with publish=true', async () => {
@@ -75,7 +73,7 @@ test('button dispatches the publishing workflow with publish=true', async () => 
 test('button refuses a second publication reported by GitHub', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     service.activeRun = async () => ({
-        id: 12, stage: 'construction', status: 'queued', html_url: 'https://example/run',
+        id: 12, stage: 'publication', status: 'queued', html_url: 'https://example/run',
     });
     service.updatePanel = async () => {};
     service.startMonitor = () => {};
@@ -85,12 +83,10 @@ test('button refuses a second publication reported by GitHub', async () => {
     assert.match(click.replies[0], /déjà en cours/);
 });
 
-test('successful two-stage pipeline publishes the resulting release', async () => {
+test('successful publishing workflow publishes the resulting release', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
-    const nightly = { id: 20, stage: 'injection', created_at: '2026-08-30T10:00:00Z' };
-    const build = { id: 21, stage: 'construction', created_at: '2026-08-30T10:30:00Z' };
+    const nightly = { id: 20, stage: 'publication', created_at: '2026-08-30T10:00:00Z' };
     service.waitForCompletion = async run => ({ ...run, status: 'completed', conclusion: 'success' });
-    service.waitForRun = async () => build;
     service.latestRelease = async () => ({ id: 9, tag_name: 'patch-v0.5.5', html_url: 'release' });
     service.finishSuccess = async release => { service.release = release; };
     await service.monitorPipeline(nightly, 8);
