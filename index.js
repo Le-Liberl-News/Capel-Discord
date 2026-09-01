@@ -221,6 +221,7 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
 const cooldownsXP = new Map();
 
 client.on('messageCreate', message => {
+    patchReleaseService.schedulePanelBump(message);
     if (debugReportIngress.accepts(message)) {
         void debugReportIngress.processMessage(message);
     }

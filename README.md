@@ -73,6 +73,10 @@ PATCH_RELEASE_CHANNEL_ID=identifiant_du_salon
 PATCHSC_GITHUB_TOKEN=token_finement_scopé
 ```
 
+Le secret Actions `DISCORD_WEBHOOK_URL` de PatchSC doit viser ce même salon. Après
+chaque notification envoyée par ce webhook, Capel replace automatiquement le panneau
+et son bouton en dernier message.
+
 Le token doit avoir accès au dépôt privé `Le-Liberl-News/PatchSC`, avec
 `Actions: Read and write` et `Contents: Read`. Il ne doit jamais être placé dans le dépôt.
 Si une publication est déjà active sur GitHub, Capel refuse une

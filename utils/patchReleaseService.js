@@ -17,6 +17,7 @@ class PatchReleaseService {
         this.dispatching = false;
         this.monitorPromise = null;
         this.requestedBy = null;
+        this.panelBumpTimer = null;
     }
 
     async github(method, path, body = null) {
@@ -128,6 +129,37 @@ class PatchReleaseService {
         if (this.panelMessage) await this.panelMessage.edit(this.panelPayload(state));
     }
 
+    schedulePanelBump(message) {
+        if (!this.channelId || message.channelId !== this.channelId || !message.webhookId) return false;
+        if (this.panelBumpTimer) clearTimeout(this.panelBumpTimer);
+        this.panelBumpTimer = setTimeout(() => {
+            this.panelBumpTimer = null;
+            this.bumpPanel().catch(error =>
+                console.error('[PatchSC release] Remontée du panneau impossible :', error));
+        }, 2_000);
+        return true;
+    }
+
+    async bumpPanel() {
+        const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
+        if (!channel || !channel.isTextBased()) return;
+        const messages = await channel.messages.fetch({ limit: 100 });
+        const panels = messages.filter(message =>
+            message.author.id === this.client.user.id && message.components.some(row =>
+                row.components.some(component => component.customId === BUTTON_ID)));
+        for (const panel of panels.values()) {
+            await panel.delete().catch(() => {});
+        }
+        this.panelMessage = null;
+        const active = this.token ? await this.activeRun() : null;
+        this.panelMessage = await channel.send(active ? this.panelPayload({
+            busy: true,
+            description: `Une ${active.stage} PatchSC est déjà en cours.`,
+            url: active.html_url,
+        }) : this.panelPayload());
+        if (active) this.startMonitor(active, null, null);
+    }
+
     async waitForRun(workflow, createdAfter, timeoutMs) {
         const deadline = Date.now() + timeoutMs;
         while (Date.now() < deadline) {
@@ -190,12 +222,7 @@ class PatchReleaseService {
     }
 
     async finishSuccess(release) {
-        await this.updatePanel({
-            description: `Dernière release disponible : **${release.tag_name}**`,
-            url: release.html_url,
-        });
-        if (this.panelMessage) await this.panelMessage.channel.send(
-            `✅ PatchSC **${release.tag_name}** est disponible : ${release.html_url}`);
+        await this.bumpPanel();
     }
 
     async handleButton(interaction) {
