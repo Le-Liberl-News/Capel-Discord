@@ -43,6 +43,16 @@ les messages restés dans le salon pendant une indisponibilité. La route histor
 `POST /debug-screen` reste disponible pendant la migration et utilise le même service de
 publication final.
 
+## Présence des testeurs
+
+La DLL envoie un heartbeat compact via le webhook Discord sous le marqueur
+`LIBERLNEWS_TESTER_PRESENCE_V1`. Capel vérifie `TESTER_PROGRESS_WEBHOOK_ID` et
+`TESTER_PROGRESS_CHANNEL_ID` (avec `PATCH_RELEASE_CHANNEL_ID` comme valeur de repli),
+supprime le message technique puis actualise un panneau unique.
+
+Le serveur ne stocke ni n'affiche l'adresse IP. L'heure du dernier heartbeat sert
+uniquement à calculer l'état en ligne/hors ligne et n'apparaît pas dans Discord.
+
 ### Écriture Sheets depuis le jeu
 
 La DLL écrit désormais directement dans Google Sheets et vérifie la cellule relue. Après

@@ -23,6 +23,7 @@ const { updateRanking } = require('./utils/rankings.js')
 const { createDebugReportIngress } = require('./utils/debugReportIngress.js');
 const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportService.js');
 const { createPatchReleaseService } = require('./utils/patchReleaseService.js');
+const { createTesterPresenceService } = require('./utils/testerPresenceService.js');
 const { state, saveState } = require('./rpg/gameState.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
@@ -57,6 +58,11 @@ const patchReleaseService = createPatchReleaseService({
     client,
     token: process.env.PATCHSC_GITHUB_TOKEN,
     channelId: process.env.PATCH_RELEASE_CHANNEL_ID,
+});
+const testerPresenceService = createTesterPresenceService({
+    client,
+    channelId: process.env.TESTER_PROGRESS_CHANNEL_ID || process.env.PATCH_RELEASE_CHANNEL_ID,
+    webhookId: process.env.TESTER_PROGRESS_WEBHOOK_ID,
 });
 
 const commands = [
@@ -133,6 +139,11 @@ client.once('clientReady', async () => {
     } catch (error) {
         console.error('[PatchSC release] Initialisation du panneau impossible :', error);
     }
+    try {
+        await testerPresenceService.ensurePanel();
+    } catch (error) {
+        console.error('[Présence testeurs] Initialisation du panneau impossible :', error);
+    }
 });
 
 client.on('interactionCreate', async interaction => {
@@ -190,9 +201,9 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
 const upload = multer({ dest: 'uploads/' });
-
 
 // Outil de screenshot ingame pour le debug, à partir d'ici'
 
@@ -221,6 +232,10 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
 const cooldownsXP = new Map();
 
 client.on('messageCreate', message => {
+    if (testerPresenceService.acceptsMessage(message)) {
+        void testerPresenceService.processMessage(message);
+        return;
+    }
     patchReleaseService.schedulePanelBump(message);
     if (debugReportIngress.accepts(message)) {
         void debugReportIngress.processMessage(message);
