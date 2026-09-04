@@ -21,11 +21,13 @@ test('distingue les pseudos identiques sans utiliser une IP', () => {
     assert.deepEqual(service.displayRows(1_001).map(row => row.name), ['Anonyme #1', 'Anonyme #2']);
 });
 
-test('signale une fin de chapitre une seule fois lors du passage au suivant', () => {
+test('conserve une fin de chapitre en attente tant que sa notification n’est pas acquittée', () => {
     const service = new TesterPresenceService({ client: {} });
     const id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     assert.deepEqual(service.receive({ installationId: id, chapter: 1 }).completedChapters, []);
     assert.deepEqual(service.receive({ installationId: id, chapter: 2 }).completedChapters, [1]);
+    assert.deepEqual(service.receive({ installationId: id, chapter: 2 }).completedChapters, [1]);
+    service.notifiedChapters.set(id, 2);
     assert.deepEqual(service.receive({ installationId: id, chapter: 2 }).completedChapters, []);
 });
 

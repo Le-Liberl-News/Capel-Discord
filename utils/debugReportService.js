@@ -34,6 +34,10 @@ function requireString(value, fieldName, maxLength, allowEmpty = false) {
     return normalized;
 }
 
+function nonNegativeInteger(value) {
+    return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+}
+
 function requireSheetUrl(value) {
     if (value === undefined || value === null || value === '') return '';
     const normalized = requireString(value, 'sheetUrl', 2048);
@@ -103,6 +107,12 @@ function validateDebugReport(rawReport) {
             MAX_MAP_NAME_LENGTH,
             true
         ),
+        chapter: nonNegativeInteger(rawReport.chapter),
+        stage: nonNegativeInteger(rawReport.stage),
+        stageCount: nonNegativeInteger(rawReport.stageCount),
+        stageLabel: requireString(rawReport.stageLabel || '', 'stageLabel', 128, true),
+        checkpoint: nonNegativeInteger(rawReport.checkpoint),
+        checkpointCount: nonNegativeInteger(rawReport.checkpointCount),
         clientReportId: requireString(
             rawReport.clientReportId,
             'clientReportId',
@@ -200,6 +210,11 @@ async function publishDebugReport({
     if (baseName) content += `**Script :** \`${baseName}\`\n`;
     if (validated.sceneFile) content += `**Fichier scène :** \`${validated.sceneFile}\`\n`;
     if (validated.mapName) content += `**Map :** ${validated.mapName}\n`;
+    if (validated.stageLabel) {
+        content += `**Progression :** chapitre ${validated.chapter}, ` +
+            `${validated.stageLabel} (${validated.stage + 1}/${validated.stageCount || '?'})\n`;
+        content += `**Jalon global :** ${validated.checkpoint}/${validated.checkpointCount || '?'}\n`;
+    }
     if (validated.dialogue) {
         content += `**Réplique :**\n> ${validated.dialogue.replace(/\n/g, '\n> ')}\n\n`;
     } else {

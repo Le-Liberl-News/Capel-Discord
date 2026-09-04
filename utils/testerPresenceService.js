@@ -20,6 +20,7 @@ class TesterPresenceService {
         this.onChapterCompleted = onChapterCompleted;
         this.testers = new Map();
         this.highestChapters = new Map();
+        this.notifiedChapters = new Map();
         this.panelMessage = null;
         this.refreshTimer = null;
         this.offlineTimer = null;
@@ -33,6 +34,16 @@ class TesterPresenceService {
             for (const [installationId, chapter] of Object.entries(saved.highestChapters || {})) {
                 if (UUID.test(installationId) && Number.isSafeInteger(chapter) && chapter >= 0) {
                     this.highestChapters.set(installationId.toLowerCase(), chapter);
+                }
+            }
+            for (const [installationId, chapter] of Object.entries(saved.notifiedChapters || {})) {
+                if (UUID.test(installationId) && Number.isSafeInteger(chapter) && chapter >= 0) {
+                    this.notifiedChapters.set(installationId.toLowerCase(), chapter);
+                }
+            }
+            for (const [installationId, chapter] of this.highestChapters) {
+                if (!this.notifiedChapters.has(installationId)) {
+                    this.notifiedChapters.set(installationId, chapter);
                 }
             }
         } catch (error) {
@@ -49,6 +60,7 @@ class TesterPresenceService {
         const temporary = `${this.statePath}.tmp`;
         fs.writeFileSync(temporary, JSON.stringify({
             highestChapters: Object.fromEntries(this.highestChapters),
+            notifiedChapters: Object.fromEntries(this.notifiedChapters),
         }), 'utf8');
         fs.renameSync(temporary, this.statePath);
     }
@@ -70,6 +82,10 @@ class TesterPresenceService {
             await message.delete().catch(() => {});
             for (const chapter of result.completedChapters) {
                 await this.onChapterCompleted?.({ tester: result.tester, chapter });
+            }
+            if (result.completedChapters.length) {
+                this.notifiedChapters.set(result.tester.installationId, result.tester.chapter);
+                this.saveState();
             }
             return true;
         } catch (error) {
@@ -103,11 +119,15 @@ class TesterPresenceService {
         };
         this.testers.set(tester.installationId, tester);
         const previousChapter = this.highestChapters.get(tester.installationId);
+        const notifiedChapter = this.notifiedChapters.get(tester.installationId);
         const completedChapters = [];
-        if (previousChapter !== undefined && tester.chapter > previousChapter) {
-            for (let chapter = previousChapter; chapter < tester.chapter; chapter += 1) {
+        if (notifiedChapter !== undefined && tester.chapter > notifiedChapter) {
+            for (let chapter = notifiedChapter; chapter < tester.chapter; chapter += 1) {
                 completedChapters.push(chapter);
             }
+        }
+        if (previousChapter === undefined) {
+            this.notifiedChapters.set(tester.installationId, tester.chapter);
         }
         if (previousChapter === undefined || tester.chapter > previousChapter) {
             this.highestChapters.set(tester.installationId, tester.chapter);

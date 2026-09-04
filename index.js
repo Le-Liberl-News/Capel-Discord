@@ -74,8 +74,10 @@ const testerPresenceService = createTesterPresenceService({
             content: `**${name.replace(/([\\_*~`>|])/g, '\\$1')}** a fini ${label}.`,
             allowedMentions: { parse: [] },
         });
-        await testerPresenceService.bumpPanel();
-        await patchReleaseService.bumpPanel();
+        await testerPresenceService.bumpPanel().catch(error =>
+            console.error('[Présence testeurs] Remontée du panneau impossible :', error));
+        await patchReleaseService.bumpPanel().catch(error =>
+            console.error('[PatchSC release] Remontée du panneau impossible :', error));
     },
 });
 
