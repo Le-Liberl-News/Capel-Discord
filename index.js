@@ -63,6 +63,20 @@ const testerPresenceService = createTesterPresenceService({
     client,
     channelId: process.env.TESTER_PROGRESS_CHANNEL_ID || process.env.PATCH_RELEASE_CHANNEL_ID,
     webhookId: process.env.TESTER_PROGRESS_WEBHOOK_ID,
+    statePath: require('path').join(__dirname, '.runtime', 'tester-presence.json'),
+    onChapterCompleted: async ({ tester, chapter }) => {
+        const channelId = process.env.TESTER_PROGRESS_CHANNEL_ID || process.env.PATCH_RELEASE_CHANNEL_ID;
+        const channel = await client.channels.fetch(channelId);
+        const name = testerPresenceService.displayRows()
+            .find(row => row.installationId === tester.installationId)?.name || 'Anonyme';
+        const label = chapter === 0 ? 'le prologue' : `le chapitre ${chapter}`;
+        await channel.send({
+            content: `**${name.replace(/([\\_*~`>|])/g, '\\$1')}** a fini ${label}.`,
+            allowedMentions: { parse: [] },
+        });
+        await testerPresenceService.bumpPanel();
+        await patchReleaseService.bumpPanel();
+    },
 });
 
 const commands = [
@@ -402,3 +416,14 @@ cron.schedule('0 22 * * *', async () => {
         } catch (error) { console.error("❌ Erreur lors de la clôture de 22h :", error); }
     }
 }, { timezone: "Europe/Paris" });
+
+cron.schedule('0 3 * * *', async () => {
+    try {
+        const result = await patchReleaseService.requestRelease();
+        console.log(result.alreadyRunning
+            ? '[PatchSC release] La publication quotidienne est déjà en cours.'
+            : '[PatchSC release] Publication quotidienne de 3 h déclenchée.');
+    } catch (error) {
+        console.error('[PatchSC release] Échec du déclenchement quotidien de 3 h :', error);
+    }
+}, { timezone: 'Europe/Paris' });

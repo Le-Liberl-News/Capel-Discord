@@ -6,3 +6,4 @@ credentials.json
 # Screenshots
 uploads/
 *.db
+.runtime/

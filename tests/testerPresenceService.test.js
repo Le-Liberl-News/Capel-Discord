@@ -21,6 +21,14 @@ test('distingue les pseudos identiques sans utiliser une IP', () => {
     assert.deepEqual(service.displayRows(1_001).map(row => row.name), ['Anonyme #1', 'Anonyme #2']);
 });
 
+test('signale une fin de chapitre une seule fois lors du passage au suivant', () => {
+    const service = new TesterPresenceService({ client: {} });
+    const id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    assert.deepEqual(service.receive({ installationId: id, chapter: 1 }).completedChapters, []);
+    assert.deepEqual(service.receive({ installationId: id, chapter: 2 }).completedChapters, [1]);
+    assert.deepEqual(service.receive({ installationId: id, chapter: 2 }).completedChapters, []);
+});
+
 test('passe hors ligne sans afficher de date', () => {
     const service = new TesterPresenceService({ client: {}, offlineAfterMs: 100 });
     service.receive({
@@ -53,4 +61,18 @@ test('accepte uniquement le webhook et le salon configurés', () => {
         channelId: 'autre', webhookId: '1544780925496205432',
         content: 'LIBERLNEWS_TESTER_PRESENCE_V1\n{}'
     }), false);
+});
+
+test('affiche le jalon officiel du scenario', () => {
+    const service = new TesterPresenceService({ client: {} });
+    service.receive({
+        installationId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', author: 'Test',
+        chapter: 1, stage: 3, stageCount: 10, stageLabel: 'Interrogatoire des Ravens',
+        checkpoint: 9, checkpointCount: 80,
+    }, 1_000);
+    const description = service.payload(1_001).embeds[0].data.description;
+    assert.match(description, /Chapitre 1/);
+    assert.match(description, /Interrogatoire des Ravens/);
+    assert.match(description, /4\/10/);
+    assert.match(description, /9\/80/);
 });

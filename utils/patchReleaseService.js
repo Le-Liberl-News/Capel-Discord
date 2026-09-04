@@ -7,6 +7,10 @@ const NIGHTLY_WORKFLOW = 'nightly-translation.yml';
 const BUTTON_ID = 'patch_release_start';
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+const RETRYABLE_NETWORK_ERRORS = new Set([
+    'EAI_AGAIN', 'ENETDOWN', 'ENETUNREACH', 'ENOTFOUND',
+    'ECONNREFUSED', 'ECONNRESET', 'EHOSTUNREACH', 'ETIMEDOUT',
+]);
 
 class PatchReleaseService {
     constructor({ client, token, channelId }) {
@@ -22,6 +26,21 @@ class PatchReleaseService {
 
     async github(method, path, body = null) {
         if (!this.token) throw new Error('PATCHSC_GITHUB_TOKEN est absent.');
+        const attempts = 4;
+        for (let attempt = 1; attempt <= attempts; attempt += 1) {
+            try {
+                return await this.githubRequest(method, path, body);
+            } catch (error) {
+                if (!RETRYABLE_NETWORK_ERRORS.has(error.code) || attempt === attempts) throw error;
+                console.warn(
+                    `[PatchSC release] GitHub inaccessible (${error.code}), ` +
+                    `nouvelle tentative ${attempt}/${attempts - 1}.`);
+                await delay(1_000 * (2 ** (attempt - 1)));
+            }
+        }
+    }
+
+    async githubRequest(method, path, body = null) {
         const payload = body === null ? null : Buffer.from(JSON.stringify(body), 'utf8');
         const options = {
             hostname: 'api.github.com', path, method,
@@ -55,7 +74,11 @@ class PatchReleaseService {
                 });
             });
             request.on('error', reject);
-            request.setTimeout(30_000, () => request.destroy(new Error('GitHub ne répond pas.')));
+            request.setTimeout(30_000, () => {
+                const error = new Error('GitHub ne répond pas.');
+                error.code = 'ETIMEDOUT';
+                request.destroy(error);
+            });
             if (payload) request.write(payload);
             request.end();
         });
@@ -225,12 +248,9 @@ class PatchReleaseService {
         await this.bumpPanel();
     }
 
-    async handleButton(interaction) {
-        if (interaction.customId !== BUTTON_ID) return false;
-        await interaction.deferReply({ ephemeral: true });
+    async requestRelease(requestedBy = null) {
         if (this.dispatching) {
-            await interaction.editReply('Une demande de publication est déjà en cours de traitement.');
-            return true;
+            throw new Error('Une demande de publication est déjà en cours de traitement.');
         }
         this.dispatching = true;
         try {
@@ -242,9 +262,8 @@ class PatchReleaseService {
                     description: `Une ${active.stage} PatchSC est déjà en cours.`,
                     url: active.html_url,
                 });
-                this.startMonitor(active, null, interaction.user.id);
-                await interaction.editReply(`Une publication est déjà en cours : ${active.html_url}`);
-                return true;
+                this.startMonitor(active, null, requestedBy);
+                return { alreadyRunning: true, run: active };
             }
             const baseline = await this.latestRelease();
             const requestedAt = Date.now();
@@ -253,20 +272,33 @@ class PatchReleaseService {
                 { ref: 'main', inputs: { publish: 'true' } });
             await this.updatePanel({
                 busy: true,
-                description: `Publication demandée par <@${interaction.user.id}>. Démarrage de la réinjection…`,
+                description: requestedBy
+                    ? `Publication demandée par <@${requestedBy}>. Démarrage de la réinjection…`
+                    : 'Publication quotidienne de 3 h demandée. Démarrage de la réinjection…',
             });
-            await interaction.editReply('✅ Publication PatchSC demandée. Le bouton restera verrouillé jusqu’au résultat.');
             const run = await this.waitForRun(NIGHTLY_WORKFLOW, requestedAt, 120_000);
             if (!run) throw new Error('GitHub a accepté la demande mais le workflow n’est pas apparu.');
             run.stage = 'publication';
-            this.startMonitor(run, baseline ? baseline.id : null, interaction.user.id);
+            this.startMonitor(run, baseline ? baseline.id : null, requestedBy);
+            return { alreadyRunning: false, run };
+        } finally {
+            this.dispatching = false;
+        }
+    }
+
+    async handleButton(interaction) {
+        if (interaction.customId !== BUTTON_ID) return false;
+        await interaction.deferReply({ ephemeral: true });
+        try {
+            const result = await this.requestRelease(interaction.user.id);
+            await interaction.editReply(result.alreadyRunning
+                ? `Une publication est déjà en cours : ${result.run.html_url}`
+                : '✅ Publication PatchSC demandée. Le bouton restera verrouillé jusqu’au résultat.');
             return true;
         } catch (error) {
             await this.updatePanel({ failed: true, description: `Impossible de démarrer : ${error.message}` });
             await interaction.editReply(`❌ ${error.message}`);
             return true;
-        } finally {
-            this.dispatching = false;
         }
     }
 }

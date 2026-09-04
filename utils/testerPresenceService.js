@@ -1,4 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRESENCE_MARKER = 'LIBERLNEWS_TESTER_PRESENCE_V1';
@@ -8,15 +10,47 @@ function clean(value, maximum) {
 }
 
 class TesterPresenceService {
-    constructor({ client, channelId, webhookId, offlineAfterMs = 90_000 }) {
+    constructor({ client, channelId, webhookId, offlineAfterMs = 90_000,
+        statePath = '', onChapterCompleted = null }) {
         this.client = client;
         this.channelId = clean(channelId, 32);
         this.webhookId = clean(webhookId, 32);
         this.offlineAfterMs = offlineAfterMs;
+        this.statePath = statePath;
+        this.onChapterCompleted = onChapterCompleted;
         this.testers = new Map();
+        this.highestChapters = new Map();
         this.panelMessage = null;
         this.refreshTimer = null;
         this.offlineTimer = null;
+        this.loadState();
+    }
+
+    loadState() {
+        if (!this.statePath) return;
+        try {
+            const saved = JSON.parse(fs.readFileSync(this.statePath, 'utf8'));
+            for (const [installationId, chapter] of Object.entries(saved.highestChapters || {})) {
+                if (UUID.test(installationId) && Number.isSafeInteger(chapter) && chapter >= 0) {
+                    this.highestChapters.set(installationId.toLowerCase(), chapter);
+                }
+            }
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error('[Présence testeurs] État local illisible :', error);
+            }
+        }
+    }
+
+    saveState() {
+        if (!this.statePath) return;
+        const directory = path.dirname(this.statePath);
+        fs.mkdirSync(directory, { recursive: true });
+        const temporary = `${this.statePath}.tmp`;
+        fs.writeFileSync(temporary, JSON.stringify({
+            highestChapters: Object.fromEntries(this.highestChapters),
+        }), 'utf8');
+        fs.renameSync(temporary, this.statePath);
     }
 
     acceptsMessage(message) {
@@ -32,8 +66,11 @@ class TesterPresenceService {
         try {
             const separator = message.content.indexOf('\n');
             if (separator < 0) throw new Error('payload JSON absent');
-            this.receive(JSON.parse(message.content.slice(separator + 1)));
+            const result = this.receive(JSON.parse(message.content.slice(separator + 1)));
             await message.delete().catch(() => {});
+            for (const chapter of result.completedChapters) {
+                await this.onChapterCompleted?.({ tester: result.tester, chapter });
+            }
             return true;
         } catch (error) {
             console.error(`[Présence testeurs] Message ${message.id} rejeté :`, error);
@@ -53,11 +90,29 @@ class TesterPresenceService {
             dllVersion: clean(body.dllVersion, 32),
             patchVersion: clean(body.patchVersion, 32),
             renderer: clean(body.renderer, 16),
+            chapter: Math.max(0, Number.isSafeInteger(body.chapter) ? body.chapter : 0),
+            stage: Math.max(0, Number.isSafeInteger(body.stage) ? body.stage : 0),
+            stageCount: Math.max(0, Number.isSafeInteger(body.stageCount) ? body.stageCount : 0),
+            stageLabel: clean(body.stageLabel, 128),
+            checkpoint: Math.max(0, Number.isSafeInteger(body.checkpoint) ? body.checkpoint : 0),
+            checkpointCount: Math.max(0,
+                Number.isSafeInteger(body.checkpointCount) ? body.checkpointCount : 0),
             bubblesRead: Math.max(0, Number.isSafeInteger(body.bubblesRead) ? body.bubblesRead : 0),
             bubblesTotal: Math.max(0, Number.isSafeInteger(body.bubblesTotal) ? body.bubblesTotal : 0),
             lastSeen: now,
         };
         this.testers.set(tester.installationId, tester);
+        const previousChapter = this.highestChapters.get(tester.installationId);
+        const completedChapters = [];
+        if (previousChapter !== undefined && tester.chapter > previousChapter) {
+            for (let chapter = previousChapter; chapter < tester.chapter; chapter += 1) {
+                completedChapters.push(chapter);
+            }
+        }
+        if (previousChapter === undefined || tester.chapter > previousChapter) {
+            this.highestChapters.set(tester.installationId, tester.chapter);
+            this.saveState();
+        }
         this.scheduleRefresh();
         if (this.offlineTimer) clearTimeout(this.offlineTimer);
         this.offlineTimer = setTimeout(() => {
@@ -65,7 +120,7 @@ class TesterPresenceService {
             this.scheduleRefresh();
         }, this.offlineAfterMs + 250);
         this.offlineTimer.unref?.();
-        return tester;
+        return { tester, completedChapters };
     }
 
     displayRows(now = Date.now()) {
@@ -91,15 +146,31 @@ class TesterPresenceService {
 
     payload(now = Date.now()) {
         const rows = this.displayRows(now);
-        const lines = rows.slice(0, 80).map(row => {
+        const lines = [];
+        let displayed = 0;
+        for (const row of rows) {
             const total = row.bubblesTotal;
             const read = Math.min(row.bubblesRead, total || row.bubblesRead);
             const filled = total ? Math.round((read / total) * 10) : 0;
+            const story = row.stageLabel
+                ? `Chapitre ${row.chapter} - ${row.stageLabel} (${row.stage + 1}/${row.stageCount || '?'})\n`
+                : '';
+            const storyFilled = row.checkpointCount
+                ? Math.round((Math.min(row.checkpoint, row.checkpointCount) /
+                    row.checkpointCount) * 10)
+                : 0;
+            const storyBar = row.stageLabel
+                ? `Scénario \`${'█'.repeat(storyFilled)}${'░'.repeat(10 - storyFilled)}\` ` +
+                    `${row.checkpoint}/${row.checkpointCount || '?'}\n`
+                : '';
             const bar = `${'█'.repeat(filled)}${'░'.repeat(10 - filled)}`;
-            return `${row.online ? '🟢' : '⚫'} **${row.name}** — ${row.location}\n` +
-                `\`${bar}\` ${read}/${total || '?'}`;
-        });
-        if (rows.length > 80) lines.push(`… et ${rows.length - 80} autre(s).`);
+            const line = `${row.online ? '🟢' : '⚫'} **${row.name}** — ${row.location}\n` +
+                story + storyBar + `Bulles \`${bar}\` ${read}/${total || '?'}`;
+            if (lines.join('\n').length + line.length + 40 > 4_000) break;
+            lines.push(line);
+            displayed += 1;
+        }
+        if (rows.length > displayed) lines.push(`… et ${rows.length - displayed} autre(s).`);
         return {
             embeds: [new EmbedBuilder()
                 .setTitle('Avancée des testeurs')
@@ -120,6 +191,15 @@ class TesterPresenceService {
         }
         if (this.panelMessage) await this.panelMessage.edit(this.payload());
         else this.panelMessage = await channel.send(this.payload());
+        return this.panelMessage;
+    }
+
+    async bumpPanel() {
+        if (!this.channelId) return null;
+        const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
+        if (!channel?.isTextBased()) return null;
+        if (this.panelMessage) await this.panelMessage.delete().catch(() => {});
+        this.panelMessage = await channel.send(this.payload());
         return this.panelMessage;
     }
 

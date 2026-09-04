@@ -45,6 +45,33 @@ test('activeRun locks on the single publishing workflow', async () => {
     assert.equal(active.stage, 'publication');
 });
 
+test('GitHub calls retry transient DNS failures', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    let calls = 0;
+    service.githubRequest = async () => {
+        calls += 1;
+        if (calls < 3) {
+            const error = new Error('getaddrinfo ENOTFOUND api.github.com');
+            error.code = 'ENOTFOUND';
+            throw error;
+        }
+        return { ok: true };
+    };
+    assert.deepEqual(await service.github('GET', '/test'), { ok: true });
+    assert.equal(calls, 3);
+});
+
+test('GitHub calls do not retry HTTP or authentication failures', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    let calls = 0;
+    service.githubRequest = async () => {
+        calls += 1;
+        throw new Error('GitHub HTTP 401');
+    };
+    await assert.rejects(service.github('GET', '/test'), /HTTP 401/);
+    assert.equal(calls, 1);
+});
+
 test('button dispatches the publishing workflow with publish=true', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     const calls = [];
