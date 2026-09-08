@@ -90,11 +90,41 @@ test('button dispatches the publishing workflow with publish=true', async () => 
     assert.deepEqual(calls[0], {
         method: 'POST',
         path: '/repos/Le-Liberl-News/PatchSC/actions/workflows/nightly-translation.yml/dispatches',
-        body: { ref: 'main', inputs: { publish: 'true' } },
+        body: { ref: 'main', inputs: { publish: 'true', notify_discord: 'true' } },
     });
     assert.equal(service.started.baseline, 7);
     assert.equal(service.started.requester, '42');
     assert.match(click.replies[0], /demandée/);
+});
+
+test('daily publication disables Discord release notifications', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    const calls = [];
+    service.activeRun = async () => null;
+    service.latestRelease = async () => ({ id: 7 });
+    service.updatePanel = async () => {};
+    service.github = async (method, path, body) => { calls.push({ method, path, body }); };
+    service.waitForRun = async () => ({
+        id: 13, status: 'queued', created_at: new Date().toISOString(), html_url: 'run',
+    });
+    service.startMonitor = () => {};
+
+    await service.requestRelease();
+
+    assert.equal(calls[0].body.inputs.notify_discord, 'false');
+});
+
+test('daily no-change result does not post a Discord message', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    let messages = 0;
+    service.panelMessage = { channel: { send: async () => { messages += 1; } } };
+    service.updatePanel = async () => {};
+    service.waitForCompletion = async run => ({ ...run, status: 'completed', conclusion: 'success' });
+    service.latestRelease = async () => ({ id: 8 });
+
+    await service.monitorPipeline({ id: 20 }, 8);
+
+    assert.equal(messages, 0);
 });
 
 test('button refuses a second publication reported by GitHub', async () => {

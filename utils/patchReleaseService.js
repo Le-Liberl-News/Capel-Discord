@@ -218,7 +218,7 @@ class PatchReleaseService {
             .catch(async error => {
                 console.error('[PatchSC release] Surveillance échouée :', error);
                 await this.updatePanel({ failed: true, description: `Échec : ${error.message}` });
-                if (this.panelMessage) await this.panelMessage.channel.send(
+                if (this.requestedBy && this.panelMessage) await this.panelMessage.channel.send(
                     `❌ Publication PatchSC interrompue : ${error.message}`);
             })
             .finally(() => {
@@ -237,7 +237,7 @@ class PatchReleaseService {
             await this.updatePanel({
                 description: 'Vérification terminée : aucun fichier binaire n’a changé, aucune release créée.',
             });
-            if (this.panelMessage) await this.panelMessage.channel.send(
+            if (this.requestedBy && this.panelMessage) await this.panelMessage.channel.send(
                 'ℹ️ PatchSC vérifié : aucun changement à publier.');
             return;
         }
@@ -269,7 +269,10 @@ class PatchReleaseService {
             const requestedAt = Date.now();
             await this.github('POST',
                 `/repos/${OWNER}/${REPOSITORY}/actions/workflows/${NIGHTLY_WORKFLOW}/dispatches`,
-                { ref: 'main', inputs: { publish: 'true' } });
+                { ref: 'main', inputs: {
+                    publish: 'true',
+                    notify_discord: requestedBy ? 'true' : 'false',
+                } });
             await this.updatePanel({
                 busy: true,
                 description: requestedBy
