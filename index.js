@@ -234,7 +234,7 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
             tableId: TABLE_ID,
             destinationChannelId: process.env.SECRET_CHANNEL_ID,
             report,
-            screenshot: { data: screenshot, name: 'capture.png' }
+            media: { data: screenshot, name: 'capture.png' }
         });
         res.status(200).send('OK');
     } catch (error) {

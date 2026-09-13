@@ -11,14 +11,21 @@ const REPORT_FILE_NAME = 'report.json';
 const SHEET_UPDATE_FILE_NAME = 'sheet-update.json';
 const SHEET_AUDIT_FILE_NAME = 'sheet-audit.json';
 const SCREENSHOT_FILE_NAME = 'capture.png';
+const VIDEO_FILE_NAME = 'capture.mp4';
 const MAX_REPORT_BYTES = 64 * 1024;
 const MAX_SCREENSHOT_BYTES = 12 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 20 * 1000 * 1000;
 const COMPLETED_REACTION = '✅';
 const REPORT_MARKER = 'LIBERLNEWS_DEBUG_REPORT_V1';
+const VIDEO_REPORT_MARKER = 'LIBERLNEWS_VIDEO_REPORT_V1';
 const SHEET_UPDATE_MARKER = 'LIBERLNEWS_SHEET_UPDATE_V1';
 const SHEET_AUDIT_MARKER = 'LIBERLNEWS_SHEET_AUDIT_V1';
 const LEGACY_SHEET_CONTEXT_MARKER = 'LIBERLNEWS_SHEET_CONTEXT_V1';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function isMp4(buffer) {
+    return buffer.length >= 12 && buffer.subarray(4, 8).toString('ascii') === 'ftyp';
+}
 
 function isDiscordAttachmentUrl(rawUrl) {
     try {
@@ -40,11 +47,18 @@ async function downloadAttachment(attachment, maxBytes) {
         throw new Error(`La pièce jointe ${attachment.name} est trop volumineuse.`);
     }
 
-    const response = await fetch(attachment.url, { signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(attachment.url, { signal: AbortSignal.timeout(30_000), redirect: 'error' });
     if (!response.ok) {
         throw new Error(`Téléchargement de ${attachment.name} impossible (HTTP ${response.status}).`);
     }
-    const data = Buffer.from(await response.arrayBuffer());
+    const chunks = [];
+    let total = 0;
+    for await (const chunk of response.body) {
+        total += chunk.length;
+        if (total > maxBytes) throw new Error(`Taille de ${attachment.name} invalide.`);
+        chunks.push(Buffer.from(chunk));
+    }
+    const data = Buffer.concat(chunks, total);
     if (data.length === 0 || data.length > maxBytes) {
         throw new Error(`Taille de ${attachment.name} invalide.`);
     }
@@ -76,7 +90,9 @@ function createDebugReportIngress({
             message.content === SHEET_AUDIT_MARKER ||
             message.content === LEGACY_SHEET_CONTEXT_MARKER ||
             message.content === REPORT_MARKER ||
-            message.content.startsWith(`${REPORT_MARKER}\n`);
+            message.content.startsWith(`${REPORT_MARKER}\n`) ||
+            message.content === VIDEO_REPORT_MARKER ||
+            message.content.startsWith(`${VIDEO_REPORT_MARKER}\n`);
         return enabled()
             && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
@@ -88,17 +104,23 @@ function createDebugReportIngress({
             throw new Error('Un signalement doit contenir exactement deux pièces jointes.');
         }
         const reportAttachment = findAttachment(message, REPORT_FILE_NAME);
-        const screenshotAttachment = findAttachment(message, SCREENSHOT_FILE_NAME);
-        if (!reportAttachment || !screenshotAttachment) {
-            throw new Error('Le message doit contenir report.json et capture.png.');
+        const videoReport = message.content === VIDEO_REPORT_MARKER ||
+            message.content.startsWith(`${VIDEO_REPORT_MARKER}\n`);
+        const mediaName = videoReport ? VIDEO_FILE_NAME : SCREENSHOT_FILE_NAME;
+        const mediaAttachment = findAttachment(message, mediaName);
+        if (!reportAttachment || !mediaAttachment) {
+            throw new Error(`Le message doit contenir report.json et ${mediaName}.`);
         }
 
-        const [reportBuffer, screenshotBuffer] = await Promise.all([
+        const [reportBuffer, mediaBuffer] = await Promise.all([
             downloadAttachment(reportAttachment, MAX_REPORT_BYTES),
-            downloadAttachment(screenshotAttachment, MAX_SCREENSHOT_BYTES)
+            downloadAttachment(mediaAttachment, videoReport ? MAX_VIDEO_BYTES : MAX_SCREENSHOT_BYTES)
         ]);
-        if (!screenshotBuffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+        if (!videoReport && !mediaBuffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
             throw new Error('La pièce jointe capture.png n’est pas un fichier PNG valide.');
+        }
+        if (videoReport && !isMp4(mediaBuffer)) {
+            throw new Error('La pièce jointe capture.mp4 n’est pas un fichier MP4 valide.');
         }
         let rawReport;
         try {
@@ -107,13 +129,16 @@ function createDebugReportIngress({
             throw new Error('Le fichier report.json ne contient pas un JSON valide.');
         }
         const report = validateDebugReport(rawReport);
+        if ((report.mediaType === 'video') !== videoReport) {
+            throw new Error('Le type du rapport ne correspond pas à sa pièce jointe.');
+        }
         await publishDebugReport({
             client,
             sheets,
             tableId,
             destinationChannelId,
             report,
-            screenshot: { data: screenshotBuffer, name: SCREENSHOT_FILE_NAME }
+            media: { data: mediaBuffer, name: mediaName }
         });
         return report.clientReportId;
     }
@@ -180,7 +205,9 @@ function createDebugReportIngress({
             }
 
             const requestId = message.content === REPORT_MARKER ||
-                message.content.startsWith(`${REPORT_MARKER}\n`)
+                message.content.startsWith(`${REPORT_MARKER}\n`) ||
+                message.content === VIDEO_REPORT_MARKER ||
+                message.content.startsWith(`${VIDEO_REPORT_MARKER}\n`)
                 ? await processDebugReport(message)
                 : (message.content === SHEET_AUDIT_MARKER
                     ? await processSheetAudit(message)

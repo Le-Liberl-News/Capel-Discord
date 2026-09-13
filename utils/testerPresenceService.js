@@ -169,9 +169,6 @@ class TesterPresenceService {
         const lines = [];
         let displayed = 0;
         for (const row of rows) {
-            const total = row.bubblesTotal;
-            const read = Math.min(row.bubblesRead, total || row.bubblesRead);
-            const filled = total ? Math.round((read / total) * 10) : 0;
             const story = row.stageLabel
                 ? `Chapitre ${row.chapter} - ${row.stageLabel} (${row.stage + 1}/${row.stageCount || '?'})\n`
                 : '';
@@ -183,9 +180,8 @@ class TesterPresenceService {
                 ? `Scénario \`${'█'.repeat(storyFilled)}${'░'.repeat(10 - storyFilled)}\` ` +
                     `${row.checkpoint}/${row.checkpointCount || '?'}\n`
                 : '';
-            const bar = `${'█'.repeat(filled)}${'░'.repeat(10 - filled)}`;
             const line = `${row.online ? '🟢' : '⚫'} **${row.name}** — ${row.location}\n` +
-                story + storyBar + `Bulles \`${bar}\` ${read}/${total || '?'}`;
+                story + storyBar.replace(/\n$/, '');
             if (lines.join('\n').length + line.length + 40 > 4_000) break;
             lines.push(line);
             displayed += 1;

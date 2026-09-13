@@ -6,6 +6,7 @@ const {
 } = require('discord.js');
 
 const sheetManager = require('./sheetManager');
+const { prepareDebugVideo } = require('./debugVideo');
 
 const MAX_AUTHOR_LENGTH = 100;
 const MAX_SCRIPT_LENGTH = 128;
@@ -113,6 +114,8 @@ function validateDebugReport(rawReport) {
         stageLabel: requireString(rawReport.stageLabel || '', 'stageLabel', 128, true),
         checkpoint: nonNegativeInteger(rawReport.checkpoint),
         checkpointCount: nonNegativeInteger(rawReport.checkpointCount),
+        mediaType: rawReport.mediaType === 'video' ? 'video' : 'screenshot',
+        durationMs: nonNegativeInteger(rawReport.durationMs),
         clientReportId: requireString(
             rawReport.clientReportId,
             'clientReportId',
@@ -178,11 +181,11 @@ async function publishDebugReport({
     tableId,
     destinationChannelId,
     report,
-    screenshot
+    media
 }) {
     const validated = validateDebugReport(report);
-    if (!screenshot || !Buffer.isBuffer(screenshot.data) || screenshot.data.length === 0) {
-        throw new Error('La capture PNG est absente.');
+    if (!media || !Buffer.isBuffer(media.data) || media.data.length === 0) {
+        throw new Error('La capture du signalement est absente.');
     }
 
     const baseName = validated.script.replace(/\.[^/.]+$/, '');
@@ -200,16 +203,23 @@ async function publishDebugReport({
         throw new Error('Le salon de destination des signalements est introuvable.');
     }
 
-    const attachment = new AttachmentBuilder(screenshot.data, {
-        name: screenshot.name || 'capture.png'
+    const attachmentData = validated.mediaType === 'video'
+        ? await prepareDebugVideo(media.data) : media.data;
+    const attachment = new AttachmentBuilder(attachmentData, {
+        name: media.name || (validated.mediaType === 'video' ? 'capture.mp4' : 'capture.png')
     });
-    let content = `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
+    let content = validated.mediaType === 'video'
+        ? `**Nouveau bug report vidéo**\n**Auteur :** ${validated.author}\n`
+        : `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
     content += `**Version de la DLL :** \`${validated.dllVersion}\`\n`;
     content += `**Version du patch FR :** \`${validated.patchVersion}\`\n`;
     content += `**Version DirectX :** \`${validated.directXVersion}\`\n`;
     if (baseName) content += `**Script :** \`${baseName}\`\n`;
     if (validated.sceneFile) content += `**Fichier scène :** \`${validated.sceneFile}\`\n`;
     if (validated.mapName) content += `**Map :** ${validated.mapName}\n`;
+    if (validated.mediaType === 'video' && validated.durationMs) {
+        content += `**Durée :** ${(validated.durationMs / 1000).toFixed(1)} s\n`;
+    }
     if (validated.stageLabel) {
         content += `**Progression :** chapitre ${validated.chapter}, ` +
             `${validated.stageLabel} (${validated.stage + 1}/${validated.stageCount || '?'})\n`;
