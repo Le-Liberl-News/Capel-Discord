@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { prepareDebugVideo, MAX_OUTPUT_BYTES } = require('../utils/debugVideo');
+const {
+    prepareDebugVideo, MAX_OUTPUT_BYTES, mp4DurationSeconds, videoBitrateCap
+} = require('../utils/debugVideo');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
@@ -15,6 +17,16 @@ test('rejects non-MP4 and oversized input before invoking FFmpeg', async () => {
     assert.ok(MAX_OUTPUT_BYTES < 10_000_000);
 });
 
+test('bitrate cap follows the clip duration', () => {
+    // Un clip court peut etre bien plus genereux qu'un clip de 90 s.
+    assert.ok(videoBitrateCap(5) > videoBitrateCap(60));
+    assert.ok(videoBitrateCap(60) > videoBitrateCap(90));
+    // Le budget de sortie reste garanti sur la duree maximale.
+    assert.ok(videoBitrateCap(90) * 90 < MAX_OUTPUT_BYTES * 8);
+    // Duree inconnue : on retombe sur l'hypothese la plus prudente.
+    assert.equal(videoBitrateCap(0), videoBitrateCap(90));
+});
+
 test('MP4 conversion decodes successfully and puts moov before mdat', async () => {
     const ffmpeg = require('ffmpeg-static');
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'capel-video-test-'));
@@ -23,7 +35,9 @@ test('MP4 conversion decodes successfully and puts moov before mdat', async () =
         await run(ffmpeg, ['-nostdin', '-hide_banner', '-loglevel', 'error',
             '-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=15', '-t', '1',
             '-c:v', 'libx264', '-y', source], { windowsHide: true });
-        const output = await prepareDebugVideo(await fs.readFile(source));
+        const raw = await fs.readFile(source);
+        assert.ok(Math.abs(mp4DurationSeconds(raw) - 1) < 0.2);
+        const output = await prepareDebugVideo(raw);
         assert.ok(output.length < MAX_OUTPUT_BYTES);
         assert.ok(output.indexOf('moov') > 0);
         assert.ok(output.indexOf('moov') < output.indexOf('mdat'));
