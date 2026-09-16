@@ -61,8 +61,12 @@ const patchReleaseService = createPatchReleaseService({
 });
 const testerPresenceService = createTesterPresenceService({
     client,
-    channelId: process.env.TESTER_PROGRESS_CHANNEL_ID || process.env.PATCH_RELEASE_CHANNEL_ID,
-    webhookId: process.env.TESTER_PROGRESS_WEBHOOK_ID,
+    ingressChannelId: process.env.TESTER_PRESENCE_INGRESS_CHANNEL_ID ||
+        process.env.DEBUG_INGRESS_CHANNEL_ID || process.env.TESTER_PROGRESS_CHANNEL_ID,
+    ingressWebhookId: process.env.TESTER_PRESENCE_INGRESS_WEBHOOK_ID ||
+        process.env.DEBUG_INGRESS_WEBHOOK_ID || process.env.TESTER_PROGRESS_WEBHOOK_ID,
+    destinationChannelId: process.env.TESTER_PROGRESS_CHANNEL_ID ||
+        process.env.PATCH_RELEASE_CHANNEL_ID,
     statePath: require('path').join(__dirname, '.runtime', 'tester-presence.json'),
     onChapterCompleted: async ({ tester, chapter }) => {
         const channelId = process.env.TESTER_PROGRESS_CHANNEL_ID || process.env.PATCH_RELEASE_CHANNEL_ID;

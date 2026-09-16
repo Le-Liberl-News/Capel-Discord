@@ -10,11 +10,16 @@ function clean(value, maximum) {
 }
 
 class TesterPresenceService {
-    constructor({ client, channelId, webhookId, offlineAfterMs = 90_000,
+    constructor({ client, channelId, webhookId, ingressChannelId, ingressWebhookId,
+        destinationChannelId, offlineAfterMs = 90_000,
         statePath = '', onChapterCompleted = null }) {
         this.client = client;
-        this.channelId = clean(channelId, 32);
-        this.webhookId = clean(webhookId, 32);
+        // `channelId`/`webhookId` restent acceptés pour les anciennes configurations.
+        // L'entrée technique et le panneau Discord sont cependant deux destinations
+        // distinctes : les confondre rendait les heartbeats visibles au changement de salon.
+        this.ingressChannelId = clean(ingressChannelId || channelId, 32);
+        this.ingressWebhookId = clean(ingressWebhookId || webhookId, 32);
+        this.destinationChannelId = clean(destinationChannelId || channelId, 32);
         this.offlineAfterMs = offlineAfterMs;
         this.statePath = statePath;
         this.onChapterCompleted = onChapterCompleted;
@@ -66,9 +71,9 @@ class TesterPresenceService {
     }
 
     acceptsMessage(message) {
-        return Boolean(this.channelId && this.webhookId) &&
-            message.channelId === this.channelId &&
-            message.webhookId === this.webhookId &&
+        return Boolean(this.ingressChannelId && this.ingressWebhookId) &&
+            message.channelId === this.ingressChannelId &&
+            message.webhookId === this.ingressWebhookId &&
             (message.content === PRESENCE_MARKER ||
                 message.content.startsWith(`${PRESENCE_MARKER}\n`));
     }
@@ -196,8 +201,8 @@ class TesterPresenceService {
     }
 
     async ensurePanel() {
-        if (!this.channelId) return null;
-        const channel = await this.client.channels.fetch(this.channelId);
+        if (!this.destinationChannelId) return null;
+        const channel = await this.client.channels.fetch(this.destinationChannelId);
         if (!channel?.isTextBased()) throw new Error('Salon de suivi des testeurs inaccessible.');
         if (!this.panelMessage) {
             const messages = await channel.messages.fetch({ limit: 100 });
@@ -211,8 +216,9 @@ class TesterPresenceService {
     }
 
     async bumpPanel() {
-        if (!this.channelId) return null;
-        const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
+        if (!this.destinationChannelId) return null;
+        const channel = this.panelMessage?.channel ||
+            await this.client.channels.fetch(this.destinationChannelId);
         if (!channel?.isTextBased()) return null;
         if (this.panelMessage) await this.panelMessage.delete().catch(() => {});
         this.panelMessage = await channel.send(this.payload());

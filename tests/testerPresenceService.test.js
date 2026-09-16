@@ -53,7 +53,8 @@ test('affiche le compteur de bulles et une barre bornée', () => {
 
 test('accepte uniquement le webhook et le salon configurés', () => {
     const service = new TesterPresenceService({
-        client: {}, channelId: '1166042889046995074', webhookId: '1544780925496205432'
+        client: {}, ingressChannelId: '1166042889046995074',
+        ingressWebhookId: '1544780925496205432', destinationChannelId: 'sortie'
     });
     assert.equal(service.acceptsMessage({
         channelId: '1166042889046995074', webhookId: '1544780925496205432',
@@ -63,6 +64,26 @@ test('accepte uniquement le webhook et le salon configurés', () => {
         channelId: 'autre', webhookId: '1544780925496205432',
         content: 'LIBERLNEWS_TESTER_PRESENCE_V1\n{}'
     }), false);
+});
+
+test('sépare le salon technique du salon du panneau', async () => {
+    const fetched = [];
+    const panel = {
+        isTextBased: () => true,
+        messages: { fetch: async () => ({ find: () => null }) },
+        send: async () => ({ edit: async () => {}, channel: panel }),
+    };
+    const service = new TesterPresenceService({
+        client: { channels: { fetch: async id => { fetched.push(id); return panel; } } },
+        ingressChannelId: 'entree', ingressWebhookId: 'webhook',
+        destinationChannelId: 'sortie',
+    });
+    assert.equal(service.acceptsMessage({
+        channelId: 'entree', webhookId: 'webhook',
+        content: 'LIBERLNEWS_TESTER_PRESENCE_V1\n{}'
+    }), true);
+    await service.ensurePanel();
+    assert.deepEqual(fetched, ['sortie']);
 });
 
 test('affiche le jalon officiel du scenario', () => {

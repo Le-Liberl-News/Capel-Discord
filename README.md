@@ -46,9 +46,21 @@ publication final.
 ## Présence des testeurs
 
 La DLL envoie un heartbeat compact via le webhook Discord sous le marqueur
-`LIBERLNEWS_TESTER_PRESENCE_V1`. Capel vérifie `TESTER_PROGRESS_WEBHOOK_ID` et
-`TESTER_PROGRESS_CHANNEL_ID` (avec `PATCH_RELEASE_CHANNEL_ID` comme valeur de repli),
-supprime le message technique puis actualise un panneau unique.
+`LIBERLNEWS_TESTER_PRESENCE_V1`. Par défaut, Capel le reconnaît avec les mêmes
+`DEBUG_INGRESS_CHANNEL_ID` et `DEBUG_INGRESS_WEBHOOK_ID` que les signalements,
+supprime le message technique puis actualise un panneau unique dans
+`TESTER_PROGRESS_CHANNEL_ID` (ou `PATCH_RELEASE_CHANNEL_ID` en valeur de repli).
+
+Si la présence utilise un autre webhook technique, définir explicitement :
+
+```dotenv
+TESTER_PRESENCE_INGRESS_CHANNEL_ID=identifiant_du_salon_technique
+TESTER_PRESENCE_INGRESS_WEBHOOK_ID=identifiant_du_webhook
+```
+
+Les anciens `TESTER_PROGRESS_WEBHOOK_ID` et `TESTER_PROGRESS_CHANNEL_ID` restent
+acceptés en repli, mais l'entrée technique et le salon d'affichage ne sont plus
+confondus.
 
 Le serveur ne stocke ni n'affiche l'adresse IP. L'heure du dernier heartbeat sert
 uniquement à calculer l'état en ligne/hors ligne et n'apparaît pas dans Discord.
