@@ -27,6 +27,10 @@ const { createTesterPresenceService } = require('./utils/testerPresenceService.j
 const { state, saveState } = require('./rpg/gameState.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
+const REPORT_DESTINATION_CHANNEL_ID = process.env.DEBUG_REPORT_DESTINATION_CHANNEL_ID ||
+    '660891802517110817';
+const TECHNICAL_INGRESS_CHANNEL_ID = process.env.DEBUG_INGRESS_CHANNEL_ID ||
+    '889835278494203915';
 // Seule la mission quotidienne utilise la table de Sky the 3rd. Les commandes
 // de consultation/correction et les rapports restent branchés sur SC.
 const DAILY_TABLE_ID = process.env.DAILY_TABLE_ID || '1JZm08gB7IdSR9cvdPCQ0G2t9ymI8nF45RwMQ0d7wWjY';
@@ -50,8 +54,8 @@ const debugReportIngress = createDebugReportIngress({
     client,
     sheets,
     tableId: TABLE_ID,
-    destinationChannelId: process.env.SECRET_CHANNEL_ID,
-    ingressChannelId: process.env.DEBUG_INGRESS_CHANNEL_ID,
+    destinationChannelId: REPORT_DESTINATION_CHANNEL_ID,
+    ingressChannelId: TECHNICAL_INGRESS_CHANNEL_ID,
     ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID
 });
 const patchReleaseService = createPatchReleaseService({
@@ -67,19 +71,19 @@ const testerPresenceService = createTesterPresenceService({
         process.env.DEBUG_INGRESS_WEBHOOK_ID || process.env.TESTER_PROGRESS_WEBHOOK_ID,
     destinationChannelId: process.env.TESTER_PROGRESS_CHANNEL_ID ||
         process.env.PATCH_RELEASE_CHANNEL_ID,
+    scanChannelIds: [
+        TECHNICAL_INGRESS_CHANNEL_ID,
+        REPORT_DESTINATION_CHANNEL_ID,
+    ],
     statePath: require('path').join(__dirname, '.runtime', 'tester-presence.json'),
     onChapterCompleted: async ({ tester, chapter }) => {
-        const channelId = process.env.TESTER_PROGRESS_CHANNEL_ID || process.env.PATCH_RELEASE_CHANNEL_ID;
-        const channel = await client.channels.fetch(channelId);
-        const name = testerPresenceService.displayRows()
-            .find(row => row.installationId === tester.installationId)?.name || 'Anonyme';
+        const channel = await client.channels.fetch(REPORT_DESTINATION_CHANNEL_ID);
+        const name = tester.author || 'Anonyme';
         const label = chapter === 0 ? 'le prologue' : `le chapitre ${chapter}`;
         await channel.send({
             content: `**${name.replace(/([\\_*~`>|])/g, '\\$1')}** a fini ${label}.`,
             allowedMentions: { parse: [] },
         });
-        await testerPresenceService.bumpPanel().catch(error =>
-            console.error('[Présence testeurs] Remontée du panneau impossible :', error));
         await patchReleaseService.bumpPanel().catch(error =>
             console.error('[PatchSC release] Remontée du panneau impossible :', error));
     },
@@ -155,14 +159,14 @@ client.once('clientReady', async () => {
         console.error('[Debug ingress] Reprise des rapports impossible :', error);
     }
     try {
+        await testerPresenceService.scanPendingMessages();
+    } catch (error) {
+        console.error('[Présence testeurs] Reprise des heartbeats impossible :', error);
+    }
+    try {
         await patchReleaseService.ensurePanel();
     } catch (error) {
         console.error('[PatchSC release] Initialisation du panneau impossible :', error);
-    }
-    try {
-        await testerPresenceService.ensurePanel();
-    } catch (error) {
-        console.error('[Présence testeurs] Initialisation du panneau impossible :', error);
     }
 });
 
@@ -236,7 +240,7 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
             client,
             sheets,
             tableId: TABLE_ID,
-            destinationChannelId: process.env.SECRET_CHANNEL_ID,
+            destinationChannelId: REPORT_DESTINATION_CHANNEL_ID,
             report,
             media: { data: screenshot, name: 'capture.png' }
         });

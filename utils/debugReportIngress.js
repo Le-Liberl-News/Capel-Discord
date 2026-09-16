@@ -233,31 +233,38 @@ function createDebugReportIngress({
             console.log('[Debug ingress] Désactivé : DEBUG_INGRESS_WEBHOOK_ID absent.');
             return;
         }
-        if (!ingressChannelId) {
-            console.log('[Debug ingress] Reprise au démarrage désactivée : DEBUG_INGRESS_CHANNEL_ID absent.');
+        const channelIds = [...new Set([ingressChannelId, destinationChannelId].filter(Boolean))];
+        if (!channelIds.length) {
+            console.log('[Debug ingress] Reprise au démarrage désactivée : aucun salon à parcourir.');
             return;
         }
 
-        const channel = await client.channels.fetch(ingressChannelId);
-        if (!channel || !channel.isTextBased() || !channel.messages) {
-            throw new Error('Le salon DEBUG_INGRESS_CHANNEL_ID est invalide ou inaccessible.');
-        }
-
-        let before;
-        do {
-            const batch = await channel.messages.fetch({ limit: 100, before });
-            if (batch.size === 0) break;
-            const ordered = [...batch.values()].reverse();
-            for (const message of ordered) {
-                if (message.author.id === client.user.id &&
-                    message.content === '❌ Message non traité : Le journal de modification Sheets est invalide.') {
-                    await message.delete().catch(() => {});
-                    continue;
-                }
-                await processMessage(message);
+        for (const channelId of channelIds) {
+            const channel = await client.channels.fetch(channelId);
+            if (!channel || !channel.isTextBased() || !channel.messages) {
+                throw new Error(`Le salon d'entrée ${channelId} est invalide ou inaccessible.`);
             }
-            before = batch.last().id;
-        } while (before);
+
+            // Le véritable salon d'entrée est parcouru en entier. Dans le salon
+            // de sortie, les paquets bruts issus d'un déplacement récent du
+            // webhook ne peuvent être que parmi les 100 derniers messages.
+            const scanAll = channelId === ingressChannelId;
+            let before;
+            do {
+                const batch = await channel.messages.fetch({ limit: 100, before });
+                if (batch.size === 0) break;
+                const ordered = [...batch.values()].reverse();
+                for (const message of ordered) {
+                    if (message.author.id === client.user.id &&
+                        message.content === '❌ Message non traité : Le journal de modification Sheets est invalide.') {
+                        await message.delete().catch(() => {});
+                        continue;
+                    }
+                    await processMessage(message);
+                }
+                before = batch.last().id;
+            } while (scanAll && before);
+        }
     }
 
     return { accepts, processMessage, scanPendingMessages };

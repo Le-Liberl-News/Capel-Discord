@@ -11,7 +11,7 @@ function clean(value, maximum) {
 
 class TesterPresenceService {
     constructor({ client, channelId, webhookId, ingressChannelId, ingressWebhookId,
-        destinationChannelId, offlineAfterMs = 90_000,
+        destinationChannelId, scanChannelIds = [], offlineAfterMs = 90_000,
         statePath = '', onChapterCompleted = null }) {
         this.client = client;
         // `channelId`/`webhookId` restent acceptés pour les anciennes configurations.
@@ -20,6 +20,8 @@ class TesterPresenceService {
         this.ingressChannelId = clean(ingressChannelId || channelId, 32);
         this.ingressWebhookId = clean(ingressWebhookId || webhookId, 32);
         this.destinationChannelId = clean(destinationChannelId || channelId, 32);
+        this.scanChannelIds = [...new Set(scanChannelIds
+            .map(value => clean(value, 32)).filter(Boolean))];
         this.offlineAfterMs = offlineAfterMs;
         this.statePath = statePath;
         this.onChapterCompleted = onChapterCompleted;
@@ -102,6 +104,18 @@ class TesterPresenceService {
         }
     }
 
+    async scanPendingMessages() {
+        if (!this.ingressWebhookId) return;
+        for (const channelId of this.scanChannelIds) {
+            const channel = await this.client.channels.fetch(channelId);
+            if (!channel?.isTextBased() || !channel.messages) continue;
+            const messages = await channel.messages.fetch({ limit: 100 });
+            for (const message of [...messages.values()].reverse()) {
+                if (this.acceptsMessage(message)) await this.processMessage(message);
+            }
+        }
+    }
+
     receive(body, now = Date.now()) {
         const installationId = clean(body?.installationId, 64);
         if (!UUID.test(installationId)) throw new Error('installationId invalide.');
@@ -140,13 +154,6 @@ class TesterPresenceService {
             this.highestChapters.set(tester.installationId, tester.chapter);
             this.saveState();
         }
-        this.scheduleRefresh();
-        if (this.offlineTimer) clearTimeout(this.offlineTimer);
-        this.offlineTimer = setTimeout(() => {
-            this.offlineTimer = null;
-            this.scheduleRefresh();
-        }, this.offlineAfterMs + 250);
-        this.offlineTimer.unref?.();
         return { tester, completedChapters };
     }
 

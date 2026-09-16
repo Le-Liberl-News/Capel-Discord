@@ -29,8 +29,9 @@ de route HTTP publique :
 4. ajouter au `.env` du serveur :
 
 ```dotenv
-DEBUG_INGRESS_CHANNEL_ID=identifiant_du_salon
+DEBUG_INGRESS_CHANNEL_ID=889835278494203915
 DEBUG_INGRESS_WEBHOOK_ID=identifiant_du_webhook
+DEBUG_REPORT_DESTINATION_CHANNEL_ID=660891802517110817
 ```
 
 L'identifiant du webhook est le nombre situé immédiatement après `/api/webhooks/` dans
@@ -64,8 +65,10 @@ Les anciens `TESTER_PROGRESS_WEBHOOK_ID` et `TESTER_PROGRESS_CHANNEL_ID` restent
 acceptés en repli, mais l'entrée technique et le salon d'affichage ne sont plus
 confondus.
 
-Le serveur ne stocke ni n'affiche l'adresse IP. L'heure du dernier heartbeat sert
-uniquement à calculer l'état en ligne/hors ligne et n'apparaît pas dans Discord.
+La DLL n'envoie plus de heartbeat périodique. Elle transmet une première position pour
+initialiser le suivi, puis uniquement les changements de chapitre. Capel utilise ces
+événements pour notifier la fin du chapitre précédent. La Rich Presence Discord reste
+locale et ne passe jamais par le webhook.
 
 ### Écriture Sheets depuis le jeu
 
