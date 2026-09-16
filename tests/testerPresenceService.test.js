@@ -51,7 +51,7 @@ test('affiche le compteur de bulles et une barre bornée', () => {
     assert.match(service.payload(1_001).embeds[0].data.description, /███░░░░░░░/);
 });
 
-test('accepte uniquement le webhook et le salon configurés', () => {
+test('accepte le webhook configuré même après son déplacement de salon', () => {
     const service = new TesterPresenceService({
         client: {}, ingressChannelId: '1166042889046995074',
         ingressWebhookId: '1544780925496205432', destinationChannelId: 'sortie'
@@ -62,6 +62,10 @@ test('accepte uniquement le webhook et le salon configurés', () => {
     }), true);
     assert.equal(service.acceptsMessage({
         channelId: 'autre', webhookId: '1544780925496205432',
+        content: 'LIBERLNEWS_TESTER_PRESENCE_V1\n{}'
+    }), true);
+    assert.equal(service.acceptsMessage({
+        channelId: '1166042889046995074', webhookId: 'autre',
         content: 'LIBERLNEWS_TESTER_PRESENCE_V1\n{}'
     }), false);
 });

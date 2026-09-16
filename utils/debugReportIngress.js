@@ -82,7 +82,7 @@ function createDebugReportIngress({
     const processing = new Set();
 
     function enabled() {
-        return Boolean(ingressChannelId && ingressWebhookId);
+        return Boolean(ingressWebhookId);
     }
 
     function accepts(message) {
@@ -94,7 +94,6 @@ function createDebugReportIngress({
             message.content === VIDEO_REPORT_MARKER ||
             message.content.startsWith(`${VIDEO_REPORT_MARKER}\n`);
         return enabled()
-            && message.channelId === ingressChannelId
             && message.webhookId === ingressWebhookId
             && recognizedContent;
     }
@@ -231,7 +230,11 @@ function createDebugReportIngress({
 
     async function scanPendingMessages() {
         if (!enabled()) {
-            console.log('[Debug ingress] Désactivé : DEBUG_INGRESS_CHANNEL_ID ou DEBUG_INGRESS_WEBHOOK_ID absent.');
+            console.log('[Debug ingress] Désactivé : DEBUG_INGRESS_WEBHOOK_ID absent.');
+            return;
+        }
+        if (!ingressChannelId) {
+            console.log('[Debug ingress] Reprise au démarrage désactivée : DEBUG_INGRESS_CHANNEL_ID absent.');
             return;
         }
 

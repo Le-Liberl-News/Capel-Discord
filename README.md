@@ -37,9 +37,11 @@ L'identifiant du webhook est le nombre situé immédiatement après `/api/webhoo
 son URL. L'URL complète, qui contient un secret, ne doit pas être ajoutée au dépôt : elle
 est configurée dans le `reporter_config.txt` livré avec la DLL.
 
-Chaque message accepté doit provenir exactement de ce salon et de ce webhook, et contenir
-les pièces jointes `report.json` et `capture.png`. Au démarrage, Capel reprend également
-les messages restés dans le salon pendant une indisponibilité. La route historique
+Chaque message accepté doit provenir exactement de ce webhook et contenir les pièces
+jointes `report.json` et `capture.png`. Le salon n'entre pas dans l'authentification :
+le même webhook peut donc être déplacé sans exposer les paquets techniques. Au démarrage,
+Capel reprend également les messages restés dans le salon configuré pendant une
+indisponibilité. La route historique
 `POST /debug-screen` reste disponible pendant la migration et utilise le même service de
 publication final.
 

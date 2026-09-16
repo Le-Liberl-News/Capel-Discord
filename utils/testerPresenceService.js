@@ -71,8 +71,10 @@ class TesterPresenceService {
     }
 
     acceptsMessage(message) {
-        return Boolean(this.ingressChannelId && this.ingressWebhookId) &&
-            message.channelId === this.ingressChannelId &&
+        // L'identifiant Discord du webhook désigne déjà l'émetteur exact. Ne pas
+        // lier l'acceptation au salon permet de déplacer le webhook sans laisser
+        // apparaître les heartbeats techniques dans sa nouvelle destination.
+        return Boolean(this.ingressWebhookId) &&
             message.webhookId === this.ingressWebhookId &&
             (message.content === PRESENCE_MARKER ||
                 message.content.startsWith(`${PRESENCE_MARKER}\n`));
