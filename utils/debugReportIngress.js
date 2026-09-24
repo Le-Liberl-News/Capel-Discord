@@ -12,9 +12,13 @@ const SHEET_UPDATE_FILE_NAME = 'sheet-update.json';
 const SHEET_AUDIT_FILE_NAME = 'sheet-audit.json';
 const SCREENSHOT_FILE_NAME = 'capture.png';
 const VIDEO_FILE_NAME = 'capture.mp4';
+// Sauvegarde du jeu jointe par la DLL au moment de l'envoi. Facultative :
+// les rapports des anciennes versions n'en contiennent pas.
+const SAVE_FILE_NAME = 'save.sav';
 const MAX_REPORT_BYTES = 64 * 1024;
 const MAX_SCREENSHOT_BYTES = 12 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 20 * 1000 * 1000;
+const MAX_SAVE_BYTES = 1024 * 1024;
 const COMPLETED_REACTION = '✅';
 const REPORT_MARKER = 'LIBERLNEWS_DEBUG_REPORT_V1';
 const VIDEO_REPORT_MARKER = 'LIBERLNEWS_VIDEO_REPORT_V1';
@@ -99,21 +103,24 @@ function createDebugReportIngress({
     }
 
     async function processDebugReport(message) {
-        if (message.attachments.size !== 2) {
-            throw new Error('Un signalement doit contenir exactement deux pièces jointes.');
-        }
         const reportAttachment = findAttachment(message, REPORT_FILE_NAME);
         const videoReport = message.content === VIDEO_REPORT_MARKER ||
             message.content.startsWith(`${VIDEO_REPORT_MARKER}\n`);
         const mediaName = videoReport ? VIDEO_FILE_NAME : SCREENSHOT_FILE_NAME;
         const mediaAttachment = findAttachment(message, mediaName);
+        const saveAttachment = findAttachment(message, SAVE_FILE_NAME);
+        const expectedAttachments = saveAttachment ? 3 : 2;
+        if (message.attachments.size !== expectedAttachments) {
+            throw new Error('Un signalement doit contenir report.json, la capture et, au plus, save.sav.');
+        }
         if (!reportAttachment || !mediaAttachment) {
             throw new Error(`Le message doit contenir report.json et ${mediaName}.`);
         }
 
-        const [reportBuffer, mediaBuffer] = await Promise.all([
+        const [reportBuffer, mediaBuffer, saveBuffer] = await Promise.all([
             downloadAttachment(reportAttachment, MAX_REPORT_BYTES),
-            downloadAttachment(mediaAttachment, videoReport ? MAX_VIDEO_BYTES : MAX_SCREENSHOT_BYTES)
+            downloadAttachment(mediaAttachment, videoReport ? MAX_VIDEO_BYTES : MAX_SCREENSHOT_BYTES),
+            saveAttachment ? downloadAttachment(saveAttachment, MAX_SAVE_BYTES) : null
         ]);
         if (!videoReport && !mediaBuffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
             throw new Error('La pièce jointe capture.png n’est pas un fichier PNG valide.');
@@ -137,7 +144,8 @@ function createDebugReportIngress({
             tableId,
             destinationChannelId,
             report,
-            media: { data: mediaBuffer, name: mediaName }
+            media: { data: mediaBuffer, name: mediaName },
+            save: saveBuffer ? { data: saveBuffer, name: SAVE_FILE_NAME } : null
         });
         return report.clientReportId;
     }

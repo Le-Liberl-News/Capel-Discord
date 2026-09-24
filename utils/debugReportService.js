@@ -181,12 +181,14 @@ async function publishDebugReport({
     tableId,
     destinationChannelId,
     report,
-    media
+    media,
+    save
 }) {
     const validated = validateDebugReport(report);
     if (!media || !Buffer.isBuffer(media.data) || media.data.length === 0) {
         throw new Error('La capture du signalement est absente.');
     }
+    const hasSave = Boolean(save && Buffer.isBuffer(save.data) && save.data.length > 0);
 
     const baseName = validated.script.replace(/\.[^/.]+$/, '');
     const hasDialogueContext = Boolean(baseName && validated.dialogue);
@@ -208,6 +210,10 @@ async function publishDebugReport({
     const attachment = new AttachmentBuilder(attachmentData, {
         name: media.name || (validated.mediaType === 'video' ? 'capture.mp4' : 'capture.png')
     });
+    // La sauvegarde accompagne le rapport : elle est republiee telle quelle pour
+    // que le testeur la retrouve dans le post nettoye.
+    const saveName = hasSave ? (save.name || 'save.sav') : null;
+    const files = hasSave ? [attachment, new AttachmentBuilder(save.data, { name: saveName })] : [attachment];
     let content = validated.mediaType === 'video'
         ? `**Nouveau bug report vidéo**\n**Auteur :** ${validated.author}\n`
         : `**Nouveau bug report**\n**Auteur :** ${validated.author}\n`;
@@ -220,6 +226,7 @@ async function publishDebugReport({
     if (validated.mediaType === 'video' && validated.durationMs) {
         content += `**Durée :** ${(validated.durationMs / 1000).toFixed(1)} s\n`;
     }
+    if (saveName) content += `**Sauvegarde :** \`${saveName}\` (état du jeu au moment de l'envoi)\n`;
     if (validated.stageLabel) {
         content += `**Progression :** chapitre ${validated.chapter}, ` +
             `${validated.stageLabel} (${validated.stage + 1}/${validated.stageCount || '?'})\n`;
@@ -284,7 +291,7 @@ async function publishDebugReport({
 
     return channel.send({
         content: truncateDiscordContent(content),
-        files: [attachment],
+        files,
         components,
         allowedMentions: { parse: [] }
     });
