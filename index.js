@@ -164,6 +164,11 @@ client.once('clientReady', async () => {
         console.error('[Présence testeurs] Reprise des heartbeats impossible :', error);
     }
     try {
+        await testerPresenceService.ensurePanel();
+    } catch (error) {
+        console.error('[Présence testeurs] Initialisation du panneau impossible :', error);
+    }
+    try {
         await patchReleaseService.ensurePanel();
     } catch (error) {
         console.error('[PatchSC release] Initialisation du panneau impossible :', error);

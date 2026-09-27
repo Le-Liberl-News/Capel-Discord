@@ -65,10 +65,12 @@ Les anciens `TESTER_PROGRESS_WEBHOOK_ID` et `TESTER_PROGRESS_CHANNEL_ID` restent
 acceptés en repli, mais l'entrée technique et le salon d'affichage ne sont plus
 confondus.
 
-La DLL n'envoie plus de heartbeat périodique. Elle transmet une première position pour
-initialiser le suivi, puis uniquement les changements de chapitre. Capel utilise ces
-événements pour notifier la fin du chapitre précédent. La Rich Presence Discord reste
-locale et ne passe jamais par le webhook.
+La DLL n'envoie plus de heartbeat périodique. Tant que l'overlay est ouvert, elle transmet
+la première position puis chaque changement de jalon, de chapitre ou de pseudo. Capel
+conserve la dernière position réellement reçue pour chaque installation et met à jour un
+message Discord unique. Une position plus ancienne remplace donc bien une position plus
+avancée après le chargement d'une autre sauvegarde. La Rich Presence Discord reste locale
+et ne passe jamais par le webhook.
 
 ### Écriture Sheets depuis le jeu
 

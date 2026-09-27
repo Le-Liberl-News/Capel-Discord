@@ -29,6 +29,7 @@ class TesterPresenceService {
         this.highestChapters = new Map();
         this.notifiedChapters = new Map();
         this.panelMessage = null;
+        this.panelMessageId = '';
         this.refreshTimer = null;
         this.offlineTimer = null;
         this.loadState();
@@ -53,6 +54,33 @@ class TesterPresenceService {
                     this.notifiedChapters.set(installationId, chapter);
                 }
             }
+            for (const [installationId, tester] of Object.entries(saved.testers || {})) {
+                if (!UUID.test(installationId) || !tester || typeof tester !== 'object') continue;
+                this.testers.set(installationId.toLowerCase(), {
+                    installationId: installationId.toLowerCase(),
+                    author: clean(tester.author, 64),
+                    sceneFile: clean(tester.sceneFile, 64),
+                    mapName: clean(tester.mapName, 128),
+                    dllVersion: clean(tester.dllVersion, 32),
+                    patchVersion: clean(tester.patchVersion, 32),
+                    renderer: clean(tester.renderer, 16),
+                    chapter: Math.max(0, Number.isSafeInteger(tester.chapter) ? tester.chapter : 0),
+                    stage: Math.max(0, Number.isSafeInteger(tester.stage) ? tester.stage : 0),
+                    stageCount: Math.max(0,
+                        Number.isSafeInteger(tester.stageCount) ? tester.stageCount : 0),
+                    stageLabel: clean(tester.stageLabel, 128),
+                    checkpoint: Math.max(0,
+                        Number.isSafeInteger(tester.checkpoint) ? tester.checkpoint : 0),
+                    checkpointCount: Math.max(0,
+                        Number.isSafeInteger(tester.checkpointCount) ? tester.checkpointCount : 0),
+                    bubblesRead: Math.max(0,
+                        Number.isSafeInteger(tester.bubblesRead) ? tester.bubblesRead : 0),
+                    bubblesTotal: Math.max(0,
+                        Number.isSafeInteger(tester.bubblesTotal) ? tester.bubblesTotal : 0),
+                    lastSeen: Number.isSafeInteger(tester.lastSeen) ? tester.lastSeen : 0,
+                });
+            }
+            this.panelMessageId = clean(saved.panelMessageId, 32);
         } catch (error) {
             if (error.code !== 'ENOENT') {
                 console.error('[Présence testeurs] État local illisible :', error);
@@ -66,8 +94,11 @@ class TesterPresenceService {
         fs.mkdirSync(directory, { recursive: true });
         const temporary = `${this.statePath}.tmp`;
         fs.writeFileSync(temporary, JSON.stringify({
+            schema: 2,
+            testers: Object.fromEntries(this.testers),
             highestChapters: Object.fromEntries(this.highestChapters),
             notifiedChapters: Object.fromEntries(this.notifiedChapters),
+            panelMessageId: this.panelMessage?.id || this.panelMessageId,
         }), 'utf8');
         fs.renameSync(temporary, this.statePath);
     }
@@ -96,6 +127,7 @@ class TesterPresenceService {
                 this.notifiedChapters.set(result.tester.installationId, result.tester.chapter);
                 this.saveState();
             }
+            this.scheduleRefresh();
             return true;
         } catch (error) {
             console.error(`[Présence testeurs] Message ${message.id} rejeté :`, error);
@@ -152,8 +184,11 @@ class TesterPresenceService {
         }
         if (previousChapter === undefined || tester.chapter > previousChapter) {
             this.highestChapters.set(tester.installationId, tester.chapter);
-            this.saveState();
         }
+        // `testers` représente la position réellement observée, pas un record :
+        // une sauvegarde plus ancienne doit donc remplacer immédiatement la position
+        // précédente, tout comme un changement de pseudo dans reporter_config.txt.
+        this.saveState();
         return { tester, completedChapters };
     }
 
@@ -194,8 +229,18 @@ class TesterPresenceService {
                 ? `Scénario \`${'█'.repeat(storyFilled)}${'░'.repeat(10 - storyFilled)}\` ` +
                     `${row.checkpoint}/${row.checkpointCount || '?'}\n`
                 : '';
-            const line = `${row.online ? '🟢' : '⚫'} **${row.name}** — ${row.location}\n` +
-                story + storyBar.replace(/\n$/, '');
+            const bubblesFilled = row.bubblesTotal
+                ? Math.round((Math.min(row.bubblesRead, row.bubblesTotal) /
+                    row.bubblesTotal) * 10)
+                : 0;
+            const bubblesBar = row.bubblesTotal
+                ? `Bulles \`${'█'.repeat(bubblesFilled)}${'░'.repeat(10 - bubblesFilled)}\` ` +
+                    `${row.bubblesRead}/${row.bubblesTotal}`
+                : '';
+            const details = [story, storyBar, bubblesBar]
+                .map(value => value.replace(/\n$/, '')).filter(Boolean).join('\n');
+            const line = `${row.online ? '🟢' : '⚫'} **${row.name}** — ${row.location}` +
+                (details ? `\n${details}` : '');
             if (lines.join('\n').length + line.length + 40 > 4_000) break;
             lines.push(line);
             displayed += 1;
@@ -213,14 +258,26 @@ class TesterPresenceService {
         if (!this.destinationChannelId) return null;
         const channel = await this.client.channels.fetch(this.destinationChannelId);
         if (!channel?.isTextBased()) throw new Error('Salon de suivi des testeurs inaccessible.');
+        if (!this.panelMessage && this.panelMessageId) {
+            this.panelMessage = await channel.messages.fetch(this.panelMessageId).catch(() => null);
+        }
         if (!this.panelMessage) {
             const messages = await channel.messages.fetch({ limit: 100 });
             this.panelMessage = messages.find(message =>
                 message.author.id === this.client.user.id &&
                 message.embeds[0]?.title === 'Avancée des testeurs') || null;
         }
-        if (this.panelMessage) await this.panelMessage.edit(this.payload());
-        else this.panelMessage = await channel.send(this.payload());
+        if (this.panelMessage) {
+            try {
+                await this.panelMessage.edit(this.payload());
+            } catch (error) {
+                if (error?.code !== 10008) throw error;
+                this.panelMessage = null;
+            }
+        }
+        if (!this.panelMessage) this.panelMessage = await channel.send(this.payload());
+        this.panelMessageId = this.panelMessage.id || '';
+        this.saveState();
         return this.panelMessage;
     }
 
