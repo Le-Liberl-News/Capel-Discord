@@ -3,7 +3,8 @@ const { EmbedBuilder } = require('discord.js');
 // Searches the lines of the translation platform through its API
 // (GET /plateforme/api/occurrences.php) and links each bubble.
 const PLATFORM_URL = (process.env.PLATFORM_URL || 'https://leliberlnews.fr').replace(/\/+$/, '');
-const DEFAULT_PROJECT = process.env.PLATFORM_PROJECT || 'sky-3rd';
+// Without the jeu option, every game is searched.
+const DEFAULT_PROJECT = process.env.PLATFORM_PROJECT || 'tous';
 const SHOWN = 5;
 const GAMES = { 'sky-3rd': 'the 3rd', 'sky-sc': 'SC', 'sky-fc': 'FC' };
 
