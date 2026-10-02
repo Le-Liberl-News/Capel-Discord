@@ -5,7 +5,8 @@ const { EmbedBuilder } = require('discord.js');
 const PLATFORM_URL = (process.env.PLATFORM_URL || 'https://leliberlnews.fr').replace(/\/+$/, '');
 // Without the jeu option, every game is searched.
 const DEFAULT_PROJECT = process.env.PLATFORM_PROJECT || 'tous';
-const SHOWN = 5;
+// A post stays short: 3 bubbles at most, one per game when every game is searched.
+const SHOWN = 3;
 const GAMES = { 'sky-3rd': 'the 3rd', 'sky-sc': 'SC', 'sky-fc': 'FC' };
 
 function cut(text, length) {
@@ -38,7 +39,7 @@ async function search(interaction) {
 
     const languages = language === 'toutes' ? 'jp,en,fr' : language;
     const api = new URL(`${PLATFORM_URL}/plateforme/api/occurrences.php`);
-    api.search = new URLSearchParams({ q: term, lang: languages, limit: String(everyGame ? 3 : SHOWN), project }).toString();
+    api.search = new URLSearchParams({ q: term, lang: languages, limit: String(everyGame ? 1 : SHOWN), project }).toString();
 
     let data;
     try {
@@ -50,11 +51,14 @@ async function search(interaction) {
         return interaction.editReply(`Impossible de chercher **${term}** sur la plateforme : ${error.message}`);
     }
 
-    // The same search, whole, on the platform.
-    const full = new URL(`${PLATFORM_URL}/plateforme/entries.php`);
-    full.searchParams.set('project', everyGame ? 'sky-3rd' : project);
-    full.searchParams.set('q', term);
-    for (const code of languages.split(',')) full.searchParams.append('lang[]', code);
+    // The same search, whole, on the platform: one page per game.
+    const searchUrl = slug => {
+        const url = new URL(`${PLATFORM_URL}/plateforme/entries.php`);
+        url.searchParams.set('project', slug);
+        url.searchParams.set('q', term);
+        for (const code of languages.split(',')) url.searchParams.append('lang[]', code);
+        return url.toString();
+    };
 
     const where = everyGame ? ' dans les trois jeux' : ` dans ${GAMES[project] || project}`;
     const inLanguage = language === 'toutes' ? '' : ` en ${language.toUpperCase()}`;
@@ -62,20 +66,19 @@ async function search(interaction) {
         return interaction.editReply(`Aucune bulle ne contient **${term}**${inLanguage}${where}.`);
     }
 
-    const perGame = everyGame
-        ? Object.entries(data.projects || {}).map(([slug, game]) => `${GAMES[slug] || game.name} : **${game.total}**`).join(' · ')
-        : '';
+    // Results per game, each linked to the whole search on the platform.
+    const games = Object.entries(data.projects || { [project]: { total: data.total } })
+        .filter(([, game]) => game.total > 0)
+        .map(([slug, game]) => `[${GAMES[slug] || game.name} : ${game.total}](${searchUrl(slug)})`)
+        .join(' · ');
     const embed = new EmbedBuilder()
         .setColor('#C8814A')
         .setTitle(`Occurrences de « ${cut(term, 200)} »`)
-        .setURL(full.toString())
-        .setDescription(`**${data.total}** bulle(s) trouvée(s)${inLanguage}${where}. `
-            + (everyGame ? `\n${perGame}\nLes premières de chaque jeu ci-dessous.`
-                : (data.total > SHOWN ? `Les ${SHOWN} premières ci-dessous, [toutes sur la plateforme](${full}).` : '')));
+        .setDescription(`**${data.total}** bulle(s) trouvée(s)${inLanguage}${where}.\nToutes les bulles : ${games}`);
 
-    // Discord caps an embed at 6000 characters: shorter texts when every game is listed.
-    const length = everyGame ? 140 : 260;
-    for (const result of data.results.slice(0, 10)) {
+    // Three bubbles of 260 characters stay well under Discord's 6000 per embed.
+    const length = 260;
+    for (const result of data.results.slice(0, SHOWN)) {
         const game = everyGame ? `[${GAMES[result.project] || result.game}] ` : '';
         embed.addFields({
             name: cut(`${game}${result.script} #${result.bubble}${result.character ? ` · ${result.character}` : ''}`, 250),
