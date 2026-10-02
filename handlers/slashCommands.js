@@ -34,6 +34,10 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         const cmdContext = require('../commands/context.js');
         return cmdContext.execute(interaction, sheets);
     }
+    if (commandName === 'occurrences') {
+        const cmdOccurrences = require('../commands/occurrences.js');
+        return cmdOccurrences.execute(interaction);
+    }
     if (commandName === 'lexique') {
         const cmdLexique = require('../commands/lexique.js');
         return cmdLexique.execute(interaction, sheets);

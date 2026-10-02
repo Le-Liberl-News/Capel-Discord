@@ -121,6 +121,11 @@ const commands = [
     new SlashCommandBuilder().setName('lexique').setDescription('Cherche un terme approximatif dans le lexique officiel')
         .addStringOption(opt => opt.setName('terme').setDescription('Le mot à chercher (ex: Aureole, bracer...)').setRequired(true)),
 
+    new SlashCommandBuilder().setName('occurrences').setDescription('Cherche un terme dans les bulles de la plateforme de traduction')
+        .addStringOption(opt => opt.setName('terme').setDescription('Le texte à chercher (ex : Aureole, bracer...)').setMinLength(2).setMaxLength(200).setRequired(true))
+        .addStringOption(opt => opt.setName('langue').setDescription('Langue où chercher (toutes par défaut)').setRequired(false)
+            .addChoices({ name: 'Toutes', value: 'toutes' }, { name: 'Japonais', value: 'jp' }, { name: 'Anglais', value: 'en' }, { name: 'Français', value: 'fr' })),
+
     new SlashCommandBuilder().setName('anonyme').setDescription('Envoyer un message anonyme dans le thread du jour')
         .addStringOption(opt => opt.setName('message').setDescription('Ton message').setMaxLength(1000).setRequired(true))
         .addAttachmentOption(opt => opt.setName('image').setDescription('Image à joindre').setRequired(false)),
