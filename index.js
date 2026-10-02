@@ -124,7 +124,9 @@ const commands = [
     new SlashCommandBuilder().setName('occurrences').setDescription('Cherche un terme dans les bulles de la plateforme de traduction')
         .addStringOption(opt => opt.setName('terme').setDescription('Le texte à chercher (ex : Aureole, bracer...)').setMinLength(2).setMaxLength(200).setRequired(true))
         .addStringOption(opt => opt.setName('langue').setDescription('Langue où chercher (toutes par défaut)').setRequired(false)
-            .addChoices({ name: 'Toutes', value: 'toutes' }, { name: 'Japonais', value: 'jp' }, { name: 'Anglais', value: 'en' }, { name: 'Français', value: 'fr' })),
+            .addChoices({ name: 'Toutes', value: 'toutes' }, { name: 'Japonais', value: 'jp' }, { name: 'Anglais', value: 'en' }, { name: 'Français', value: 'fr' }))
+        .addStringOption(opt => opt.setName('jeu').setDescription('Jeu où chercher (the 3rd par défaut)').setRequired(false)
+            .addChoices({ name: 'The 3rd', value: 'sky-3rd' }, { name: 'SC', value: 'sky-sc' }, { name: 'FC', value: 'sky-fc' }, { name: 'Tous les jeux', value: 'tous' })),
 
     new SlashCommandBuilder().setName('anonyme').setDescription('Envoyer un message anonyme dans le thread du jour')
         .addStringOption(opt => opt.setName('message').setDescription('Ton message').setMaxLength(1000).setRequired(true))
