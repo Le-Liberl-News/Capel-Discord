@@ -62,19 +62,30 @@ async function search(interaction) {
 
     const where = everyGame ? ' dans les trois jeux' : ` dans ${GAMES[project] || project}`;
     const inLanguage = language === 'toutes' ? '' : ` en ${language.toUpperCase()}`;
-    if (data.total === 0) {
+    if (data.total === 0 && !data.names_total) {
         return interaction.editReply(`Aucune bulle ne contient **${term}**${inLanguage}${where}.`);
     }
 
-    // Results per game, each linked to the whole search on the platform.
+    // Results per game, and one link to the whole search on the platform
+    // (every game at once when no game was chosen).
     const games = Object.entries(data.projects || { [project]: { total: data.total } })
         .filter(([, game]) => game.total > 0)
-        .map(([slug, game]) => `[${GAMES[slug] || game.name} : ${game.total}](${searchUrl(slug)})`)
+        .map(([slug, game]) => `${GAMES[slug] || game.name} : ${game.total}`)
         .join(' · ');
     const embed = new EmbedBuilder()
         .setColor('#C8814A')
         .setTitle(`Occurrences de « ${cut(term, 200)} »`)
-        .setDescription(`**${data.total}** bulle(s) trouvée(s)${inLanguage}${where}.\nToutes les bulles : ${games}`);
+        .setDescription(`**${data.total}** bulle(s) trouvée(s)${inLanguage}${where}.\n${games}\n[Voir toutes les bulles sur la plateforme](${searchUrl(project)})`);
+
+    // Names of the files' name lists matching the search.
+    if (data.names_total > 0) {
+        const names = data.names.slice(0, 5).map(name => {
+            const game = everyGame ? `${GAMES[name.project] || name.game} · ` : '';
+            return `[${game}${name.script}](${name.url}) : ${cut(name.jp, 40)} / ${cut(name.en, 40)} / ${cut(name.fr || '—', 40)}`;
+        });
+        if (data.names_total > names.length) names.push(`… et ${data.names_total - names.length} autre(s)`);
+        embed.addFields({ name: `Noms de personnages (${data.names_total})`, value: names.join('\n').slice(0, 1024) });
+    }
 
     // Three bubbles of 260 characters stay well under Discord's 6000 per embed.
     const length = 260;
