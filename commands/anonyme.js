@@ -3,6 +3,7 @@ const db = require('../utils/db.js');
 const { state, saveState } = require('../rpg/gameState.js');
 const databasePersos = require('../rpg/data/persos.json');
 const { tenterRegenDiscussion } = require('../rpg/gestionFatigue.js');
+const { defendreLeLiberl } = require('../rpg/defenseLiberl.js');
 
 const PSEUDOS = [
 //   0-5                 1-6         2-7              3-8                   4-9
@@ -172,6 +173,7 @@ async function execute(interaction) {
         
         await webhook.send(payload);
         await interaction.reply({ content: "Message anonyme envoyé !", flags: ['Ephemeral'] });
+        await defendreLeLiberl({ channel: interaction.channel, pseudo, texte, state, saveState, databasePersos });
 
     } catch (e) {
         console.error("Erreur envoi anonyme :", e);

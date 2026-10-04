@@ -25,6 +25,7 @@ const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportSer
 const { createPatchReleaseService } = require('./utils/patchReleaseService.js');
 const { createTesterPresenceService } = require('./utils/testerPresenceService.js');
 const { state, saveState } = require('./rpg/gameState.js');
+const { defendreLeLiberl } = require('./rpg/defenseLiberl.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
 const REPORT_DESTINATION_CHANNEL_ID = process.env.DEBUG_REPORT_DESTINATION_CHANNEL_ID ||
@@ -337,6 +338,7 @@ client.on('messageCreate', async message => {
         if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );
+        await defendreLeLiberl({ channel: message.channel, pseudo, texte, state, saveState, databasePersos });
 
     } catch (e) { console.error("Erreur envoi anonymisé :", e); }
 });
