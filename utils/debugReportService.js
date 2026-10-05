@@ -19,6 +19,11 @@ const MAX_SCENE_FILE_LENGTH = 128;
 const MAX_MAP_NAME_LENGTH = 256;
 const MAX_TRANSLATION_LENGTH = 8000;
 const MAX_DISCORD_CONTENT_LENGTH = 2000;
+// Sky SC's lines live on the translation platform (no more Google sheets):
+// the overlay links them there, and a bug report looks its line up there.
+const PLATFORM_URL = (process.env.PLATFORM_URL || 'https://leliberlnews.fr').replace(/\/+$/, '');
+const PLATFORM_HOST = new URL(PLATFORM_URL).hostname;
+const PLATFORM_PROJECT = process.env.DEBUG_REPORT_PROJECT || 'sky-sc';
 
 function requireString(value, fieldName, maxLength, allowEmpty = false) {
     if (typeof value !== 'string') {
@@ -46,13 +51,46 @@ function requireSheetUrl(value) {
     try {
         parsed = new URL(normalized);
     } catch {
-        throw new Error('Le lien Google Sheets est invalide.');
+        throw new Error('Le lien de la réplique est invalide.');
     }
-    if (parsed.protocol !== 'https:' || parsed.hostname !== 'docs.google.com' ||
-        !/^\/spreadsheets\/d\/[a-zA-Z0-9_-]+(?:\/|$)/.test(parsed.pathname)) {
-        throw new Error('Le lien doit cibler un classeur Google Sheets.');
+    const platform = parsed.hostname === PLATFORM_HOST && parsed.pathname.startsWith('/plateforme/');
+    const sheet = parsed.hostname === 'docs.google.com' &&
+        /^\/spreadsheets\/d\/[a-zA-Z0-9_-]+(?:\/|$)/.test(parsed.pathname);
+    if (parsed.protocol !== 'https:' || (!platform && !sheet)) {
+        throw new Error('Le lien doit cibler la plateforme de traduction.');
     }
     return parsed.toString();
+}
+
+function isPlatformUrl(value) {
+    try {
+        return new URL(value).hostname === PLATFORM_HOST;
+    } catch {
+        return false;
+    }
+}
+
+// The comparison of the overlay: spacing, the platform's {…} codes and the
+// game's #…X codes do not tell two lines apart.
+function normalizedLine(value) {
+    return String(value || '')
+        .replace(/[\u00a0\u2007\u2009\u200a\u202f]/g, ' ')
+        .replace(/\{[^{}]{1,16}\}/g, '')
+        .replace(/#\d*[ACFKPSVW]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+// The bubbles of a script (and its _N parts) whose French, English or
+// Japanese is the reported line, from the platform's in-game API.
+async function platformMatches(script, dialogue) {
+    const api = new URL(`${PLATFORM_URL}/plateforme/api/ingame.php`);
+    api.search = new URLSearchParams({ action: 'script', project: PLATFORM_PROJECT, script: script.toLowerCase() }).toString();
+    const response = await fetch(api, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    const wanted = normalizedLine(dialogue);
+    return (data.items || []).filter(item => [item.fr, item.en, item.jp].some(text => normalizedLine(text) === wanted));
 }
 
 function targetSheetUrl(baseUrl, line) {
@@ -145,7 +183,7 @@ function validateSheetUpdateRequest(rawRequest) {
 function validateSheetAudit(rawAudit) {
     if (!rawAudit || typeof rawAudit !== 'object' || Array.isArray(rawAudit) ||
         rawAudit.schema !== 1) {
-        throw new Error('Le journal de modification Sheets est invalide.');
+        throw new Error('Le journal de modification est invalide.');
     }
     return {
         schema: 1,
@@ -192,14 +230,15 @@ async function publishDebugReport({
 
     const baseName = validated.script.replace(/\.[^/.]+$/, '');
     const hasDialogueContext = Boolean(baseName && validated.dialogue);
-    const matches = hasDialogueContext
-        ? await sheetManager.trouverOccurrencesBug(
-            sheets,
-            tableId,
-            baseName,
-            validated.dialogue
-        )
-        : [];
+    let matches = [];
+    let lookupError = '';
+    if (hasDialogueContext) {
+        try {
+            matches = await platformMatches(baseName, validated.dialogue);
+        } catch (error) {
+            lookupError = error.message;
+        }
+    }
     const channel = await client.channels.fetch(destinationChannelId);
     if (!channel || !channel.isTextBased()) {
         throw new Error('Le salon de destination des signalements est introuvable.');
@@ -243,47 +282,32 @@ async function publishDebugReport({
     const components = [];
 
     let dialogueUrl = validated.sheetUrl;
-    if (!dialogueUrl && matches.length > 0) {
-        dialogueUrl = targetSheetUrl(matches[0].lien, matches[0].ligne);
-    }
+    if (!dialogueUrl && matches.length > 0) dialogueUrl = matches[0].url;
 
     if (matches.length > 0) {
         content += `✅ **Match exact trouvé (${matches.length} occurrence(s)) :**\n`;
         matches.slice(0, 10).forEach(match => {
-            const url = targetSheetUrl(match.lien, match.ligne);
-            content += `- [Feuille **${match.feuille}**, ligne ${match.ligne}](${url}) | *${match.perso}*\n`;
+            content += `- [\`${match.script}\` bulle ${match.ordinal}](${match.url})\n`;
         });
-
-        const fixButton = new ButtonBuilder()
-            .setCustomId(`btn_fix_${baseName}`)
-            .setLabel('Corriger ces lignes')
-            .setStyle(ButtonStyle.Success)
-            .setEmoji('✍️');
-        components.push(new ActionRowBuilder().addComponents(fixButton));
     } else if (hasDialogueContext) {
-        content += '❌ **Aucun match exact trouvé.** (Réplique vide, tag caché ou erreur ?)\n🔎 Inspectez manuellement les feuilles liées :';
-        const linkedSheets = await sheetManager.getFeuillesParNom(sheets, tableId, baseName);
-
-        if (linkedSheets.length > 0) {
-            const linkRow = new ActionRowBuilder();
-            linkedSheets.slice(0, 5).forEach(sheet => {
-                linkRow.addComponents(
-                    new ButtonBuilder()
-                        .setLabel(`Ouvrir ${sheet.nom}`)
-                        .setStyle(ButtonStyle.Link)
-                        .setURL(sheet.lien)
-                );
-            });
-            components.push(linkRow);
-        } else {
-            content += `\n⚠️ *Le script ${baseName} n'a pas été trouvé dans le Sommaire.*`;
-        }
+        content += lookupError
+            ? `⚠️ **Recherche sur la plateforme impossible :** ${lookupError}\n`
+            : '❌ **Aucun match exact trouvé.** (Réplique vide, tag caché ou erreur ?)\n';
+        const scriptUrl = new URL(`${PLATFORM_URL}/plateforme/entries.php`);
+        scriptUrl.search = new URLSearchParams({ project: PLATFORM_PROJECT, script: baseName.toLowerCase() }).toString();
+        components.push(new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel(`Ouvrir ${baseName} sur la plateforme`)
+                .setStyle(ButtonStyle.Link)
+                .setURL(scriptUrl.toString())
+        ));
     }
 
     if (dialogueUrl) {
         components.push(new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('Ouvrir la réplique dans Sheets')
+                .setLabel(isPlatformUrl(dialogueUrl) ? 'Ouvrir la réplique sur la plateforme'
+                    : 'Ouvrir la réplique dans Sheets')
                 .setStyle(ButtonStyle.Link)
                 .setURL(dialogueUrl)
         ));
@@ -361,7 +385,10 @@ async function publishSheetAudit({ client, destinationChannelId, audit }) {
         throw new Error('Le salon de journalisation est introuvable.');
     }
     const baseName = validated.script.replace(/\.[^/.]+$/, '');
-    let content = '📝 **Modification Sheets effectuée depuis le jeu**\n';
+    const onPlatform = isPlatformUrl(validated.sheetUrl);
+    let content = onPlatform
+        ? '📝 **Modification de la plateforme effectuée depuis le jeu**\n'
+        : '📝 **Modification Sheets effectuée depuis le jeu**\n';
     content += `**Auteur :** ${validated.author}\n`;
     content += `**Script :** \`${baseName}\`\n`;
     content += `**Ancien texte :**\n> ${quotedPreview(validated.previous || '*vide*')}\n`;
@@ -369,7 +396,7 @@ async function publishSheetAudit({ client, destinationChannelId, audit }) {
     const components = validated.sheetUrl
         ? [new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setLabel('Ouvrir la réplique dans Sheets')
+                .setLabel(onPlatform ? 'Ouvrir sur la plateforme' : 'Ouvrir la réplique dans Sheets')
                 .setStyle(ButtonStyle.Link)
                 .setURL(validated.sheetUrl)
         )]
@@ -383,6 +410,8 @@ async function publishSheetAudit({ client, destinationChannelId, audit }) {
 }
 
 module.exports = {
+    normalizedLine,
+    requireSheetUrl,
     applySheetUpdate,
     legacyHttpReport,
     publishDebugReport,
