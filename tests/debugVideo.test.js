@@ -47,7 +47,9 @@ test('MP4 conversion decodes successfully and puts moov before mdat', async () =
             '-f', 'null', '-'], { windowsHide: true });
         const corrupt = Buffer.alloc(32);
         corrupt.write('ftyp', 4);
-        await assert.rejects(prepareDebugVideo(corrupt));
+        // Le message doit porter la raison ffmpeg, sinon il n'y a rien a lire.
+        await assert.rejects(prepareDebugVideo(corrupt),
+            /Compression video impossible/);
         // A failed decode must not poison the serialized conversion queue.
         assert.ok((await prepareDebugVideo(await fs.readFile(source))).length > 0);
     } finally {

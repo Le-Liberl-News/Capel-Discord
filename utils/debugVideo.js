@@ -49,16 +49,26 @@ async function convert(data) {
         const output = path.join(directory, 'capture.mp4');
         await fs.writeFile(input, data);
         // Fixed paths/arguments, no shell. Limit decode duration and encoder resources.
-        await run(require('ffmpeg-static'), [
-            '-nostdin', '-hide_banner', '-loglevel', 'error', '-xerror',
-            '-protocol_whitelist', 'file,pipe', '-threads', '2', '-i', input,
-            '-map', '0:v:0', '-map', '0:a:0?', '-t', '90',
-            '-vf', 'scale=w=min(960\\,iw):h=min(540\\,ih):force_original_aspect_ratio=decrease:force_divisible_by=2',
-            '-r', '15', '-c:v', 'libx264', '-threads', '2', '-preset', 'veryfast',
-            '-crf', '20', '-maxrate', String(maxrate), '-bufsize', String(maxrate * 2),
-            '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '64k',
-            '-map_metadata', '-1', '-movflags', '+faststart', '-y', output
-        ], { timeout: 120_000, maxBuffer: 512 * 1024, windowsHide: true });
+        try {
+            await run(require('ffmpeg-static'), [
+                '-nostdin', '-hide_banner', '-loglevel', 'error', '-xerror',
+                '-protocol_whitelist', 'file,pipe', '-threads', '2', '-i', input,
+                '-map', '0:v:0', '-map', '0:a:0?', '-t', '90',
+                '-vf', 'scale=w=min(960\\,iw):h=min(540\\,ih):force_original_aspect_ratio=decrease:force_divisible_by=2',
+                '-r', '15', '-c:v', 'libx264', '-threads', '2', '-preset', 'veryfast',
+                '-crf', '20', '-maxrate', String(maxrate), '-bufsize', String(maxrate * 2),
+                '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '64k',
+                '-map_metadata', '-1', '-movflags', '+faststart', '-y', output
+            ], { timeout: 120_000, maxBuffer: 512 * 1024, windowsHide: true });
+        } catch (erreur) {
+            // Sans le stderr d'ffmpeg, l'erreur remontee n'est que « Command
+            // failed », ce qui ne dit pas pourquoi la conversion a echoue.
+            const detail = String(erreur.stderr ?? erreur.stdout ?? '')
+                .trim().split('\n').filter(Boolean).slice(-4).join(' | ');
+            console.error('❌ debugVideo : ffmpeg a echoue :', detail || erreur.message);
+            throw new Error(
+                `Compression video impossible : ${detail || erreur.message}`.slice(0, 1500));
+        }
         const size = (await fs.stat(output)).size;
         if (size === 0 || size > MAX_OUTPUT_BYTES) {
             throw new Error('Vidéo compressée trop volumineuse ou vide.');
