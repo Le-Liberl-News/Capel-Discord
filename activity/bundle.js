@@ -9613,6 +9613,22 @@ var { Commands: Commands2 } = common_exports;
 
 // client/main.js
 var CLIENT_ID = window.__CLIENT_ID__ || "__CLIENT_ID__";
+var VERSION = "v4";
+var journal = [];
+var etapeTexte = "";
+var etape = (texte) => {
+  etapeTexte = texte;
+  majBandeau();
+};
+function majBandeau() {
+  bandeau.textContent = [
+    `${VERSION} \u2014 ${etapeTexte}`,
+    `client ${CLIENT_ID}`,
+    `origine ${location.origin}`,
+    `referrer ${document.referrer || "aucun"}`,
+    ...journal
+  ].join("\n");
+}
 var GRILLE = 12;
 var TUILE_L = 56;
 var TUILE_H = 28;
@@ -9625,6 +9641,19 @@ var contexte = toile.getContext("2d");
 var dedansDiscord = new URLSearchParams(location.search).has("frame_id");
 var apiBase = window.__API_BASE__ || (dedansDiscord ? "/.proxy/api" : "/api");
 var apiUrl = (route) => apiBase.endsWith(".php") ? `${apiBase}?r=${route}` : `${apiBase}/${route}`;
+if (dedansDiscord) {
+  addEventListener("message", (evenement) => {
+    let resume;
+    try {
+      resume = JSON.stringify(evenement.data);
+    } catch {
+      resume = String(evenement.data);
+    }
+    journal.push(`recu [${evenement.origin}] ${resume.slice(0, 80)}`);
+    while (journal.length > 5) journal.shift();
+    majBandeau();
+  });
+}
 var etat = {
   salon: "local",
   moi: { id: "local", nom: "moi", x: 3, z: 3 },
@@ -9829,7 +9858,9 @@ async function entrer() {
     return;
   }
   const sdk = new DiscordSDK(CLIENT_ID);
+  etape(`1/4 SDK, client ${CLIENT_ID}`);
   await avecDelai(sdk.ready(), 1e4, "Discord n a pas repondu (SDK)");
+  etape("2/4 SDK pret, autorisation...");
   const { verifieur, defi } = await defiPkce();
   const { code } = await avecDelai(sdk.commands.authorize({
     client_id: CLIENT_ID,
@@ -9840,13 +9871,15 @@ async function entrer() {
     code_challenge: defi,
     code_challenge_method: "S256"
   }), 15e3, "Discord n a pas repondu (autorisation)");
+  etape("3/4 code recu, jeton...");
   const reponse = await fetch(apiUrl("token"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, code_verifier: verifieur })
   });
   const { access_token: jeton, erreur } = await reponse.json();
-  if (!jeton) throw new Error(erreur ?? "jeton Discord absent");
+  if (!jeton) throw new Error(erreur ?? `jeton absent (HTTP ${reponse.status})`);
+  etape("4/4 jeton recu, identification...");
   const auth = await sdk.commands.authenticate({ access_token: jeton });
   etat.salon = sdk.channelId ?? "local";
   etat.moi = {
