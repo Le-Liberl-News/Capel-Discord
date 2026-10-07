@@ -266,6 +266,86 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
     }
 });
 
+// ---------------------------------------------------------------------------
+// Activité Discord : carte isométrique (voir le dossier `activity/`).
+// L'app Capel porte à la fois le bot et l'activité : mêmes identifiants OAuth.
+// ---------------------------------------------------------------------------
+const ACTIVITE_DOSSIER = path.join(__dirname, 'activity');
+const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '';
+const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
+const activiteSalles = new Map();
+
+function activiteJoueurs(salle) {
+    if (!activiteSalles.has(salle)) activiteSalles.set(salle, new Map());
+    const table = activiteSalles.get(salle);
+    const limite = Date.now() - 15000;
+    for (const [cle, joueur] of table) {
+        if (joueur.vu < limite) table.delete(cle);
+    }
+    return [...table.values()].map(({ vu, ...reste }) => reste);
+}
+
+app.post('/api/token', async (req, res) => {
+    try {
+        const corps = new URLSearchParams({
+            client_id: ACTIVITE_ID,
+            grant_type: 'authorization_code',
+            code: String(req.body?.code ?? '')
+        });
+        if (req.body?.code_verifier) {
+            corps.set('code_verifier', String(req.body.code_verifier));   // PKCE : pas de secret
+        } else if (ACTIVITE_SECRET) {
+            corps.set('client_secret', ACTIVITE_SECRET);
+        } else {
+            throw new Error('ni code_verifier (PKCE) ni client secret');
+        }
+        const reponse = await fetch('https://discord.com/api/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: corps
+        });
+        if (!reponse.ok) throw new Error(`Discord a refusé l'échange (${reponse.status})`);
+        res.json(await reponse.json());
+    } catch (erreur) {
+        console.error("❌ Activité /api/token :", erreur.message);
+        res.status(500).json({ erreur: erreur.message });
+    }
+});
+
+app.get('/api/state', (req, res) => {
+    res.json({ joueurs: activiteJoueurs(String(req.query.channel ?? 'local')) });
+});
+
+app.post('/api/state', (req, res) => {
+    const { channel, id, nom, x, z } = req.body ?? {};
+    if (!id) return res.status(400).json({ erreur: 'joueur sans identifiant' });
+    const salle = String(channel ?? 'local');
+    activiteJoueurs(salle);
+    activiteSalles.get(salle).set(String(id), {
+        id: String(id),
+        nom: String(nom ?? 'joueur').slice(0, 32),
+        x: Number(x) || 0,
+        z: Number(z) || 0,
+        vu: Date.now()
+    });
+    res.json({ joueurs: activiteJoueurs(salle) });
+});
+
+function envoyerClientActivite(nomFichier, res) {
+    fs.readFile(path.join(ACTIVITE_DOSSIER, nomFichier), (erreur, donnees) => {
+        if (erreur) return res.status(404).send('introuvable');
+        const estJs = nomFichier.endsWith('.js');
+        res.set('Cache-Control', 'no-store');
+        res.type(estJs ? 'application/javascript' : 'text/html');
+        res.send(estJs
+            ? donnees.toString('utf8').replaceAll('__CLIENT_ID__', ACTIVITE_ID)
+            : donnees);
+    });
+}
+
+app.get('/', (req, res) => envoyerClientActivite('index.html', res));
+app.get('/bundle.js', (req, res) => envoyerClientActivite('bundle.js', res));
+
 const cooldownsXP = new Map();
 
 client.on('messageCreate', message => {
