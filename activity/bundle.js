@@ -9612,7 +9612,7 @@ var lodash_transformExports = requireLodash_transform();
 var { Commands: Commands2 } = common_exports;
 
 // client/main.js
-var CLIENT_ID = "__CLIENT_ID__";
+var CLIENT_ID = window.__CLIENT_ID__ || "__CLIENT_ID__";
 var GRILLE = 12;
 var TUILE_L = 56;
 var TUILE_H = 28;
@@ -9623,7 +9623,8 @@ var bandeau = document.getElementById("bandeau");
 var toile = document.getElementById("scene");
 var contexte = toile.getContext("2d");
 var dedansDiscord = new URLSearchParams(location.search).has("frame_id");
-var api = dedansDiscord ? "/.proxy/api" : "/api";
+var apiBase = window.__API_BASE__ || (dedansDiscord ? "/.proxy/api" : "/api");
+var apiUrl = (route) => apiBase.endsWith(".php") ? `${apiBase}?r=${route}` : `${apiBase}/${route}`;
 var etat = {
   salon: "local",
   moi: { id: "local", nom: "moi", x: 3, z: 3 },
@@ -9761,7 +9762,7 @@ toile.addEventListener("pointerdown", (evenement) => {
 });
 async function publier() {
   try {
-    const reponse = await fetch(`${api}/state`, {
+    const reponse = await fetch(apiUrl("state"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -9831,7 +9832,7 @@ async function entrer() {
     code_challenge: defi,
     code_challenge_method: "S256"
   });
-  const reponse = await fetch("/.proxy/api/token", {
+  const reponse = await fetch(apiUrl("token"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, code_verifier: verifieur })
