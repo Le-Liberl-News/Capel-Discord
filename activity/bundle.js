@@ -9813,6 +9813,14 @@ async function defiPkce() {
   );
   return { verifieur, defi: base64url(empreinte) };
 }
+function avecDelai(promesse, ms, libelle) {
+  return Promise.race([
+    promesse,
+    new Promise((_, rejeter) => {
+      setTimeout(() => rejeter(new Error(`${libelle} (${ms / 1e3} s)`)), ms);
+    })
+  ]);
+}
 async function entrer() {
   if (!dedansDiscord) {
     const suffixe = Math.random().toString(36).slice(2, 6);
@@ -9821,9 +9829,9 @@ async function entrer() {
     return;
   }
   const sdk = new DiscordSDK(CLIENT_ID);
-  await sdk.ready();
+  await avecDelai(sdk.ready(), 1e4, "Discord n a pas repondu (SDK)");
   const { verifieur, defi } = await defiPkce();
-  const { code } = await sdk.commands.authorize({
+  const { code } = await avecDelai(sdk.commands.authorize({
     client_id: CLIENT_ID,
     response_type: "code",
     state: "",
@@ -9831,7 +9839,7 @@ async function entrer() {
     scope: ["identify"],
     code_challenge: defi,
     code_challenge_method: "S256"
-  });
+  }), 15e3, "Discord n a pas repondu (autorisation)");
   const reponse = await fetch(apiUrl("token"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
