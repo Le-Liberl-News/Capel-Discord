@@ -82,9 +82,23 @@ test("retrying the same duel resends both invitations and preserves the already 
  assert.equal((await lobby.state(player.activity_token)).sceneKey,before.sceneKey);assert.equal(calls.filter(c=>c[0]==="public").length,1);
  time=60002;fail=true;await manager.handle(command);assert.equal((await lobby.state(player.activity_token)).sceneKey,id);assert.match(calls.at(-1)[1].content,/messages/);assert.doesNotMatch(calls.at(-1)[1].content,/private detail/);
 });
-test("duel conflicts return their actual reason without silently changing another match",async()=>{
+test("a new challenge releases the initiating player's old assignment",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"occupied",channel:"guild",players:["real-alice","other"]});lobby.joinDuel("occupied","real-alice");
  let reply;const manager=createActivityDuels({lobby,characterNames:["Joshua"],resolveCharacter:async()=>"Estelle",resolveOpponent:async()=>"real-bob"});
- const command={isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice"},deferReply:async()=>{},editReply:async data=>reply=data.content};
- await manager.handle(command);assert.match(reply,/en duel/);assert.doesNotMatch(reply,/personnage cibl/);assert.equal(lobby.findDuel(["real-alice","other"],"guild").id,"occupied");
+ const command={isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async()=>{}},client:{users:{fetch:async()=>({send:async()=>{}})}},channel:{send:async()=>{}},deferReply:async()=>{},editReply:async data=>reply=data.content};
+ await manager.handle(command);assert.match(reply,/envoy/);assert.equal((await lobby.join({id:"real-alice",channel:"guild"})).map,"anterose");assert.ok(lobby.findDuel(["real-alice","real-bob"],"guild"));
+});
+test("closed activity releases stale assignments while a connected opponent remains protected",async()=>{
+ const {lobby,tick}=fixture();lobby.createDuel({id:"old",channel:"guild",players:["a","b"]});lobby.joinDuel("old","a");lobby.joinDuel("old","b");
+ const b=await lobby.join({id:"b",channel:"dm-b"});await lobby.state(b.activity_token);
+ tick(60000);await lobby.state(b.activity_token);tick(60001);await lobby.state(b.activity_token);assert.throws(()=>lobby.prepareDuel("c","b"),/actif/);
+ lobby.prepareDuel("c","a");lobby.createDuel({id:"new",channel:"guild",players:["c","a"]});lobby.joinDuel("new","a");
+ assert.equal((await lobby.join({id:"a",channel:"dm-a"})).map,"arena");assert.equal((await lobby.state(b.activity_token)).sceneKey,"old");
+});
+test("accepting a new private invitation leaves the previous match",async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:"old",channel:"guild",players:["a","b"]});lobby.createDuel({id:"new",channel:"guild",players:["a","c"]});lobby.joinDuel("old","a");
+ const a=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(a.activity_token);lobby.joinDuel("new","a");assert.equal((await lobby.state(a.activity_token)).sceneKey,"new");
+});
+test("the same pair resumes its duel even when the new command comes from another channel",()=>{
+ const {lobby}=fixture();lobby.createDuel({id:"old",channel:"first",players:["a","b"]});lobby.joinDuel("old","a");assert.equal(lobby.findDuel(["b","a"],"second").id,"old");
 });
