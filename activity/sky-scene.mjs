@@ -51,7 +51,7 @@ export async function createSkyScene(canvas) {
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   let pomFlying = false;
   const projectile = createProjectilePlayback();
-  const effects = createPomEffects(THREE, scene, canvas);
+  const effects = await createPomEffects(THREE, scene, canvas, ASSETS);
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2(),
     keys = new Set();
@@ -511,7 +511,7 @@ export async function createSkyScene(canvas) {
         pomAvatar.mesh.position.z += right.z * 0.3;
       }
     }
-    effects.update(seconds, pomAvatar?.mesh.position, ball?.mode !== "held" && pomFlying);
+    effects.update(seconds, pomAvatar?.mesh.position, ball?.mode !== "held" && pomFlying, camera);
     if (health.hp === 0) {
       const remaining = Math.max(
         0,

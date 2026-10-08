@@ -1,17 +1,22 @@
-export function createPomEffects(THREE, scene, canvas) {
-  const count = 100, positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
-  const particles = Array.from({ length: count }, () => ({ age: 1, x: 0, y: 0, z: 0 }));
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  const image = document.createElement("canvas"); image.width = image.height = 32;
-  const ctx = image.getContext("2d"), gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-  gradient.addColorStop(0, "rgba(255,255,255,1)"); gradient.addColorStop(0.25, "rgba(255,255,255,.9)"); gradient.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, 32, 32);
-  const texture = new THREE.CanvasTexture(image);
-  const material = new THREE.PointsMaterial({ size: 0.45, map: texture, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  const points = new THREE.Points(geometry, material); points.frustumCulled = false; scene.add(points);
-  let audio, cursor = 0, previous, accumulator = 0;
+export async function createPomEffects(THREE, scene, canvas, assets) {
+  const loader = new THREE.TextureLoader();
+  const [boltTexture, frameTexture] = await Promise.all([
+    loader.loadAsync(new URL("effects/fire-bolt.png", assets).href),
+    loader.loadAsync(new URL("effects/fire-frames.png", assets).href),
+  ]);
+  for (const texture of [boltTexture, frameTexture]) {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.LinearFilter;
+  }
+  const material = new THREE.SpriteMaterial({ map: boltTexture, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const bolt = new THREE.Sprite(material); bolt.scale.set(3.2, 0.8, 1); bolt.visible = false; scene.add(bolt);
+  const flames = Array.from({ length: 3 }, (_, i) => {
+    const texture = frameTexture.clone(); texture.repeat.set(0.25, 1);
+    const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 1 - i * 0.23 }));
+    flame.scale.setScalar(1.15 - i * 0.2); flame.visible = false; scene.add(flame); return flame;
+  });
+  let audio, previous, elapsed = 0;
+  const direction = new THREE.Vector3(1,0,0), right = new THREE.Vector3(), up = new THREE.Vector3();
   const unlock = () => {
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) return;
@@ -21,7 +26,7 @@ export function createPomEffects(THREE, scene, canvas) {
   canvas.addEventListener("pointerdown", unlock); window.addEventListener("keydown", unlock);
   return {
     launch() {
-      previous = null;
+      previous = null; elapsed = 0;
       if (!audio || audio.state !== "running") return;
       // A short filtered air burst plus a falling tone, generated locally.
       const t = audio.currentTime, buffer = audio.createBuffer(1, Math.ceil(audio.sampleRate * 0.22), audio.sampleRate);
@@ -33,27 +38,30 @@ export function createPomEffects(THREE, scene, canvas) {
       const oscillator = audio.createOscillator(), tone = audio.createGain(); oscillator.frequency.setValueAtTime(330, t); oscillator.frequency.exponentialRampToValueAtTime(90, t + 0.16);
       tone.gain.setValueAtTime(0.09, t); tone.gain.exponentialRampToValueAtTime(0.001, t + 0.18); oscillator.connect(tone).connect(audio.destination); oscillator.start(t); oscillator.stop(t + 0.18);
     },
-    update(dt, position, flying) {
-      if (flying && position) {
-        accumulator += dt * 100;
-        const total = Math.min(20, Math.floor(accumulator)); accumulator -= total;
-        for (let i = 0; i < total; i++) {
-          const p = particles[cursor++ % count], f = (i + 1) / total;
-          const start = previous && previous.distanceTo(position) < 3 ? previous : position;
-          p.x = start.x + (position.x - start.x) * f + (Math.random() - 0.5) * 0.12;
-          p.y = start.y + (position.y - start.y) * f; p.z = start.z + (position.z - start.z) * f;
-          p.age = 0;
-        }
-        previous = position.clone();
-      } else { previous = null; accumulator = 0; }
-      particles.forEach((p, i) => {
-        p.age += dt; p.y += dt * 0.4;
-        positions.set([p.x, p.y, p.z], i * 3);
-        const fade = Math.max(0, 1 - p.age / 0.45);
-        colors.set([fade, fade * fade * 0.65, fade ** 4 * 0.08], i * 3);
+    update(dt, position, flying, camera) {
+      elapsed += dt;
+      bolt.visible = !!(flying && position);
+      for (const flame of flames) flame.visible = bolt.visible;
+      if (!bolt.visible) { previous = null; return; }
+      if (previous && previous.distanceToSquared(position) > 0.000001)
+        direction.copy(position).sub(previous).normalize();
+      previous = position.clone();
+      // The original FIRE texture points right. Rotate its billboard into the
+      // actual screen direction and keep the bright tip just behind the Pom.
+      right.setFromMatrixColumn(camera.matrixWorld, 0);
+      up.setFromMatrixColumn(camera.matrixWorld, 1);
+      material.rotation = Math.atan2(direction.dot(up), direction.dot(right));
+      bolt.position.copy(position).addScaledVector(direction, -1.25);
+      flames.forEach((flame, i) => {
+        flame.position.copy(position).addScaledVector(direction, -0.5 - i * 0.5);
+        flame.material.map.offset.x = ((Math.floor(elapsed * 16) + i) % 4) / 4;
+        flame.scale.setScalar((1.15 - i * 0.2) * (1 + Math.sin(elapsed * 30 + i) * 0.08));
       });
-      geometry.attributes.position.needsUpdate = geometry.attributes.color.needsUpdate = true;
     },
-    dispose() { canvas.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); audio?.close(); scene.remove(points); geometry.dispose(); material.dispose(); texture.dispose(); },
+    dispose() {
+      canvas.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); audio?.close();
+      scene.remove(bolt); material.dispose(); boltTexture.dispose(); frameTexture.dispose();
+      for (const flame of flames) { scene.remove(flame); flame.material.map.dispose(); flame.material.dispose(); }
+    },
   };
 }
