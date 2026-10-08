@@ -83,3 +83,9 @@ Discord impose de fermer l'activité avant de la relancer dans un autre contexte
 Quand les deux invitations privées sont acceptées, General (595259248984981516) reçoit un bouton pour regarder le duel. Les spectateurs partagent l’arène, marchent dans les tribunes, ne subissent pas les tirs et ne ramassent pas de Pom.
 
 `/prophunt [duree:10]` ouvre des inscriptions dans le salon. Participer envoie un bouton privé ; ouvrir ce bouton rejoint Rolent. Le créateur clique Démarrer quand au moins deux joueurs sont entrés. Chasseur tiré au sort, immobile et aveuglé pendant les 30 secondes de préparation. Les autres deviennent des tonneaux ou caisses natifs. Clic droit du chasseur sur un objet à moins de 2,2 unités, sans obstacle, pour trouver un joueur. Tous trouvés : chasseur gagnant ; expiration : joueurs cachés gagnants. Une partie commune à tous les salons, jusqu’à 20 joueurs, 10 minutes par défaut (1 à 30). Retour Antérose quitte la partie. État sauvegardé dans `.runtime/activity-prophunt.json`.
+
+## Rendu de Rolent
+
+Caméra orthographique reculée (120 unités, profondeur 350) : même cadrage, sans sectionner les bâtiments avec le plan proche. Clé rouge exacte traitée aussi en ARGB4444. Les textures contenant une opacité intermédiaire utilisent BLEND, avec profondeur non écrite et décalage polygonal pour les vitrages superposés.
+
+Le décor conserve ses couleurs et textures sans éclairage PBR. Une lumière directionnelle et des surfaces ShadowMaterial ajoutent des ombres douces, calculées une fois au chargement (2048²). Seules les surfaces complètement opaques reçoivent cette couche ; les feuillages restent découpés. Une ombre de contact suit les personnages et objets mobiles dans les trois maps.

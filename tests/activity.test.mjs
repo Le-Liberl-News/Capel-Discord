@@ -199,3 +199,25 @@ test("asset versions refresh old textures without rewriting embedded model buffe
   assert.equal(versionAsset("https://example.test/plant.png?old=1","new"),"https://example.test/plant.png?old=1&v=new");
   assert.equal(versionAsset("data:application/octet-stream;base64,AA==","new"),"data:application/octet-stream;base64,AA==");
 });
+
+import {cameraDistance,configureSkyMaterial,createMapShadows} from "../activity/sky-rendering.mjs";
+test("Rolent camera keeps nearby building roofs ahead of the near plane at all rotations",()=>{
+ for(const pitch of [Math.PI/9,Math.PI/4,Math.PI*5/12])for(const yaw of [0,Math.PI/2,Math.PI,Math.PI*1.5]){
+  const focus=new THREE.Vector3(-48,0,40),camera=new THREE.OrthographicCamera(-18,18,12,-12,.1,350),distance=cameraDistance("rolent");
+  camera.position.set(focus.x+Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,focus.z-Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(focus);camera.updateMatrixWorld();
+  for(const x of [-18,0,18])for(const z of [-18,0,18]){const point=new THREE.Vector3(focus.x+x,13,focus.z+z).project(camera);assert.ok(point.z>-1&&point.z<1);}
+ }
+});
+test("translucent glass blends without writing coplanar depth",()=>{
+ const material=new THREE.MeshBasicMaterial({transparent:true,opacity:.5});configureSkyMaterial(material);assert.equal(material.depthWrite,false);assert.equal(material.polygonOffset,true);assert.ok(material.polygonOffsetUnits<0);
+ const opaque=new THREE.MeshBasicMaterial();configureSkyMaterial(opaque);assert.equal(opaque.depthWrite,true);
+});
+test("Rolent original translucent textures are exported as blending surfaces",()=>{
+ const model=JSON.parse(fs.readFileSync(new URL("../activity/assets/sky/rolent/anterose.gltf",import.meta.url)));
+ for(const name of ["T01O1701.png","T02O1703.png","T02O1803.png"]){const image=model.images.findIndex(i=>i.uri===name),texture=model.textures.findIndex(t=>t.source===image),material=model.materials.find(m=>m.pbrMetallicRoughness.baseColorTexture.index===texture);assert.equal(material.alphaMode,"BLEND");assert.equal(material.extras.skyShadowReceiver,false);}
+});
+test("map shadows retain native colours and do not cover transparent foliage",()=>{
+ const scene=new THREE.Scene(),model=new THREE.Group(),renderer={shadowMap:{}};scene.add(model);
+ for(const receiver of [true,false]){const material=new THREE.MeshBasicMaterial();material.userData.skyShadowReceiver=receiver;model.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),material));}
+ const shadows=createMapShadows(THREE,renderer,scene,model,"rolent");assert.equal(shadows.overlays.length,1);assert.equal(shadows.overlays[0].material.depthWrite,false);assert.equal(shadows.overlays[0].material.side,THREE.DoubleSide);assert.equal(shadows.overlays[0].receiveShadow,true);assert.equal(renderer.shadowMap.autoUpdate,false);assert.equal(renderer.shadowMap.needsUpdate,true);
+});

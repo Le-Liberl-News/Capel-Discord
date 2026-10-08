@@ -1,3 +1,4 @@
+import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
 import { createArenaCutaway, versionAsset } from "./scene-visibility.mjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
 import collisionModule from "./surface-collision.cjs";
@@ -25,12 +26,12 @@ export async function createSkyScene(canvas, map = "anterose") {
   renderer.setClearColor(0x201b18);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene(),
-    camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 150),
+    camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, map === "rolent" ? 350 : 150),
     avatars = new Map(),
     catalogue = await fetch(new URL("characters.json", ASSETS)).then((r) =>
       r.json(),
     );
-  const version = new URL(import.meta.url).searchParams.get("v") ?? "arena-20261008-2";
+  const version = new URL(import.meta.url).searchParams.get("v") ?? "rolent-20261008-3";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
@@ -48,6 +49,8 @@ export async function createSkyScene(canvas, map = "anterose") {
         ? object.material
         : [object.material];
       for (const material of materials) {
+        configureSkyMaterial(material);
+        if (material.transparent) object.renderOrder=3;
         if (cutaway) {
           material.clippingPlanes = cutaway.planes;
           material.clipIntersection = true;
@@ -61,6 +64,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
     }
   });
+  const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
@@ -68,8 +72,18 @@ export async function createSkyScene(canvas, map = "anterose") {
   let walkingGrid = grid, movementAllowed = true;
   const propCatalogue = map === "rolent" ? await fetch(new URL("props.json", mapAssets)).then(r => r.json()) : {};
   const propModels = new Map();
+  const shadowCanvas=document.createElement("canvas");shadowCanvas.width=64;shadowCanvas.height=64;
+  const shadowContext=shadowCanvas.getContext("2d"), gradient=shadowContext.createRadialGradient(32,32,4,32,32,31);
+  gradient.addColorStop(0,"rgba(0,0,0,.85)");gradient.addColorStop(.5,"rgba(0,0,0,.5)");gradient.addColorStop(1,"rgba(0,0,0,0)");
+  shadowContext.fillStyle=gradient;shadowContext.fillRect(0,0,64,64);
+  const shadowTexture=new THREE.CanvasTexture(shadowCanvas);
+  function attachShadow(avatar,id) {
+    if (id.startsWith("world:pom"))return avatar;
+    avatar.shadow=createContactShadow(THREE,shadowTexture);scene.add(avatar.shadow);return avatar;
+  }
   function removeAvatar(avatar) {
     scene.remove(avatar.mesh);
+    if(avatar.shadow){scene.remove(avatar.shadow);avatar.shadow.geometry.dispose();avatar.shadow.material.dispose();}
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); avatar.mesh.material.map.dispose(); avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
@@ -251,7 +265,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       content.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
       const mesh = new THREE.Group(); mesh.add(content); scene.add(mesh);
       avatar = {mesh,prop,character,dead,hp:player.hp??100,info:{height:1},position:{x:player.x??spawn.x,y:player.y??spawn.y,z:player.z??spawn.z},target:null,heading:{dx:0,dz:-1},time:0};
-      avatars.set(player.id,avatar); return avatar;
+      attachShadow(avatar,player.id);avatars.set(player.id,avatar); return avatar;
     }
     const baseInfo = catalogue[character];
     const info =
@@ -320,6 +334,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       heading: player.heading ?? { dx: 0, dz: -1 },
       time: 0,
     };
+    attachShadow(avatar,player.id);
     avatars.set(player.id, avatar);
     return avatar;
   }
@@ -471,9 +486,9 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
     camera.position.set(
-      follow.x + Math.sin(yaw) * Math.cos(pitch) * 17,
-      follow.y + Math.sin(pitch) * 17,
-      follow.z - Math.cos(yaw) * Math.cos(pitch) * 17,
+      follow.x + Math.sin(yaw) * Math.cos(pitch) * cameraDistance(map),
+      follow.y + Math.sin(pitch) * cameraDistance(map),
+      follow.z - Math.cos(yaw) * Math.cos(pitch) * cameraDistance(map),
     );
     camera.lookAt(follow);
     camera.updateMatrixWorld();
@@ -551,6 +566,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         avatar.position.y,
         avatar.position.z,
       );
+      if(avatar.shadow)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
       avatar.mesh.rotation.z = avatar.fallbackDeath ? Math.PI / 2 : 0;
       avatar.mesh.rotation.y = Math.atan2(
@@ -637,7 +653,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     setConnected(value) { connected = value; if (!value) { path=[]; keys.clear(); marker.visible=false; } },
     async resetSession(player) { actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
@@ -819,6 +835,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
       for (const texture of maps) texture.dispose(); for (const material of materials) material.dispose();
       for (const pending of propModels.values()) pending.then(value => value.scene.traverse(object => { object.geometry?.dispose(); for(const material of [].concat(object.material??[])){ material.map?.dispose(); material.dispose(); } }));
+      mapShadows?.light.shadow.dispose();
+      shadowTexture.dispose();
       renderer.dispose();
     },
   };

@@ -27,7 +27,7 @@ def archive_entries(game, archive):
 
 
 def decode_model_texture(data):
-    """Sky RGB1555 DDS uses pure red as a colour key, in addition to alpha."""
+    """Sky DDS uses exact pure red as a colour key, including RGB1555 and ARGB4444."""
     import io
     image = Image.open(io.BytesIO(data)).convert('RGBA')
     if data[:4] != b'DDS ':
@@ -40,6 +40,10 @@ def decode_model_texture(data):
                 if pixels[x, y][:3] == (255, 0, 0): pixels[x, y] = (0, 0, 0, 0)
         return image
     if fourcc or bits != 16 or not flags & 64:
+        pixels = image.load()
+        for y in range(image.height):
+            for x in range(image.width):
+                if pixels[x, y][:3] == (255, 0, 0): pixels[x, y] = (0, 0, 0, 0)
         return image
     height, width, pitch = struct.unpack_from('<III', data, 12)
     pitch = max(width * 2, pitch) if struct.unpack_from('<I', data, 8)[0] & 8 else width * 2
@@ -52,7 +56,7 @@ def decode_model_texture(data):
                 shift = (alpha & -alpha).bit_length() - 1
                 opacity = ((word & alpha) >> shift) * 255 // (alpha >> shift)
             # Confirmed by the supplied xxViewer: only exact pure red is keyed.
-            if (red, green, blue) == (0x7c00, 0x03e0, 0x001f) and word & (red | green | blue) == red:
+            if red and word & (red | green | blue) == red:
                 opacity = 0
             r, g, b, _ = pixels[x, y]
             pixels[x, y] = (r, g, b, opacity) if opacity else (0, 0, 0, 0)
@@ -147,7 +151,15 @@ def main():
     # The original game uses vertex colours and unlit textures, not PBR lighting.
     for material in model['materials']:
         material['extensions'] = {'KHR_materials_unlit': {}}
-        material['alphaMode'] = 'MASK'
+        texture_index = material.get('pbrMetallicRoughness', {}).get('baseColorTexture', {}).get('index')
+        translucent, opaque = False, True
+        if texture_index is not None:
+            texture_name = model['images'][model['textures'][texture_index]['source']]['uri']
+            alpha_values = Image.open(args.output / texture_name).convert('RGBA').getchannel('A').histogram()
+            translucent = any(alpha_values[1:255])
+            opaque = sum(alpha_values[:255]) == 0
+        material['alphaMode'] = 'BLEND' if translucent else 'MASK'
+        material['extras'] = {'skyShadowReceiver': opaque}
         material['alphaCutoff'] = 0.1
         material['doubleSided'] = True
     model['extensionsUsed'] = ['KHR_materials_unlit']
