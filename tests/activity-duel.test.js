@@ -71,3 +71,20 @@ test("a second window cannot alternate movement with the current controller",asy
  await assert.rejects(()=>lobby.state(first.activity_token,{x:9,z:9}),{status:409});
  assert.deepEqual((await lobby.state(second.activity_token)).position,{x:1,y:0,z:1});
 });
+
+test("retrying the same duel resends both invitations and preserves the already joined arena",async()=>{
+ let time=0,fail=false;const calls=[],{lobby}=fixture();
+ const manager=createActivityDuels({lobby,now:()=>time,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
+ const command={isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>calls.push(["a",data])},client:{users:{fetch:async()=>({send:async data=>{if(fail)throw Object.assign(new Error("private detail"),{code:50007});calls.push(["b",data]);}})}},channel:{send:async data=>calls.push(["public",data])},deferReply:async()=>{},editReply:async data=>calls.push(["reply",data])};
+ await manager.handle(command);const id=calls.find(c=>c[0]==="b")[1].components[0].components[0].custom_id.slice(9);
+ lobby.joinDuel(id,"real-alice");const player=await lobby.join({id:"real-alice",channel:"dm-a"});const before=await lobby.state(player.activity_token);
+ time=30001;await manager.handle(command);const sent=calls.filter(c=>c[0]==="b");assert.equal(sent.length,2);assert.equal(sent[1][1].components[0].components[0].custom_id,"activity:"+id);
+ assert.equal((await lobby.state(player.activity_token)).sceneKey,before.sceneKey);assert.equal(calls.filter(c=>c[0]==="public").length,1);
+ time=60002;fail=true;await manager.handle(command);assert.equal((await lobby.state(player.activity_token)).sceneKey,id);assert.match(calls.at(-1)[1].content,/messages/);assert.doesNotMatch(calls.at(-1)[1].content,/private detail/);
+});
+test("duel conflicts return their actual reason without silently changing another match",async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:"occupied",channel:"guild",players:["real-alice","other"]});lobby.joinDuel("occupied","real-alice");
+ let reply;const manager=createActivityDuels({lobby,characterNames:["Joshua"],resolveCharacter:async()=>"Estelle",resolveOpponent:async()=>"real-bob"});
+ const command={isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice"},deferReply:async()=>{},editReply:async data=>reply=data.content};
+ await manager.handle(command);assert.match(reply,/en duel/);assert.doesNotMatch(reply,/personnage cibl/);assert.equal(lobby.findDuel(["real-alice","other"],"guild").id,"occupied");
+});

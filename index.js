@@ -263,7 +263,7 @@ app.post('/api/token', async (req, res) => {
 app.post('/api/profile', async (req, res) => {
     try {
         const response = await fetch('https://discord.com/api/users/@me', {headers: {Authorization: 'Bearer ' + activiteBearer(req)}});
-        if (!response.ok) return res.status(401).json({erreur: 'Identification Discord requise.'});
+        if (!response.ok) return res.status([401,403].includes(response.status) ? 401 : response.status === 429 ? 429 : 502).json({erreur: [401,403].includes(response.status) ? 'Identification Discord requise.' : 'Connexion Discord temporairement indisponible.'});
         const user = await response.json();
         const channel = await client.channels.fetch(String(req.body?.channel || ''));
         if (channel?.guild) {
@@ -275,7 +275,10 @@ app.post('/api/profile', async (req, res) => {
         }
         res.set('Cache-Control', 'no-store');
         res.json(await activiteService.join({id: user.id, channel: channel.id}));
-    } catch (error) { res.status(403).json({erreur: 'Impossible de rejoindre ce salon Discord.'}); }
+    } catch (error) {
+        const denied = [10003,10007,50001,50013].includes(error.code);
+        res.status(denied ? 403 : 502).json({erreur: denied ? 'Impossible de rejoindre ce salon Discord.' : 'Connexion Discord temporairement indisponible.'});
+    }
 });
 app.get('/api/state', async (req, res) => {
     try { res.set('Cache-Control', 'no-store');res.json(await activiteService.state(activiteBearer(req), undefined, Number(req.query.after))); }

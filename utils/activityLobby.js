@@ -34,6 +34,14 @@ function createActivityLobby({ arena, store = null, now = Date.now, ...options }
       pom:pom(result.pom), poms:result.poms?.map(pom) };
   }
   return {
+    findDuel(players, channel) {
+      prune();
+      for (const [id, duel] of duels) {
+        if (duel.channel === channel && duel.players.length === players.length && players.every(user => duel.players.includes(user) && (!assignments.has(user) || assignments.get(user) === id)))
+          return { id, players: [...duel.players], expires: duel.expires };
+      }
+      return null;
+    },
     createDuel({ id, channel, players }) {
       prune(); if (!arena) throw new ActivityError("Arène indisponible.");
       for (const user of players) if (assignments.has(user)) throw new ActivityError("Un des personnages est déjà en duel.");

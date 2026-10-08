@@ -1,4 +1,4 @@
-import { fetchJson } from "./network.mjs";
+import { fetchJson, retryConnection } from "./network.mjs";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { createMapMusic } from "./music.mjs";
 import { createSkyScene, ASSETS } from "./sky-scene.mjs";
@@ -66,6 +66,8 @@ async function entrer() {
   etape(`1/4 SDK, client ${CLIENT_ID}`);
   await avecDelai(sdk.ready(), 10000, "Discord n a pas repondu (SDK)");
   etape("2/4 SDK pret, autorisation...");
+  // An OAuth code is single-use: a retry obtains a fresh code and PKCE verifier.
+  const reponse = await retryConnection(async () => {
   const { verifieur, defi } = await defiPkce();
   const { code } = await avecDelai(
     sdk.commands.authorize({
@@ -81,11 +83,12 @@ async function entrer() {
     "Discord n a pas repondu (autorisation)",
   );
   etape("3/4 code recu, jeton...");
-  const reponse = await fetchJson(apiUrl("token"), {
+  return await fetchJson(apiUrl("token"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, code_verifier: verifieur }),
   });
+  }, { onRetry: (_, attempt, total) => etape(`Connexion Discord : nouvelle tentative ${attempt}/${total}...`) });
   const { access_token: jeton, erreur } = reponse;
   if (!jeton)
     throw new Error(erreur ?? `jeton absent (HTTP ${reponse.status})`);
@@ -94,14 +97,14 @@ async function entrer() {
   const auth = await sdk.commands.authenticate({ access_token: jeton });
   etat.salon = sdk.channelId ?? "local";
   etat.accessToken = jeton;
-  const profileResponse = await fetchJson(apiUrl("profile"), {
+  const profileResponse = await retryConnection(() => fetchJson(apiUrl("profile"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: "Bearer " + jeton,
     },
     body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId }),
-  });
+  }), { onRetry: (_, attempt, total) => etape(`Connexion au duel : nouvelle tentative ${attempt}/${total}...`) });
   const profile = profileResponse;
   etat.map = profile.map ?? "anterose";
   etat.token = profile.activity_token;
@@ -245,7 +248,13 @@ async function start() {
   }
   void poll();
 }
-start().catch((error) => {
+function showLoadError(error) {
   bandeau.textContent = "Chargement impossible : " + error.message;
+  const retry = document.createElement("button");
+  retry.textContent = "Réessayer la connexion";
+  retry.style.cssText = "display:block;margin-top:10px;padding:8px 12px;cursor:pointer";
+  retry.onclick = () => { retry.remove(); scene?.dispose(); music?.dispose(); scene = null; music = null; void start().catch(showLoadError); };
+  bandeau.append(retry);
   console.error(error);
-});
+}
+void start().catch(showLoadError);
