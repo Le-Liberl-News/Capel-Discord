@@ -99,9 +99,19 @@ function createActivityWorld({
     thrownBy: null,
     flight: 0,
   };
-  let last = now();
+  let last = now(), shot = 0;
+  const sample = () => {
+    if (!ball.shotId) return;
+    const q = { t: ball.flight, x: ball.x, y: ball.y, z: ball.z };
+    const previous = ball.trajectory.at(-1);
+    if (previous?.t === q.t) ball.trajectory[ball.trajectory.length - 1] = q;
+    else ball.trajectory.push(q);
+    if (ball.trajectory.length > 64) ball.trajectory.shift();
+  };
   const resetBall = () =>
     Object.assign(ball, ballSpawn, {
+      shotId: null,
+      trajectory: [],
       mode: "rest",
       owner: null,
       vx: 0,
@@ -111,6 +121,7 @@ function createActivityWorld({
       flight: 0,
     });
   const stop = () => {
+    sample();
     ball.mode = "rest";
     ball.owner = null;
     ball.vx = ball.vy = ball.vz = 0;
@@ -216,6 +227,7 @@ function createActivityWorld({
           if (blockedX || !blockedZ) ball.vx = -ball.vx;
           if (blockedZ || !blockedX) ball.vz = -ball.vz;
         }
+        sample();
         ball.ricochets++;
         if (ball.ricochets >= 2) {
           ball.vx *= 0.5;
@@ -269,6 +281,7 @@ function createActivityWorld({
         ball.y = y;
       }
     }
+    if (ball.mode === "flight") sample();
     if (ball.mode === "held") {
       const p = players.get(ball.owner);
       if (!p || p.hp === 0) stop();
@@ -340,6 +353,8 @@ function createActivityWorld({
         d = Math.hypot(dx, dy, dz);
       if (d < 0.15 || d > 150) return { error: "Direction invalide." };
       Object.assign(ball, {
+        shotId: ++shot,
+        trajectory: [{ t: 0, x: player.x, y: (player.y ?? 0) + 0.9, z: player.z }],
         mode: "flight",
         owner: null,
         thrownBy: player.id,
@@ -378,7 +393,7 @@ function createActivityWorld({
             !n.static && pause <= 0 && now() >= talkUntil && path.length > 0,
         }),
       ),
-      pom: { ...ball },
+      pom: { ...ball, trajectory: ball.trajectory?.map((p) => ({ ...p })) },
     }),
   };
 }

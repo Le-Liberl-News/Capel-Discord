@@ -1,3 +1,5 @@
+import { createProjectilePlayback } from "./projectile.mjs";
+import { createPomEffects } from "./pom-effects.mjs";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { createDialogues } from "./dialogue.mjs";
@@ -47,7 +49,9 @@ export async function createSkyScene(canvas) {
   );
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
-  const projectileRay = new THREE.Raycaster();
+  let pomFlying = false;
+  const projectile = createProjectilePlayback();
+  const effects = createPomEffects(THREE, scene, canvas);
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2(),
     keys = new Set();
@@ -145,7 +149,7 @@ export async function createSkyScene(canvas) {
     for (const n of residents)
       options.push(["Parler à " + n.name, "talk", n.id]);
     if (ball?.mode === "rest" && nearby(ball, 2))
-      options.push(["Ramasser le Pom", "pickup"]);
+      { queueAction("pickup"); return; }
     menu.replaceChildren();
     for (const [label, type, target] of options) {
       const b = document.createElement("button");
@@ -442,40 +446,8 @@ export async function createSkyScene(canvas) {
     for (const [id, avatar] of avatars) {
       const ballState = environment.pom,
         isPom = id === "world:pom";
-      if (isPom && ballState && ballState.mode !== "held") {
-        Object.assign(avatar.position, {
-          x: ballState.x,
-          y: ballState.y,
-          z: ballState.z,
-        });
-        if (ballState.mode === "flight") {
-          const elapsed = Math.min(
-            0.18,
-            Math.max(0, (time - environment.receivedAt) / 1000),
-          );
-          const velocity = new THREE.Vector3(
-              ballState.vx,
-              ballState.vy ?? 0,
-              ballState.vz,
-            ),
-            speed = velocity.length();
-          if (speed > 0) {
-            const direction = velocity.clone().divideScalar(speed);
-            projectileRay.set(
-              new THREE.Vector3(ballState.x, ballState.y, ballState.z),
-              direction,
-            );
-            projectileRay.far = speed * elapsed + 0.22;
-            const hit = projectileRay.intersectObject(model, true)[0];
-            const travel = hit
-              ? Math.min(speed * elapsed, Math.max(0, hit.distance - 0.22))
-              : speed * elapsed;
-            avatar.position.x += direction.x * travel;
-            avatar.position.y += direction.y * travel;
-            avatar.position.z += direction.z * travel;
-          }
-        }
-      }
+      if (isPom && ballState && ballState.mode !== "held")
+        pomFlying = projectile.update(seconds, avatar.position);
       const motion = isPom
         ? {
             moving: ballState?.mode === "flight",
@@ -539,6 +511,7 @@ export async function createSkyScene(canvas) {
         pomAvatar.mesh.position.z += right.z * 0.3;
       }
     }
+    effects.update(seconds, pomAvatar?.mesh.position, ball?.mode !== "held" && pomFlying);
     if (health.hp === 0) {
       const remaining = Math.max(
         0,
@@ -669,6 +642,7 @@ export async function createSkyScene(canvas) {
         pom: result.pom ?? null,
         receivedAt: performance.now(),
       };
+      if (projectile.receive(environment.pom)) effects.launch();
       health = { ...result.health, received: performance.now() };
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {
@@ -743,6 +717,7 @@ export async function createSkyScene(canvas) {
       labels.remove();
       style.remove();
       dialogues.dispose();
+      effects.dispose();
       renderer.dispose();
     },
   };

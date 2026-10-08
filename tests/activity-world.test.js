@@ -365,3 +365,16 @@ test("a free shot across the real restaurant stairs hits a player below", () => 
   world.tick(players);
   assert.equal(b.hp, 75);
 });
+
+test("snapshots preserve ordered ricochet corners and unique launch identity", () => {
+  const f = fixture(); f.players.delete("b"); const a = f.players.get("a");
+  f.world.action(a, {type:"pickup"}, f.players);
+  f.world.action(a, {type:"throw", aim:{x:20,y:.9,z:1}}, f.players);
+  f.tick(1);
+  const ball = f.world.snapshot().pom;
+  assert.equal(ball.shotId, 1); assert.ok(ball.trajectory.length >= 3);
+  assert.ok(ball.trajectory.length <= 64);
+  for (let i=1;i<ball.trajectory.length;i++) assert.ok(ball.trajectory[i].t >= ball.trajectory[i-1].t);
+  ball.trajectory[0].x = 999;
+  assert.notEqual(f.world.snapshot().pom.trajectory[0].x,999);
+});
