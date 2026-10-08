@@ -1,3 +1,4 @@
+import { createTouchControls } from "./touch-controls.mjs";
 import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
 import { createArenaCutaway, versionAsset } from "./scene-visibility.mjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
@@ -127,6 +128,22 @@ export async function createSkyScene(canvas, map = "anterose") {
     "#sky-labels{position:fixed;inset:0;pointer-events:none;z-index:8}.sky-nameplate{position:absolute;transform:translate(-50%,-100%);color:#ffe8b5;font:16px AveriaSky,sans-serif;text-shadow:1px 1px 2px #000;background:#211c2a9c;border-radius:3px;padding:2px 6px;white-space:nowrap}.sky-hp{height:4px;background:#4c2222;margin-top:3px}.sky-hp i{display:block;height:100%;background:#94d375}#sky-actions{position:fixed;z-index:30;padding:6px;background:#211c2aee;border:2px solid #d9c28d;border-radius:5px;color:white;font:18px AveriaSky,sans-serif}#sky-actions button{display:block;width:100%;text-align:left;padding:8px 12px;background:transparent;color:#fff;border:0;cursor:pointer;font:inherit}#sky-actions button:hover{background:#61537f}#sky-combat{position:fixed;bottom:16px;left:16px;z-index:12;background:#211c2ade;color:#ffe7b0;padding:10px 14px;border:1px solid #c6b27d;border-radius:5px;font:18px AveriaSky,sans-serif;pointer-events:none;white-space:pre-line;max-width:calc(100vw - 64px)}";
   document.head.append(style);
   document.body.append(menu, status, labels);
+  const touchButton=document.createElement("button");
+  touchButton.id="sky-touch-action";touchButton.type="button";touchButton.textContent="Actions";
+  touchButton.setAttribute("aria-pressed","false");
+  touchButton.title="Actions puis toucher la cible, ou appui long. Deux doigts : caméra.";
+  if(matchMedia("(any-pointer:coarse)").matches)document.body.dataset.skyTouch="true";
+  let touchArmed=false;
+  function disarmTouch(){touchArmed=false;touchButton.setAttribute("aria-pressed","false");touchButton.textContent="Actions";}
+  touchButton.addEventListener("click",()=>{touchArmed=!touchArmed;touchButton.setAttribute("aria-pressed",String(touchArmed));touchButton.textContent=touchArmed?"Touchez la cible":"Actions";});
+  const touchStyle=document.createElement("style");
+  touchStyle.textContent="#sky-touch-action{display:none;position:fixed;right:12px;bottom:80px;z-index:25;min-height:48px;min-width:104px;padding:10px 14px;background:#ead29c;color:#241b15;border:2px solid #b49760;border-radius:6px;font:17px AveriaSky,sans-serif;touch-action:manipulation}#sky-touch-action[aria-pressed=true]{background:#ffc569}#sky-touch-action:disabled{opacity:.45}body[data-sky-touch] #sky-touch-action{display:block}@media(any-pointer:coarse){#sky-touch-action{display:block}}@media(max-width:600px){#hud{top:8px!important;left:8px!important;max-width:calc(100vw - 160px)!important;padding:6px 8px!important;font-size:11px!important}#hud h1{font-size:15px!important}#sky-prophunt{top:66px!important;right:8px!important;max-width:calc(100vw - 40px)!important;font-size:13px!important;padding:8px!important}#sky-combat{bottom:70px;left:8px;max-width:calc(100vw - 145px);font-size:13px;padding:6px 8px}#sky-actions button{min-height:44px}.sky-nameplate{font-size:13px}}";
+  document.head.append(touchStyle);document.body.append(touchButton);
+  const touches=createTouchControls({
+    tap:event=>{if(!connected)return;if(touchArmed){disarmTouch();interaction(event);}else click(event);},
+    action:event=>{disarmTouch();interaction(event);},
+    camera:({dx,dy,scale})=>{menu.hidden=true;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch+dy*.005,Math.PI/9,Math.PI*5/12);zoom=THREE.MathUtils.clamp(zoom*scale,4,map==="arena"?30:15);resize();},
+  });
   const oldHelp = document.getElementById("aide");
   if (oldHelp) oldHelp.hidden = true;
   function queueAction(type, target, aim, text) {
@@ -377,7 +394,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   function blur() {
     keys.clear();
-    endDrag();
+    endDrag();touches.reset();disarmTouch();
   }
   function click(event) {
     if (event.button !== 0) return;
@@ -413,6 +430,9 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   function pointerdown(event) {
     if (!connected) return;
+    if (event.pointerType==="touch") {
+      event.preventDefault();document.body.dataset.skyTouch="true";menu.hidden=true;touches.down(event);canvas.setPointerCapture(event.pointerId);return;
+    }
     if (event.button !== 2) {
       click(event);
       return;
@@ -429,6 +449,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     canvas.setPointerCapture(event.pointerId);
   }
   function pointermove(event) {
+    if(touches.has(event.pointerId)){event.preventDefault();touches.move(event);return;}
     if (!drag || event.pointerId !== drag.id) return;
     if (
       Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5
@@ -446,6 +467,10 @@ export async function createSkyScene(canvas, map = "anterose") {
     drag.y = event.clientY;
   }
   function endDrag(event) {
+    if(event&&touches.has(event.pointerId)){
+      touches.up(event,event.type!=="pointerup");
+      if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);return;
+    }
     const previous = drag;
     drag = null;
     if (event?.type === "pointerup" && previous && !previous.moved)
@@ -655,8 +680,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     catalogue,
     ...(__ACTIVITY_PREVIEW__ ? { renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
-    setConnected(value) { connected = value; if (!value) { path=[]; keys.clear(); marker.visible=false; } },
-    async resetSession(player) { actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
+    setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
+    async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
     },
@@ -748,6 +773,8 @@ export async function createSkyScene(canvas, map = "anterose") {
         if (projectiles.get(ball.id).receive(ball)) effects.get(ball.id).launch();
         if (predicted?.confirmed && ball.mode !== "flight") predictedShots.delete(ball.id);
       }
+      touchButton.disabled=!connected||result.health?.hp===0||!!result.health?.spectator||result.health?.canMove===false;
+      if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
       if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?22:12;resize(); }
@@ -770,8 +797,9 @@ export async function createSkyScene(canvas, map = "anterose") {
           (environment.poms.some(p => p.owner === localId)
             ? "Pom en main : clic droit pour tirer vers le point visé."
             : "Clic droit : parler / ramasser le Pom. Glisser : caméra.");
+      if(document.body.dataset.skyTouch && health.hp>0) status.textContent=environment.poms.some(p=>p.owner===localId)?"Actions puis toucher pour tirer.":"Toucher : marcher. Appui long : actions. Deux doigts : caméra.";
       if (health.spectator && map === "arena") status.textContent = "Tribunes : spectateur";
-      if (environment.game) status.textContent = result.notice ?? "Rolent : clic droit pour chercher un objet proche.";
+      if (environment.game) status.textContent = result.notice ?? (document.body.dataset.skyTouch?"Toucher : marcher. Actions puis toucher un objet pour chercher.":"Rolent : clic droit pour chercher un objet proche.");
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;
       if (result.actionResult?.id === actionQueue[0]?.id) actionQueue.shift();
@@ -825,6 +853,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("keyup", keyup);
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
+      touches.reset();touchButton.remove();touchStyle.remove();
       menu.remove();
       status.remove();
       labels.remove();

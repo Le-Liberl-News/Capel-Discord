@@ -36,7 +36,7 @@ function drawHunt() {
  if(!g)return;
  const seconds=Math.max(0,Math.ceil((g.deadline-g.serverTime)/1000-(Date.now()-g.received)/1000));
  const timer=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
- gameHud.textContent = g.phase==="waiting" ? "Inscription ouverte : "+g.players+" joueurs.\nLe créateur lance la partie depuis Discord." : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Clic droit sur un objet proche pour chercher.":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
+ gameHud.textContent = g.phase==="waiting" ? "Inscription ouverte : "+g.players+" joueurs.\nLe créateur lance la partie depuis Discord." : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Actions / appui long sur mobile ; clic droit sur PC.":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
 }
 setInterval(drawHunt,250);
 const leave = document.createElement("button"); leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
@@ -56,6 +56,10 @@ chatSend.style.cssText = "padding:6px 12px;background:#f3dfb4;color:#332319;bord
 const chatHint = document.createElement("small"); chatHint.textContent = " Visible par les joueurs de cette map.";
 chat.append(chatLabel,chatSend,chatHint); document.body.append(chat);
 chat.addEventListener("submit", event => { event.preventDefault(); if (scene?.speak(chatInput.value)) chatInput.value = ""; });
+const chatToggle=document.createElement("button");chatToggle.id="sky-chat-toggle";chatToggle.type="button";chatToggle.textContent="Discussion";chatToggle.setAttribute("aria-expanded","false");
+const mobileStyle=document.createElement("style");mobileStyle.textContent="#sky-chat-toggle{display:none;position:fixed;right:12px;bottom:138px;z-index:25;min-height:44px;padding:8px 12px;background:#211c2a;color:#ffe7b0;border:1px solid #b49760;border-radius:5px;font:15px AveriaSky,sans-serif}body[data-sky-touch] #sky-chat-toggle{display:block}body[data-sky-touch] #sky-chat:not([data-open]){display:none}body[data-sky-touch] #sky-chat{bottom:190px}@media(any-pointer:coarse),(max-width:600px){#sky-chat-toggle{display:block}#sky-chat:not([data-open]){display:none}#sky-chat{bottom:190px!important;z-index:26!important}}";
+document.head.append(mobileStyle);document.body.append(chatToggle);
+chatToggle.addEventListener("click",()=>{const open=!chat.hasAttribute("data-open");chat.toggleAttribute("data-open",open);chatToggle.setAttribute("aria-expanded",String(open));if(open)chatInput.focus();else chatInput.blur();});
 chatInput.addEventListener("focus", () => window.dispatchEvent(new Event("blur")));
 function base64url(donnees) {
   const octets = new Uint8Array(donnees);

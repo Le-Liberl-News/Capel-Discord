@@ -221,3 +221,19 @@ test("map shadows retain native colours and do not cover transparent foliage",()
  for(const receiver of [true,false]){const material=new THREE.MeshBasicMaterial();material.userData.skyShadowReceiver=receiver;model.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),material));}
  const shadows=createMapShadows(THREE,renderer,scene,model,"rolent");assert.equal(shadows.overlays.length,1);assert.equal(shadows.overlays[0].material.depthWrite,false);assert.equal(shadows.overlays[0].material.side,THREE.DoubleSide);assert.equal(shadows.overlays[0].receiveShadow,true);assert.equal(renderer.shadowMap.autoUpdate,false);assert.equal(renderer.shadowMap.needsUpdate,true);
 });
+
+import {createTouchControls} from "../activity/touch-controls.mjs";
+function touchFixture(){const calls=[],timers=new Map();let next=0;const controls=createTouchControls({tap:p=>calls.push(["tap",p]),action:p=>calls.push(["action",p]),camera:p=>calls.push(["camera",p]),setTimer:fn=>{timers.set(++next,fn);return next;},clearTimer:id=>timers.delete(id)});const event=(id,x=100,y=100)=>({pointerId:id,clientX:x,clientY:y});return {controls,calls,event,hold(){for(const [id,fn] of [...timers]){timers.delete(id);fn();}}};}
+test("touch taps move only on release; long presses interact once without moving",()=>{
+ const f=touchFixture();f.controls.down(f.event(1));assert.equal(f.calls.length,0);f.controls.up(f.event(1));assert.equal(f.calls[0][0],"tap");f.hold();assert.equal(f.calls.length,1);
+ f.controls.down(f.event(2));f.hold();f.controls.up(f.event(2));assert.deepEqual(f.calls.map(c=>c[0]),["tap","action"]);
+});
+test("touch drags and cancellations never cause accidental actions or walking",()=>{
+ const f=touchFixture();f.controls.down(f.event(1));f.controls.move(f.event(1,140));f.hold();f.controls.up(f.event(1,140));assert.equal(f.calls.length,0);
+ f.controls.down(f.event(2));f.controls.up(f.event(2),true);f.hold();assert.equal(f.calls.length,0);
+ f.controls.down(f.event(3));f.controls.reset();f.hold();f.controls.up(f.event(3));assert.equal(f.calls.length,0);
+});
+test("two finger camera gestures cancel long presses and never trigger leftover taps",()=>{
+ const f=touchFixture();f.controls.down(f.event(1,100));f.controls.down(f.event(2,200));f.hold();f.controls.move(f.event(2,220,120));assert.equal(f.calls.length,1);assert.equal(f.calls[0][0],"camera");assert.ok(f.calls[0][1].scale<1);assert.equal(f.calls[0][1].dx,10);
+ f.controls.up(f.event(2,220,120));f.controls.up(f.event(1));assert.equal(f.calls.length,1);
+});

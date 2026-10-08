@@ -89,3 +89,7 @@ Quand les deux invitations privées sont acceptées, General (595259248984981516
 Caméra orthographique reculée (120 unités, profondeur 350) : même cadrage, sans sectionner les bâtiments avec le plan proche. Clé rouge exacte traitée aussi en ARGB4444. Les textures contenant une opacité intermédiaire utilisent BLEND, avec profondeur non écrite et décalage polygonal pour les vitrages superposés.
 
 Le décor conserve ses couleurs et textures sans éclairage PBR. Une lumière directionnelle et des surfaces ShadowMaterial ajoutent des ombres douces, calculées une fois au chargement (2048²). Seules les surfaces complètement opaques reçoivent cette couche ; les feuillages restent découpés. Une ombre de contact suit les personnages et objets mobiles dans les trois maps.
+
+## Commandes tactiles
+
+Toucher la map pour marcher. Appui long (450 ms) pour les actions du clic droit. Le bouton Actions arme le prochain toucher : ramasser, parler, tirer ou chercher un objet, selon le contexte. Glisser à deux doigts pour orienter la caméra ; écarter/pincer pour zoomer. Les gestes de caméra annulent le toucher de déplacement et l’appui long. Discussion replie le formulaire sur mobile. Les commandes de souris restent identiques.
