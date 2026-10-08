@@ -116,6 +116,8 @@ async function entrer() {
   bandeau.textContent = `Connecte : ${etat.moi.nom}\nSalon ${etat.salon}`;
 }
 
+let wakePoll = () => {};
+
 async function publier() {
   if (!etat.token) return;
   const submitted = scene.movement();
@@ -135,6 +137,7 @@ async function publier() {
   if (result.map !== (etat.map ?? "anterose") || (etat.sceneKey && result.sceneKey !== etat.sceneKey)) {
     scene.dispose(); etat.map = result.map;
     scene = await createSkyScene(toile, etat.map);
+    scene.onAction(() => wakePoll());
     await scene.me({id:result.ownId,character:result.character,...result.position});
     music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
     etat.messageCursor = result.messageCursor;
@@ -171,6 +174,7 @@ async function start() {
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
+  scene.onAction(() => wakePoll());
   music = createMapMusic(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg", ASSETS));
   leave.hidden = etat.map !== "arena";
   document.querySelector("#hud h1").textContent = etat.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
@@ -210,22 +214,25 @@ async function start() {
       etat.character +
       (scene.catalogue[etat.character] ? "" : " · sprite Estelle provisoire");
   }
-  let failures = 0;
+  let failures = 0, timer, inFlight = false, requested = false, stopped = false;
+  wakePoll = () => { requested = true; if (!inFlight && !stopped) { clearTimeout(timer); void poll(); } };
   async function poll() {
+    if (inFlight || stopped) return;
+    inFlight = true; requested = false;
     try {
       await publier(); failures = 0;
       bandeau.textContent = "Votre personnage du jour : " + etat.character;
     } catch (error) {
       scene.setConnected(false); failures++;
       bandeau.textContent = error.message;
-      if (error.status === 409) return; // Do not steal control back from another window.
+      if (error.status === 409) { inFlight = false; stopped = true; return; } // Do not steal control back from another window.
       if (error.status === 401) {
         try {
           const profile = await fetchJson(apiUrl("profile"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.accessToken},body:JSON.stringify({channel:etat.salon,guild:etat.sdk.guildId})});
           etat.token = profile.activity_token; etat.messageCursor = profile.messageCursor ?? 0;
           etat.character = profile.character; etat.moi = profile.player;
           if (profile.map !== etat.map) {
-            scene.dispose(); etat.map = profile.map; scene = await createSkyScene(toile,etat.map);
+            scene.dispose(); etat.map = profile.map; scene = await createSkyScene(toile,etat.map); scene.onAction(() => wakePoll());
             music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
           }
           await scene.resetSession(profile.player); etat.sceneKey = null;
@@ -233,7 +240,8 @@ async function start() {
         } catch (reconnectError) { bandeau.textContent = "Reconnexion en cours. " + reconnectError.message; }
       }
     }
-    setTimeout(poll, Math.min(2000, failures ? 300 * failures : 150));
+    inFlight = false;
+    timer = setTimeout(poll, requested ? 0 : Math.min(2000, failures ? 300 * failures : 150));
   }
   void poll();
 }

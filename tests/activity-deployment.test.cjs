@@ -35,3 +35,11 @@ test("local preview keeps its separate page and bundle", () => {
   assert.match(page, /id="personnage"/);
   assert.match(page, /preview-bundle\.js/);
 });
+
+test("Kanone and Phyllis have native eight-direction walking sprites",()=>{
+ const catalogue=JSON.parse(fs.readFileSync(path.join(root,"activity/assets/sky/characters.json"),"utf8"));
+ for(const name of ["Kanone","Phyllis"]){
+  const info=catalogue[name];assert.equal(info.directions,8);assert.equal(info.frames,64);assert.ok(info.run.length>1);
+  const png=fs.readFileSync(path.join(root,"activity/assets/sky",info.texture));assert.equal(png.readUInt32BE(16),info.columns*info.frameWidth);assert.equal(png.readUInt32BE(20),info.rows*info.frameHeight);
+ }
+});

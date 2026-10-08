@@ -1,3 +1,5 @@
+import { createShotPrediction } from "./shot-prediction.mjs";
+import collisionModule from "./surface-collision.cjs";
 import { createProjectilePlayback } from "./projectile.mjs";
 import { createPomEffects } from "./pom-effects.mjs";
 import * as THREE from "three";
@@ -32,6 +34,8 @@ export async function createSkyScene(canvas, map = "anterose") {
   );
   const model = loaded.scene;
   scene.add(model);
+  model.updateMatrixWorld(true);
+  const collision = collisionModule.createSurfaceCollision(THREE, model);
   model.traverse((object) => {
     if (object.isMesh) {
       const materials = Array.isArray(object.material)
@@ -71,6 +75,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     lastTime = performance.now(),
     disposed = false;
   const actionQueue = [];
+  const predictedShots = new Map();
+  let notifyAction = () => {};
   let environment = { npcs: [], poms: [], pom: null, receivedAt: 0 },
     health = { hp: 100 },
     respawn = 0;
@@ -91,8 +97,11 @@ export async function createSkyScene(canvas, map = "anterose") {
   if (oldHelp) oldHelp.hidden = true;
   function queueAction(type, target, aim) {
     if (actionQueue.length >= 8) return;
-    actionQueue.push({ id: crypto.randomUUID(), type, target, aim });
+    const action = { id: crypto.randomUUID(), type, target, aim };
+    actionQueue.push(action);
     menu.hidden = true;
+    notifyAction();
+    return action;
   }
   function interaction(event) {
     const me = avatars.get(localId);
@@ -134,8 +143,16 @@ export async function createSkyScene(canvas, map = "anterose") {
           new THREE.Plane(new THREE.Vector3(0, 1, 0), -(me.position.y + 0.9)),
           new THREE.Vector3(),
         );
-      if (aim)
-        queueAction("throw", undefined, { x: aim.x, y: aim.y, z: aim.z });
+      if (aim && !predictedShots.has(ball.id) && !actionQueue.length) {
+        const simulation = createShotPrediction(grid, collision, me.position, { x: aim.x, y: aim.y, z: aim.z });
+        if (!simulation) return;
+        const action = queueAction("throw", undefined, { x: aim.x, y: aim.y, z: aim.z });
+        if (action) {
+          predictedShots.set(ball.id, { action: action.id, confirmed: false });
+          projectiles.get(ball.id)?.predict(simulation);
+          effects.get(ball.id)?.launch({ x: aim.x - me.position.x, y: aim.y - me.position.y - .9, z: aim.z - me.position.z });
+        }
+      }
       return;
     }
     const options = [];
@@ -448,11 +465,11 @@ export async function createSkyScene(canvas, map = "anterose") {
     for (const [id, avatar] of avatars) {
       const ballState = environment.poms.find(p => p.id === id),
         isPom = id.startsWith("world:pom");
-      if (isPom && ballState && ballState.mode !== "held")
+      if (isPom && ballState && (ballState.mode !== "held" || predictedShots.has(id)))
         flying.set(id, projectiles.get(id)?.update(seconds, avatar.position));
       const motion = isPom
         ? {
-            moving: ballState?.mode === "flight",
+            moving: ballState?.mode === "flight" || predictedShots.has(id),
             dx: ballState?.vx ?? 0,
             dz: ballState?.vz ?? 0,
           }
@@ -505,7 +522,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
       if (!pomAvatar) continue;
-      if (ball.owner) {
+      if (ball.owner && !predictedShots.has(ball.id)) {
         const owner = avatars.get(ball.owner);
         if (owner) {
           pomAvatar.mesh.position.copy(owner.mesh.position);
@@ -514,7 +531,7 @@ export async function createSkyScene(canvas, map = "anterose") {
           pomAvatar.mesh.position.z += right.z * 0.3;
         }
       }
-      effects.get(ball.id)?.update(seconds, pomAvatar.mesh.position, ball.mode !== "held" && flying.get(ball.id), camera);
+      effects.get(ball.id)?.update(seconds, pomAvatar.mesh.position, flying.get(ball.id), camera);
     }
     if (health.hp === 0) {
       const remaining = Math.max(
@@ -574,8 +591,10 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
+    ...(__ACTIVITY_PREVIEW__ ? { projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    onAction(callback) { notifyAction = callback; },
     setConnected(value) { connected = value; if (!value) { path=[]; keys.clear(); marker.visible=false; } },
-    async resetSession(player) { actionQueue.length=0; path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
+    async resetSession(player) { actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
     },
@@ -654,7 +673,15 @@ export async function createSkyScene(canvas, map = "anterose") {
           projectiles.set(ball.id,createProjectilePlayback());
           effects.set(ball.id,await createPomEffects(THREE,scene,canvas,ASSETS));
         }
+        const predicted = predictedShots.get(ball.id);
+        if (predicted && result.actionResult?.id === predicted.action) {
+          predicted.confirmed = !result.actionResult.error;
+          if (result.actionResult.error) { projectiles.get(ball.id).cancelPrediction(); predictedShots.delete(ball.id); }
+        }
+        // Ignore a response for the previous poll while the click is still in flight.
+        if (predicted && !predicted.confirmed && !result.actionResult?.error) continue;
         if (projectiles.get(ball.id).receive(ball)) effects.get(ball.id).launch();
+        if (predicted?.confirmed && ball.mode !== "flight") predictedShots.delete(ball.id);
       }
       health = { ...result.health, received: performance.now() };
       const me = avatars.get(localId);

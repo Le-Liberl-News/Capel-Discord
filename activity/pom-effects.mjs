@@ -25,8 +25,9 @@ export async function createPomEffects(THREE, scene, canvas, assets) {
   };
   canvas.addEventListener("pointerdown", unlock); window.addEventListener("keydown", unlock);
   return {
-    launch() {
+    launch(heading) {
       previous = null; elapsed = 0;
+      if (heading) direction.set(heading.x, heading.y, heading.z).normalize();
       if (!audio || audio.state !== "running") return;
       // A short filtered air burst plus a falling tone, generated locally.
       const t = audio.currentTime, buffer = audio.createBuffer(1, Math.ceil(audio.sampleRate * 0.22), audio.sampleRate);
