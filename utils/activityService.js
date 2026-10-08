@@ -92,7 +92,7 @@ function createActivityService({
       messageStreams.set(channel, events.slice(-50));
       return true;
     },
-    leave(token) { const session=sessions.get(token); if (!session) return; rooms.get(session.channel)?.delete(session.id); sessions.delete(token); },
+    leave(token, keepPlayer = false) { const session=sessions.get(token); if (!session) return; if (!keepPlayer) rooms.get(session.channel)?.delete(session.id); sessions.delete(token); },
     async join({ id, channel }) {
       prune();
       const session = {
@@ -101,6 +101,7 @@ function createActivityService({
         expires: now() + 2 * 60 * 60 * 1000,
         refreshAt: 0,
         messageStart: messageSequence,
+        joinedAt: now(),
       };
       await refresh(session);
       const token = randomBytes(32).toString("hex");
@@ -113,9 +114,9 @@ function createActivityService({
           id,
           nom: session.character,
           character: session.character,
-          ...spawnFor(id),
-          hp: MAX_HP,
-          deadUntil: 0,
+          ...(rooms.get(channel)?.get(id) ?? spawnFor(id)),
+          hp: rooms.get(channel)?.get(id)?.hp ?? MAX_HP,
+          deadUntil: rooms.get(channel)?.get(id)?.deadUntil ?? 0,
         },
       };
     },
@@ -131,7 +132,7 @@ function createActivityService({
       if (!player)
         player = {
           id: session.id,
-          ...spawnFor(session.id),
+          ...(session.playerState ?? spawnFor(session.id)),
           seen: now() - 150,
           character: session.character,
         };
@@ -141,6 +142,7 @@ function createActivityService({
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
+      player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
@@ -150,7 +152,7 @@ function createActivityService({
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
         const allowance =
-          Math.min(2, Math.max(0.15, (now() - player.seen) / 1000)) * 4.5 +
+          Math.min(5, Math.max(0.15, (now() - (player.acceptedAt ?? player.seen)) / 1000)) * 4.5 +
           0.15;
         // Validate each travelled segment rather than the chord between polls.
         // Sequence numbers let a retry replay an already acknowledged prefix.
@@ -204,6 +206,7 @@ function createActivityService({
         }
         if (valid) {
           session.movementSequence = lastSequence;
+          player.acceptedAt = now();
           player.x = x;
           player.z = z;
           player.y = grid.cells[index(x, z)];
@@ -238,9 +241,11 @@ function createActivityService({
           session.actionResult = actionResult;
         } else actionResult = session.actionResult;
       }
+      session.playerState = { ...player };
       const environment = world.snapshot();
       return {
         ...environment,
+        movementSequence: session.movementSequence ?? 0,
         actionResult: point?.action
           ? { id: point.action.id, error: actionResult?.error }
           : undefined,
@@ -268,7 +273,7 @@ function createActivityService({
           .map(({ created, ...message }) => message),
         character: session.character,
         position: { x: player.x, y: player.y, z: player.z },
-        joueurs: [...room.values()].map(({ seen, lastTalk, ...rest }) => rest),
+        joueurs: [...room.values()].map(({ seen, lastTalk, acceptedAt, ...rest }) => rest),
       };
     },
   };

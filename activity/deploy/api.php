@@ -43,5 +43,11 @@ if ($reponse === false) {
     echo json_encode(['erreur' => 'bot injoignable sur 127.0.0.1:3000']);
     exit;
 }
+json_decode($reponse);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(502);
+    echo json_encode(['erreur' => 'Serveur temporairement indisponible. Reconnexion en cours.']);
+    exit;
+}
 http_response_code($code ?: 502);
 echo $reponse;

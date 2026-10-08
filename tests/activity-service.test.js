@@ -279,3 +279,15 @@ test("a lost response can retry its movement prefix without rewinding", async ()
   });
   assert.equal(result.position.x, 1.5);
 });
+
+test("rejected movement is not acknowledged and its time budget can recover",async()=>{
+ const f=fixture(),joined=await f.service.join({id:"alice",channel:"room"});await f.service.state(joined.activity_token);
+ f.tick(150);const trace=[{x:1,z:0,sequence:1}];
+ const rejected=await f.service.state(joined.activity_token,{x:1,z:0,trace});assert.equal(rejected.movementSequence,0);
+ f.tick(150);const accepted=await f.service.state(joined.activity_token,{x:1,z:0,trace});assert.equal(accepted.position.x,1);assert.equal(accepted.movementSequence,1);
+});
+test("temporary presence expiry does not reset a valid session back to spawn",async()=>{
+ const f=fixture(),joined=await f.service.join({id:"alice",channel:"room"});await f.service.state(joined.activity_token);
+ f.tick(1000);await f.service.state(joined.activity_token,{x:3,z:0});f.tick(16000);
+ const resumed=await f.service.state(joined.activity_token);assert.equal(resumed.position.x,3);
+});

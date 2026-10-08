@@ -67,6 +67,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     zoom = 12,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
+    connected = true,
     lastTime = performance.now(),
     disposed = false;
   const actionQueue = [];
@@ -95,7 +96,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   function interaction(event) {
     const me = avatars.get(localId);
-    if (!me || health.hp === 0) return;
+    if (!connected || !me || health.hp === 0) return;
     const nearby = (p, r = 2.2) =>
       Math.hypot(p.x - me.position.x, p.z - me.position.z) <= r &&
       Math.abs((p.y ?? 0) - me.position.y) < 1.8;
@@ -275,6 +276,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     renderer.setSize(innerWidth, innerHeight, false);
   }
   function keydown(event) {
+    if (!connected) return;
     if (event.target.closest?.("input,textarea,select,[contenteditable]"))
       return;
     if (
@@ -337,6 +339,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     }
   }
   function pointerdown(event) {
+    if (!connected) return;
     if (event.button !== 2) {
       click(event);
       return;
@@ -571,6 +574,8 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
+    setConnected(value) { connected = value; if (!value) { path=[]; keys.clear(); marker.visible=false; } },
+    async resetSession(player) { actionQueue.length=0; path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
     },

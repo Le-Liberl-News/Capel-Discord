@@ -218,6 +218,7 @@ const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || ''
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
 const activiteService = createActivityLobby({
+    store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
     arena: {
       spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
       grid: require('./activity/assets/sky/arena/navigation.json'),
@@ -229,7 +230,7 @@ const activiteService = createActivityLobby({
     geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/anterose.gltf'), 'utf8'))),
     resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
 });
-const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
+const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {

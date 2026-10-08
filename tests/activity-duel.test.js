@@ -35,12 +35,14 @@ test("separate Poms are atomic and a player cannot carry two",async()=>{
  const thrown=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"throw",type:"throw",aim:{x:7,y:.9,z:1}}});assert.equal(thrown.poms[0].mode,"flight");assert.equal(thrown.poms[1].mode,"held");
 });
 test("duel command uses character names and only private buttons launch",async()=>{
- const calls=[],{lobby}=fixture();const service=createActivityDuels({lobby,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
+ let saved;const store={load:()=>saved,save:data=>saved=structuredClone(data)};
+ const calls=[],{lobby}=fixture();const options={lobby,store,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"};let service=createActivityDuels(options);
  const interaction={isChatInputCommand:()=>true,isButton:()=>false,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>calls.push(["private-a",data])},client:{users:{fetch:async()=>({send:async data=>calls.push(["private-b",data])})}},channel:{send:async data=>calls.push(["public",data])},deferReply:async()=>{},editReply:async data=>calls.push(["reply",data])};
  assert.equal(await service.handle(interaction),true);
  const publicMessage=calls.find(c=>c[0]==="public")[1];assert.equal(publicMessage.content.includes("real-"),false);assert.deepEqual(publicMessage.allowedMentions,{parse:[]});
  const customId=calls.find(c=>c[0]==="private-b")[1].components[0].components[0].custom_id;
  assert.equal(customId.includes("real-"),false);
+ service=createActivityDuels(options); // Restart before the recipient opens the private invitation.
  let launched=false;await service.handle({isChatInputCommand:()=>false,isButton:()=>true,customId,user:{id:"real-bob"},channel:{isDMBased:()=>true},launchActivity:async()=>{launched=true;}});assert.equal(launched,true);
  let refused=false;await service.handle({isChatInputCommand:()=>false,isButton:()=>true,customId,user:{id:"intruder"},reply:async()=>{refused=true;}});assert.equal(refused,true);
 });
@@ -51,4 +53,21 @@ test("native Grancel arena connects both spawns and every Pom sits on its real f
  const geometry=require("../utils/activityGeometry").createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,"anterose.gltf"))));
  const {route}=await import("../activity/movement.mjs");assert.ok(route(g,{x:-6,y:0,z:3},{x:6,z:3}).length);
  for(const p of residents.ballSpawns) { assert.ok(Math.abs(geometry.floor(p.x,p.z,p.y)-p.y+.375)<.001); assert.ok(route(g,g.spawn,p).length); }
+});
+
+test("duel assignment survives restart and both opponents can resume the same arena",async()=>{
+ let saved;const store={load:()=>saved,save:data=>saved=structuredClone(data)};
+ const options={grid,store,resolveCharacter:async()=>"Joshua",arena:{grid,residents:{npcs:[],ballSpawns:[{x:1,y:.375,z:2}]}}};
+ let lobby=createActivityLobby(options);lobby.createDuel({id:"persisted",channel:"guild",players:["a","b"]});lobby.joinDuel("persisted","a");lobby.joinDuel("persisted","b");
+ const old=await lobby.join({id:"a",channel:"dm-a"});lobby=createActivityLobby(options);
+ await assert.rejects(()=>lobby.state(old.activity_token),{status:401});
+ const a=await lobby.join({id:"a",channel:"dm-a"}),b=await lobby.join({id:"b",channel:"dm-b"});
+ const picked=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"pickup",type:"pickup",target:"world:pom:0"}});
+ const peer=await lobby.state(b.activity_token);assert.equal(peer.joueurs.length,2);assert.equal(peer.sceneKey,"persisted");assert.equal(peer.poms[0].owner,picked.ownId);
+});
+test("a second window cannot alternate movement with the current controller",async()=>{
+ const {lobby}=fixture();const first=await lobby.join({id:"a",channel:"guild"});await lobby.state(first.activity_token);
+ const second=await lobby.join({id:"a",channel:"guild"});await lobby.state(second.activity_token);
+ await assert.rejects(()=>lobby.state(first.activity_token,{x:9,z:9}),{status:409});
+ assert.deepEqual((await lobby.state(second.activity_token)).position,{x:1,y:0,z:1});
 });

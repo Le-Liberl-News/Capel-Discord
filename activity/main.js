@@ -1,3 +1,4 @@
+import { fetchJson } from "./network.mjs";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { createMapMusic } from "./music.mjs";
 import { createSkyScene, ASSETS } from "./sky-scene.mjs";
@@ -61,7 +62,7 @@ async function entrer() {
     return;
   }
 
-  const sdk = new DiscordSDK(CLIENT_ID);
+  const sdk = etat.sdk ??= new DiscordSDK(CLIENT_ID);
   etape(`1/4 SDK, client ${CLIENT_ID}`);
   await avecDelai(sdk.ready(), 10000, "Discord n a pas repondu (SDK)");
   etape("2/4 SDK pret, autorisation...");
@@ -80,19 +81,20 @@ async function entrer() {
     "Discord n a pas repondu (autorisation)",
   );
   etape("3/4 code recu, jeton...");
-  const reponse = await fetch(apiUrl("token"), {
+  const reponse = await fetchJson(apiUrl("token"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, code_verifier: verifieur }),
   });
-  const { access_token: jeton, erreur } = await reponse.json();
+  const { access_token: jeton, erreur } = reponse;
   if (!jeton)
     throw new Error(erreur ?? `jeton absent (HTTP ${reponse.status})`);
   etape("4/4 jeton recu, identification...");
 
   const auth = await sdk.commands.authenticate({ access_token: jeton });
   etat.salon = sdk.channelId ?? "local";
-  const profileResponse = await fetch(apiUrl("profile"), {
+  etat.accessToken = jeton;
+  const profileResponse = await fetchJson(apiUrl("profile"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -100,9 +102,7 @@ async function entrer() {
     },
     body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId }),
   });
-  const profile = await profileResponse.json();
-  if (!profileResponse.ok)
-    throw new Error(profile.erreur ?? "Personnage indisponible");
+  const profile = profileResponse;
   etat.map = profile.map ?? "anterose";
   etat.token = profile.activity_token;
   etat.messageCursor = profile.messageCursor ?? 0;
@@ -119,7 +119,7 @@ async function entrer() {
 async function publier() {
   if (!etat.token) return;
   const submitted = scene.movement();
-  const response = await fetch(apiUrl("state"), {
+  const response = await fetchJson(apiUrl("state"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -131,8 +131,7 @@ async function publier() {
       action: scene.action(),
     }),
   });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.erreur ?? "Connexion perdue");
+  const result = response;
   if (result.map !== (etat.map ?? "anterose") || (etat.sceneKey && result.sceneKey !== etat.sceneKey)) {
     scene.dispose(); etat.map = result.map;
     scene = await createSkyScene(toile, etat.map);
@@ -142,7 +141,8 @@ async function publier() {
   }
   document.querySelector("#hud h1").textContent = result.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
   etat.sceneKey = result.sceneKey; leave.hidden = result.map !== "arena";
-  scene.acknowledgeMovement(submitted.sequence);
+  scene.setConnected(true);
+  scene.acknowledgeMovement(result.movementSequence ?? submitted.sequence);
   scene.correct(result.position, submitted);
   await scene.world(result);
   await scene.sync([
@@ -210,13 +210,30 @@ async function start() {
       etat.character +
       (scene.catalogue[etat.character] ? "" : " · sprite Estelle provisoire");
   }
+  let failures = 0;
   async function poll() {
     try {
-      await publier();
+      await publier(); failures = 0;
+      bandeau.textContent = "Votre personnage du jour : " + etat.character;
     } catch (error) {
+      scene.setConnected(false); failures++;
       bandeau.textContent = error.message;
+      if (error.status === 409) return; // Do not steal control back from another window.
+      if (error.status === 401) {
+        try {
+          const profile = await fetchJson(apiUrl("profile"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.accessToken},body:JSON.stringify({channel:etat.salon,guild:etat.sdk.guildId})});
+          etat.token = profile.activity_token; etat.messageCursor = profile.messageCursor ?? 0;
+          etat.character = profile.character; etat.moi = profile.player;
+          if (profile.map !== etat.map) {
+            scene.dispose(); etat.map = profile.map; scene = await createSkyScene(toile,etat.map);
+            music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
+          }
+          await scene.resetSession(profile.player); etat.sceneKey = null;
+          bandeau.textContent = "Connexion rétablie.";
+        } catch (reconnectError) { bandeau.textContent = "Reconnexion en cours. " + reconnectError.message; }
+      }
     }
-    setTimeout(poll, 150);
+    setTimeout(poll, Math.min(2000, failures ? 300 * failures : 150));
   }
   void poll();
 }

@@ -33,6 +33,12 @@ def decode_model_texture(data):
     if data[:4] != b'DDS ':
         return image
     _, flags, fourcc, bits, red, green, blue, alpha = struct.unpack_from('<8I', data, 76)
+    if not fourcc and bits == 32 and flags & 64:
+        pixels = image.load()
+        for y in range(image.height):
+            for x in range(image.width):
+                if pixels[x, y][:3] == (255, 0, 0): pixels[x, y] = (0, 0, 0, 0)
+        return image
     if fourcc or bits != 16 or not flags & 64:
         return image
     height, width, pitch = struct.unpack_from('<III', data, 12)
