@@ -21,7 +21,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03004.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 76,
+      "frameHeight": 74,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Joshua": {
     "texture": "ch00010.png",
@@ -45,7 +62,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03014.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 72,
+      "frameHeight": 78,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Scherazard": {
     "texture": "ch00020.png",
@@ -69,7 +103,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03024.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 84,
+      "frameHeight": 88,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Olivier": {
     "texture": "ch00030.png",
@@ -93,7 +144,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03034.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 88,
+      "frameHeight": 87,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Kloe": {
     "texture": "ch00040.png",
@@ -117,7 +185,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03044.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 80,
+      "frameHeight": 73,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Agate": {
     "texture": "ch00050.png",
@@ -141,7 +226,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03054.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 90,
+      "frameHeight": 87,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Tita": {
     "texture": "ch00060.png",
@@ -165,7 +267,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03064.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 60,
+      "frameHeight": 76,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Zin": {
     "texture": "ch00070.png",
@@ -189,7 +308,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03074.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 113,
+      "frameHeight": 100,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Nial": {
     "texture": "ch02060.png",
@@ -333,7 +469,24 @@
     ],
     "directions": 8,
     "fps": 12,
-    "height": 1.7
+    "height": 1.7,
+    "death": {
+      "texture": "ch03514.png",
+      "columns": 8,
+      "rows": 1,
+      "frameWidth": 64,
+      "frameHeight": 69,
+      "frames": 8,
+      "idle": [
+        0
+      ],
+      "run": [
+        0
+      ],
+      "directions": 8,
+      "fps": 8,
+      "height": 1.7
+    }
   },
   "Professeur Russell": {
     "texture": "ch02020.png",
@@ -647,7 +800,7 @@
     "fps": 12,
     "height": 1.7
   },
-  "Général Morgan": {
+  "GÃ©nÃ©ral Morgan": {
     "texture": "ch02080.png",
     "columns": 8,
     "rows": 8,
@@ -1339,5 +1492,101 @@
     "directions": 8,
     "fps": 12,
     "height": 1.7
+  },
+  "GÃ©rant Lechter": {
+    "texture": "ch01560.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.7
+  },
+  "Lenore": {
+    "texture": "ch02540.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 48,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.7
+  },
+  "Horrace": {
+    "texture": "ch01000.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 80,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.7
+  },
+  "Pom": {
+    "texture": "ch10140.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 96,
+    "frameHeight": 73,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 0.75
   }
 }

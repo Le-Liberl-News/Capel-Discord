@@ -1,13 +1,20 @@
 const { randomBytes } = require("node:crypto");
+const { createActivityWorld, MAX_HP } = require("./activityWorld");
 class ActivityError extends Error {
   constructor(message, status = 400) {
     super(message);
     this.status = status;
   }
 }
-function createActivityService({ grid, resolveCharacter, now = Date.now }) {
+function createActivityService({
+  grid,
+  resolveCharacter,
+  now = Date.now,
+  residents = { npcs: [] },
+}) {
   let messageSequence = 0;
   const messageStreams = new Map();
+  const worlds = new Map();
   const sessions = new Map(),
     rooms = new Map(),
     step = grid.step;
@@ -33,6 +40,7 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
       if (!room.size) {
         rooms.delete(id);
         messageStreams.delete(id);
+        worlds.delete(id);
       } else if (messageStreams.has(id))
         messageStreams.set(
           id,
@@ -103,6 +111,8 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
           nom: session.character,
           character: session.character,
           ...spawn,
+          hp: MAX_HP,
+          deadUntil: 0,
         },
       };
     },
@@ -122,31 +132,51 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
           seen: now() - 150,
           character: session.character,
         };
-      if (point) {
+      let world = worlds.get(session.channel);
+      if (!world) {
+        world = createActivityWorld({ grid, ...residents, now });
+        worlds.set(session.channel, world);
+      }
+      room.set(session.id, player);
+      const previousRespawn = player.respawn ?? 0;
+      world.tick(room);
+      const justRespawned = (player.respawn ?? 0) !== previousRespawn;
+      if (point && player.hp > 0 && !justRespawned) {
         const x = Number(point.x),
           z = Number(point.z);
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
         const allowance =
-          Math.min(2, Math.max(0.15, (now() - player.seen) / 1000)) * 4.5 + 0.15;
+          Math.min(2, Math.max(0.15, (now() - player.seen) / 1000)) * 4.5 +
+          0.15;
         // Validate each travelled segment rather than the chord between polls.
         // Sequence numbers let a retry replay an already acknowledged prefix.
-        let samples = [{ x, z }], lastSequence = session.movementSequence ?? 0;
+        let samples = [{ x, z }],
+          lastSequence = session.movementSequence ?? 0;
         if (point.trace !== undefined) {
           if (!Array.isArray(point.trace) || point.trace.length > 1024)
             throw new ActivityError("Invalid movement trace.");
           let sequence = 0;
           for (const sample of point.trace) {
-            if (!sample || !Number.isFinite(sample.x) || !Number.isFinite(sample.z) ||
-                !Number.isSafeInteger(sample.sequence) || sample.sequence <= sequence)
+            if (
+              !sample ||
+              !Number.isFinite(sample.x) ||
+              !Number.isFinite(sample.z) ||
+              !Number.isSafeInteger(sample.sequence) ||
+              sample.sequence <= sequence
+            )
               throw new ActivityError("Invalid movement trace.");
             sequence = sample.sequence;
           }
-          samples = point.trace.filter(sample => sample.sequence > lastSequence);
+          samples = point.trace.filter(
+            (sample) => sample.sequence > lastSequence,
+          );
           samples = [...samples, { x, z }];
           lastSequence = Math.max(lastSequence, sequence);
         }
-        let valid = canWalk(x, z), travelled = 0, from = player;
+        let valid = canWalk(x, z),
+          travelled = 0,
+          from = player;
         for (const to of samples) {
           if (!valid) break;
           const distance = Math.hypot(to.x - from.x, to.z - from.z);
@@ -165,7 +195,8 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
             }
           }
           if (valid)
-            valid = Math.abs(grid.cells[index(to.x, to.z)] - previousHeight) <= 0.35;
+            valid =
+              Math.abs(grid.cells[index(to.x, to.z)] - previousHeight) <= 0.35;
           from = to;
         }
         if (valid) {
@@ -179,7 +210,44 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
       player.nom = session.character;
       player.character = session.character;
       room.set(session.id, player);
+      let actionResult;
+      if (
+        point?.action &&
+        typeof point.action.id === "string" &&
+        point.action.id.length <= 80
+      ) {
+        // A lost response may replay an action; never throw or talk twice.
+        if (session.lastAction !== point.action.id) {
+          session.lastAction = point.action.id;
+          actionResult = world.action(player, point.action, room);
+          if (actionResult.text) {
+            const events = messageStreams.get(session.channel) ?? [];
+            events.push({
+              id: point.action.id,
+              author: actionResult.speaker,
+              character: actionResult.character,
+              text: actionResult.text,
+              sequence: ++messageSequence,
+              created: now(),
+            });
+            messageStreams.set(session.channel, events.slice(-50));
+          }
+          session.actionResult = actionResult;
+        } else actionResult = session.actionResult;
+      }
+      const environment = world.snapshot();
       return {
+        ...environment,
+        actionResult: point?.action
+          ? { id: point.action.id, error: actionResult?.error }
+          : undefined,
+        health: {
+          hp: player.hp,
+          maxHp: MAX_HP,
+          deadUntil: player.deadUntil,
+          respawn: player.respawn ?? 0,
+          serverTime: now(),
+        },
         messageCursor: messageSequence,
         messages: (messageStreams.get(session.channel) ?? [])
           .filter(
@@ -190,12 +258,14 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
                   Number.isSafeInteger(after) && after <= messageSequence
                     ? after
                     : session.messageStart,
-                ) && room.has(message.author),
+                ) &&
+              (room.has(message.author) ||
+                environment.npcs.some((n) => n.id === message.author)),
           )
           .map(({ created, ...message }) => message),
         character: session.character,
         position: { x: player.x, y: player.y, z: player.z },
-        joueurs: [...room.values()].map(({ seen, ...rest }) => rest),
+        joueurs: [...room.values()].map(({ seen, lastTalk, ...rest }) => rest),
       };
     },
   };

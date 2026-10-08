@@ -276,6 +276,7 @@ const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_
 const { createActivityService } = require('./utils/activityService.js');
 const activiteService = createActivityService({
     grid: require('./activity/assets/sky/navigation.json'),
+    residents: require('./activity/assets/sky/residents.json'),
     resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
 });
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');

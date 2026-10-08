@@ -123,13 +123,24 @@ async function publier() {
       "Content-Type": "application/json",
       Authorization: "Bearer " + etat.token,
     },
-    body: JSON.stringify({ ...submitted, after: etat.messageCursor }),
+    body: JSON.stringify({
+      ...submitted,
+      after: etat.messageCursor,
+      action: scene.action(),
+    }),
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.erreur ?? "Connexion perdue");
   scene.acknowledgeMovement(submitted.sequence);
   scene.correct(result.position, submitted);
-  await scene.sync(result.joueurs);
+  await scene.world(result);
+  await scene.sync([
+    ...result.joueurs,
+    ...(result.npcs ?? []),
+    ...(result.pom
+      ? [{ id: "world:pom", character: "Pom", npc: true, ...result.pom }]
+      : []),
+  ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
   if (result.character && result.character !== etat.character) {

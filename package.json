@@ -26,6 +26,6 @@
   "scripts": {
     "activity:build": "esbuild activity/main.js --bundle --format=esm --minify --legal-comments=eof --outfile=activity/bundle.js --define:__ACTIVITY_PREVIEW__=false",
     "activity:preview": "node activity/tools/preview.cjs",
-    "activity:test": "node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs"
+    "activity:test": "node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-world.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs"
   }
 }

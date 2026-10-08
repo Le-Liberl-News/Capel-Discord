@@ -1,0 +1,119 @@
+{
+  "npcs": [
+    {
+      "id": "manager",
+      "name": "Gérant Lechter",
+      "character": "Gérant Lechter",
+      "waypoints": [
+        {
+          "x": 2,
+          "y": 0,
+          "z": -4.8
+        },
+        {
+          "x": 0.5,
+          "y": 0,
+          "z": -4.8
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "z": -1
+        }
+      ],
+      "lines": [
+        "L'ambiance est enfin redevenue assez festive pour ressortir le vin.",
+        "On a tendance à l'oublier, mais il n'y a rien de tel que la paix.",
+        "Bienvenue à l'Anterose !",
+        "On entend souvent dire que « la faim est la meilleure des sauces... »",
+        "... mais j'ajouterais à cela que « la paix est le meilleur des hors-d'œuvre. »",
+        "Je fais tout mon possible pour que ce restaurant se porte à merveille, pour éviter toute source d'inquiétude supplémentaire."
+      ],
+      "source": {
+        "script": "T1131",
+        "function": 6,
+        "chip": "ch01560"
+      }
+    },
+    {
+      "id": "lenore",
+      "name": "Lenore",
+      "character": "Lenore",
+      "waypoints": [
+        {
+          "x": -2,
+          "y": 0,
+          "z": -3.8
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "z": -2
+        },
+        {
+          "x": -1.2,
+          "y": 0,
+          "z": 0.5
+        }
+      ],
+      "lines": [
+        "Bienvenue !",
+        "Bose va déjà beaucoup mieux, je trouve.",
+        "Je vous souhaite un bon appétit.",
+        "Je remarque que tout le monde se donne à fond pour réparer le marché.",
+        "On entend les coups de marteaux jusqu'ici à longueur de journée."
+      ],
+      "source": {
+        "script": "T1131",
+        "function": 11,
+        "chip": "ch02540"
+      }
+    },
+    {
+      "id": "horrace",
+      "name": "Horrace",
+      "character": "Horrace",
+      "waypoints": [
+        {
+          "x": -5.5,
+          "y": 0,
+          "z": -0.5
+        },
+        {
+          "x": -5.5,
+          "y": 0,
+          "z": -4
+        },
+        {
+          "x": -3,
+          "y": 0,
+          "z": -5
+        }
+      ],
+      "lines": [
+        "Hum hum... Le goût est le même que d'habitude.",
+        "J'avais oublié à quel point j'aime discuter avec les jeunes.",
+        "Je souhaite à ce jeune homme tout le succès qu'il mérite.",
+        "Vous savez, j'ai fait la rencontre d'un jeune marchand avec qui j'ai parlé de commerce...",
+        "Ho ho, j'espère le revoir ici une autre fois pour continuer notre discussion.",
+        "La vente en face à face est une relation des plus humaines, quand on y réfléchit bien.",
+        "À trop chercher le profit, on finit toujours par le regretter amèrement."
+      ],
+      "source": {
+        "script": "T1131",
+        "function": 12,
+        "chip": "ch01000"
+      }
+    }
+  ],
+  "ballSpawn": {
+    "x": -4,
+    "y": 0.83,
+    "z": -2
+  },
+  "source": {
+    "script": "T1131",
+    "language": "FR",
+    "sha256": "b8d2c878267fcbe47b9c139dc26392a865365ce989cbde3790b816cc5b5dd758"
+  }
+}
