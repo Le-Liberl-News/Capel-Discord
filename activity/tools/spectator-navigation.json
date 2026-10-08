@@ -1,0 +1,18 @@
+{
+  "origin": {
+    "x": -36.5,
+    "z": -43
+  },
+  "step": 0.25,
+  "width": 293,
+  "height": 293,
+  "spawn": {
+    "x": -15,
+    "z": 1
+  },
+  "rayHeight": 20,
+  "minY": 3.8,
+  "maxY": 7.5,
+  "elevatedOnly": 3.8,
+  "outputFile": "spectator-navigation.json"
+}

@@ -378,3 +378,9 @@ test("snapshots preserve ordered ricochet corners and unique launch identity", (
   ball.trajectory[0].x = 999;
   assert.notEqual(f.world.snapshot().pom.trajectory[0].x,999);
 });
+
+test("spectators are immune even at projectile height and cannot pick up the Pom",()=>{
+ const f=fixture(),a=f.players.get('a'),b=f.players.get('b');b.spectator=true;
+ f.world.action(a,{type:'pickup'},f.players);f.world.action(a,{type:'throw',aim:{x:7,y:.9,z:1}},f.players);f.tick(.5);
+ assert.equal(b.hp,100);assert.ok(f.world.action(b,{type:'pickup'},f.players).error);
+});

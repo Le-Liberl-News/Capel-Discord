@@ -15,7 +15,7 @@ export const ASSETS = new URL(
   location.href,
 );
 export async function createSkyScene(canvas, map = "anterose") {
-  const mapAssets = map === "arena" ? new URL("arena/", ASSETS) : ASSETS;
+  const mapAssets = map === "anterose" ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false,
@@ -64,6 +64,14 @@ export async function createSkyScene(canvas, map = "anterose") {
   const grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
+  const spectatorGrid = map === "arena" ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
+  let walkingGrid = grid, movementAllowed = true;
+  const propCatalogue = map === "rolent" ? await fetch(new URL("props.json", mapAssets)).then(r => r.json()) : {};
+  const propModels = new Map();
+  function removeAvatar(avatar) {
+    scene.remove(avatar.mesh);
+    if (!avatar.prop) { avatar.mesh.geometry.dispose(); avatar.mesh.material.map.dispose(); avatar.mesh.material.dispose(); }
+  }
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const projectiles = new Map(), effects = new Map(), flying = new Map();
@@ -126,6 +134,16 @@ export async function createSkyScene(canvas, map = "anterose") {
       1 - (event.clientY / innerHeight) * 2,
     );
     raycaster.setFromCamera(pointer, camera);
+    if (environment.game?.role === "hunter" && environment.game.phase === "hunting") {
+      const targets = [...avatars].filter(([id,a]) => id !== localId && a.prop);
+      const hit = raycaster.intersectObjects([model,...targets.map(([,a]) => a.mesh)],true).find(h => !cutaway || !model.getObjectById(h.object.id) || cutaway.visible(h.point));
+      if (hit) {
+        const target = targets.find(([,a]) => a.mesh.getObjectById(hit.object.id));
+        queueAction("hunt_find", target?.[0], {x:hit.point.x,y:hit.point.y,z:hit.point.z});
+      }
+      return;
+    }
+    if (health.spectator) return;
     const ball = environment.poms.find(p => p.owner === localId) ?? environment.poms.filter(p => p.mode === "rest" && nearby(p,2)).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if (ball?.owner === localId) {
       const targets = [
@@ -207,10 +225,11 @@ export async function createSkyScene(canvas, map = "anterose") {
   async function setAvatar(player) {
     let avatar = avatars.get(player.id);
     const dead = player.hp === 0;
+    const prop = propCatalogue[player.prop] ? player.prop : null;
     const character = catalogue[player.character]
       ? player.character
       : "Estelle";
-    if (avatar && avatar.character === character && avatar.dead === dead) {
+    if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
       avatar.npc = !!player.npc;
@@ -221,10 +240,18 @@ export async function createSkyScene(canvas, map = "anterose") {
       return avatar;
     }
     if (avatar) {
-      scene.remove(avatar.mesh);
-      avatar.mesh.geometry.dispose();
-      avatar.mesh.material.map.dispose();
-      avatar.mesh.material.dispose();
+      removeAvatar(avatar);
+    }
+    if (prop) {
+      if (!propModels.has(prop)) propModels.set(prop, new GLTFLoader(loading).loadAsync(new URL(propCatalogue[prop].model,mapAssets).href));
+      const content = (await propModels.get(prop)).scene.clone(true);
+      const box = new THREE.Box3().setFromObject(content), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+      const scale = propCatalogue[prop].height / size.y;
+      content.scale.multiplyScalar(scale);
+      content.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
+      const mesh = new THREE.Group(); mesh.add(content); scene.add(mesh);
+      avatar = {mesh,prop,character,dead,hp:player.hp??100,info:{height:1},position:{x:player.x??spawn.x,y:player.y??spawn.y,z:player.z??spawn.z},target:null,heading:{dx:0,dz:-1},time:0};
+      avatars.set(player.id,avatar); return avatar;
     }
     const baseInfo = catalogue[character];
     const info =
@@ -273,6 +300,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     scene.add(mesh);
     avatar = {
       mesh,
+      prop,
       character,
       displayName: player.nom ?? player.name ?? player.character,
       dead,
@@ -305,7 +333,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     renderer.setSize(innerWidth, innerHeight, false);
   }
   function keydown(event) {
-    if (!connected) return;
+    if (!connected || !movementAllowed) return;
     if (event.target.closest?.("input,textarea,select,[contenteditable]"))
       return;
     if (
@@ -339,7 +367,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   function click(event) {
     if (event.button !== 0) return;
     menu.hidden = true;
-    if (health.hp === 0) return;
+    if (health.hp === 0 || !movementAllowed) return;
     pointer.set(
       (event.clientX / innerWidth) * 2 - 1,
       (-event.clientY / innerHeight) * 2 + 1,
@@ -351,16 +379,16 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (!me) return;
     for (const hit of hits) {
       if (cutaway && !cutaway.visible(hit.point)) continue;
-      const cell = nearestCell(grid, hit.point);
+      const cell = nearestCell(walkingGrid, hit.point);
       if (!cell) continue;
-      const destination = pointAt(grid, cell);
+      const destination = pointAt(walkingGrid, cell);
       if (
         Math.hypot(destination.x - hit.point.x, destination.z - hit.point.z) >
-          grid.step * 1.5 ||
+          walkingGrid.step * 1.5 ||
         Math.abs(destination.y - hit.point.y) > 0.3
       )
         continue;
-      const next = route(grid, me.position, destination);
+      const next = route(walkingGrid, me.position, destination);
       if (!next.length) continue;
       path = next;
       marker.position.set(destination.x, destination.y + 0.03, destination.z);
@@ -416,7 +444,7 @@ export async function createSkyScene(canvas, map = "anterose") {
 
   function wheel(event) {
     event.preventDefault();
-    zoom = THREE.MathUtils.clamp(zoom + event.deltaY * 0.005, 4, 15);
+    zoom = THREE.MathUtils.clamp(zoom + event.deltaY * 0.005, 4, map === "arena" ? 30 : 15);
     resize();
   }
   canvas.addEventListener("pointerdown", pointerdown);
@@ -458,7 +486,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     camera.getWorldDirection(forward);
     forward.y = 0;
     forward.normalize();
-    if (me && health.hp > 0) {
+    if (me && health.hp > 0 && movementAllowed) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has("d")) -
         Number(keys.has("arrowleft") || keys.has("q") || keys.has("a"));
@@ -469,7 +497,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         const length = Math.hypot(horizontal, vertical),
           dx = (right.x * horizontal + forward.x * vertical) / length,
           dz = (right.z * horizontal + forward.z * vertical) / length;
-        path = route(grid, me.position, {
+        path = route(walkingGrid, me.position, {
           x: me.position.x + dx * 0.6,
           z: me.position.z + dz * 0.6,
         });
@@ -502,6 +530,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         avatar.time += seconds;
       } else if (avatar.npc && !avatar.dead) avatar.time += seconds;
       else avatar.time = 0;
+      if (!avatar.prop) {
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,
@@ -516,16 +545,19 @@ export async function createSkyScene(canvas, map = "anterose") {
         (frame % avatar.info.columns) / avatar.info.columns,
         1 - (Math.floor(frame / avatar.info.columns) + 1) / avatar.info.rows,
       );
+      }
       avatar.mesh.position.set(
         avatar.position.x,
         avatar.position.y,
         avatar.position.z,
       );
+      if (!avatar.prop) {
       avatar.mesh.rotation.z = avatar.fallbackDeath ? Math.PI / 2 : 0;
       avatar.mesh.rotation.y = Math.atan2(
         camera.position.x - avatar.position.x,
         camera.position.z - avatar.position.z,
       );
+      }
     }
     if (me)
       follow.lerp(
@@ -558,7 +590,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       status.textContent = "0 / 100 PV · Réapparition dans " + remaining + " s";
     }
     for (const [id, a] of avatars) {
-      if (id.startsWith("world:pom")) continue;
+      if (id.startsWith("world:pom") || a.prop) { if(nameplates.has(id)) nameplates.get(id).hidden=true; continue; }
       let label = nameplates.get(id);
       if (!label) {
         label = document.createElement("div");
@@ -663,7 +695,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       for (const player of players) {
         if (player.id === localId) {
           const current = avatars.get(localId);
-          if (current && current.dead !== (player.hp === 0))
+          if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null)))
             await setAvatar({ ...player, ...current.position });
           else if (current) current.hp = player.hp ?? 100;
           continue;
@@ -673,15 +705,13 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
       for (const [id, avatar] of avatars)
         if (!present.has(id)) {
-          scene.remove(avatar.mesh);
-          avatar.mesh.geometry.dispose();
-          avatar.mesh.material.map.dispose();
-          avatar.mesh.material.dispose();
+          removeAvatar(avatar);
           avatars.delete(id);
         }
     },
     async world(result) {
       environment = {
+        game: result.game,
         npcs: result.npcs ?? [],
         pom: result.pom ?? null,
         poms: result.poms ?? (result.pom ? [{...result.pom,id:result.pom.id ?? "world:pom"}] : []),
@@ -702,7 +732,12 @@ export async function createSkyScene(canvas, map = "anterose") {
         if (projectiles.get(ball.id).receive(ball)) effects.get(ball.id).launch();
         if (predicted?.confirmed && ball.mode !== "flight") predictedShots.delete(ball.id);
       }
+      const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
+      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?22:12;resize(); }
+      walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
+      movementAllowed = health.canMove !== false;
+      if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {
         path = [];
@@ -719,6 +754,8 @@ export async function createSkyScene(canvas, map = "anterose") {
           (environment.poms.some(p => p.owner === localId)
             ? "Pom en main : clic droit pour tirer vers le point visé."
             : "Clic droit : parler / ramasser le Pom. Glisser : caméra.");
+      if (health.spectator && map === "arena") status.textContent = "Tribunes : spectateur";
+      if (environment.game) status.textContent = result.notice ?? "Rolent : clic droit pour chercher un objet proche.";
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;
       if (result.actionResult?.id === actionQueue[0]?.id) actionQueue.shift();
@@ -781,6 +818,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const materials = new Set(), maps = new Set();
       scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
       for (const texture of maps) texture.dispose(); for (const material of materials) material.dispose();
+      for (const pending of propModels.values()) pending.then(value => value.scene.traverse(object => { object.geometry?.dispose(); for(const material of [].concat(object.material??[])){ material.map?.dispose(); material.dispose(); } }));
       renderer.dispose();
     },
   };

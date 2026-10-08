@@ -66,7 +66,7 @@ for (let z = 0; z < height; z++)
       new THREE.Vector3(0, -1, 0),
     );
     const hits = ray.intersectObject(scene, true),
-      top = hits.find(hit => hit.point.y >= (settings.minY ?? -0.1) && hit.point.y <= (settings.maxY ?? 3.5) && Math.abs(hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y) > 0.7);
+      top = settings.outdoorsOnly ? hits[0] : hits.find(hit => hit.point.y >= (settings.minY ?? -0.1) && hit.point.y <= (settings.maxY ?? 3.5) && Math.abs(hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y) > 0.7);
     cells.push(
       top &&
         top.point.y >= (settings.minY ?? -0.1) &&
@@ -135,8 +135,13 @@ for (let i = 0; i < expanded.length; i++) {
   }
   groups.push(group);
 }
-const allowed = new Set(groups.sort((a, b) => b.length - a.length)[0]),
+const retained = groups.sort((a, b) => b.length - a.length);
+const selected = settings.elevatedOnly !== undefined
+  ? retained.filter(group => group.length >= 20 && group.every(i => expanded[i] >= settings.elevatedOnly))
+  : retained.slice(0, 1);
+const allowed = new Set(selected.flat()),
   navigable = expanded.map((y, i) => (allowed.has(i) ? y : null));
+if (!allowed.size) throw new Error("No connected walkable floor in this map configuration");
 let start = -1,
   best = Infinity;
 for (const i of allowed) {
@@ -154,7 +159,7 @@ const spawn = {
   z: origin.z + Math.floor(start / width) * step,
 };
 await fs.writeFile(
-  new URL("navigation.json", root),
+  new URL(settings.outputFile ?? "navigation.json", root),
   JSON.stringify({ origin, step, width, height, cells: navigable, spawn }),
 );
 console.log("Navigable cells:", allowed.size, spawn);

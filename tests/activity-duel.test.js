@@ -53,6 +53,7 @@ test("native Grancel arena connects both spawns and every Pom sits on its real f
  const fs=require("node:fs"),path=require("node:path"),root=path.join(__dirname,"../activity/assets/sky/arena");
  const g=JSON.parse(fs.readFileSync(path.join(root,"navigation.json"))),residents=JSON.parse(fs.readFileSync(path.join(root,"residents.json")));
  const geometry=require("../utils/activityGeometry").createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,"anterose.gltf"))));
+ const stands=JSON.parse(fs.readFileSync(path.join(root,"spectator-navigation.json")));assert.ok(stands.spawn.y>3.8);assert.ok(Math.abs(geometry.floor(stands.spawn.x,stands.spawn.z,20)-stands.spawn.y)<.01);
  const {route}=await import("../activity/movement.mjs");assert.ok(route(g,{x:-6,y:0,z:3},{x:6,z:3}).length);
  for(const p of residents.ballSpawns) { assert.ok(Math.abs(geometry.floor(p.x,p.z,p.y)-p.y+.375)<.001); assert.ok(route(g,g.spawn,p).length); }
 });
@@ -173,4 +174,79 @@ test("world saves survive restart and empty maps without copying connected avata
  const home=await lobby.state(arena.activity_token,{action:{id:"go-home",type:"leave_duel"}});assert.deepEqual(home.position,moved.position);assert.equal(home.joueurs.length,1);
  time+=16000;const visitor=await lobby.join({id:"visitor",channel:"third-channel"});const world=await lobby.state(visitor.activity_token);assert.equal(world.joueurs.length,1);assert.equal(world.pom.x,2);
  const back=await lobby.join({id:"a",channel:"dm-a"});assert.deepEqual((await lobby.state(back.activity_token)).position,moved.position);
+});
+
+
+test("duel announces once after both accept and spectators use the upper grid",async()=>{
+ const sent=[],{lobby}=fixture();
+ const manager=createActivityDuels({lobby,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
+ const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"595259248984981516");return {send:async data=>{sent.push({announcement:data});return {id:"broadcast"};}}}}};
+ await manager.handle({isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>sent.push(data)},client,channel:{send:async()=>{}},deferReply:async()=>{},editReply:async()=>{}});
+ const customId=sent[0].components[0].components[0].custom_id;
+ const click=id=>({isButton:()=>true,customId,user:{id},channel:{isDMBased:()=>true},client,launchActivity:async()=>{}});
+ await manager.handle(click("real-alice"));assert.equal(sent.filter(s=>s.announcement).length,0);
+ await manager.handle(click("real-bob"));await manager.handle(click("real-bob"));
+ const broadcasts=sent.filter(s=>s.announcement);assert.equal(broadcasts.length,1);assert.doesNotMatch(JSON.stringify(broadcasts),/real-alice|real-bob/);
+ const watch=broadcasts[0].announcement.components[0].components[0].custom_id;
+ await manager.handle({isButton:()=>true,customId:watch,user:{id:"watcher"},launchActivity:async()=>{}});
+ const viewer=await lobby.join({id:"watcher",channel:"guild"});
+ const view=await lobby.state(viewer.activity_token,{x:1,z:1,action:{id:"pick",type:"pickup",target:"world:pom:0"}});
+ assert.equal(view.map,"arena");assert.equal(view.health.spectator,true);assert.ok(view.actionResult.error);
+});
+
+test("spectator grid keeps stands movement separate from combat floor and failed launches keep location",async()=>{
+ const upper={...grid,cells:Array(100).fill(5),spawn:{x:3,y:5,z:3}};
+ const lobby=createActivityLobby({grid,resolveCharacter:async()=>"Estelle",arena:{grid,spectatorGrid:upper,residents:{npcs:[]}}});
+ lobby.createDuel({id:"duel:watch",players:["a","b"],channel:"guild"});
+ assert.throws(()=>lobby.spectateDuel("duel:watch","c"));
+ lobby.acceptDuel("duel:watch","a");lobby.acceptDuel("duel:watch","b");lobby.spectateDuel("duel:watch","c");
+ const c=await lobby.join({id:"c",channel:"guild"});assert.equal(c.player.y,5);
+ assert.equal((await lobby.state(c.activity_token)).health.spectator,true);
+ const manager=createActivityDuels({lobby,characterNames:[],resolveCharacter:async()=>"Estelle"});let reply;
+ await manager.handle({isButton:()=>true,customId:"activity:watch:duel:watch",user:{id:"d"},launchActivity:async()=>{throw new Error("Discord rejected");},reply:async data=>reply=data});
+ assert.ok(reply);assert.equal((await lobby.join({id:"d",channel:"guild"})).map,"anterose");
+});
+
+const {createPropHuntGame}=require("../utils/activityPropHuntGame");
+test("Prop Hunt has 30 seconds preparation, ten minute search, proximity and idempotent finds",()=>{
+ let time=0,saved;const store={load:()=>saved,save:value=>saved=structuredClone(value)};
+ let game=createPropHuntGame({now:()=>time,chooseHunter:()=>0,store});const id=game.create("a").id;
+ game.join(id,"a","Estelle");game.join(id,"b","Joshua");game.join(id,"c","Olivier");game.start(id,"a");
+ assert.equal(game.policy("a").canMove,false);assert.ok(game.policy("b").prop);
+ assert.equal(game.render([{id:"a"},{id:"b"}],"a").length,1);
+ time=29999;assert.equal(game.status("a").phase,"preparation");
+ time=30000;game=createPropHuntGame({now:()=>time,store});assert.equal(game.status("a").phase,"hunting");assert.equal(game.policy("a").canMove,true);
+ assert.ok(game.find("a",{},[]).error);
+ const players=[{id:"a",x:1,y:0,z:1},{id:"b",x:2,y:0,z:1},{id:"c",x:8,y:0,z:8}];
+ assert.ok(game.find("b",{id:"invalid",target:"a"},players).error);
+ assert.ok(game.find("a",{id:"far",target:"c"},players).error);time+=1000;
+ assert.ok(game.find("a",{id:"wall",target:"b"},players,{sweep:()=>({distance:.1})}).error);time+=1000;
+ const found=game.find("a",{id:"found",target:"b"},players);assert.equal(found.found,true);assert.deepEqual(game.find("a",{id:"found",target:"b"},players),found);
+ assert.equal(game.status("b").role,"found");assert.equal(game.policy("b").spectator,true);assert.equal(game.policy("b").prop,null);
+ time=630000;assert.equal(game.status("a").winner,"hiders");assert.equal(game.policy("c").prop,null);
+});
+test("finding every prop wins; hunters cannot move or see hiders during preparation",async()=>{
+ let time=0;const game=createPropHuntGame({now:()=>time,chooseHunter:()=>0});
+ const lobby=createActivityLobby({grid,now:()=>time,resolveCharacter:async id=>id==="a"?"Estelle":"Joshua",huntGame:game,rolent:{grid,residents:{npcs:[],disablePoms:true}},arena:{grid}});
+ const id=lobby.createHunt("a",1).id;lobby.joinHunt(id,"a","Estelle");lobby.joinHunt(id,"b","Joshua");
+ const a=await lobby.join({id:"a",channel:"dm-a"}),b=await lobby.join({id:"b",channel:"dm-b"});
+ await lobby.state(b.activity_token);lobby.startHunt(id,"a");time=1000;
+ const prep=await lobby.state(a.activity_token,{x:2,z:1});assert.deepEqual(prep.position,grid.spawn);assert.equal(prep.joueurs.length,1);assert.equal(prep.health.canMove,false);assert.equal(prep.poms.length,0);
+ const hidden=await lobby.state(b.activity_token);assert.ok(hidden.joueurs.find(p=>p.id===hidden.ownId).prop);assert.equal(JSON.stringify(hidden).includes('"id":"a"'),false);
+ time=30000;await lobby.state(b.activity_token);const result=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"find",type:"hunt_find",target:hidden.ownId}});
+ assert.equal(result.game.winner,"hunter");assert.equal(result.actionResult.error,undefined);
+ assert.equal((await lobby.state(b.activity_token,{action:{id:"leave",type:"leave_duel"}})).map,"anterose");
+});
+
+test("Prop Hunt publish failures release the lobby and failed Discord launches do not register players",async()=>{
+ const {createActivityPropHunt}=require('../utils/activityPropHunt');const game=createPropHuntGame();
+ const lobby=createActivityLobby({grid,resolveCharacter:async()=>"Estelle",huntGame:game,rolent:{grid,residents:{npcs:[],disablePoms:true}},arena:{grid}});
+ const manager=createActivityPropHunt({lobby,resolveCharacter:async()=>"Estelle"});let response;
+ await manager.handle({isChatInputCommand:()=>true,commandName:'prophunt',user:{id:'a'},options:{getInteger:()=>null},channel:{send:async()=>{throw Error('no permission');}},deferReply:async()=>{},editReply:async x=>response=x});
+ assert.equal(lobby.huntSummary().phase,'finished');assert.ok(response);
+ const id=lobby.createHunt('a',10).id;
+ await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{throw Error('already active');},reply:async x=>response=x});
+ assert.equal(lobby.huntSummary().count,0);assert.equal((await lobby.join({id:'b',channel:'dm'})).map,'anterose');
+ await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{}});
+ assert.equal(lobby.huntSummary().count,1);assert.equal((await lobby.join({id:'b',channel:'dm'})).map,'rolent');
 });

@@ -15,6 +15,8 @@ function createActivityService({
   spawnFor = () => grid.spawn,
   persistent = false,
   store = null,
+  navigationFor = () => grid,
+  playerPolicy = () => ({}),
 }) {
   const saved = store?.load() ?? {};
   const remembered = new Map(saved.players ?? []);
@@ -137,12 +139,19 @@ function createActivityService({
           ...(rooms.get(channel)?.get(id) ?? remembered.get(id) ?? spawnFor(id)),
           hp: (rooms.get(channel)?.get(id) ?? remembered.get(id))?.hp ?? MAX_HP,
           deadUntil: (rooms.get(channel)?.get(id) ?? remembered.get(id))?.deadUntil ?? 0,
+          ...playerPolicy(id),
         },
       };
     },
     async state(token, point, after) {
       const session = sessionFor(token);
       await refresh(session);
+      const walkingGrid = navigationFor(session.id) ?? grid, step = walkingGrid.step;
+      const index = (x,z) => {
+        const a=Math.round((x-walkingGrid.origin.x)/step),b=Math.round((z-walkingGrid.origin.z)/step);
+        return a<0||b<0||a>=walkingGrid.width||b>=walkingGrid.height ? -1 : b*walkingGrid.width+a;
+      };
+      const canWalk=(x,z)=>{const i=index(x,z);return i>=0&&walkingGrid.cells[i]!==null;};
       let room = rooms.get(session.channel);
       if (!room) {
         room = new Map();
@@ -161,12 +170,13 @@ function createActivityService({
         world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
+      Object.assign(player,{spectator:false,canMove:true,prop:null},playerPolicy(session.id));
       room.set(session.id, player);
       player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && player.hp > 0 && !justRespawned) {
+      if (point && player.hp > 0 && !justRespawned && player.canMove !== false) {
         const x = Number(point.x),
           z = Number(point.z);
         if (!Number.isFinite(x) || !Number.isFinite(z))
@@ -207,21 +217,21 @@ function createActivityService({
           const distance = Math.hypot(to.x - from.x, to.z - from.z);
           travelled += distance;
           valid = travelled <= allowance && canWalk(to.x, to.z);
-          let previousHeight = grid.cells[index(from.x, from.z)];
+          let previousHeight = walkingGrid.cells[index(from.x, from.z)];
           for (let t = 0; valid && t <= distance; t += step / 2) {
             const fraction = distance ? t / distance : 0;
             const px = from.x + (to.x - from.x) * fraction;
             const pz = from.z + (to.z - from.z) * fraction;
             valid = canWalk(px, pz);
             if (valid) {
-              const height = grid.cells[index(px, pz)];
+              const height = walkingGrid.cells[index(px, pz)];
               valid = Math.abs(height - previousHeight) <= 0.35;
               previousHeight = height;
             }
           }
           if (valid)
             valid =
-              Math.abs(grid.cells[index(to.x, to.z)] - previousHeight) <= 0.35;
+              Math.abs(walkingGrid.cells[index(to.x, to.z)] - previousHeight) <= 0.35;
           from = to;
         }
         if (valid) {
@@ -229,7 +239,7 @@ function createActivityService({
           player.acceptedAt = now();
           player.x = x;
           player.z = z;
-          player.y = grid.cells[index(x, z)];
+          player.y = walkingGrid.cells[index(x, z)];
         }
       }
       player.seen = now();
@@ -277,6 +287,8 @@ function createActivityService({
           : undefined,
         health: {
           hp: player.hp,
+          spectator: player.spectator,
+          canMove: player.canMove,
           maxHp: MAX_HP,
           deadUntil: player.deadUntil,
           respawn: player.respawn ?? 0,

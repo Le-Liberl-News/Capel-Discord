@@ -9,3 +9,5 @@ test("a missing command fails deployment verification",async()=>{
  const rest={get:async route=>route==="/oauth2/applications/@me"?{id:"app"}:[],put:async()=>{}};
  await assert.rejects(()=>syncApplicationCommands(rest,[{name:"duel",type:1}]),/duel/);
 });
+
+ test("prophunt is registered with an optional 1-30 minute duration",()=>{ const command=require("../utils/applicationCommands").commands.find(c=>c.name==="prophunt");assert.ok(command);assert.equal(command.options[0].min_value,1);assert.equal(command.options[0].max_value,30); });

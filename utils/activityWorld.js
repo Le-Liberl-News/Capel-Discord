@@ -250,7 +250,7 @@ function createSingleActivityWorld({
         continue;
       }
       for (const p of players.values()) {
-        if (p.hp === 0 || p.id === ball.thrownBy) continue;
+        if (p.hp === 0 || p.spectator || p.id === ball.thrownBy) continue;
         const dx = x - ball.x,
           dy = y - ball.y,
           dz = z - ball.z,
@@ -305,7 +305,7 @@ function createSingleActivityWorld({
     }
   }
   function action(player, command, players) {
-    if (!command || player.hp === 0) return { error: "Action impossible." };
+    if (!command || player.hp === 0 || player.spectator) return { error: "Action impossible." };
     if (command.type === "talk") {
       const n = residents.find((n) => n.id === command.target);
       if (
@@ -415,6 +415,11 @@ function createSingleActivityWorld({
   };
 }
 function createActivityWorld(options) {
+  if (options.disablePoms) {
+    const world = createSingleActivityWorld(options);
+    return { ...world, snapshot: () => ({npcs:world.snapshot().npcs,poms:[],pom:null}),
+      action: (player,command,players) => command?.type === "talk" ? world.action(player,command,players) : {error:"Aucun Pom sur cette map."} };
+  }
   if (!options.ballSpawns?.length) return createSingleActivityWorld(options);
   const worlds = options.ballSpawns.map((ballSpawn, i) => createSingleActivityWorld({ ...options, ballSpawn, npcs: i ? [] : options.npcs, initialState: options.initialState ? { npcs: i ? [] : options.initialState.npcs, pom: options.initialState.poms?.[i] ?? (i === 0 ? options.initialState.pom : null) } : null }));
   const snapshot = () => {

@@ -1,0 +1,12 @@
+{
+  "barrel": {
+    "model": "props/barrel/anterose.gltf",
+    "height": 1.0,
+    "name": "Tonneau"
+  },
+  "crate": {
+    "model": "props/crate/anterose.gltf",
+    "height": 1.0,
+    "name": "Caisse"
+  }
+}

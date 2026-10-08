@@ -21,7 +21,25 @@ const etat = {
   messageCursor: 0,
 };
 let scene, music;
-const leave = document.createElement("button"); leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
+const mapTitle = map => map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+const musicUrl = map => new URL(map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS);
+const gameHud = document.createElement("div"), blindfold = document.createElement("div");
+gameHud.id="sky-prophunt"; gameHud.hidden=true;
+gameHud.style.cssText="position:fixed;right:16px;top:64px;z-index:22;padding:12px;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;font:16px AveriaSky,sans-serif;white-space:pre-line";
+blindfold.id="sky-preparation"; blindfold.hidden=true; blindfold.style.cssText="position:fixed;inset:0;background:#17121c;z-index:14";
+document.body.append(blindfold,gameHud);
+document.getElementById("hud").style.zIndex="21";
+let huntState;
+function updateHunt(game) { huntState=game; drawHunt(); }
+function drawHunt() {
+ const g=huntState; gameHud.hidden=!g; blindfold.hidden=!(g?.phase==="preparation"&&g.role==="hunter");
+ if(!g)return;
+ const seconds=Math.max(0,Math.ceil((g.deadline-g.serverTime)/1000-(Date.now()-g.received)/1000));
+ const timer=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
+ gameHud.textContent = g.phase==="waiting" ? "Inscription ouverte : "+g.players+" joueurs.\nLe créateur lance la partie depuis Discord." : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Clic droit sur un objet proche pour chercher.":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
+}
+setInterval(drawHunt,250);
+const leave = document.createElement("button"); leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
 const chat = document.createElement("form");
 chat.id = "sky-chat";
 chat.hidden = true;
@@ -159,17 +177,18 @@ async function publier() {
     scene = await createSkyScene(toile, etat.map);
     scene.onAction(() => wakePoll());
     await scene.me({id:result.ownId,character:result.character,...result.position});
-    music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
+    music.setTrack(musicUrl(etat.map));
     etat.messageCursor = result.messageCursor;
   } else if (result.relocated) {
     await scene.resetSession({id:result.ownId,character:result.character,...result.position});
     etat.messageCursor = result.messageCursor;
   }
-  document.querySelector("#hud h1").textContent = result.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
-  etat.sceneKey = result.sceneKey; leave.hidden = result.map !== "arena";
+  document.querySelector("#hud h1").textContent = mapTitle(result.map);
+  etat.sceneKey = result.sceneKey; leave.hidden = result.map === "anterose";
   scene.setConnected(true);
   scene.acknowledgeMovement(result.movementSequence ?? submitted.sequence);
   scene.correct(result.position, submitted);
+  updateHunt(result.game ? {...result.game,received:Date.now()} : null);
   await scene.world(result);
   await scene.sync([
     ...result.joueurs,
@@ -198,9 +217,9 @@ async function start() {
   await entrer();
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
   scene.onAction(() => wakePoll());
-  music = createMapMusic(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg", ASSETS));
-  leave.hidden = etat.map !== "arena";
-  document.querySelector("#hud h1").textContent = etat.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+  music = createMapMusic(musicUrl(etat.map));
+  leave.hidden = etat.map === "anterose";
+  document.querySelector("#hud h1").textContent = mapTitle(etat.map);
   await scene.me({ ...etat.moi, character: etat.character });
   chat.hidden = false;
   if (
@@ -208,7 +227,7 @@ async function start() {
     apercuLocal &&
     new URLSearchParams(location.search).has("inspect")
   )
-    window.__activityPreview = scene;
+    window.__activityPreview = Object.assign(scene,{setHuntState:game=>updateHunt(game?{...game,received:Date.now()}:null)});
   if (__ACTIVITY_PREVIEW__ && apercuLocal) {
     const picker = document.getElementById("personnage");
     picker.hidden = false;
@@ -258,7 +277,7 @@ async function start() {
           etat.character = profile.character; etat.moi = profile.player;
           if (profile.map !== etat.map) {
             scene.dispose(); etat.map = profile.map; scene = await createSkyScene(toile,etat.map); scene.onAction(() => wakePoll());
-            music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
+            music.setTrack(musicUrl(etat.map));
           }
           await scene.resetSession(profile.player); etat.sceneKey = null;
           bandeau.textContent = "Connexion rétablie.";

@@ -77,3 +77,9 @@ Les positions, les PV et la map de chaque joueur, les positions des PNJ et les P
 Les messages des salons de lancement autorisés et les MP envoyés à Capel par un joueur présent deviennent des bulles dans sa map actuelle. Le champ « Discussion de la map » transmet directement un message authentifié ; il n'envoie pas de message Discord et ne divulgue pas le compte du joueur. Les autres conversations privées ne sont pas lues.
 
 Discord impose de fermer l'activité avant de la relancer dans un autre contexte. Le nouveau lancement reprend le même avatar dans la même map et invalide l'ancien jeton de contrôle pour éviter les mouvements concurrents.
+
+## Spectateurs et Prop Hunt
+
+Quand les deux invitations privées sont acceptées, General (595259248984981516) reçoit un bouton pour regarder le duel. Les spectateurs partagent l’arène, marchent dans les tribunes, ne subissent pas les tirs et ne ramassent pas de Pom.
+
+`/prophunt [duree:10]` ouvre des inscriptions dans le salon. Participer envoie un bouton privé ; ouvrir ce bouton rejoint Rolent. Le créateur clique Démarrer quand au moins deux joueurs sont entrés. Chasseur tiré au sort, immobile et aveuglé pendant les 30 secondes de préparation. Les autres deviennent des tonneaux ou caisses natifs. Clic droit du chasseur sur un objet à moins de 2,2 unités, sans obstacle, pour trouver un joueur. Tous trouvés : chasseur gagnant ; expiration : joueurs cachés gagnants. Une partie commune à tous les salons, jusqu’à 20 joueurs, 10 minutes par défaut (1 à 30). Retour Antérose quitte la partie. État sauvegardé dans `.runtime/activity-prophunt.json`.

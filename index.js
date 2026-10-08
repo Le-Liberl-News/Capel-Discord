@@ -129,6 +129,7 @@ client.once('clientReady', async () => {
 
 client.on('interactionCreate', async interaction => {
     if (await activiteDuels.handle(interaction)) return;
+    if (await activitePropHunt.handle(interaction)) return;
     if (interaction.isButton()) {
         if (await patchReleaseService.handleButton(interaction)) return;
         return handleButtons(interaction, sheets);
@@ -219,13 +220,22 @@ const ACTIVITE_DOSSIER = path.join(__dirname, 'activity');
 const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '';
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
+const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
 const activiteService = createActivityLobby({
+    huntGame,
+    rolent: {
+      grid: require('./activity/assets/sky/rolent/navigation.json'),
+      residents: require('./activity/assets/sky/rolent/residents.json'),
+      geometry: require('./utils/activityGeometry').createActivityGeometry(JSON.parse(require('fs').readFileSync(path.join(__dirname,'activity/assets/sky/rolent/anterose.gltf'),'utf8'))),
+    },
     worldStores: {
+      rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
       anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
       arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),
     },
     store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
     arena: {
+      spectatorGrid: require("./activity/assets/sky/arena/spectator-navigation.json"),
       spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
       grid: require('./activity/assets/sky/arena/navigation.json'),
       residents: require('./activity/assets/sky/arena/residents.json'),
@@ -237,6 +247,7 @@ const activiteService = createActivityLobby({
     resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
 });
 const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
+const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {

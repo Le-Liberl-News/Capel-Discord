@@ -1,10 +1,20 @@
 const { randomBytes } = require("node:crypto");
 const { ActivityError } = require("./activityService");
 class DuelError extends Error {}
-function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, characterNames, store = null, now = Date.now }) {
+function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, characterNames, store = null, spectatorChannel = "595259248984981516", now = Date.now }) {
   const invitations = new Map(), lastInvite = new Map();
   for (const [id,invitation] of store?.load() ?? []) if (invitation.expires>now()) invitations.set(id,invitation);
+  const announcing = new Set();
   const persist=()=>store?.save([...invitations]);
+  async function announce(id,invitation,client) {
+    if(invitation.announced || announcing.has(id))return;
+    announcing.add(id);
+    try {
+      const channel=await client.channels.fetch(spectatorChannel);
+      const message=await channel.send({content:invitation.names.join(" contre ")+" : le duel commence dans l'arène de Grancel !",components:[{type:1,components:[{type:2,custom_id:"activity:watch:"+id,label:"Regarder depuis les tribunes",style:1}]}],allowedMentions:{parse:[]}});
+      invitation.announced=message.id??true;persist();
+    } finally {announcing.delete(id);}
+  }
   const prune = () => { for (const [id,i] of invitations) if (i.expires<now()) { invitations.delete(id); lobby.cancelDuel(id); persist(); } };
   return {
     async handle(interaction) {
@@ -27,7 +37,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
           id=existing?.id ?? "duel:"+randomBytes(16).toString("hex");
           const players=existing?.players ?? [interaction.user.id,target];
           if (!existing) { lobby.prepareDuel(interaction.user.id, target); lobby.createDuel({id,channel:interaction.channelId,players}); created = true; }
-          invitations.set(id,{players,names:players.map(user=>user===interaction.user.id?own:name),expires:existing?.expires ?? now()+30*60*1000}); persist();
+          invitations.set(id,{...invitations.get(id),players,names:players.map(user=>user===interaction.user.id?own:name),expires:existing?.expires ?? now()+30*60*1000}); persist();
           const row={type:1,components:[{type:2,custom_id:"activity:"+id,label:"Rejoindre le duel",style:1}]};
           // DM messages contain no mention or identity of the other participant.
           const deliveries = await Promise.allSettled([
@@ -63,14 +73,24 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
         if (!invitation?.players.includes(interaction.user.id)) { await interaction.reply({content:"Invitation expirée ou inaccessible.",flags:64}); return true; }
         try {
           if (await resolveCharacter(interaction.user.id) !== invitation.names[invitation.players.indexOf(interaction.user.id)]) throw new DuelError("Votre personnage du jour a changé.");
-          lobby.joinDuel(id,interaction.user.id);
           // Launch only inside the participant's private conversation with the bot.
           if (!interaction.channel?.isDMBased?.()) throw new DuelError("Ouvrez votre invitation privée.");
+          lobby.joinDuel(id,interaction.user.id);
           await interaction.launchActivity();
+          const ready=lobby.acceptDuel(id,interaction.user.id);
+          if(ready && interaction.client?.channels) {
+            try { await announce(id,invitation,interaction.client); }
+            catch { /* Keep the accepted duel; a retry can publish the announcement. */ }
+          }
         } catch(error) {
           lobby.leaveDuel(interaction.user.id);
           if (!interaction.replied) await interaction.reply({content:"Lancement impossible. Ouvrez votre invitation privée puis réessayez.",flags:64});
         }
+        return true;
+      }
+      if(interaction.isButton?.() && interaction.customId.startsWith("activity:watch:duel:")) {
+        try { const id=interaction.customId.slice("activity:watch:".length); lobby.validateSpectate(id); await interaction.launchActivity(); lobby.spectateDuel(id,interaction.user.id); }
+        catch(error) { if(!interaction.replied) await interaction.reply({content:error instanceof ActivityError?error.message:"Fermez votre activité actuelle puis réessayez ce bouton.",flags:64}); }
         return true;
       }
       return false;
