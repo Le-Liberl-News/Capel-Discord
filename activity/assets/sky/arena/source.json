@@ -1,0 +1,14 @@
+{
+  "game": "Trails in the Sky SC",
+  "model": "ED6_DT2A/t4104._x3",
+  "textures": "ED6_DT35",
+  "musicTableId": 81,
+  "music": "BGM/ED6511.ogg",
+  "navigation": {
+    "origin": {"x": -20, "z": -10},
+    "step": 0.25,
+    "width": 160,
+    "height": 180,
+    "spawn": {"x": -6, "z": 6}
+  }
+}

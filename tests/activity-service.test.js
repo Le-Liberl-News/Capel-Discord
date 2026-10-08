@@ -113,11 +113,14 @@ test("server accepts the actual staircase route up and down", async () => {
     now: () => clock,
   });
   const session = await service.join({ id: "alice", channel: "room" });
+  await service.state(session.activity_token);
   const upstairs = { x: 8, z: .2 };
   const up = route(grid, grid.spawn, upstairs);
   const down = route(grid, up.at(-1), grid.spawn);
+  let previous = grid.spawn;
   for (const point of [...up, ...down]) {
-    clock += 300;
+    clock += Math.max(300, Math.ceil(Math.hypot(point.x-previous.x, point.z-previous.z) / 3.5 * 1000));
+    previous = point;
     const state = await service.state(session.activity_token, point);
     assert.deepEqual(state.position, point);
   }

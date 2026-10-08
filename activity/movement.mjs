@@ -69,7 +69,10 @@ export function route(grid, from, to) {
         );
         current = previous.get(current);
       }
-      return points.reverse();
+      points.reverse();
+      const destination = {x:to.x,z:to.z,y:grid.cells[b]};
+      if (!points.length || Math.hypot(points.at(-1).x-to.x,points.at(-1).z-to.z)>1e-6) points.push(destination);
+      return smoothRoute(grid, from, points);
     }
     open.delete(current);
     const x = current % grid.width,
@@ -103,6 +106,30 @@ export function route(grid, from, to) {
     }
   }
   return [];
+}
+// Remove grid zigzags on a clear, level floor; preserve individual stair rises.
+export function smoothRoute(grid, from, points) {
+  const clear = (a, b) => {
+    if (Math.abs((a.y ?? b.y) - b.y) > 0.02) return false;
+    const distance = Math.hypot(b.x - a.x, b.z - a.z);
+    const steps = Math.max(1, Math.ceil(distance / (grid.step / 4)));
+    let previous = cellAt(grid, a.x, a.z);
+    for (let i = 0; i <= steps; i++) {
+      const f = i / steps, cell = cellAt(grid, a.x + (b.x - a.x) * f, a.z + (b.z - a.z) * f);
+      if (!walkable(grid, cell.x, cell.z) || Math.abs(grid.cells[indexAt(grid, cell.x, cell.z)] - b.y) > 0.02) return false;
+      if (cell.x !== previous.x && cell.z !== previous.z &&
+        (!walkable(grid, cell.x, previous.z) || !walkable(grid, previous.x, cell.z))) return false;
+      previous = cell;
+    }
+    return true;
+  };
+  const result = []; let anchor = from, start = 0;
+  while (start < points.length) {
+    let end = start;
+    for (let i = start + 1; i < points.length; i++) if (clear(anchor, points[i])) end = i;
+    result.push(points[end]); anchor = points[end]; start = end + 1;
+  }
+  return result;
 }
 export function advance(position, points, seconds, speed = SPEED, record = () => {}) {
   let remaining = Math.max(0, seconds) * speed,

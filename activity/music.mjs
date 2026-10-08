@@ -1,7 +1,8 @@
 export function createMapMusic(url) {
   const audio = new Audio(url.href);
   audio.loop = true;
-  audio.volume = 0.25;
+  audio.volume = 0.1;
+  try { const saved = localStorage.getItem("sky-music-volume"); if (saved !== null && Number.isFinite(Number(saved))) audio.volume = Math.max(0, Math.min(1, Number(saved))); } catch {}
   audio.preload = "auto";
   const button = document.createElement("button");
   button.type = "button";
@@ -37,17 +38,28 @@ export function createMapMusic(url) {
     button.textContent = "\u266b Musique indisponible";
     button.title = "Le fichier audio n\u2019a pas pu \u00eatre charg\u00e9.";
   });
-  document.body.append(button);
+  const panel = document.createElement("div");
+  panel.style.cssText = "position:fixed;right:16px;bottom:16px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #b49760;border-radius:4px;background:#201b18ee;color:#e8d5ad;font:12px system-ui";
+  button.style.cssText = "border:0;background:transparent;color:inherit;cursor:pointer;font:inherit";
+  const slider = document.createElement("input"); slider.type = "range"; slider.min = "0"; slider.max = "100"; slider.step = "1"; slider.value = String(Math.round(audio.volume * 100));
+  slider.style.cssText = "width:100px;accent-color:#dab36a"; slider.setAttribute("aria-label", "Volume de la musique");
+  slider.addEventListener("input", () => {
+    audio.volume = Number(slider.value) / 100;
+    slider.title = slider.value + " %";
+    try { localStorage.setItem("sky-music-volume", String(audio.volume)); } catch {}
+    void play();
+  });
+  panel.append(button, slider); document.body.append(panel);
   document.addEventListener("pointerdown", gesture);
   document.addEventListener("keydown", gesture);
   update();
   void play();
-  return { dispose() {
+  return { setTrack(url) { audio.pause(); audio.src = url.href; audio.load(); void play(); }, dispose() {
     audio.pause();
     document.removeEventListener("pointerdown", gesture);
     document.removeEventListener("keydown", gesture);
     audio.removeAttribute("src");
     audio.load();
-    button.remove();
+    panel.remove();
   }};
 }

@@ -21,7 +21,7 @@ jobs:
       run: npm ci --ignore-scripts --no-audit --no-fund
 
     - name: Test activity movement and sessions
-      run: node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-world.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs tests/activity-projectile.test.mjs
+      run: node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-world.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs tests/activity-projectile.test.mjs tests/activity-duel.test.js
 
     - name: 🛠️ Deploy & Restart natively
       env:

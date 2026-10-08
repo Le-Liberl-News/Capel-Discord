@@ -113,9 +113,10 @@ test("music retries blocked autoplay on a gesture and remembers mute", async () 
   const previous = { Audio: globalThis.Audio, document: globalThis.document, localStorage: globalThis.localStorage };
   const events = new Map(), storage = new Map();
   let audio;
+  const elements = [];
   const button = { style: {}, events: {}, setAttribute() {}, addEventListener(name, cb) { this.events[name] = cb; }, remove() {} };
   globalThis.document = {
-    createElement: () => button, body: { append() {} },
+    createElement: () => { const e = elements.length === 0 ? button : { style:{},events:{},setAttribute(){},addEventListener(n,cb){this.events[n]=cb;},append(){},remove(){} }; elements.push(e); return e; }, body: { append() {} },
     addEventListener: (name, cb) => events.set(name, cb),
     removeEventListener: (name) => events.delete(name),
   };
@@ -139,6 +140,9 @@ test("music retries blocked autoplay on a gesture and remembers mute", async () 
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(audio.paused, false);
     assert.equal(audio.loop, true);
+    assert.equal(audio.volume, .1);
+    const slider = elements.find(e => e.type === "range"); slider.value = "7"; slider.events.input();
+    assert.equal(audio.volume,.07); assert.equal(storage.get("sky-music-volume"),"0.07");
     button.events.click();
     assert.equal(audio.paused, true);
     assert.equal(storage.get("anterose-music-muted"), "1");
@@ -157,4 +161,16 @@ test("the restaurant music asset is an Ogg file", () => {
   const music = fs.readFileSync(new URL("../activity/assets/sky/music/anterose.ogg", import.meta.url));
   assert.equal(music.subarray(0, 4).toString(), "OggS");
   assert.ok(music.length > 100000);
+});
+
+test("open-floor route follows a straight non-grid diagonal", () => {
+ const g={origin:{x:0,z:0},width:20,height:20,step:1,cells:Array(400).fill(0)};
+ const p=route(g,{x:1.1,y:0,z:1.2},{x:17,z:9});
+ assert.equal(p.length,1); assert.deepEqual(p[0],{x:17,y:0,z:9});
+});
+
+test("held movement retains the exact heading instead of snapping back to grid centers", () => {
+ const g={origin:{x:0,z:0},width:30,height:30,step:.2,cells:Array(900).fill(0)};
+ const p={x:1.03,y:0,z:1.02},dx=.4,dz=Math.sqrt(1-dx*dx);
+ for(let i=0;i<90;i++) { const path=route(g,p,{x:p.x+dx*.6,z:p.z+dz*.6}); const motion=advance(p,path,1/60,1); assert.ok(Math.abs(motion.dx-dx)<1e-7); assert.ok(Math.abs(motion.dz-dz)<1e-7); }
 });

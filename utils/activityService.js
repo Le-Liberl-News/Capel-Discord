@@ -12,6 +12,7 @@ function createActivityService({
   now = Date.now,
   residents = { npcs: [] },
   geometry = null,
+  spawnFor = () => grid.spawn,
 }) {
   let messageSequence = 0;
   const messageStreams = new Map();
@@ -91,6 +92,7 @@ function createActivityService({
       messageStreams.set(channel, events.slice(-50));
       return true;
     },
+    leave(token) { const session=sessions.get(token); if (!session) return; rooms.get(session.channel)?.delete(session.id); sessions.delete(token); },
     async join({ id, channel }) {
       prune();
       const session = {
@@ -111,7 +113,7 @@ function createActivityService({
           id,
           nom: session.character,
           character: session.character,
-          ...spawn,
+          ...spawnFor(id),
           hp: MAX_HP,
           deadUntil: 0,
         },
@@ -129,13 +131,13 @@ function createActivityService({
       if (!player)
         player = {
           id: session.id,
-          ...spawn,
+          ...spawnFor(session.id),
           seen: now() - 150,
           character: session.character,
         };
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);

@@ -2,12 +2,13 @@
 const MAX_HP = 100,
   DAMAGE = 25,
   RESPAWN_MS = 10000;
-function createActivityWorld({
+function createSingleActivityWorld({
   grid,
   npcs = [],
   ballSpawn = grid.spawn,
   now = Date.now,
   geometry = null,
+  spawnFor = () => grid.spawn,
 }) {
   const index = (x, z) => {
     const a = Math.round((x - grid.origin.x) / grid.step),
@@ -142,7 +143,7 @@ function createActivityWorld({
       p.hp ??= MAX_HP;
       p.deadUntil ??= 0;
       if (p.hp === 0 && time >= p.deadUntil) {
-        Object.assign(p, grid.spawn);
+        Object.assign(p, spawnFor(p.id));
         p.hp = MAX_HP;
         p.deadUntil = 0;
         p.respawn = (p.respawn ?? 0) + 1;
@@ -395,6 +396,29 @@ function createActivityWorld({
       ),
       pom: { ...ball, trajectory: ball.trajectory?.map((p) => ({ ...p })) },
     }),
+  };
+}
+function createActivityWorld(options) {
+  if (!options.ballSpawns?.length) return createSingleActivityWorld(options);
+  const worlds = options.ballSpawns.map((ballSpawn, i) => createSingleActivityWorld({ ...options, ballSpawn, npcs: i ? [] : options.npcs }));
+  const snapshot = () => {
+    const first = worlds[0].snapshot();
+    const poms = worlds.map((world, i) => ({ ...world.snapshot().pom, id: "world:pom:" + i }));
+    return { ...first, pom: poms[0], poms };
+  };
+  return {
+    tick(players) { worlds.forEach(world => world.tick(players)); },
+    resetBall() { worlds.forEach(world => world.resetBall()); },
+    snapshot,
+    action(player, command, players) {
+      if (command?.type === "talk") return worlds[0].action(player, command, players);
+      const poms = snapshot().poms;
+      const carried = poms.findIndex(p => p.owner === player.id);
+      if (command?.type === "pickup" && carried >= 0) return { error: "Vous portez déjà un Pom." };
+      const index = command?.type === "throw" ? carried : poms.findIndex(p => p.id === command?.target);
+      if (index < 0) return { error: "Pom indisponible." };
+      return worlds[index].action(player, command, players);
+    },
   };
 }
 module.exports = { createActivityWorld, MAX_HP, DAMAGE, RESPAWN_MS };

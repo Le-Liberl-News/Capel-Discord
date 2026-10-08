@@ -11,7 +11,8 @@ export const ASSETS = new URL(
     : "./assets/sky/",
   location.href,
 );
-export async function createSkyScene(canvas) {
+export async function createSkyScene(canvas, map = "anterose") {
+  const mapAssets = map === "arena" ? new URL("arena/", ASSETS) : ASSETS;
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false,
@@ -27,7 +28,7 @@ export async function createSkyScene(canvas) {
       r.json(),
     );
   const loaded = await new GLTFLoader().loadAsync(
-    new URL("anterose.gltf", ASSETS).href,
+    new URL("anterose.gltf", mapAssets).href,
   );
   const model = loaded.scene;
   scene.add(model);
@@ -44,14 +45,12 @@ export async function createSkyScene(canvas) {
         }
     }
   });
-  const grid = await fetch(new URL("navigation.json", ASSETS)).then((r) =>
+  const grid = await fetch(new URL("navigation.json", mapAssets)).then((r) =>
     r.json(),
   );
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
-  let pomFlying = false;
-  const projectile = createProjectilePlayback();
-  const effects = await createPomEffects(THREE, scene, canvas, ASSETS);
+  const projectiles = new Map(), effects = new Map(), flying = new Map();
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2(),
     keys = new Set();
@@ -63,7 +62,7 @@ export async function createSkyScene(canvas) {
   };
   let path = [],
     yaw = 0,
-    pitch = Math.atan2(11, 13),
+    pitch = Math.PI / 4,
     drag = null,
     zoom = 12,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
@@ -71,7 +70,7 @@ export async function createSkyScene(canvas) {
     lastTime = performance.now(),
     disposed = false;
   const actionQueue = [];
-  let environment = { npcs: [], pom: null, receivedAt: 0 },
+  let environment = { npcs: [], poms: [], pom: null, receivedAt: 0 },
     health = { hp: 100 },
     respawn = 0;
   const menu = document.createElement("div"),
@@ -105,7 +104,7 @@ export async function createSkyScene(canvas) {
       1 - (event.clientY / innerHeight) * 2,
     );
     raycaster.setFromCamera(pointer, camera);
-    const ball = environment.pom;
+    const ball = environment.poms.find(p => p.owner === localId) ?? environment.poms.filter(p => p.mode === "rest" && nearby(p,2)).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if (ball?.owner === localId) {
       const targets = [
         model,
@@ -149,7 +148,7 @@ export async function createSkyScene(canvas) {
     for (const n of residents)
       options.push(["Parler à " + n.name, "talk", n.id]);
     if (ball?.mode === "rest" && nearby(ball, 2))
-      { queueAction("pickup"); return; }
+      { queueAction("pickup", ball.id); return; }
     menu.replaceChildren();
     for (const [label, type, target] of options) {
       const b = document.createElement("button");
@@ -230,7 +229,7 @@ export async function createSkyScene(canvas) {
       (info.height * info.frameWidth) / info.frameHeight,
       info.height,
     );
-    geometry.translate(0, player.id === "world:pom" ? 0 : info.height / 2, 0);
+    geometry.translate(0, player.id.startsWith("world:pom") ? 0 : info.height / 2, 0);
     const mesh = new THREE.Mesh(
       geometry,
       new THREE.MeshBasicMaterial({
@@ -444,10 +443,10 @@ export async function createSkyScene(canvas) {
       }
     }
     for (const [id, avatar] of avatars) {
-      const ballState = environment.pom,
-        isPom = id === "world:pom";
+      const ballState = environment.poms.find(p => p.id === id),
+        isPom = id.startsWith("world:pom");
       if (isPom && ballState && ballState.mode !== "held")
-        pomFlying = projectile.update(seconds, avatar.position);
+        flying.set(id, projectiles.get(id)?.update(seconds, avatar.position));
       const motion = isPom
         ? {
             moving: ballState?.mode === "flight",
@@ -500,18 +499,20 @@ export async function createSkyScene(canvas) {
         1 - Math.exp(-seconds * 7),
       );
     if (!path.length) marker.visible = false;
-    const pomAvatar = avatars.get("world:pom"),
-      ball = environment.pom;
-    if (pomAvatar && ball?.owner) {
-      const owner = avatars.get(ball.owner);
-      if (owner) {
-        pomAvatar.mesh.position.copy(owner.mesh.position);
-        pomAvatar.mesh.position.y += 0.9;
-        pomAvatar.mesh.position.x += right.x * 0.3;
-        pomAvatar.mesh.position.z += right.z * 0.3;
+    for (const ball of environment.poms) {
+      const pomAvatar = avatars.get(ball.id);
+      if (!pomAvatar) continue;
+      if (ball.owner) {
+        const owner = avatars.get(ball.owner);
+        if (owner) {
+          pomAvatar.mesh.position.copy(owner.mesh.position);
+          pomAvatar.mesh.position.y += 0.9;
+          pomAvatar.mesh.position.x += right.x * 0.3;
+          pomAvatar.mesh.position.z += right.z * 0.3;
+        }
       }
+      effects.get(ball.id)?.update(seconds, pomAvatar.mesh.position, ball.mode !== "held" && flying.get(ball.id), camera);
     }
-    effects.update(seconds, pomAvatar?.mesh.position, ball?.mode !== "held" && pomFlying, camera);
     if (health.hp === 0) {
       const remaining = Math.max(
         0,
@@ -523,7 +524,7 @@ export async function createSkyScene(canvas) {
       status.textContent = "0 / 100 PV · Réapparition dans " + remaining + " s";
     }
     for (const [id, a] of avatars) {
-      if (id === "world:pom") continue;
+      if (id.startsWith("world:pom")) continue;
       let label = nameplates.get(id);
       if (!label) {
         label = document.createElement("div");
@@ -640,9 +641,16 @@ export async function createSkyScene(canvas) {
       environment = {
         npcs: result.npcs ?? [],
         pom: result.pom ?? null,
+        poms: result.poms ?? (result.pom ? [{...result.pom,id:result.pom.id ?? "world:pom"}] : []),
         receivedAt: performance.now(),
       };
-      if (projectile.receive(environment.pom)) effects.launch();
+      for (const ball of environment.poms) {
+        if (!projectiles.has(ball.id)) {
+          projectiles.set(ball.id,createProjectilePlayback());
+          effects.set(ball.id,await createPomEffects(THREE,scene,canvas,ASSETS));
+        }
+        if (projectiles.get(ball.id).receive(ball)) effects.get(ball.id).launch();
+      }
       health = { ...result.health, received: performance.now() };
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {
@@ -657,13 +665,14 @@ export async function createSkyScene(canvas) {
         status.textContent =
           health.hp +
           " / 100 PV · " +
-          (environment.pom?.owner === localId
+          (environment.poms.some(p => p.owner === localId)
             ? "Pom en main : clic droit pour tirer vers le point visé."
             : "Clic droit : parler / ramasser le Pom. Glisser : caméra.");
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;
       if (result.actionResult?.id === actionQueue[0]?.id) actionQueue.shift();
     },
+    leaveDuel() { queueAction("leave_duel"); },
     action() {
       return actionQueue[0];
     },
@@ -717,7 +726,10 @@ export async function createSkyScene(canvas) {
       labels.remove();
       style.remove();
       dialogues.dispose();
-      effects.dispose();
+      for (const effect of effects.values()) effect.dispose();
+      const materials = new Set(), maps = new Set();
+      scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
+      for (const texture of maps) texture.dispose(); for (const material of materials) material.dispose();
       renderer.dispose();
     },
   };

@@ -19,7 +19,8 @@ const etat = {
   character: "Estelle",
   messageCursor: 0,
 };
-let scene;
+let scene, music;
+const leave = document.createElement("button"); leave.textContent = "Quitter le duel"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
 function base64url(donnees) {
   const octets = new Uint8Array(donnees);
   let texte = "";
@@ -102,6 +103,7 @@ async function entrer() {
   const profile = await profileResponse.json();
   if (!profileResponse.ok)
     throw new Error(profile.erreur ?? "Personnage indisponible");
+  etat.map = profile.map ?? "anterose";
   etat.token = profile.activity_token;
   etat.messageCursor = profile.messageCursor ?? 0;
   etat.character = profile.character;
@@ -131,15 +133,22 @@ async function publier() {
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.erreur ?? "Connexion perdue");
+  if (result.map !== (etat.map ?? "anterose") || (etat.sceneKey && result.sceneKey !== etat.sceneKey)) {
+    scene.dispose(); etat.map = result.map;
+    scene = await createSkyScene(toile, etat.map);
+    await scene.me({id:result.ownId,character:result.character,...result.position});
+    music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
+    etat.messageCursor = result.messageCursor;
+  }
+  document.querySelector("#hud h1").textContent = result.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+  etat.sceneKey = result.sceneKey; leave.hidden = result.map !== "arena";
   scene.acknowledgeMovement(submitted.sequence);
   scene.correct(result.position, submitted);
   await scene.world(result);
   await scene.sync([
     ...result.joueurs,
     ...(result.npcs ?? []),
-    ...(result.pom
-      ? [{ id: "world:pom", character: "Pom", npc: true, ...result.pom }]
-      : []),
+    ...(result.poms ?? (result.pom ? [{id:"world:pom",...result.pom}] : [])).map(p=>({character:"Pom",npc:true,...p})),
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
@@ -159,9 +168,12 @@ async function start() {
     return;
   }
   etape("Chargement du restaurant Antérose…");
-  scene = await createSkyScene(toile);
-  createMapMusic(new URL("music/anterose.ogg", ASSETS));
+  if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
+  scene ??= await createSkyScene(toile, etat.map ?? "anterose");
+  music = createMapMusic(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg", ASSETS));
+  leave.hidden = etat.map !== "arena";
+  document.querySelector("#hud h1").textContent = etat.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
   await scene.me({ ...etat.moi, character: etat.character });
   if (
     __ACTIVITY_PREVIEW__ &&

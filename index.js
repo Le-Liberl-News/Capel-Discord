@@ -91,6 +91,8 @@ const testerPresenceService = createTesterPresenceService({
 });
 
 const commands = [
+    new SlashCommandBuilder().setName("duel").setDescription("Défier un personnage dans l’arène de Grancel").setDMPermission(false)
+        .addStringOption(o => o.setName("personnage").setDescription("Personnage de votre adversaire du jour").setRequired(true).setAutocomplete(true)),
     new SlashCommandBuilder().setName('test1').setDescription('Parse la TABLE'),
     new SlashCommandBuilder().setName('runtrad').setDescription('Cherche une réplique à traduire'),
     new SlashCommandBuilder().setName('trad').setDescription('Soumettre une traduction anonyme'),
@@ -184,6 +186,7 @@ client.once('clientReady', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
+    if (await activiteDuels.handle(interaction)) return;
     if (interaction.isButton()) {
         if (await patchReleaseService.handleButton(interaction)) return;
         return handleButtons(interaction, sheets);
@@ -273,13 +276,20 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
 const ACTIVITE_DOSSIER = path.join(__dirname, 'activity');
 const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '';
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
-const { createActivityService } = require('./utils/activityService.js');
-const activiteService = createActivityService({
+const { createActivityLobby } = require('./utils/activityLobby.js');
+const activiteService = createActivityLobby({
+    arena: {
+      spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
+      grid: require('./activity/assets/sky/arena/navigation.json'),
+      residents: require('./activity/assets/sky/arena/residents.json'),
+      geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/arena/anterose.gltf'), 'utf8'))),
+    },
     grid: require('./activity/assets/sky/navigation.json'),
     residents: require('./activity/assets/sky/residents.json'),
     geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/anterose.gltf'), 'utf8'))),
     resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
 });
+const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {
@@ -315,9 +325,13 @@ app.post('/api/profile', async (req, res) => {
         if (!response.ok) return res.status(401).json({erreur: 'Identification Discord requise.'});
         const user = await response.json();
         const channel = await client.channels.fetch(String(req.body?.channel || ''));
-        if (!channel?.guild || channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur: 'Salon Discord invalide.'});
-        const member = await channel.guild.members.fetch(user.id);
-        if (!member || !channel.permissionsFor(member)?.has('ViewChannel')) return res.status(403).json({erreur: 'Accès au salon refusé.'});
+        if (channel?.guild) {
+          if (channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur:'Salon Discord invalide.'});
+          const member = await channel.guild.members.fetch(user.id);
+          if (!member || !channel.permissionsFor(member)?.has('ViewChannel')) return res.status(403).json({erreur:'Accès au salon refusé.'});
+        } else if (!channel?.isDMBased?.() || channel.recipient?.id !== user.id) {
+          return res.status(403).json({erreur:'Conversation privée invalide.'});
+        }
         res.set('Cache-Control', 'no-store');
         res.json(await activiteService.join({id: user.id, channel: channel.id}));
     } catch (error) { res.status(403).json({erreur: 'Impossible de rejoindre ce salon Discord.'}); }

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import fs from "node:fs/promises";
-const root = new URL("../assets/sky/", import.meta.url),
+const root = process.argv[2] ? new URL("file:///" + process.argv[2].replaceAll("\\", "/").replace(/\/$/, "") + "/") : new URL("../assets/sky/", import.meta.url),
+  settings = process.argv[3] ? JSON.parse(await fs.readFile(process.argv[3],"utf8")) : {},
   gltf = JSON.parse(await fs.readFile(new URL("anterose.gltf", root), "utf8")),
   bytes = Buffer.from(gltf.buffers[0].uri.split(",")[1], "base64"),
   scene = new THREE.Group();
@@ -52,10 +53,10 @@ function node(index, parent) {
 }
 for (const index of gltf.scenes[0].nodes) node(index, scene);
 scene.updateMatrixWorld(true);
-const step = 0.2,
-  origin = { x: -18, z: -12 },
-  width = 192,
-  height = 162,
+const step = settings.step ?? 0.2,
+  origin = settings.origin ?? { x: -18, z: -12 },
+  width = settings.width ?? 192,
+  height = settings.height ?? 162,
   cells = [],
   ray = new THREE.Raycaster();
 for (let z = 0; z < height; z++)
@@ -141,7 +142,7 @@ let start = -1,
 for (const i of allowed) {
   const x = origin.x + (i % width) * step,
     z = origin.z + Math.floor(i / width) * step,
-    d = (x + 2.4) ** 2 + (z + 1.7) ** 2;
+    d = (x - (settings.spawn?.x ?? -2.4)) ** 2 + (z - (settings.spawn?.z ?? -1.7)) ** 2;
   if (d < best) {
     best = d;
     start = i;

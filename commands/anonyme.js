@@ -194,6 +194,7 @@ async function monIdentite(interaction) {
 }
 
 module.exports = {
+    characterNames: PSEUDOS,
     getPseudoAnonyme,
     execute,
     monIdentite,
