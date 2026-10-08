@@ -83,12 +83,12 @@ test("real restaurant spawn is on a walkable floor and connected to a destinatio
 
 test('restaurant upstairs is reached through successive stair heights and can be left again', () => {
  const g=JSON.parse(fs.readFileSync(new URL('../activity/assets/sky/navigation.json',import.meta.url)));
- const destination={x:6.8,z:4.8};
+ const destination={x:8,z:.2};
  const path=route(g,g.spawn,destination);
  assert.ok(path.length);
- assert.equal(path.at(-1).y,3.25);
- assert.ok(path.some(p=>p.y===2));
- assert.ok(path.some(p=>p.y===2.75));
+ assert.equal(path.at(-1).y,1.5);
+ assert.ok(path.some(p=>p.y===.5));
+ assert.ok(path.some(p=>p.y===1));
  let previous=g.spawn;
  for(const point of path){assert.ok(Math.abs(point.y-previous.y)<=.35);previous=point;}
  assert.ok(route(g,path.at(-1),g.spawn).length);

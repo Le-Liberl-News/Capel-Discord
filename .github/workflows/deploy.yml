@@ -17,6 +17,9 @@ jobs:
       with:
         node-version: 24
 
+    - name: Install activity test dependencies
+      run: npm ci --ignore-scripts --no-audit --no-fund
+
     - name: Test activity movement and sessions
       run: node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-world.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs
 

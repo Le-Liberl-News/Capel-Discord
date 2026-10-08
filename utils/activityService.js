@@ -11,6 +11,7 @@ function createActivityService({
   resolveCharacter,
   now = Date.now,
   residents = { npcs: [] },
+  geometry = null,
 }) {
   let messageSequence = 0;
   const messageStreams = new Map();
@@ -134,7 +135,7 @@ function createActivityService({
         };
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now });
+        world = createActivityWorld({ grid, ...residents, now, geometry });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);

@@ -47,6 +47,7 @@ export async function createSkyScene(canvas) {
   );
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
+  const projectileRay = new THREE.Raycaster();
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2(),
     keys = new Set();
@@ -60,7 +61,7 @@ export async function createSkyScene(canvas) {
     yaw = 0,
     pitch = Math.atan2(11, 13),
     drag = null,
-    zoom = 8,
+    zoom = 12,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
     lastTime = performance.now(),
@@ -84,9 +85,9 @@ export async function createSkyScene(canvas) {
   document.body.append(menu, status, labels);
   const oldHelp = document.getElementById("aide");
   if (oldHelp) oldHelp.hidden = true;
-  function queueAction(type, target) {
+  function queueAction(type, target, aim) {
     if (actionQueue.length >= 8) return;
-    actionQueue.push({ id: crypto.randomUUID(), type, target });
+    actionQueue.push({ id: crypto.randomUUID(), type, target, aim });
     menu.hidden = true;
   }
   function interaction(event) {
@@ -100,13 +101,39 @@ export async function createSkyScene(canvas) {
       1 - (event.clientY / innerHeight) * 2,
     );
     raycaster.setFromCamera(pointer, camera);
-    const candidates = [...avatars].filter(
-      ([id]) => id !== localId && id !== "world:pom",
-    );
-    const hit = raycaster.intersectObjects(
-      candidates.map(([, a]) => a.mesh),
-    )[0];
-    const selected = hit && candidates.find(([, a]) => a.mesh === hit.object);
+    const ball = environment.pom;
+    if (ball?.owner === localId) {
+      const targets = [
+        model,
+        ...[...avatars]
+          .filter(([id, a]) => id !== localId && id !== "world:pom" && !a.npc)
+          .map(([, a]) => a.mesh),
+      ];
+      const hit = raycaster.intersectObjects(targets, true)[0];
+      let aim;
+      if (hit) {
+        aim = hit.point.clone();
+        const isPlayer = [...avatars.values()].some(
+          (a) => a.mesh === hit.object && !a.npc,
+        );
+        if (
+          !isPlayer &&
+          hit.face &&
+          Math.abs(
+            hit.face.normal.clone().transformDirection(hit.object.matrixWorld)
+              .y,
+          ) > 0.65
+        )
+          aim.y += 0.65;
+      } else
+        aim = raycaster.ray.intersectPlane(
+          new THREE.Plane(new THREE.Vector3(0, 1, 0), -(me.position.y + 0.9)),
+          new THREE.Vector3(),
+        );
+      if (aim)
+        queueAction("throw", undefined, { x: aim.x, y: aim.y, z: aim.z });
+      return;
+    }
     const options = [];
     const residents = environment.npcs
       .filter((n) => nearby(n) && Math.abs(n.y - me.position.y) < 0.6)
@@ -117,18 +144,8 @@ export async function createSkyScene(canvas) {
       );
     for (const n of residents)
       options.push(["Parler à " + n.name, "talk", n.id]);
-    const ball = environment.pom;
     if (ball?.mode === "rest" && nearby(ball, 2))
       options.push(["Ramasser le Pom", "pickup"]);
-    if (ball?.owner === localId) {
-      if (selected && !selected[1].npc && selected[1].hp !== 0)
-        options.unshift([
-          "Lancer sur " + selected[1].displayName,
-          "throw",
-          selected[0],
-        ]);
-      else status.textContent = "Clic droit sur un joueur pour lancer le Pom.";
-    }
     menu.replaceChildren();
     for (const [label, type, target] of options) {
       const b = document.createElement("button");
@@ -165,6 +182,7 @@ export async function createSkyScene(canvas) {
       avatar.hp = player.hp ?? 100;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
+      avatar.speed = player.speed ?? 0.8;
       if (player.heading) avatar.heading = player.heading;
       avatar.target = { x: player.x, y: player.y ?? 0, z: player.z };
       return avatar;
@@ -208,7 +226,7 @@ export async function createSkyScene(canvas) {
       (info.height * info.frameWidth) / info.frameHeight,
       info.height,
     );
-    geometry.translate(0, info.height / 2, 0);
+    geometry.translate(0, player.id === "world:pom" ? 0 : info.height / 2, 0);
     const mesh = new THREE.Mesh(
       geometry,
       new THREE.MeshBasicMaterial({
@@ -228,6 +246,7 @@ export async function createSkyScene(canvas) {
       hp: player.hp ?? 100,
       npc: !!player.npc,
       walking: !!player.moving,
+      speed: player.speed ?? 0.8,
       fallbackDeath: dead && !baseInfo.death,
       info,
       position: {
@@ -237,7 +256,7 @@ export async function createSkyScene(canvas) {
       },
       target: null,
       direction: 6,
-      heading: { dx: 0, dz: -1 },
+      heading: player.heading ?? { dx: 0, dz: -1 },
       time: 0,
     };
     avatars.set(player.id, avatar);
@@ -434,18 +453,26 @@ export async function createSkyScene(canvas) {
             0.18,
             Math.max(0, (time - environment.receivedAt) / 1000),
           );
-          for (let t = 0.008; t <= elapsed; t += 0.008) {
-            const x = ballState.x + ballState.vx * t,
-              z = ballState.z + ballState.vz * t;
-            const a = Math.round((x - grid.origin.x) / grid.step),
-              b = Math.round((z - grid.origin.z) / grid.step);
-            const h =
-              a < 0 || b < 0 || a >= grid.width || b >= grid.height
-                ? null
-                : grid.cells[b * grid.width + a];
-            if (h === null || Math.abs(h - (ballState.y - 0.9)) >= 0.65) break;
-            avatar.position.x = x;
-            avatar.position.z = z;
+          const velocity = new THREE.Vector3(
+              ballState.vx,
+              ballState.vy ?? 0,
+              ballState.vz,
+            ),
+            speed = velocity.length();
+          if (speed > 0) {
+            const direction = velocity.clone().divideScalar(speed);
+            projectileRay.set(
+              new THREE.Vector3(ballState.x, ballState.y, ballState.z),
+              direction,
+            );
+            projectileRay.far = speed * elapsed + 0.22;
+            const hit = projectileRay.intersectObject(model, true)[0];
+            const travel = hit
+              ? Math.min(speed * elapsed, Math.max(0, hit.distance - 0.22))
+              : speed * elapsed;
+            avatar.position.x += direction.x * travel;
+            avatar.position.y += direction.y * travel;
+            avatar.position.z += direction.z * travel;
           }
         }
       }
@@ -463,12 +490,13 @@ export async function createSkyScene(canvas) {
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
                 seconds,
-                avatar.npc && id !== "world:pom" ? 0.8 : 6,
+                avatar.npc && id !== "world:pom" ? avatar.speed + 0.1 : 6,
               );
       if (motion.moving || avatar.walking) {
         if (motion.moving) avatar.heading = { dx: motion.dx, dz: motion.dz };
         avatar.time += seconds;
-      } else avatar.time = 0;
+      } else if (avatar.npc && !avatar.dead) avatar.time += seconds;
+      else avatar.time = 0;
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,
@@ -506,7 +534,7 @@ export async function createSkyScene(canvas) {
       const owner = avatars.get(ball.owner);
       if (owner) {
         pomAvatar.mesh.position.copy(owner.mesh.position);
-        pomAvatar.mesh.position.y += 0.85;
+        pomAvatar.mesh.position.y += 0.9;
         pomAvatar.mesh.position.x += right.x * 0.3;
         pomAvatar.mesh.position.z += right.z * 0.3;
       }
@@ -656,7 +684,7 @@ export async function createSkyScene(canvas) {
           health.hp +
           " / 100 PV · " +
           (environment.pom?.owner === localId
-            ? "Pom en main : clic droit sur un joueur pour viser."
+            ? "Pom en main : clic droit pour tirer vers le point visé."
             : "Clic droit : parler / ramasser le Pom. Glisser : caméra.");
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;

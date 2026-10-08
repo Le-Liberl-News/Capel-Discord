@@ -30,6 +30,8 @@ function node(index, parent) {
   if (data.matrix)
     group.applyMatrix4(new THREE.Matrix4().fromArray(data.matrix));
   if (data.scale) group.scale.fromArray(data.scale);
+  if (data.translation) group.position.fromArray(data.translation);
+  if (data.rotation) group.quaternion.fromArray(data.rotation);
   parent.add(group);
   if (data.mesh !== undefined)
     for (const primitive of gltf.meshes[data.mesh].primitives) {
@@ -51,8 +53,8 @@ function node(index, parent) {
 for (const index of gltf.scenes[0].nodes) node(index, scene);
 scene.updateMatrixWorld(true);
 const step = 0.2,
-  origin = { x: -12, z: -12 },
-  width = 152,
+  origin = { x: -18, z: -12 },
+  width = 192,
   height = 162,
   cells = [],
   ray = new THREE.Raycaster();
@@ -139,7 +141,7 @@ let start = -1,
 for (const i of allowed) {
   const x = origin.x + (i % width) * step,
     z = origin.z + Math.floor(i / width) * step,
-    d = x * x + z * z;
+    d = (x + 2.4) ** 2 + (z + 1.7) ** 2;
   if (d < best) {
     best = d;
     start = i;

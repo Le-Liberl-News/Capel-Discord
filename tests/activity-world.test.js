@@ -115,10 +115,19 @@ test("native residents walk only on reachable cells and stop when speaking", () 
     for (const n of world.snapshot().npcs) {
       const x = Math.round((n.x - grid.origin.x) / grid.step),
         z = Math.round((n.z - grid.origin.z) / grid.step);
-      assert.notEqual(grid.cells[z * grid.width + x], null);
+      if (!n.static) assert.notEqual(grid.cells[z * grid.width + x], null);
     }
   }
   const after = world.snapshot().npcs;
+  for (const id of ["npc:manager", "npc:horrace"]) {
+    const a = after.find((n) => n.id === id),
+      b = before.find((n) => n.id === id);
+    assert.deepEqual([a.x, a.y, a.z], [b.x, b.y, b.z]);
+  }
+  assert.deepEqual(
+    [before[2].x, before[2].y, before[2].z],
+    [3.299999999999997, 1.65, 10.95],
+  );
   assert.ok(
     after.some(
       (n, i) => Math.hypot(n.x - before[i].x, n.z - before[i].z) > 0.4,
@@ -250,4 +259,109 @@ test("service refuses dead movement and ignores the corpse snapshot on respawn",
   assert.equal(revived.health.hp, 100);
   assert.equal(revived.position.x, 0);
   assert.equal(revived.health.respawn, 1);
+});
+
+test("free aim needs no player target; a descending and a vertical shot can hit a lower floor", () => {
+  for (const targetX of [1, 5]) {
+    let time = 0;
+    const grid = {
+      origin: { x: 0, z: 0 },
+      step: 1,
+      width: 10,
+      height: 10,
+      cells: Array(100).fill(0),
+      spawn: { x: 1, y: 0, z: 1 },
+    };
+    const players = new Map([
+      ["a", { id: "a", x: 1, y: 3, z: 1 }],
+      ["b", { id: "b", x: targetX, y: 0, z: 1 }],
+    ]);
+    const world = require("../utils/activityWorld").createActivityWorld({
+      grid,
+      ballSpawn: { x: 1, y: 3.5, z: 1 },
+      geometry: { sweep: () => null, floor: () => 0 },
+      now: () => time,
+    });
+    world.tick(players);
+    world.action(players.get("a"), { type: "pickup" }, players);
+    assert.deepEqual(
+      world.action(
+        players.get("a"),
+        { type: "throw", aim: { x: targetX, y: 0.9, z: 1 } },
+        players,
+      ),
+      {},
+    );
+    assert.ok(world.snapshot().pom.vy < 0);
+    time = 400;
+    world.tick(players);
+    assert.equal(players.get("b").hp, 75);
+  }
+});
+test("invalid free aim does not consume the held Pom", () => {
+  const f = fixture(),
+    a = f.players.get("a");
+  f.world.action(a, { type: "pickup" }, f.players);
+  for (const aim of [
+    null,
+    { x: NaN, y: 0, z: 1 },
+    { x: 1, y: Infinity, z: 1 },
+    { x: 10000, y: 0, z: 1 },
+  ])
+    assert.ok(f.world.action(a, { type: "throw", aim }, f.players).error);
+  assert.equal(f.world.snapshot().pom.owner, "a");
+});
+test("server geometry respects the restaurant translation, floors and real surfaces", () => {
+  const fs = require("node:fs"),
+    path = require("node:path");
+  const geometry = require("../utils/activityGeometry").createActivityGeometry(
+    JSON.parse(
+      fs.readFileSync(
+        path.join(__dirname, "../activity/assets/sky/anterose.gltf"),
+        "utf8",
+      ),
+    ),
+  );
+  assert.ok(Math.abs(geometry.floor(-2.4, 1.7, 5)) < 0.01);
+  assert.ok(Math.abs(geometry.floor(8.3, 0.2, 5) - 1.5) < 0.01);
+  const contact = geometry.sweep(
+    { x: -2.4, y: 2, z: 1.7 },
+    { x: -2.4, y: -1, z: 1.7 },
+    0.22,
+  );
+  assert.ok(contact);
+  assert.ok(contact.normal.y > 0.9);
+});
+
+test("a free shot across the real restaurant stairs hits a player below", () => {
+  const fs = require("node:fs"),
+    path = require("node:path"),
+    grid = require("../activity/assets/sky/navigation.json");
+  const geometry = require("../utils/activityGeometry").createActivityGeometry(
+    JSON.parse(
+      fs.readFileSync(
+        path.join(__dirname, "../activity/assets/sky/anterose.gltf"),
+        "utf8",
+      ),
+    ),
+  );
+  let time = 0;
+  const a = { id: "a", x: 5, y: 1.5, z: -0.4 },
+    b = { id: "b", x: 2.2, y: 0, z: -1.2 },
+    players = new Map([
+      ["a", a],
+      ["b", b],
+    ]);
+  const world = createActivityWorld({
+    grid,
+    geometry,
+    ballSpawn: { x: 5, y: 1.9, z: -0.4 },
+    now: () => time,
+  });
+  world.tick(players);
+  world.action(a, { type: "pickup" }, players);
+  world.action(a, { type: "throw", aim: { x: b.x, y: 0.9, z: b.z } }, players);
+  time = 300;
+  world.tick(players);
+  assert.equal(b.hp, 75);
 });

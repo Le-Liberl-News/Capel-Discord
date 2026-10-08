@@ -277,6 +277,7 @@ const { createActivityService } = require('./utils/activityService.js');
 const activiteService = createActivityService({
     grid: require('./activity/assets/sky/navigation.json'),
     residents: require('./activity/assets/sky/residents.json'),
+    geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/anterose.gltf'), 'utf8'))),
     resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
 });
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');

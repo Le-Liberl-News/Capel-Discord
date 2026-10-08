@@ -20,7 +20,7 @@ def archive_entries(game, archive):
     with (game / (archive + '.dat')).open('rb') as data:
         for index in range(count):
             offset = 16 + index * 36
-            rawname = directory[offset:offset + 12].decode('ascii')
+            rawname = directory[offset:offset + 12].decode('ascii', errors='replace')
             name = rawname[:8].rstrip() + rawname[8:].rstrip('\0 ')
             packed, unpacked, _, _, location = struct.unpack_from('<IIIII', directory, offset + 16)
             yield name.lower(), data, location, packed, unpacked
@@ -85,6 +85,9 @@ def main():
     parser.add_argument('--chips', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--extra-chips', type=Path)
+    parser.add_argument('--textures', type=Path, help='Folder of decoded DDS entries')
+    parser.add_argument('--center-x', type=float, default=0)
+    parser.add_argument('--only-map', action='store_true')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     spec = importlib.util.spec_from_file_location('sky_x', Path(__file__).parent / 'vendor/x3_parser.py')
@@ -95,8 +98,15 @@ def main():
     needed = {image['uri'].lower().replace('.png', '._ds'): image['uri'] for image in model['images']}
     found = set()
     for archive in sorted(args.game.glob('*.dir')):
+        if found == set(needed):
+            break
         for name, stream, offset, packed, unpacked in archive_entries(args.game, archive.stem):
             if name not in needed or name in found:
+                continue
+            decoded = args.textures / name if args.textures else None
+            if decoded and decoded.is_file():
+                decode_model_texture(decoded.read_bytes()).save(args.output / needed[name])
+                found.add(name)
                 continue
             if packed != unpacked:
                 raise ValueError(f'Compressed texture {name}: extract with ed6-archive first')
@@ -127,7 +137,7 @@ def main():
                 model['accessors'].append({'bufferView': len(model['bufferViews']) - 1, 'componentType': 5121, 'type': 'VEC4', 'count': accessor['count'], 'normalized': True})
             primitive['attributes']['COLOR_0'] = colours[position_id]
     model['buffers'][0]['byteLength'] = len(binary)
-    model['buffers'][0]['uri'] = 'data:application/octet-stream;base64,' + base64.b64encode(binary).decode('ascii')
+    model['buffers'][0]['uri'] = 'data:application/octet-stream;base64,' + base64.b64encode(binary).decode('ascii', errors='replace')
     # The original game uses vertex colours and unlit textures, not PBR lighting.
     for material in model['materials']:
         material['extensions'] = {'KHR_materials_unlit': {}}
@@ -135,7 +145,11 @@ def main():
         material['alphaCutoff'] = 0.1
         material['doubleSided'] = True
     model['extensionsUsed'] = ['KHR_materials_unlit']
+    model['nodes'][model['scenes'][model.get('scene', 0)]['nodes'][0]]['translation'] = [-args.center_x, 0, 0]
     (args.output / 'anterose.gltf').write_text(json.dumps(model, separators=(',', ':')))
+    if args.only_map:
+        print(json.dumps({'meshes': len(model['meshes']), 'textures': len(found)}))
+        return
     characters = json.loads((Path(__file__).parent / 'character-map.json').read_text(encoding='utf8'))
     catalogue = {}
     for name, chip in characters.items():

@@ -113,7 +113,7 @@ test("server accepts the actual staircase route up and down", async () => {
     now: () => clock,
   });
   const session = await service.join({ id: "alice", channel: "room" });
-  const upstairs = { x: 6.8, z: 4.8 };
+  const upstairs = { x: 8, z: .2 };
   const up = route(grid, grid.spawn, upstairs);
   const down = route(grid, up.at(-1), grid.spawn);
   for (const point of [...up, ...down]) {
@@ -227,7 +227,7 @@ test("continuous stair movement is accepted with slow polling and turns", async 
     const session = await service.join({ id: "alice", channel: "room" });
     const p = { ...grid.spawn };
     await service.state(session.activity_token, p);
-    for (const destination of [{ x: 6.8, z: 4.8 }, grid.spawn]) {
+    for (const destination of [{ x: 8, z: .2 }, grid.spawn]) {
       const points = route(grid, p, destination);
       let trace = [], lastPoll = clock;
       while (points.length) {
