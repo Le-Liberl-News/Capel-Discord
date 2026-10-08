@@ -102,3 +102,21 @@ test("accepting a new private invitation leaves the previous match",async()=>{
 test("the same pair resumes its duel even when the new command comes from another channel",()=>{
  const {lobby}=fixture();lobby.createDuel({id:"old",channel:"first",players:["a","b"]});lobby.joinDuel("old","a");assert.equal(lobby.findDuel(["b","a"],"second").id,"old");
 });
+
+for (const failure of ["public", "a", "b", "confirmation"]) {
+ test("delivered private invitations remain usable when " + failure + " fails", async()=>{
+  const {lobby}=fixture(),sent=[];let reply,replyCalls=0;
+  const reject=()=>{throw Object.assign(new Error("sensitive Discord detail"),{code:failure==="public"?50013:50007});};
+  const manager=createActivityDuels({lobby,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
+  const command={isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>failure==="a"?reject():sent.push(["real-alice",data])},client:{users:{fetch:async()=>({send:async data=>failure==="b"?reject():sent.push(["real-bob",data])})}},channel:{send:async()=>{if(failure==="public")reject();}},deferReply:async()=>{},editReply:async data=>{if(failure==="confirmation" && !replyCalls++)reject();reply=data.content;}};
+  await manager.handle(command);assert.ok(sent.length);assert.match(reply,/valid/);assert.doesNotMatch(reply,/sensitive|real-/);
+  for(const [user,data] of sent){let launched=false;await manager.handle({isChatInputCommand:()=>false,isButton:()=>true,customId:data.components[0].components[0].custom_id,user:{id:user},channel:{isDMBased:()=>true},launchActivity:async()=>{launched=true;},reply:async data=>{throw new Error(data.content);}});assert.equal(launched,true);}
+ });
+}
+test("a duel is cancelled only when neither participant received an invitation",async()=>{
+ const {lobby}=fixture();let reply;
+ const reject=async()=>{throw Object.assign(new Error("private detail"),{code:50007});};
+ const manager=createActivityDuels({lobby,characterNames:["Joshua"],resolveCharacter:async()=>"Estelle",resolveOpponent:async()=>"real-bob"});
+ await manager.handle({isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:reject},client:{users:{fetch:async()=>({send:reject})}},deferReply:async()=>{},editReply:async data=>reply=data.content});
+ assert.equal(lobby.findDuel(["real-alice","real-bob"],"guild"),null);assert.match(reply,/messages/);
+});
