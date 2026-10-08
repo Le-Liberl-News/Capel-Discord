@@ -50,6 +50,12 @@ export async function createSkyScene(canvas) {
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2(),
     keys = new Set();
+  let movementSequence = 0;
+  let movementTrace = [];
+  const recordMovement = (point) => {
+    movementTrace.push({ ...point, sequence: ++movementSequence });
+    if (movementTrace.length > 1024) movementTrace.shift();
+  };
   let path = [],
     yaw = 0,
     pitch = Math.atan2(11, 13),
@@ -298,7 +304,7 @@ export async function createSkyScene(canvas) {
     for (const [id, avatar] of avatars) {
       const motion =
         id === localId
-          ? advance(avatar.position, path, seconds)
+          ? advance(avatar.position, path, seconds, undefined, recordMovement)
           : advance(
               avatar.position,
               avatar.target ? [avatar.target] : [],
@@ -414,7 +420,14 @@ export async function createSkyScene(canvas) {
       ) {
         Object.assign(me.position, position);
         path = [];
+        movementTrace = [];
       }
+    },
+    movement() {
+      return { ...this.position(), trace: movementTrace.map(p => ({ ...p })), sequence: movementSequence };
+    },
+    acknowledgeMovement(sequence) {
+      movementTrace = movementTrace.filter(p => p.sequence > sequence);
     },
     screenPoint(point) {
       const p = new THREE.Vector3(point.x, point.y, point.z).project(camera);

@@ -216,3 +216,63 @@ test("chat accepts long messages without splitting unicode characters and keeps 
   assert.equal(Array.from(state.messages[0].text).length, 4000);
   assert.equal(state.messages[0].text.endsWith("😀"), true);
 });
+
+test("continuous stair movement is accepted with slow polling and turns", async () => {
+  const fs = require("node:fs"), path = require("node:path");
+  const grid = JSON.parse(fs.readFileSync(path.join(__dirname, "../activity/assets/sky/navigation.json")));
+  const { route, advance } = await import("../activity/movement.mjs");
+  for (const interval of [150, 300, 600, 1000]) {
+    let clock = 0, sequence = 0;
+    const service = createActivityService({ grid, resolveCharacter: async () => "Estelle", now: () => clock });
+    const session = await service.join({ id: "alice", channel: "room" });
+    const p = { ...grid.spawn };
+    await service.state(session.activity_token, p);
+    for (const destination of [{ x: 6.8, z: 4.8 }, grid.spawn]) {
+      const points = route(grid, p, destination);
+      let trace = [], lastPoll = clock;
+      while (points.length) {
+        advance(p, points, 1 / 30, undefined, point => trace.push({ ...point, sequence: ++sequence }));
+        clock += 1000 / 30;
+        if (clock - lastPoll >= interval || !points.length) {
+          const state = await service.state(session.activity_token, { ...p, trace });
+          assert.ok(Math.hypot(state.position.x - p.x, state.position.z - p.z) < 1e-8,
+            "Stairs rejected with polling interval " + interval);
+          trace = [];
+          lastPoll = clock;
+        }
+      }
+    }
+  }
+});
+
+test("movement traces cannot bypass collisions, speed or input validation", async () => {
+  const f = fixture(), session = await f.service.join({ id: "alice", channel: "room" });
+  await f.service.state(session.activity_token);
+  f.grid.cells[1] = null;
+  f.tick(1000);
+  let result = await f.service.state(session.activity_token, { x: 2, z: 0, trace: [{ x: 2, z: 0, sequence: 1 }] });
+  assert.equal(result.position.x, 0);
+  result = await f.service.state(session.activity_token, {
+    x: 0, z: 0, trace: [{ x: 0, z: 7, sequence: 1 }, { x: 0, z: 0, sequence: 2 }]
+  });
+  assert.equal(result.position.z, 0);
+  await assert.rejects(() => f.service.state(session.activity_token, {
+    x: 0, z: 0, trace: [{ x: NaN, z: 0, sequence: 1 }]
+  }), { status: 400 });
+  await assert.rejects(() => f.service.state(session.activity_token, {
+    x: 0, z: 0, trace: Array(1025).fill({ x: 0, z: 0, sequence: 1 })
+  }), { status: 400 });
+});
+
+test("a lost response can retry its movement prefix without rewinding", async () => {
+  const f = fixture(), session = await f.service.join({ id: "alice", channel: "room" });
+  await f.service.state(session.activity_token);
+  const prefix = [{ x: 0.5, z: 0, sequence: 1 }, { x: 1, z: 0, sequence: 2 }];
+  f.tick(300);
+  await f.service.state(session.activity_token, { x: 1, z: 0, trace: prefix });
+  f.tick(150);
+  const result = await f.service.state(session.activity_token, {
+    x: 1.5, z: 0, trace: [...prefix, { x: 1.5, z: 0, sequence: 3 }]
+  });
+  assert.equal(result.position.x, 1.5);
+});

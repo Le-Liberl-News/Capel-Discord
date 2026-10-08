@@ -104,7 +104,7 @@ export function route(grid, from, to) {
   }
   return [];
 }
-export function advance(position, points, seconds, speed = SPEED) {
+export function advance(position, points, seconds, speed = SPEED, record = () => {}) {
   let remaining = Math.max(0, seconds) * speed,
     moved = 0,
     dx = 0,
@@ -124,6 +124,7 @@ export function advance(position, points, seconds, speed = SPEED) {
     position.x += dx * length;
     position.z += dz * length;
     position.y = (position.y ?? 0) + ((next.y ?? position.y ?? 0) - (position.y ?? 0)) * (length / distance);
+    record({ ...position });
     moved += length;
     remaining -= length;
     if (length >= distance - 1e-6) points.shift();

@@ -127,33 +127,49 @@ function createActivityService({ grid, resolveCharacter, now = Date.now }) {
           z = Number(point.z);
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
-        const distance = Math.hypot(x - player.x, z - player.z),
-          allowance =
-            Math.min(2, Math.max(0.15, (now() - player.seen) / 1000)) * 4.5 +
-            0.15;
-        let valid = distance <= allowance && canWalk(x, z);
-        let previousHeight = player.y ?? grid.cells[index(player.x, player.z)];
-        for (let t = 0; valid && t <= distance; t += step / 2) {
-          const fraction = distance ? t / distance : 0;
-          valid = canWalk(
-            player.x + (x - player.x) * fraction,
-            player.z + (z - player.z) * fraction,
-          );
-          if (valid) {
-            const height =
-              grid.cells[
-                index(
-                  player.x + (x - player.x) * fraction,
-                  player.z + (z - player.z) * fraction,
-                )
-              ];
-            valid = Math.abs(height - previousHeight) <= 0.35;
-            previousHeight = height;
+        const allowance =
+          Math.min(2, Math.max(0.15, (now() - player.seen) / 1000)) * 4.5 + 0.15;
+        // Validate each travelled segment rather than the chord between polls.
+        // Sequence numbers let a retry replay an already acknowledged prefix.
+        let samples = [{ x, z }], lastSequence = session.movementSequence ?? 0;
+        if (point.trace !== undefined) {
+          if (!Array.isArray(point.trace) || point.trace.length > 1024)
+            throw new ActivityError("Invalid movement trace.");
+          let sequence = 0;
+          for (const sample of point.trace) {
+            if (!sample || !Number.isFinite(sample.x) || !Number.isFinite(sample.z) ||
+                !Number.isSafeInteger(sample.sequence) || sample.sequence <= sequence)
+              throw new ActivityError("Invalid movement trace.");
+            sequence = sample.sequence;
           }
+          samples = point.trace.filter(sample => sample.sequence > lastSequence);
+          samples = [...samples, { x, z }];
+          lastSequence = Math.max(lastSequence, sequence);
         }
-        if (valid)
-          valid = Math.abs(grid.cells[index(x, z)] - previousHeight) <= 0.35;
+        let valid = canWalk(x, z), travelled = 0, from = player;
+        for (const to of samples) {
+          if (!valid) break;
+          const distance = Math.hypot(to.x - from.x, to.z - from.z);
+          travelled += distance;
+          valid = travelled <= allowance && canWalk(to.x, to.z);
+          let previousHeight = grid.cells[index(from.x, from.z)];
+          for (let t = 0; valid && t <= distance; t += step / 2) {
+            const fraction = distance ? t / distance : 0;
+            const px = from.x + (to.x - from.x) * fraction;
+            const pz = from.z + (to.z - from.z) * fraction;
+            valid = canWalk(px, pz);
+            if (valid) {
+              const height = grid.cells[index(px, pz)];
+              valid = Math.abs(height - previousHeight) <= 0.35;
+              previousHeight = height;
+            }
+          }
+          if (valid)
+            valid = Math.abs(grid.cells[index(to.x, to.z)] - previousHeight) <= 0.35;
+          from = to;
+        }
         if (valid) {
+          session.movementSequence = lastSequence;
           player.x = x;
           player.z = z;
           player.y = grid.cells[index(x, z)];

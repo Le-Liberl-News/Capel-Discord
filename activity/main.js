@@ -116,7 +116,7 @@ async function entrer() {
 
 async function publier() {
   if (!etat.token) return;
-  const submitted = { ...scene.position() };
+  const submitted = scene.movement();
   const response = await fetch(apiUrl("state"), {
     method: "POST",
     headers: {
@@ -127,6 +127,7 @@ async function publier() {
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.erreur ?? "Connexion perdue");
+  scene.acknowledgeMovement(submitted.sequence);
   scene.correct(result.position, submitted);
   await scene.sync(result.joueurs);
   scene.messages(result.messages ?? []);
