@@ -68,4 +68,12 @@ La navigation de Grancel se régénère avec `node activity/tools/build-navigati
 
 Les textures du modèle portent la version du bundle pour éviter les anciens PNG opaques en cache. La découpe des murs suit la caméra et le personnage, sans modifier les collisions physiques ; les clics ignorent les fragments masqués.
 
-L'Antérose est partagée par salon Discord. Quitter un duel lancé dans un salon revient dans l'Antérose de ce salon, même depuis la fenêtre privée du duel. Les bulles restent reliées aux messages du salon d'origine.
+L'Antérose et l'arène sont chacune un monde unique partagé par tous les joueurs, indépendamment du salon ou du MP de lancement. Les duels donnent accès à cette même arène : les autres combattants et les Poms sont communs. Revenir à l'Antérose retrouve tous les joueurs qui y sont présents.
+
+## Monde persistant et discussion
+
+Les positions, les PV et la map de chaque joueur, les positions des PNJ et les Poms sont sauvegardés dans les fichiers privés `.runtime/activity-world-anterose.json`, `.runtime/activity-world-arena.json` et `.runtime/activity-duels.json`. Les sauvegardes du monde sont limitées à une par seconde, avec une sauvegarde immédiate lors d'un changement de map. Un avatar déconnecté disparaît de la présence, mais sa position et le monde ne sont pas recréés. Les tirs interrompus par un redémarrage sont posés au sol.
+
+Les messages des salons de lancement autorisés et les MP envoyés à Capel par un joueur présent deviennent des bulles dans sa map actuelle. Le champ « Discussion de la map » transmet directement un message authentifié ; il n'envoie pas de message Discord et ne divulgue pas le compte du joueur. Les autres conversations privées ne sont pas lues.
+
+Discord impose de fermer l'activité avant de la relancer dans un autre contexte. Le nouveau lancement reprend le même avatar dans la même map et invalide l'ancien jeton de contrôle pour éviter les mouvements concurrents.

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, WebhookClient, ContextMenuCommandBuilder, ApplicationCommandType, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, WebhookClient, ContextMenuCommandBuilder, ApplicationCommandType, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { google } = require('googleapis');
 
 const db = require('./utils/db.js');
@@ -46,10 +46,12 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.DirectMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildVoiceStates
-    ]
+    ],
+    partials: [Partials.Channel]
 });
 const debugReportIngress = createDebugReportIngress({
     client,
@@ -218,6 +220,10 @@ const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || ''
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
 const activiteService = createActivityLobby({
+    worldStores: {
+      anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
+      arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),
+    },
     store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
     arena: {
       spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
@@ -307,7 +313,7 @@ app.get('/bundle.js', (req, res) => envoyerClientActivite('bundle.js', res));
 
 // Only messages whose author already has an avatar in this activity room are relayed.
 client.on('messageCreate', message => {
-    activiteService.captureMessage({id: message.id, channel: message.channelId, author: message.author.id, text: message.cleanContent ?? message.content, bot: message.author.bot, webhook: Boolean(message.webhookId)});
+    activiteService.captureMessage({id: message.id, channel: message.channelId, author: message.author.id, text: message.cleanContent ?? message.content, direct: Boolean(message.channel.isDMBased?.()), bot: message.author.bot, webhook: Boolean(message.webhookId)});
 });
 
 const cooldownsXP = new Map();
@@ -324,7 +330,7 @@ client.on('messageCreate', message => {
 });
 
 client.on('messageCreate', async message => {
-    if (message.author.bot) return;
+    if (!message.guild || message.author.bot) return;
 
     const now = Date.now();
     const lastXP = cooldownsXP.get(message.author.id) || 0;

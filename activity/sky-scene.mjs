@@ -107,9 +107,9 @@ export async function createSkyScene(canvas, map = "anterose") {
   document.body.append(menu, status, labels);
   const oldHelp = document.getElementById("aide");
   if (oldHelp) oldHelp.hidden = true;
-  function queueAction(type, target, aim) {
+  function queueAction(type, target, aim, text) {
     if (actionQueue.length >= 8) return;
-    const action = { id: crypto.randomUUID(), type, target, aim };
+    const action = { id: crypto.randomUUID(), type, target, aim, text };
     actionQueue.push(action);
     menu.hidden = true;
     notifyAction();
@@ -611,6 +611,11 @@ export async function createSkyScene(canvas, map = "anterose") {
     async resetSession(player) { actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
+    },
+    speak(text) {
+      if (!connected || !text.trim()) return false;
+      if (__ACTIVITY_PREVIEW__ && !new URLSearchParams(location.search).has("frame_id")) { this.say(text); return true; }
+      return !!queueAction("say", undefined, undefined, text.trim());
     },
     say(text) {
       if (!__ACTIVITY_PREVIEW__) return;

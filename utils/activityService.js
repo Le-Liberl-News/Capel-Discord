@@ -13,7 +13,13 @@ function createActivityService({
   residents = { npcs: [] },
   geometry = null,
   spawnFor = () => grid.spawn,
+  persistent = false,
+  store = null,
 }) {
+  const saved = store?.load() ?? {};
+  const remembered = new Map(saved.players ?? []);
+  const worldStates = saved.worlds ?? {};
+  let lastSave = -Infinity;
   let messageSequence = 0;
   const messageStreams = new Map();
   const worlds = new Map();
@@ -32,17 +38,24 @@ function createActivityService({
     return i >= 0 && grid.cells[i] !== null;
   };
   const spawn = grid.spawn;
+  function save(force = false) {
+    if (!store || (!force && now() - lastSave < 1000)) return;
+    for (const room of rooms.values()) for (const [id, player] of room) remembered.set(id, { ...player });
+    for (const [id, world] of worlds) worldStates[id] = world.snapshot();
+    store.save({ players: [...remembered], worlds: worldStates });
+    lastSave = now();
+  }
   function prune() {
     const time = now();
     for (const [token, session] of sessions)
       if (session.expires <= time) sessions.delete(token);
     for (const [id, room] of rooms) {
       for (const [user, player] of room)
-        if (time - player.seen > 15000) room.delete(user);
+        if (time - player.seen > 15000) { if (persistent) remembered.set(user, { ...player }); worlds.get(id)?.depart(user,player); room.delete(user); }
       if (!room.size) {
-        rooms.delete(id);
+        if (persistent) worlds.get(id)?.tick(room);
+        else { rooms.delete(id); worlds.delete(id); }
         messageStreams.delete(id);
-        worlds.delete(id);
       } else if (messageStreams.has(id))
         messageStreams.set(
           id,
@@ -92,7 +105,14 @@ function createActivityService({
       messageStreams.set(channel, events.slice(-50));
       return true;
     },
-    leave(token, keepPlayer = false) { const session=sessions.get(token); if (!session) return; if (!keepPlayer) rooms.get(session.channel)?.delete(session.id); sessions.delete(token); },
+    leave(token, keepPlayer = false) {
+      const session = sessions.get(token); if (!session) return;
+      const room = rooms.get(session.channel), player = room?.get(session.id);
+      if (persistent && player) remembered.set(session.id, { ...player });
+      if (!keepPlayer) { worlds.get(session.channel)?.depart(session.id,player); room?.delete(session.id); if (room) worlds.get(session.channel)?.tick(room); }
+      sessions.delete(token); save(true);
+    },
+    resetPlayer(id) { remembered.delete(id); for (const [key,room] of rooms) { worlds.get(key)?.depart(id,room.get(id)); room.delete(id); } save(true); },
     async join({ id, channel }) {
       prune();
       const session = {
@@ -114,9 +134,9 @@ function createActivityService({
           id,
           nom: session.character,
           character: session.character,
-          ...(rooms.get(channel)?.get(id) ?? spawnFor(id)),
-          hp: rooms.get(channel)?.get(id)?.hp ?? MAX_HP,
-          deadUntil: rooms.get(channel)?.get(id)?.deadUntil ?? 0,
+          ...(rooms.get(channel)?.get(id) ?? remembered.get(id) ?? spawnFor(id)),
+          hp: (rooms.get(channel)?.get(id) ?? remembered.get(id))?.hp ?? MAX_HP,
+          deadUntil: (rooms.get(channel)?.get(id) ?? remembered.get(id))?.deadUntil ?? 0,
         },
       };
     },
@@ -132,13 +152,13 @@ function createActivityService({
       if (!player)
         player = {
           id: session.id,
-          ...(session.playerState ?? spawnFor(session.id)),
+          ...(session.playerState ?? remembered.get(session.id) ?? spawnFor(session.id)),
           seen: now() - 150,
           character: session.character,
         };
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
@@ -225,7 +245,12 @@ function createActivityService({
         // A lost response may replay an action; never throw or talk twice.
         if (session.lastAction !== point.action.id) {
           session.lastAction = point.action.id;
-          actionResult = world.action(player, point.action, room);
+          if (point.action.type === "say") {
+            const text = typeof point.action.text === "string" ? point.action.text.trim() : "";
+            if (!text || Array.from(text).length > 4000) actionResult = { error: "Message invalide." };
+            else if (now() - (session.lastSpeech ?? -Infinity) < 1000) actionResult = { error: "Attendez une seconde entre deux messages." };
+            else { session.lastSpeech = now(); actionResult = { text, speaker: player.id, character: session.character }; }
+          } else actionResult = world.action(player, point.action, room);
           if (actionResult.text) {
             const events = messageStreams.get(session.channel) ?? [];
             events.push({
@@ -243,6 +268,7 @@ function createActivityService({
       }
       session.playerState = { ...player };
       const environment = world.snapshot();
+      save();
       return {
         ...environment,
         movementSequence: session.movementSequence ?? 0,

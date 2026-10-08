@@ -291,3 +291,21 @@ test("temporary presence expiry does not reset a valid session back to spawn",as
  f.tick(1000);await f.service.state(joined.activity_token,{x:3,z:0});f.tick(16000);
  const resumed=await f.service.state(joined.activity_token);assert.equal(resumed.position.x,3);
 });
+
+test("in-game speech uses the authenticated character and retries do not duplicate bubbles",async()=>{
+ const f=fixture(),a=await f.service.join({id:"alice",channel:"room"}),b=await f.service.join({id:"bob",channel:"room"});await f.service.state(a.activity_token);await f.service.state(b.activity_token);
+ const action={id:"speech-1",type:"say",text:"Bonjour !",speaker:"fake"};await f.service.state(a.activity_token,{x:0,z:0,action});await f.service.state(a.activity_token,{x:0,z:0,action});
+ const reply=await f.service.state(b.activity_token);assert.equal(reply.messages.length,1);assert.equal(reply.messages[0].author,"alice");assert.equal(reply.messages[0].text,"Bonjour !");
+ const refused=await f.service.state(a.activity_token,{x:0,z:0,action:{id:"speech-2",type:"say",text:"spam"}});assert.match(refused.actionResult.error,/seconde/);
+ const empty=await f.service.state(a.activity_token,{x:0,z:0,action:{id:"speech-3",type:"say",text:" "}});assert.match(empty.actionResult.error,/invalide/);
+});
+
+test("durable world retains a moved Pom after everyone leaves and the server restarts",async()=>{
+ let time=0,saved;const grid={origin:{x:0,z:0},step:1,width:10,height:10,cells:Array(100).fill(0),spawn:{x:1,y:0,z:1}};
+ const options={grid,persistent:true,now:()=>time,resolveCharacter:async()=>"Estelle",residents:{npcs:[],ballSpawn:{x:1,y:.375,z:1}},store:{load:()=>saved,save:data=>saved=structuredClone(data)}};
+ let service=createActivityService(options);const a=await service.join({id:"a",channel:"map"});await service.state(a.activity_token,{x:1,z:1,action:{id:"pickup",type:"pickup"}});
+ time=1000;await service.state(a.activity_token,{x:4,z:1});service.leave(a.activity_token);
+ assert.equal(saved.worlds.map.pom.x,4);assert.equal(saved.worlds.map.pom.owner,null);
+ service=createActivityService(options);const b=await service.join({id:"b",channel:"map"});const restored=await service.state(b.activity_token);
+ assert.equal(restored.pom.x,4);assert.equal(restored.pom.y,.375);assert.equal(restored.pom.mode,"rest");assert.equal(restored.joueurs.length,1);
+});

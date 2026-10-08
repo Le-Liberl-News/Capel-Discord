@@ -9,6 +9,7 @@ function createSingleActivityWorld({
   now = Date.now,
   geometry = null,
   spawnFor = () => grid.spawn,
+  initialState = null,
 }) {
   const index = (x, z) => {
     const a = Math.round((x - grid.origin.x) / grid.step),
@@ -100,6 +101,16 @@ function createSingleActivityWorld({
     thrownBy: null,
     flight: 0,
   };
+  // Restore durable positions; interrupted throws and carried Poms are put down.
+  for (const resident of residents) {
+    const previous = initialState?.npcs?.find(n => n.id === resident.id);
+    if (previous && [previous.x, previous.y, previous.z].every(Number.isFinite)) Object.assign(resident, { x: previous.x, y: previous.y, z: previous.z, heading: previous.heading ?? resident.heading });
+  }
+  if (initialState?.pom && [initialState.pom.x, initialState.pom.z].every(Number.isFinite)) {
+    const previous = initialState.pom;
+    const floor = geometry ? geometry.floor(previous.x, previous.z, (previous.y ?? 0) + .1) : height(previous.x, previous.z);
+    if (floor !== null) Object.assign(ball, { x: previous.x, z: previous.z, y: floor + .375 });
+  }
   let last = now(), shot = 0;
   const sample = () => {
     if (!ball.shotId) return;
@@ -377,6 +388,11 @@ function createSingleActivityWorld({
     tick,
     action,
     resetBall,
+    depart(id, player) {
+      if (ball.owner !== id) return;
+      if (player) { ball.x = player.x; ball.z = player.z; ball.y = (player.y ?? 0) + .9; }
+      stop();
+    },
     snapshot: () => ({
       npcs: residents.map(
         ({
@@ -400,7 +416,7 @@ function createSingleActivityWorld({
 }
 function createActivityWorld(options) {
   if (!options.ballSpawns?.length) return createSingleActivityWorld(options);
-  const worlds = options.ballSpawns.map((ballSpawn, i) => createSingleActivityWorld({ ...options, ballSpawn, npcs: i ? [] : options.npcs }));
+  const worlds = options.ballSpawns.map((ballSpawn, i) => createSingleActivityWorld({ ...options, ballSpawn, npcs: i ? [] : options.npcs, initialState: options.initialState ? { npcs: i ? [] : options.initialState.npcs, pom: options.initialState.poms?.[i] ?? (i === 0 ? options.initialState.pom : null) } : null }));
   const snapshot = () => {
     const first = worlds[0].snapshot();
     const poms = worlds.map((world, i) => ({ ...world.snapshot().pom, id: "world:pom:" + i }));
@@ -409,6 +425,7 @@ function createActivityWorld(options) {
   return {
     tick(players) { worlds.forEach(world => world.tick(players)); },
     resetBall() { worlds.forEach(world => world.resetBall()); },
+    depart(id, player) { worlds.forEach(world => world.depart(id, player)); },
     snapshot,
     action(player, command, players) {
       if (command?.type === "talk") return worlds[0].action(player, command, players);

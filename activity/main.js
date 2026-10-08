@@ -21,7 +21,24 @@ const etat = {
   messageCursor: 0,
 };
 let scene, music;
-const leave = document.createElement("button"); leave.textContent = "Quitter le duel"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
+const leave = document.createElement("button"); leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
+const chat = document.createElement("form");
+chat.id = "sky-chat";
+chat.hidden = true;
+chat.style.cssText = "position:fixed;right:16px;bottom:70px;z-index:15;width:300px;max-width:calc(100vw - 32px);padding:10px;box-sizing:border-box;background:#211c2aee;border:1px solid #b49760;border-radius:5px;color:#ffe7b0;font:13px system-ui";
+const chatLabel = document.createElement("label");
+chatLabel.textContent = "Discussion de la map";
+const chatInput = document.createElement("input");
+chatInput.name = "message"; chatInput.maxLength = 4000; chatInput.autocomplete = "off";
+chatInput.placeholder = "Votre message…";
+chatInput.style.cssText = "box-sizing:border-box;width:100%;padding:8px;margin:6px 0;color:#211c2a;background:#fff3d6;border:0;border-radius:3px";
+chatLabel.append(chatInput);
+const chatSend = document.createElement("button"); chatSend.type = "submit"; chatSend.textContent = "Envoyer";
+chatSend.style.cssText = "padding:6px 12px;background:#f3dfb4;color:#332319;border:0;border-radius:3px;cursor:pointer";
+const chatHint = document.createElement("small"); chatHint.textContent = " Visible par les joueurs de cette map.";
+chat.append(chatLabel,chatSend,chatHint); document.body.append(chat);
+chat.addEventListener("submit", event => { event.preventDefault(); if (scene?.speak(chatInput.value)) chatInput.value = ""; });
+chatInput.addEventListener("focus", () => window.dispatchEvent(new Event("blur")));
 function base64url(donnees) {
   const octets = new Uint8Array(donnees);
   let texte = "";
@@ -116,7 +133,7 @@ async function entrer() {
     character: etat.character,
     ...profile.player,
   };
-  bandeau.textContent = `Connecte : ${etat.moi.nom}\nSalon ${etat.salon}`;
+  bandeau.textContent = `Votre personnage : ${etat.moi.nom}\nMonde partagé · Les messages envoyés ici ou en MP à Capel apparaissent en bulles.`;
 }
 
 let wakePoll = () => {};
@@ -143,6 +160,9 @@ async function publier() {
     scene.onAction(() => wakePoll());
     await scene.me({id:result.ownId,character:result.character,...result.position});
     music.setTrack(new URL(etat.map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS));
+    etat.messageCursor = result.messageCursor;
+  } else if (result.relocated) {
+    await scene.resetSession({id:result.ownId,character:result.character,...result.position});
     etat.messageCursor = result.messageCursor;
   }
   document.querySelector("#hud h1").textContent = result.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
@@ -182,6 +202,7 @@ async function start() {
   leave.hidden = etat.map !== "arena";
   document.querySelector("#hud h1").textContent = etat.map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
   await scene.me({ ...etat.moi, character: etat.character });
+  chat.hidden = false;
   if (
     __ACTIVITY_PREVIEW__ &&
     apercuLocal &&
@@ -215,7 +236,8 @@ async function start() {
     bandeau.textContent =
       "Votre personnage du jour : " +
       etat.character +
-      (scene.catalogue[etat.character] ? "" : " · sprite Estelle provisoire");
+      (scene.catalogue[etat.character] ? "" : " · sprite Estelle provisoire") +
+      "\nMonde partagé · Vos MP à Capel deviennent des bulles.";
   }
   let failures = 0, timer, inFlight = false, requested = false, stopped = false;
   wakePoll = () => { requested = true; if (!inFlight && !stopped) { clearTimeout(timer); void poll(); } };

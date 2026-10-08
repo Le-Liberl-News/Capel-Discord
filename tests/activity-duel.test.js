@@ -17,13 +17,15 @@ test("private duel unites different DM channels, isolates other players and hide
  assert.throws(()=>lobby.joinDuel("match","intruder"));
  const left=await lobby.state(a.activity_token,{action:{id:"leave",type:"leave_duel"},x:99,z:99});assert.equal(left.map,"anterose");
 });
-test("different duels cannot see or damage one another; invitation expires",async()=>{
+test("different duels share one arena and its Poms; invitations still expire",async()=>{
  const {lobby,tick}=fixture();
  lobby.createDuel({id:"one",channel:"guild",players:["a","b"]});lobby.createDuel({id:"two",channel:"guild",players:["c","d"]});
  lobby.joinDuel("one","a");lobby.joinDuel("two","c");
  const a=await lobby.join({id:"a",channel:"dm-a"}),c=await lobby.join({id:"c",channel:"dm-c"});
- await lobby.state(a.activity_token);assert.equal((await lobby.state(c.activity_token)).joueurs.length,1);
- tick(30*60*1000+1);assert.throws(()=>lobby.joinDuel("one","b"));assert.equal((await lobby.state(a.activity_token)).map,"anterose");
+ await lobby.state(a.activity_token);const shared=await lobby.state(c.activity_token);assert.equal(shared.joueurs.length,2);assert.equal(shared.sceneKey,"arena");
+ const picked=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"shared-pickup",type:"pickup",target:"world:pom:0"}});
+ assert.equal((await lobby.state(c.activity_token)).poms[0].owner,picked.ownId);
+ tick(30*60*1000+1);assert.throws(()=>lobby.joinDuel("one","b"));assert.equal((await lobby.state(a.activity_token)).map,"arena");
 });
 test("separate Poms are atomic and a player cannot carry two",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"match",channel:"guild",players:["a","b"]});lobby.joinDuel("match","a");lobby.joinDuel("match","b");
@@ -63,7 +65,7 @@ test("duel assignment survives restart and both opponents can resume the same ar
  await assert.rejects(()=>lobby.state(old.activity_token),{status:401});
  const a=await lobby.join({id:"a",channel:"dm-a"}),b=await lobby.join({id:"b",channel:"dm-b"});
  const picked=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"pickup",type:"pickup",target:"world:pom:0"}});
- const peer=await lobby.state(b.activity_token);assert.equal(peer.joueurs.length,2);assert.equal(peer.sceneKey,"persisted");assert.equal(peer.poms[0].owner,picked.ownId);
+ const peer=await lobby.state(b.activity_token);assert.equal(peer.joueurs.length,2);assert.equal(peer.sceneKey,"arena");assert.equal(peer.poms[0].owner,picked.ownId);
 });
 test("a second window cannot alternate movement with the current controller",async()=>{
  const {lobby}=fixture();const first=await lobby.join({id:"a",channel:"guild"});await lobby.state(first.activity_token);
@@ -80,7 +82,7 @@ test("retrying the same duel resends both invitations and preserves the already 
  lobby.joinDuel(id,"real-alice");const player=await lobby.join({id:"real-alice",channel:"dm-a"});const before=await lobby.state(player.activity_token);
  time=30001;await manager.handle(command);const sent=calls.filter(c=>c[0]==="b");assert.equal(sent.length,2);assert.equal(sent[1][1].components[0].components[0].custom_id,"activity:"+id);
  assert.equal((await lobby.state(player.activity_token)).sceneKey,before.sceneKey);assert.equal(calls.filter(c=>c[0]==="public").length,1);
- time=60002;fail=true;await manager.handle(command);assert.equal((await lobby.state(player.activity_token)).sceneKey,id);assert.match(calls.at(-1)[1].content,/messages/);assert.doesNotMatch(calls.at(-1)[1].content,/private detail/);
+ time=60002;fail=true;await manager.handle(command);assert.equal((await lobby.state(player.activity_token)).sceneKey,"arena");assert.match(calls.at(-1)[1].content,/messages/);assert.doesNotMatch(calls.at(-1)[1].content,/private detail/);
 });
 test("a new challenge releases the initiating player's old assignment",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"occupied",channel:"guild",players:["real-alice","other"]});lobby.joinDuel("occupied","real-alice");
@@ -93,11 +95,11 @@ test("closed activity releases stale assignments while a connected opponent rema
  const b=await lobby.join({id:"b",channel:"dm-b"});await lobby.state(b.activity_token);
  tick(60000);await lobby.state(b.activity_token);tick(60001);await lobby.state(b.activity_token);assert.throws(()=>lobby.prepareDuel("c","b"),/actif/);
  lobby.prepareDuel("c","a");lobby.createDuel({id:"new",channel:"guild",players:["c","a"]});lobby.joinDuel("new","a");
- assert.equal((await lobby.join({id:"a",channel:"dm-a"})).map,"arena");assert.equal((await lobby.state(b.activity_token)).sceneKey,"old");
+ assert.equal((await lobby.join({id:"a",channel:"dm-a"})).map,"arena");assert.equal((await lobby.state(b.activity_token)).sceneKey,"arena");
 });
 test("accepting a new private invitation leaves the previous match",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"old",channel:"guild",players:["a","b"]});lobby.createDuel({id:"new",channel:"guild",players:["a","c"]});lobby.joinDuel("old","a");
- const a=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(a.activity_token);lobby.joinDuel("new","a");assert.equal((await lobby.state(a.activity_token)).sceneKey,"new");
+ const a=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(a.activity_token);lobby.joinDuel("new","a");const transfer=await lobby.state(a.activity_token);assert.equal(transfer.sceneKey,"arena");assert.equal(transfer.relocated,true);
 });
 test("the same pair resumes its duel even when the new command comes from another channel",()=>{
  const {lobby}=fixture();lobby.createDuel({id:"old",channel:"first",players:["a","b"]});lobby.joinDuel("old","a");assert.equal(lobby.findDuel(["b","a"],"second").id,"old");
@@ -121,7 +123,7 @@ test("a duel is cancelled only when neither participant received an invitation",
  assert.equal(lobby.findDuel(["real-alice","real-bob"],"guild"),null);assert.match(reply,/messages/);
 });
 
-test("both private duel windows return to the original channel's ongoing roleplay", async()=>{
+test("all Discord channels and returning duel windows share one ongoing roleplay", async()=>{
  const {lobby}=fixture();
  const rp=await lobby.join({id:"rp",channel:"guild-home"});await lobby.state(rp.activity_token);
  const other=await lobby.join({id:"other",channel:"different-guild"});await lobby.state(other.activity_token);
@@ -130,11 +132,45 @@ test("both private duel windows return to the original channel's ongoing rolepla
  await lobby.state(a.activity_token);await lobby.state(b.activity_token);
  const first=await lobby.state(a.activity_token,{action:{id:"leave-a",type:"leave_duel"}});
  const second=await lobby.state(b.activity_token,{action:{id:"leave-b",type:"leave_duel"}});
- assert.equal(first.map,"anterose");assert.equal(second.map,"anterose");assert.equal(second.joueurs.length,3);
- assert.equal((await lobby.state(rp.activity_token)).joueurs.length,3);
- assert.equal((await lobby.state(other.activity_token)).joueurs.length,1);
+ assert.equal(first.map,"anterose");assert.equal(second.map,"anterose");assert.equal(second.joueurs.length,4);
+ assert.equal((await lobby.state(rp.activity_token)).joueurs.length,4);
+ assert.equal((await lobby.state(other.activity_token)).joueurs.length,4);
  assert.equal(lobby.captureMessage({id:"speech",channel:"guild-home",author:"rp",text:"Bienvenue !"}),true);
  assert.equal((await lobby.state(a.activity_token)).messages.at(-1).text,"Bienvenue !");
  assert.equal((await lobby.state(b.activity_token)).messages.at(-1).text,"Bienvenue !");
- const reconnect=await lobby.join({id:"a",channel:"dm-a"});assert.equal((await lobby.state(reconnect.activity_token)).joueurs.length,3);
+ const reconnect=await lobby.join({id:"a",channel:"dm-a"});assert.equal((await lobby.state(reconnect.activity_token)).joueurs.length,4);
+});
+
+test("private messages follow the speaker's map without leaking unrelated conversations", async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:"chat",channel:"guild",players:["a","b"]});lobby.joinDuel("chat","a");lobby.joinDuel("chat","b");
+ const a=await lobby.join({id:"a",channel:"dm-a"}),b=await lobby.join({id:"b",channel:"dm-b"}),rp=await lobby.join({id:"rp",channel:"other-guild"});
+ await lobby.state(a.activity_token);await lobby.state(b.activity_token);await lobby.state(rp.activity_token);
+ assert.equal(lobby.captureMessage({id:"dm-speech",channel:"dm-a",author:"a",text:"Salut !"}),true);
+ assert.equal((await lobby.state(b.activity_token)).messages.at(-1).text,"Salut !");assert.equal((await lobby.state(rp.activity_token)).messages.length,0);
+ assert.equal(lobby.captureMessage({id:"private",channel:"unrelated-dm",author:"a",text:"private"}),false);
+ assert.equal(lobby.captureMessage({id:"capel-dm",channel:"capel-dm-a",direct:true,author:"a",text:"Message au bot"}),true);
+ assert.equal((await lobby.state(b.activity_token)).messages.at(-1).text,"Message au bot");
+ await lobby.state(a.activity_token,{action:{id:"exit-a",type:"leave_duel"}});await lobby.state(b.activity_token,{action:{id:"exit-b",type:"leave_duel"}});
+ assert.equal(lobby.captureMessage({id:"dm-home",channel:"dm-b",author:"b",text:"Retour au restaurant"}),true);
+ assert.equal((await lobby.state(a.activity_token)).messages.at(-1).text,"Retour au restaurant");
+ assert.equal((await lobby.state(rp.activity_token)).messages.at(-1).text,"Retour au restaurant");
+});
+test("closing and reopening in a server channel keeps the same avatar, map and position",async()=>{
+ const {lobby,tick}=fixture();const dm=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(dm.activity_token);tick(1000);
+ const moved=await lobby.state(dm.activity_token,{x:4,z:1});const guild=await lobby.join({id:"a",channel:"guild"});const fresh=await lobby.state(guild.activity_token);
+ assert.equal(fresh.ownId,moved.ownId);assert.deepEqual(fresh.position,moved.position);assert.equal(fresh.joueurs.length,1);
+ await assert.rejects(()=>lobby.state(dm.activity_token),{status:409});
+});
+test("world saves survive restart and empty maps without copying connected avatars",async()=>{
+ let time=0,metadata;const files={};const memory=name=>({load:()=>files[name],save:data=>files[name]=structuredClone(data)});
+ const options={grid,now:()=>time,resolveCharacter:async()=>"Estelle",store:{load:()=>metadata,save:data=>metadata=structuredClone(data)},worldStores:{anterose:memory("tavern"),arena:memory("arena")},residents:{npcs:[],ballSpawn:{x:2,y:.375,z:1}},arena:{grid,residents:{npcs:[],ballSpawns:[{x:2,y:.375,z:1}]}}};
+ let lobby=createActivityLobby(options);const a=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(a.activity_token);time=1000;
+ const moved=await lobby.state(a.activity_token,{x:4,z:1});assert.deepEqual(moved.position,{x:4,y:0,z:1});
+ lobby=createActivityLobby(options);const restored=await lobby.join({id:"a",channel:"guild"});assert.deepEqual((await lobby.state(restored.activity_token)).position,moved.position);
+ lobby.createDuel({id:"move-map",channel:"guild",players:["a","b"]});lobby.joinDuel("move-map","a");await lobby.state(restored.activity_token);time=2000;
+ await lobby.state(restored.activity_token,{x:3,z:1});
+ lobby=createActivityLobby(options);const arena=await lobby.join({id:"a",channel:"other-dm"});assert.equal(arena.map,"arena");assert.equal((await lobby.state(arena.activity_token)).position.x,3);
+ const home=await lobby.state(arena.activity_token,{action:{id:"go-home",type:"leave_duel"}});assert.deepEqual(home.position,moved.position);assert.equal(home.joueurs.length,1);
+ time+=16000;const visitor=await lobby.join({id:"visitor",channel:"third-channel"});const world=await lobby.state(visitor.activity_token);assert.equal(world.joueurs.length,1);assert.equal(world.pom.x,2);
+ const back=await lobby.join({id:"a",channel:"dm-a"});assert.deepEqual((await lobby.state(back.activity_token)).position,moved.position);
 });
