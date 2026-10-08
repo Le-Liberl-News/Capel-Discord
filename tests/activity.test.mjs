@@ -237,3 +237,11 @@ test("two finger camera gestures cancel long presses and never trigger leftover 
  const f=touchFixture();f.controls.down(f.event(1,100));f.controls.down(f.event(2,200));f.hold();f.controls.move(f.event(2,220,120));assert.equal(f.calls.length,1);assert.equal(f.calls[0][0],"camera");assert.ok(f.calls[0][1].scale<1);assert.equal(f.calls[0][1].dx,10);
  f.controls.up(f.event(2,220,120));f.controls.up(f.event(1));assert.equal(f.calls.length,1);
 });
+
+import {positionOf,avatarAtPosition} from "../activity/avatar-state.mjs";
+test("local prop changes preserve predicted position without retaining stale appearance",()=>{
+ const old={id:"old",character:"Kanone",prop:null,x:3,y:0,z:5};
+ const next=avatarAtPosition({id:"avatar:current",character:"Kanone",prop:"barrel",x:1,y:0,z:1},old);
+ assert.equal(next.prop,"barrel");assert.equal(next.id,"avatar:current");assert.deepEqual(positionOf(next),{x:3,y:0,z:5});
+ const found=avatarAtPosition({...next,prop:null,character:"Phyllis"},{...old,prop:"barrel"});assert.equal(found.prop,null);assert.equal(found.character,"Phyllis");assert.deepEqual(Object.keys(positionOf(found)),["x","y","z"]);
+});

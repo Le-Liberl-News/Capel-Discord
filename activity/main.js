@@ -176,15 +176,17 @@ async function publier() {
     }),
   });
   const result = response;
+  const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
+  etat.moi=ownPlayer;
   if (result.map !== (etat.map ?? "anterose") || (etat.sceneKey && result.sceneKey !== etat.sceneKey)) {
     scene.dispose(); etat.map = result.map;
     scene = await createSkyScene(toile, etat.map);
     scene.onAction(() => wakePoll());
-    await scene.me({id:result.ownId,character:result.character,...result.position});
+    await scene.me(ownPlayer);
     music.setTrack(musicUrl(etat.map));
     etat.messageCursor = result.messageCursor;
   } else if (result.relocated) {
-    await scene.resetSession({id:result.ownId,character:result.character,...result.position});
+    await scene.resetSession(ownPlayer);
     etat.messageCursor = result.messageCursor;
   }
   document.querySelector("#hud h1").textContent = mapTitle(result.map);
@@ -203,11 +205,6 @@ async function publier() {
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
-    await scene.me({
-      ...etat.moi,
-      ...scene.position(),
-      character: result.character,
-    });
     bandeau.textContent = "Votre personnage du jour : " + result.character;
   }
 }

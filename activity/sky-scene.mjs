@@ -1,3 +1,4 @@
+import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
 import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
 import { createArenaCutaway, versionAsset } from "./scene-visibility.mjs";
@@ -678,10 +679,10 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
-    async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,player); connected=false; },
+    async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
     },
@@ -736,8 +737,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       for (const player of players) {
         if (player.id === localId) {
           const current = avatars.get(localId);
-          if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null)))
-            await setAvatar({ ...player, ...current.position });
+          if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null) || current.character !== (catalogue[player.character]?player.character:"Estelle")))
+            await setAvatar(avatarAtPosition(player,current.position));
           else if (current) current.hp = player.hp ?? 100;
           continue;
         }
