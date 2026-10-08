@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { createDialogues } from "./dialogue.mjs";
+import { needsCorrection } from "./reconciliation.mjs";
 import { advance, route, nearestCell, pointAt, facing } from "./movement.mjs";
-const ASSETS = new URL(
+export const ASSETS = new URL(
   new URLSearchParams(location.search).has("frame_id")
     ? "/.proxy/assets/sky/"
     : "./assets/sky/",
@@ -405,12 +406,11 @@ export async function createSkyScene(canvas) {
           avatars.delete(id);
         }
     },
-    correct(position) {
+    correct(position, submitted) {
       const me = avatars.get(localId);
       if (
         me &&
-        position &&
-        Math.hypot(me.position.x - position.x, me.position.z - position.z) > 0.8
+        needsCorrection(me.position, position, submitted)
       ) {
         Object.assign(me.position, position);
         path = [];

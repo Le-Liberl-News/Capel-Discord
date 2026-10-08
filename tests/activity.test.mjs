@@ -98,3 +98,63 @@ test('height changes smoothly while walking onto a step',()=>{
  advance(p,[{x:1,y:.25,z:0}],.1,1);
  assert.equal(p.y,.025);
 });
+
+
+test("a delayed accepted position never rewinds local movement", async () => {
+  const { needsCorrection } = await import("../activity/reconciliation.mjs");
+  const sent = { x: 1, z: 2 };
+  assert.equal(needsCorrection({ x: 5, z: 2 }, { ...sent }, sent), false);
+  assert.equal(needsCorrection({ x: 5, z: 2 }, { x: 0, z: 2 }, sent), true);
+  assert.equal(needsCorrection({ x: 1.2, z: 2 }, { x: 1.01, z: 2 }, sent), false);
+});
+
+test("music retries blocked autoplay on a gesture and remembers mute", async () => {
+  const { createMapMusic } = await import("../activity/music.mjs");
+  const previous = { Audio: globalThis.Audio, document: globalThis.document, localStorage: globalThis.localStorage };
+  const events = new Map(), storage = new Map();
+  let audio;
+  const button = { style: {}, events: {}, setAttribute() {}, addEventListener(name, cb) { this.events[name] = cb; }, remove() {} };
+  globalThis.document = {
+    createElement: () => button, body: { append() {} },
+    addEventListener: (name, cb) => events.set(name, cb),
+    removeEventListener: (name) => events.delete(name),
+  };
+  globalThis.localStorage = { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) };
+  globalThis.Audio = class {
+    paused = true;
+    calls = 0;
+    constructor(url) { this.url = url; audio = this; }
+    async play() { if (++this.calls === 1) throw new Error("Autoplay blocked"); this.paused = false; }
+    pause() { this.paused = true; }
+    addEventListener() {}
+    removeAttribute() {}
+    load() {}
+  };
+  let music;
+  try {
+    music = createMapMusic(new URL("https://example.test/anterose.ogg"));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(audio.paused, true);
+    events.get("pointerdown")({ target: {} });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(audio.paused, false);
+    assert.equal(audio.loop, true);
+    button.events.click();
+    assert.equal(audio.paused, true);
+    assert.equal(storage.get("anterose-music-muted"), "1");
+    events.get("pointerdown")({ target: {} });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(audio.paused, true, "moving must not unmute music");
+  } finally {
+    music?.dispose();
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
+    }
+  }
+});
+
+test("the restaurant music asset is an Ogg file", () => {
+  const music = fs.readFileSync(new URL("../activity/assets/sky/music/anterose.ogg", import.meta.url));
+  assert.equal(music.subarray(0, 4).toString(), "OggS");
+  assert.ok(music.length > 100000);
+});

@@ -55,3 +55,9 @@ Le premier export nécessite les archives extraites avec ed6-archive (outil loca
 Copier deploy/index.php, deploy/api.php, bundle.js et assets/ dans le dossier activite du site. Le bot doit recevoir les modifications de index.js et utils/activityService.js, ainsi que activity/assets/sky/navigation.json. Le relais PHP transmet l’en-tête Authorization au bot ; l’hébergement doit le fournir à PHP. Ne pas mettre à jour uniquement le client : les anciennes routes state n’ont pas l’identification du prototype.
 
 La publication suit activity/DEPLOYMENT.md. Les contrôles de démonstration restent réservés à l’aperçu local ; le client publié impose Discord.
+
+## Musique et synchronisation
+
+ED6101.ogg accompagne la map en boucle, volume initial 25 %. Le bouton en bas à droite coupe/réactive la musique et conserve ce choix localement. Si la lecture automatique est refusée, le premier geste de l’utilisateur la lance.
+
+Les accusés de position sont comparés à la copie envoyée dans la requête : la latence ne replace plus le personnage à une position valide mais ancienne. Les déplacements refusés par le serveur restent corrigés.

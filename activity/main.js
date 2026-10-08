@@ -1,5 +1,6 @@
 import { DiscordSDK } from "@discord/embedded-app-sdk";
-import { createSkyScene } from "./sky-scene.mjs";
+import { createMapMusic } from "./music.mjs";
+import { createSkyScene, ASSETS } from "./sky-scene.mjs";
 const CLIENT_ID = window.__CLIENT_ID__ || "__CLIENT_ID__";
 const dedansDiscord = new URLSearchParams(location.search).has("frame_id");
 const apercuLocal = __ACTIVITY_PREVIEW__ && !dedansDiscord;
@@ -115,17 +116,18 @@ async function entrer() {
 
 async function publier() {
   if (!etat.token) return;
+  const submitted = { ...scene.position() };
   const response = await fetch(apiUrl("state"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: "Bearer " + etat.token,
     },
-    body: JSON.stringify({ ...scene.position(), after: etat.messageCursor }),
+    body: JSON.stringify({ ...submitted, after: etat.messageCursor }),
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.erreur ?? "Connexion perdue");
-  scene.correct(result.position);
+  scene.correct(result.position, submitted);
   await scene.sync(result.joueurs);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
@@ -146,6 +148,7 @@ async function start() {
   }
   etape("Chargement du restaurant Antérose…");
   scene = await createSkyScene(toile);
+  createMapMusic(new URL("music/anterose.ogg", ASSETS));
   await entrer();
   await scene.me({ ...etat.moi, character: etat.character });
   if (

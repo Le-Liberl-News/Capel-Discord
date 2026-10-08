@@ -10,3 +10,5 @@ Le modèle T1131 et ses textures proviennent de l’installation locale Steam de
 Les éléments des bulles proviennent des atlas originaux ED6_DT00/c_waku3._ch et c_icon1._ch de Sky FC. Les découpes sont reproductibles avec tools/export_dialogue_assets.py.
 
 Averia Sans Libre : [Google Fonts](https://github.com/google/fonts/tree/main/ofl/averiasanslibre), SIL Open Font License 1.1 ; le fichier OFL.txt est conservé avec la copie de la police dans assets/sky/dialogue.
+
+Musique de la map : BGM/ED6101.ogg (Commercial City of Bose), copie de l’installation Steam FC dans assets/sky/music/anterose.ogg. Le scénario T1131 utilise BGM 11.
