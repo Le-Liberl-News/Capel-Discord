@@ -51,21 +51,22 @@ jobs:
         trap cleanup_ssh EXIT
         
         echo "🚀 Début du transfert des fichiers..."
-        rsync -avz \
+        sshpass -d 3 rsync -avz \
           --exclude='.git/' \
           --exclude='.github/' \
           --exclude='.env' \
           --exclude='credentials.json' \
           --exclude='node_modules/' \
           --exclude='uploads/' \
-          -e "ssh -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
-          ./ "$SSH_TARGET:$TARGET_DIR/"
+          -e "ssh -o StrictHostKeyChecking=yes -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
+          ./ "$SSH_TARGET:$TARGET_DIR/" 3<<<"$VPS_PASS"
         
         echo "🔄 Redémarrage du bot avec le moteur Orbal..."
-        ssh \
+        sshpass -d 3 ssh \
+          -o StrictHostKeyChecking=yes \
           -o ControlMaster=no \
           -o ControlPath="$SSH_CONTROL_PATH" \
-          -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" << 'EOF'
+          -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 3<<<"$VPS_PASS" << 'EOF'
           set -euo pipefail
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
