@@ -19,7 +19,7 @@ function createActivityPropHunt({lobby,resolveCharacter}) {
    }catch(error){await interaction.editReply({content:error instanceof ActivityError?error.message:'Ouvrez vos messages prives a Capel puis reessayez.'});}return true;
   }
   if(kind.startsWith('activity:prophunt:')){
-   try{if(!interaction.channel?.isDMBased?.())throw new ActivityError('Ouvrez le bouton prive.');const id=kind.slice('activity:prophunt:'.length);const character=await resolveCharacter(interaction.user.id);lobby.validateJoinHunt(id,interaction.user.id);await interaction.launchActivity();lobby.joinHunt(id,interaction.user.id,character);}
+   try{if(!interaction.channel?.isDMBased?.())throw new ActivityError('Ouvrez le bouton prive.');const id=kind.slice('activity:prophunt:'.length);const character=await resolveCharacter(interaction.user.id);lobby.validateJoinHunt(id,interaction.user.id);if(lobby.isConnected(interaction.user.id)){lobby.joinHunt(id,interaction.user.id,character);await interaction.reply({content:"Vous rejoignez Rolent dans votre activité déjà ouverte.",flags:64});}else{await interaction.launchActivity();lobby.joinHunt(id,interaction.user.id,character);}}
    catch(error){if(!interaction.replied)await interaction.reply({content:error instanceof ActivityError?error.message:'Fermez votre activite actuelle puis reessayez ce bouton.',flags:64});}return true;
   }
   if(kind.startsWith('prophunt:start:')){

@@ -89,7 +89,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
         return true;
       }
       if(interaction.isButton?.() && interaction.customId.startsWith("activity:watch:duel:")) {
-        try { const id=interaction.customId.slice("activity:watch:".length); lobby.validateSpectate(id); await interaction.launchActivity(); lobby.spectateDuel(id,interaction.user.id); }
+        try { const id=interaction.customId.slice("activity:watch:".length); lobby.validateSpectate(id); if(lobby.isConnected(interaction.user.id)) { lobby.spectateDuel(id,interaction.user.id); await interaction.reply({content:"Vous rejoignez les tribunes dans votre activité déjà ouverte.",flags:64}); } else { await interaction.launchActivity(); lobby.spectateDuel(id,interaction.user.id); } }
         catch(error) { if(!interaction.replied) await interaction.reply({content:error instanceof ActivityError?error.message:"Fermez votre activité actuelle puis réessayez ce bouton.",flags:64}); }
         return true;
       }

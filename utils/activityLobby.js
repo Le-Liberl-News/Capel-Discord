@@ -54,6 +54,7 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
       pom:pom(result.pom), poms:result.poms?.map(pom) };
   }
   return {
+    isConnected(user) { const session=sessions.get(active.get(user));return !!session && session.expires>now() && now()-(session.seen??-Infinity)<15000; },
     findDuel(players, channel) {
       prune();
       for (const [id, duel] of duels) {
@@ -109,12 +110,13 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
       active.set(id,token);
       if (!sources.has(id)) sources.set(id,new Set());
       sources.get(id).add(channel);
-      sessions.set(token,{id,channel,key:target.key,match:target.match,service:target.service,token:result.activity_token,expires:now()+2*60*60*1000});
+      sessions.set(token,{id,channel,key:target.key,match:target.match,service:target.service,token:result.activity_token,seen:now(),expires:now()+2*60*60*1000});
       return {...sanitize(result),activity_token:token,map:target.map};
     },
     async state(token,point,after) {
       prune(); const session=sessions.get(token); if (!session) throw new ActivityError("Reconnectez-vous à l'activité.",401);
       if (active.get(session.id)!==token) throw new ActivityError("Activité ouverte dans une autre fenêtre.",409);
+      session.seen=now();
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
       if (["leave_duel","leave_map"].includes(point?.action?.type)) { huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }
       const target=destination(session.id); let changed=false;

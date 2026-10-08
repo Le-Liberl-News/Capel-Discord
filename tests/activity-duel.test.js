@@ -247,6 +247,14 @@ test("Prop Hunt publish failures release the lobby and failed Discord launches d
  const id=lobby.createHunt('a',10).id;
  await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{throw Error('already active');},reply:async x=>response=x});
  assert.equal(lobby.huntSummary().count,0);assert.equal((await lobby.join({id:'b',channel:'dm'})).map,'anterose');
- await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{}});
+ await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{throw Error('must reuse the open activity');},reply:async()=>{}});
  assert.equal(lobby.huntSummary().count,1);assert.equal((await lobby.join({id:'b',channel:'dm'})).map,'rolent');
+});
+
+test("watching from an already open activity teleports without a second Discord launch",async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:'duel:live',players:['a','b'],channel:'guild'});lobby.acceptDuel('duel:live','a');lobby.acceptDuel('duel:live','b');
+ const viewer=await lobby.join({id:'c',channel:'dm'});await lobby.state(viewer.activity_token);
+ const manager=createActivityDuels({lobby,characterNames:[]});let replied=false;
+ await manager.handle({isButton:()=>true,customId:'activity:watch:duel:live',user:{id:'c'},launchActivity:async()=>{throw Error('must not relaunch');},reply:async()=>{replied=true;}});
+ const result=await lobby.state(viewer.activity_token);assert.equal(replied,true);assert.equal(result.map,'arena');assert.equal(result.health.spectator,true);
 });
