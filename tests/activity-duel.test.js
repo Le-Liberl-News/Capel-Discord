@@ -120,3 +120,21 @@ test("a duel is cancelled only when neither participant received an invitation",
  await manager.handle({isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:reject},client:{users:{fetch:async()=>({send:reject})}},deferReply:async()=>{},editReply:async data=>reply=data.content});
  assert.equal(lobby.findDuel(["real-alice","real-bob"],"guild"),null);assert.match(reply,/messages/);
 });
+
+test("both private duel windows return to the original channel's ongoing roleplay", async()=>{
+ const {lobby}=fixture();
+ const rp=await lobby.join({id:"rp",channel:"guild-home"});await lobby.state(rp.activity_token);
+ const other=await lobby.join({id:"other",channel:"different-guild"});await lobby.state(other.activity_token);
+ lobby.createDuel({id:"private",channel:"guild-home",players:["a","b"]});lobby.joinDuel("private","a");lobby.joinDuel("private","b");
+ const a=await lobby.join({id:"a",channel:"dm-a"}),b=await lobby.join({id:"b",channel:"dm-b"});
+ await lobby.state(a.activity_token);await lobby.state(b.activity_token);
+ const first=await lobby.state(a.activity_token,{action:{id:"leave-a",type:"leave_duel"}});
+ const second=await lobby.state(b.activity_token,{action:{id:"leave-b",type:"leave_duel"}});
+ assert.equal(first.map,"anterose");assert.equal(second.map,"anterose");assert.equal(second.joueurs.length,3);
+ assert.equal((await lobby.state(rp.activity_token)).joueurs.length,3);
+ assert.equal((await lobby.state(other.activity_token)).joueurs.length,1);
+ assert.equal(lobby.captureMessage({id:"speech",channel:"guild-home",author:"rp",text:"Bienvenue !"}),true);
+ assert.equal((await lobby.state(a.activity_token)).messages.at(-1).text,"Bienvenue !");
+ assert.equal((await lobby.state(b.activity_token)).messages.at(-1).text,"Bienvenue !");
+ const reconnect=await lobby.join({id:"a",channel:"dm-a"});assert.equal((await lobby.state(reconnect.activity_token)).joueurs.length,3);
+});

@@ -19,6 +19,9 @@ function createActivityLobby({ arena, store = null, now = Date.now, ...options }
   };
   function release(user) {
     const match = assignments.get(user);
+    const home = duels.get(match)?.channel;
+    // A duel opens in DMs but belongs to the channel where it was challenged.
+    if (home) for (const session of sessions.values()) if (session.id === user) { session.channel = home; session.homeChannel = home; }
     assignments.delete(user); lastSeen.delete(user);
     for (const session of sessions.values()) if (session.id === user && session.key === match) session.service.leave(session.token);
   }
@@ -26,7 +29,7 @@ function createActivityLobby({ arena, store = null, now = Date.now, ...options }
     let changed = false;
     for (const [user] of assignments) if (now() - (lastSeen.get(user) ?? 0) > presenceGrace) { release(user); changed = true; }
     for (const [id, duel] of duels) if (duel.expires < now()) {
-      duels.delete(id); for (const [user, match] of assignments) if (match === id) release(user); changed = true;
+      for (const [user, match] of assignments) if (match === id) release(user); duels.delete(id); changed = true;
     }
     for (const [token, s] of sessions) if (s.expires < now()) sessions.delete(token);
     if (changed) persist();
@@ -67,7 +70,7 @@ function createActivityLobby({ arena, store = null, now = Date.now, ...options }
       if (assignments.get(user) !== id) release(user);
       assignments.set(user,id); lastSeen.set(user,now()); persist();
     },
-    cancelDuel(id) { duels.delete(id); for (const [user, match] of assignments) if (match===id) release(user); persist(); },
+    cancelDuel(id) { for (const [user, match] of assignments) if (match===id) release(user); duels.delete(id); persist(); },
     leaveDuel(user) { release(user); persist(); },
     captureMessage(message) {
       const target=destination(message.author);
@@ -81,10 +84,10 @@ function createActivityLobby({ arena, store = null, now = Date.now, ...options }
       prune();
       if (assignments.has(id)) lastSeen.set(id,now());
       const old=sessions.get(active.get(id)); if (old) old.service.leave(old.token,true);
-      const target=destination(id), result=await target.service.join({id,channel:target.channel??channel});
+      const target=destination(id), result=await target.service.join({id,channel:target.channel??old?.homeChannel??channel});
       const token=randomBytes(32).toString("hex");
       active.set(id,token);
-      sessions.set(token,{id,channel,key:target.key,service:target.service,token:result.activity_token,expires:now()+2*60*60*1000});
+      sessions.set(token,{id,channel:target.map === "arena" ? duels.get(target.key).channel : (old?.homeChannel ?? channel),homeChannel:old?.homeChannel,key:target.key,service:target.service,token:result.activity_token,expires:now()+2*60*60*1000});
       return {...sanitize(result),activity_token:token,map:target.map};
     },
     async state(token,point,after) {

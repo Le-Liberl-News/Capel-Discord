@@ -1,3 +1,4 @@
+import { createArenaCutaway, versionAsset } from "./scene-visibility.mjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
 import collisionModule from "./surface-collision.cjs";
 import { createProjectilePlayback } from "./projectile.mjs";
@@ -29,7 +30,12 @@ export async function createSkyScene(canvas, map = "anterose") {
     catalogue = await fetch(new URL("characters.json", ASSETS)).then((r) =>
       r.json(),
     );
-  const loaded = await new GLTFLoader().loadAsync(
+  const version = new URL(import.meta.url).searchParams.get("v") ?? "arena-20261008-2";
+  const loading = new THREE.LoadingManager();
+  loading.setURLModifier(url => versionAsset(url, version));
+  const cutaway = map === "arena" ? createArenaCutaway() : null;
+  renderer.localClippingEnabled = !!cutaway;
+  const loaded = await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = loaded.scene;
@@ -41,15 +47,21 @@ export async function createSkyScene(canvas, map = "anterose") {
       const materials = Array.isArray(object.material)
         ? object.material
         : [object.material];
-      for (const material of materials)
+      for (const material of materials) {
+        if (cutaway) {
+          material.clippingPlanes = cutaway.planes;
+          material.clipIntersection = true;
+          material.needsUpdate = true;
+        }
         if (material.map) {
           material.map.magFilter = THREE.NearestFilter;
           material.map.minFilter = THREE.LinearFilter;
           material.map.needsUpdate = true;
         }
+      }
     }
   });
-  const grid = await fetch(new URL("navigation.json", mapAssets)).then((r) =>
+  const grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
   const dialogues = await createDialogues(ASSETS);
@@ -122,7 +134,7 @@ export async function createSkyScene(canvas, map = "anterose") {
           .filter(([id, a]) => id !== localId && id !== "world:pom" && !a.npc)
           .map(([, a]) => a.mesh),
       ];
-      const hit = raycaster.intersectObjects(targets, true)[0];
+      const hit = raycaster.intersectObjects(targets, true).find(hit => !cutaway || !model.getObjectById(hit.object.id) || cutaway.visible(hit.point));
       let aim;
       if (hit) {
         aim = hit.point.clone();
@@ -178,7 +190,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     menu.style.left = Math.min(event.clientX, innerWidth - 260) + "px";
     menu.style.top = Math.min(event.clientY, innerHeight - 180) + "px";
   }
-  const textureLoader = new THREE.TextureLoader();
+  const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
   const marker = new THREE.Mesh(
     new THREE.RingGeometry(0.15, 0.22, 24),
@@ -338,6 +350,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const me = avatars.get(localId);
     if (!me) return;
     for (const hit of hits) {
+      if (cutaway && !cutaway.visible(hit.point)) continue;
       const cell = nearestCell(grid, hit.point);
       if (!cell) continue;
       const destination = pointAt(grid, cell);
@@ -436,6 +449,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     );
     camera.lookAt(follow);
     camera.updateMatrixWorld();
+    cutaway?.update(camera, follow);
     const right = {
         x: camera.matrixWorld.elements[0],
         z: camera.matrixWorld.elements[2],

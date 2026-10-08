@@ -62,16 +62,16 @@ const step = settings.step ?? 0.2,
 for (let z = 0; z < height; z++)
   for (let x = 0; x < width; x++) {
     ray.set(
-      new THREE.Vector3(origin.x + x * step, 10, origin.z + z * step),
+      new THREE.Vector3(origin.x + x * step, settings.rayHeight ?? 10, origin.z + z * step),
       new THREE.Vector3(0, -1, 0),
     );
     const hits = ray.intersectObject(scene, true),
-      top = hits.find(hit => hit.point.y >= -0.1 && hit.point.y <= 3.5 && Math.abs(hit.face.normal.y) > 0.7);
+      top = hits.find(hit => hit.point.y >= (settings.minY ?? -0.1) && hit.point.y <= (settings.maxY ?? 3.5) && Math.abs(hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y) > 0.7);
     cells.push(
       top &&
-        top.point.y >= -0.1 &&
-        top.point.y <= 3.5 &&
-        Math.abs(top.face.normal.y) > 0.7
+        top.point.y >= (settings.minY ?? -0.1) &&
+        top.point.y <= (settings.maxY ?? 3.5) &&
+        Math.abs(top.face.normal.clone().transformDirection(top.object.matrixWorld).y) > 0.7
         ? Math.round(top.point.y * 1000) / 1000
         : null,
     );

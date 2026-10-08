@@ -174,3 +174,28 @@ test("held movement retains the exact heading instead of snapping back to grid c
  const p={x:1.03,y:0,z:1.02},dx=.4,dz=Math.sqrt(1-dx*dx);
  for(let i=0;i<90;i++) { const path=route(g,p,{x:p.x+dx*.6,z:p.z+dz*.6}); const motion=advance(p,path,1/60,1); assert.ok(Math.abs(motion.dx-dx)<1e-7); assert.ok(Math.abs(motion.dz-dz)<1e-7); }
 });
+
+import * as THREE from "three";
+import { createArenaCutaway, versionAsset } from "../activity/scene-visibility.mjs";
+test("arena navigation reaches both ends of the combat field", () => {
+  const arena = JSON.parse(fs.readFileSync(new URL("../activity/assets/sky/arena/navigation.json", import.meta.url)));
+  for (const target of [{x:0,z:-22},{x:0,z:10},{x:-9,z:-15},{x:8,z:-15}]) {
+    const path = route(arena, arena.spawn, target);
+    assert.ok(path.length, JSON.stringify(target));
+    assert.equal(path.at(-1).x, target.x);
+    assert.equal(path.at(-1).z, target.z);
+  }
+});
+test("arena foreground cut follows rotations and never removes ground or rear walls", () => {
+  const cut = createArenaCutaway(), focus = new THREE.Vector3(0,0,0), camera = new THREE.PerspectiveCamera();
+  for (const sign of [-1,1]) {
+    camera.position.set(0,12,sign*17); camera.lookAt(focus); camera.updateMatrixWorld(); cut.update(camera,focus);
+    assert.equal(cut.visible(new THREE.Vector3(0,5,sign*8)),false);
+    assert.equal(cut.visible(new THREE.Vector3(0,0,sign*8)),true);
+    assert.equal(cut.visible(new THREE.Vector3(0,5,-sign*8)),true);
+  }
+});
+test("asset versions refresh old textures without rewriting embedded model buffers", () => {
+  assert.equal(versionAsset("https://example.test/plant.png?old=1","new"),"https://example.test/plant.png?old=1&v=new");
+  assert.equal(versionAsset("data:application/octet-stream;base64,AA==","new"),"data:application/octet-stream;base64,AA==");
+});
