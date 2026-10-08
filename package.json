@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@discord/embedded-app-sdk": "2.5.0",
     "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.19.2",
     "@google/generative-ai": "^0.24.1",
@@ -16,6 +17,15 @@
     "mysql2": "^3.22.0",
     "node-cron": "^4.2.1",
     "opusscript": "^0.0.8",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.0"
+  },
+  "scripts": {
+    "activity:build": "esbuild activity/main.js --bundle --format=esm --minify --legal-comments=eof --outfile=activity/bundle.js --define:__ACTIVITY_PREVIEW__=false",
+    "activity:preview": "node activity/tools/preview.cjs",
+    "activity:test": "node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs"
   }
 }

@@ -1,0 +1,1343 @@
+{
+  "Estelle": {
+    "texture": "ch00000.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Joshua": {
+    "texture": "ch00010.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 89,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Scherazard": {
+    "texture": "ch00020.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 48,
+    "frameHeight": 93,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Olivier": {
+    "texture": "ch00030.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 47,
+    "frameHeight": 93,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Kloe": {
+    "texture": "ch00040.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 89,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Agate": {
+    "texture": "ch00050.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 54,
+    "frameHeight": 96,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Tita": {
+    "texture": "ch00060.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 60,
+    "frameHeight": 81,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Zin": {
+    "texture": "ch00070.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 73,
+    "frameHeight": 119,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Nial": {
+    "texture": "ch02060.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 92,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Luciola": {
+    "texture": "ch03520.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 52,
+    "frameHeight": 98,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Bleublanc": {
+    "texture": "ch03530.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 62,
+    "frameHeight": 96,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Campanella": {
+    "texture": "ch03600.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 93,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Weissmann": {
+    "texture": "ch03550.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 95,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Renne": {
+    "texture": "ch03510.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 78,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Professeur Russell": {
+    "texture": "ch02020.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 82,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Julia": {
+    "texture": "ch03580.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 88,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Josette": {
+    "texture": "ch03100.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 38,
+    "frameHeight": 91,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Anelace": {
+    "texture": "ch01630.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 88,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Cassius": {
+    "texture": "ch03670.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 48,
+    "frameHeight": 93,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Maire Maybelle": {
+    "texture": "ch02360.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 48,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Richard": {
+    "texture": "ch02030.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 94,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Mueller": {
+    "texture": "ch03570.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 54,
+    "frameHeight": 102,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Grant": {
+    "texture": "ch01260.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 89,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Proviseur Collins": {
+    "texture": "ch02600.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 91,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Jill": {
+    "texture": "ch02390.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 92,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Hans": {
+    "texture": "ch02550.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 88,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Carna": {
+    "texture": "ch01240.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Général Morgan": {
+    "texture": "ch02080.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 93,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Lugran": {
+    "texture": "ch02380.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Kilika": {
+    "texture": "ch02610.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 83,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Kurt": {
+    "texture": "ch01620.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 92,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Elnan": {
+    "texture": "ch02580.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Majordome Philippe": {
+    "texture": "ch02470.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 51,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Duc Dunan": {
+    "texture": "ch02140.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 52,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Lila": {
+    "texture": "ch02370.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 43,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Kyle": {
+    "texture": "ch02120.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 91,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Don": {
+    "texture": "ch03760.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 56,
+    "frameHeight": 101,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Reine Alicia": {
+    "texture": "ch02010.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 52,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Orvid": {
+    "texture": "ch01120.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Maire Klaus": {
+    "texture": "ch02350.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Antoine": {
+    "texture": "ch01700.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 72,
+    "frameHeight": 53,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Lt-colonel Cid": {
+    "texture": "ch03590.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 89,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Sieg": {
+    "texture": "ch02323.png",
+    "columns": 8,
+    "rows": 5,
+    "frameWidth": 106,
+    "frameHeight": 75,
+    "frames": 40,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Clem": {
+    "texture": "ch02590.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 68,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Daniel": {
+    "texture": "ch02640.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 36,
+    "frameHeight": 71,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Deen": {
+    "texture": "ch02510.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 88,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Rocco": {
+    "texture": "ch02530.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Rais": {
+    "texture": "ch02520.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 88,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Mary": {
+    "texture": "ch02630.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 37,
+    "frameHeight": 68,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Intendante Hilda": {
+    "texture": "ch02460.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Gilbert": {
+    "texture": "ch03750.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 52,
+    "frameHeight": 91,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Polly": {
+    "texture": "ch02500.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 34,
+    "frameHeight": 74,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Ray": {
+    "texture": "ch01220.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Terry": {
+    "texture": "ch01660.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 89,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Luke": {
+    "texture": "ch01160.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 71,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  },
+  "Pat": {
+    "texture": "ch01060.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 32,
+    "frameHeight": 69,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
+  }
+}

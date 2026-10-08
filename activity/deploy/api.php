@@ -4,6 +4,7 @@
 $routes = [
     'token' => '/api/token',
     'state' => '/api/state',
+    'profile' => '/api/profile',
 ];
 
 $route = $_GET['r'] ?? '';
@@ -14,12 +15,19 @@ if (!isset($routes[$route])) {
     exit;
 }
 
+header('Cache-Control: no-store, must-revalidate');
+$authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+if ($authorization === '' && function_exists('getallheaders')) {
+    foreach (getallheaders() as $name => $value) {
+        if (strcasecmp($name, 'Authorization') === 0) $authorization = $value;
+    }
+}
 $corps = file_get_contents('php://input');
 $requete = curl_init('http://127.0.0.1:3000' . $routes[$route]);
 curl_setopt_array($requete, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST',
-    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: ' . $authorization],
     CURLOPT_POSTFIELDS => $corps === false || $corps === '' ? null : $corps,
     CURLOPT_CONNECTTIMEOUT => 5,
     CURLOPT_TIMEOUT => 30,

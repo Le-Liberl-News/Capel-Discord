@@ -12,6 +12,14 @@ jobs:
     - name: 📥 Get latest code
       uses: actions/checkout@v4
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+
+    - name: Test activity movement and sessions
+      run: node --test tests/activity.test.mjs tests/activity-service.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs
+
     - name: 🛠️ Deploy & Restart natively
       env:
         VPS_PASS: ${{ secrets.VPS_PASSWORD }}

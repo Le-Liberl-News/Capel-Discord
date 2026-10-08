@@ -7,3 +7,9 @@ credentials.json
 uploads/
 *.db
 .runtime/
+
+# Generated local activity preview
+activity/preview-bundle.js
+activity/tools/__pycache__/
+__pycache__/
+*.py[cod]

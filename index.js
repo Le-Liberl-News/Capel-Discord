@@ -273,17 +273,12 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
 const ACTIVITE_DOSSIER = path.join(__dirname, 'activity');
 const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '';
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
-const activiteSalles = new Map();
-
-function activiteJoueurs(salle) {
-    if (!activiteSalles.has(salle)) activiteSalles.set(salle, new Map());
-    const table = activiteSalles.get(salle);
-    const limite = Date.now() - 15000;
-    for (const [cle, joueur] of table) {
-        if (joueur.vu < limite) table.delete(cle);
-    }
-    return [...table.values()].map(({ vu, ...reste }) => reste);
-}
+const { createActivityService } = require('./utils/activityService.js');
+const activiteService = createActivityService({
+    grid: require('./activity/assets/sky/navigation.json'),
+    resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
+});
+const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {
     try {
@@ -312,24 +307,28 @@ app.post('/api/token', async (req, res) => {
     }
 });
 
-app.get('/api/state', (req, res) => {
-    res.json({ joueurs: activiteJoueurs(String(req.query.channel ?? 'local')) });
+app.post('/api/profile', async (req, res) => {
+    try {
+        const response = await fetch('https://discord.com/api/users/@me', {headers: {Authorization: 'Bearer ' + activiteBearer(req)}});
+        if (!response.ok) return res.status(401).json({erreur: 'Identification Discord requise.'});
+        const user = await response.json();
+        const channel = await client.channels.fetch(String(req.body?.channel || ''));
+        if (!channel?.guild || channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur: 'Salon Discord invalide.'});
+        const member = await channel.guild.members.fetch(user.id);
+        if (!member || !channel.permissionsFor(member)?.has('ViewChannel')) return res.status(403).json({erreur: 'Accès au salon refusé.'});
+        res.set('Cache-Control', 'no-store');
+        res.json(await activiteService.join({id: user.id, channel: channel.id}));
+    } catch (error) { res.status(403).json({erreur: 'Impossible de rejoindre ce salon Discord.'}); }
 });
-
-app.post('/api/state', (req, res) => {
-    const { channel, id, nom, x, z } = req.body ?? {};
-    if (!id) return res.status(400).json({ erreur: 'joueur sans identifiant' });
-    const salle = String(channel ?? 'local');
-    activiteJoueurs(salle);
-    activiteSalles.get(salle).set(String(id), {
-        id: String(id),
-        nom: String(nom ?? 'joueur').slice(0, 32),
-        x: Number(x) || 0,
-        z: Number(z) || 0,
-        vu: Date.now()
-    });
-    res.json({ joueurs: activiteJoueurs(salle) });
+app.get('/api/state', async (req, res) => {
+    try { res.set('Cache-Control', 'no-store');res.json(await activiteService.state(activiteBearer(req), undefined, Number(req.query.after))); }
+    catch(error){res.status(error.status || 500).json({erreur:error.message});}
 });
+app.post('/api/state', async (req, res) => {
+    try { res.set('Cache-Control', 'no-store');res.json(await activiteService.state(activiteBearer(req), req.body, req.body?.after)); }
+    catch(error){res.status(error.status || 500).json({erreur:error.message});}
+});
+app.use('/assets/sky', express.static(path.join(ACTIVITE_DOSSIER, 'assets', 'sky')));
 
 function envoyerClientActivite(nomFichier, res) {
     fs.readFile(path.join(ACTIVITE_DOSSIER, nomFichier), (erreur, donnees) => {
@@ -345,6 +344,11 @@ function envoyerClientActivite(nomFichier, res) {
 
 app.get('/', (req, res) => envoyerClientActivite('index.html', res));
 app.get('/bundle.js', (req, res) => envoyerClientActivite('bundle.js', res));
+
+// Only messages whose author already has an avatar in this activity room are relayed.
+client.on('messageCreate', message => {
+    activiteService.captureMessage({id: message.id, channel: message.channelId, author: message.author.id, text: message.cleanContent ?? message.content, bot: message.author.bot, webhook: Boolean(message.webhookId)});
+});
 
 const cooldownsXP = new Map();
 
