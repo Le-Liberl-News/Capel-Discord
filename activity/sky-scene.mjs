@@ -666,17 +666,20 @@ export async function createSkyScene(canvas, map = "anterose") {
       const poses=motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*8+(avatar.direction%(info.directions??8));
       avatar.renderFrame={pose,info};
+      avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
+      avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
       avatar.mesh.position.set(
         avatar.position.x,
-        avatar.position.y,
+        avatar.position.y-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),
         avatar.position.z,
       );
       if(avatar.shadow&&!avatar.shadow.userData.update)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
       avatar.mesh.rotation.z = avatar.fallbackDeath ? Math.PI / 2 : 0;
-      if(avatar.character==="Sieg"&&!avatar.dead)avatar.mesh.quaternion.copy(camera.quaternion);
+      if(avatar.character==="Sieg"&&!avatar.dead&&!avatar.perched)avatar.mesh.quaternion.copy(camera.quaternion);
+      else if(avatar.character==="Sieg")avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),0);
       else avatar.mesh.rotation.y = Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]);
       }
     }
@@ -764,7 +767,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
     onCraftCapture(callback){notifyCapture=callback;},

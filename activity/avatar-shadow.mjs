@@ -14,7 +14,7 @@ export function createAvatarShadow(THREE,avatar,collision,map){
   const direction=facing(avatar.heading.dx,avatar.heading.dz,basis.right,basis.forward)%(avatar.info.directions??8);material.uniforms.tile.value.z=direction*texture.repeat.x;
   material.uniforms.opacity.value=(map==='anterose'?.2:.06+.26*state.daylight)*Math.max(.15,1-(p.y-floor)/10);
   const output=geometry.attributes.position,c=Math.cos(avatar.mesh.rotation.z),sn=Math.sin(avatar.mesh.rotation.z);
-  for(let i=0;i<source.count;i++){const sx=source.getX(i)*c-source.getY(i)*sn,sy=source.getX(i)*sn+source.getY(i)*c;vertex.set(p.x+basis.right.x*sx,p.y+sy,p.z+basis.right.z*sx);const projected=projectShadow(vertex,floor,light);output.setXYZ(i,projected.x,projected.y,projected.z);}
+  for(let i=0;i<source.count;i++){const sx=source.getX(i)*c-source.getY(i)*sn,sy=source.getX(i)*sn+source.getY(i)*c;vertex.set(p.x+basis.right.x*sx,p.y+sy-(avatar.info.footOffsets?.[direction]??0),p.z+basis.right.z*sx);const projected=projectShadow(vertex,floor,light);output.setXYZ(i,projected.x,projected.y,projected.z);}
   output.needsUpdate=true;
  };
  return mesh;
