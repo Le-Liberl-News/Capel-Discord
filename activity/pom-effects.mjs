@@ -52,6 +52,7 @@ export async function createPomEffects(THREE, scene, canvas, assets) {
       right.setFromMatrixColumn(camera.matrixWorld, 0);
       up.setFromMatrixColumn(camera.matrixWorld, 1);
       material.rotation = Math.atan2(direction.dot(up), direction.dot(right));
+      bolt.userData.skyProjectileDirection={x:direction.x,y:direction.y,z:direction.z};
       bolt.position.copy(position).addScaledVector(direction, -1.25);
       flames.forEach((flame, i) => {
         flame.position.copy(position).addScaledVector(direction, -0.5 - i * 0.5);

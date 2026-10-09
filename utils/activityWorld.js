@@ -280,7 +280,7 @@ function createSingleActivityWorld({
         });
         if (struck) {
           p.hp = Math.max(0, p.hp - DAMAGE);
-          if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId},at:time});}
+          if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId,follow:"projectile",started:ball.launchedAt,releaseAt:ball.launchedAt,impactAt:ball.launchedAt+ball.flight*1000,trajectory:[...ball.trajectory.map(q=>({...q})),{t:ball.flight,x,y,z}]},at:time});}
           ball.x = x;
           ball.z = z;
           ball.y = y;
@@ -367,6 +367,7 @@ function createSingleActivityWorld({
       if (d < 0.15 || d > 150) return { error: "Direction invalide." };
       Object.assign(ball, {
         shotId: ++shot,
+        launchedAt: now(),
         trajectory: [{ t: 0, x: player.x, y: (player.y ?? 0) + 0.9, z: player.z }],
         mode: "flight",
         owner: null,

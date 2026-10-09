@@ -394,3 +394,12 @@ test('a Pom cannot damage a participant during the duel presentation',()=>{
   f.tick(.5);assert.equal(f.players.get('b').hp,protectedNow?100:75);
  }
 });
+
+
+test('a lethal Pom retains its launch and ricochet trajectory without account IDs',()=>{
+ let clock=1000;const events=[],grid={origin:{x:0,z:0},width:10,height:10,step:1,cells:Array(100).fill(0),spawn:{x:1,y:0,z:1}};
+ const world=createActivityWorld({grid,ballSpawn:{x:1,y:.25,z:1},now:()=>clock,onDefeat:e=>events.push(e)});
+ const players=new Map([['secret-a',{id:'secret-a',x:1,y:0,z:1,hp:100}],['secret-b',{id:'secret-b',x:5,y:0,z:1,hp:25}]]);
+ world.tick(players);world.action(players.get('secret-a'),{type:'pickup'},players);world.action(players.get('secret-a'),{type:'throw',target:'secret-b'},players);clock+=500;world.tick(players);
+ assert.equal(events.length,1);const a=events[0].action;assert.equal(a.started,1000);assert.equal(a.releaseAt,1000);assert.equal(a.trajectory[0].t,0);assert.ok(a.trajectory.at(-1).t>0);assert.ok(a.impactAt>a.started);assert.ok(!JSON.stringify(a).includes('secret-'));
+});

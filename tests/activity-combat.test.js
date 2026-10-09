@@ -47,3 +47,9 @@ test('last action GIF accepts either duelist, rejects outsiders and posts once t
  await assert.rejects(()=>relay.capture('outsider',body),{status:403});
  await Promise.all([relay.capture('one',body),relay.capture('two',body)]);assert.equal(posts.length,1);assert.equal(posts[0].match,'match-one');assert.match(posts[0].text,/ralenti/);assert.ok(posts[0].gif);
 });
+
+
+test('lethal attacks retain anonymous cinematic timing and target markers',()=>{
+ const events=[],f=fixture({onDefeat:e=>events.push(e)});f.players.get('victim').hp=10;f.start('craft');f.tick(1800);
+ const a=events[0].action;assert.equal(a.started,1000);assert.ok(a.releaseAt>a.started);assert.ok(a.impactAt>a.releaseAt);assert.ok(a.endsAt>a.impactAt);assert.deepEqual(a.origin,{x:0,y:0,z:0});assert.deepEqual(a.aim,{x:2,y:0,z:0});assert.equal(a.actor,undefined);assert.equal(a.kind,'craft');
+});

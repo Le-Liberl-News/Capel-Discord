@@ -115,7 +115,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=map==="arena"?await createRenneCombat(THREE,scene,ASSETS):null;
   let notifyCapture=()=>{};
-  const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel")):null;
+  const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model):null;
   const craftCapture=renneCombat?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event));
   function aimForAttack(event) {
@@ -661,6 +661,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking,avatar.position.y,avatar.flightFloor);
       const poses=motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*8+(avatar.direction%(info.directions??8));
+      avatar.renderFrame={pose,info};
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
       avatar.mesh.position.set(

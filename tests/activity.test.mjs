@@ -279,3 +279,34 @@ test('duel replay retains only the last twenty frames',async()=>{
  const {replayWindow}=await import('../activity/duel-finish.mjs');const frames=[];for(let i=0;i<100;i++)replayWindow(frames,i);
  assert.equal(frames.length,20);assert.equal(frames[0],80);assert.equal(frames.at(-1),99);
 });
+
+
+test('cinematic markers replay preparation, release, impact slow motion and the defeated body',async()=>{
+ const {cinematicPhase,CINEMATIC_DURATION}=await import('../activity/cinematic.mjs');
+ const attack={kind:'craft',started:1000,releaseAt:1800,impactAt:2400};
+ assert.deepEqual(cinematicPhase(0,attack,2500),{kind:'hero',progress:0,time:900});
+ assert.equal(cinematicPhase(1600,attack,2500).time,1800);
+ assert.equal(cinematicPhase(3500,attack,2500).kind,'impact');
+ assert.equal(cinematicPhase(3700,attack,2500).time,2360);
+ assert.equal(cinematicPhase(5200,attack,2500).time,2800);
+ assert.equal(cinematicPhase(CINEMATIC_DURATION,attack,2500).progress,1);
+ assert.equal(cinematicPhase(3500,null,2500).time,2460);
+});
+
+test('cinematic projectile tracking retains actual ricochets and vertical movement',async()=>{
+ const {trajectoryPoint}=await import('../activity/cinematic.mjs');
+ const points=[{t:0,x:0,y:3,z:0},{t:.5,x:5,y:2,z:0},{t:1,x:5,y:1,z:5}];
+ assert.deepEqual(trajectoryPoint(points,.25),{x:2.5,y:2.5,z:0});
+ assert.deepEqual(trajectoryPoint(points,.75),{x:5,y:1.5,z:2.5});
+ assert.equal(trajectoryPoint(points,2).z,5);
+ assert.deepEqual(trajectoryPoint([],1,{x:8,y:0,z:1}),{x:8,y:0,z:1});
+});
+
+test('scene history interpolates locally without changing recorded world states',async()=>{
+ const {historyPair}=await import('../activity/cinematic.mjs');
+ const history=[{time:1000,position:{x:0}},{time:1100,position:{x:1}}],before=structuredClone(history);
+ assert.equal(historyPair(history,1050).progress,.5);
+ assert.equal(historyPair(history,500).a.time,1000);
+ assert.equal(historyPair(history,1500).b.time,1100);
+ assert.deepEqual(history,before);assert.equal(historyPair([],1000),null);
+});
