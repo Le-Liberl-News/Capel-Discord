@@ -16,39 +16,33 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
     } finally {announcing.delete(id);}
   }
   const prune = () => { for (const [id,i] of invitations) if (i.expires<now()) { invitations.delete(id); lobby.cancelDuel(id); persist(); } };
-  return {
-    async handle(interaction) {
-      if (interaction.isAutocomplete?.() && interaction.commandName === "duel") {
-        const text=interaction.options.getFocused().toLocaleLowerCase("fr");
-        await interaction.respond(characterNames.filter(n=>n.toLocaleLowerCase("fr").includes(text)).slice(0,25).map(name=>({name,value:name}))); return true;
-      }
-      if (interaction.isChatInputCommand?.() && interaction.commandName === "duel") {
-        await interaction.deferReply({flags:64}); prune();
+  async function invite({user,client,channel,channelId,requested,inGame=false}) {
+    prune();
         let id, created = false, delivered = false;
         try {
-          if (now() - (lastInvite.get(interaction.user.id) ?? -Infinity) < 30000) throw new DuelError("Attendez 30 secondes entre deux défis.");
-          const requested=interaction.options.getString("personnage",true);
+          if (now() - (lastInvite.get(user.id) ?? -Infinity) < 30000) throw new DuelError("Attendez 30 secondes entre deux défis.");
+
           const name=characterNames.find(n=>n.toLocaleLowerCase("fr")===requested.toLocaleLowerCase("fr"));
           const target=name && await resolveOpponent(name);
-          if (!target || target===interaction.user.id) throw new DuelError("Choisissez un autre personnage attribué aujourd'hui.");
-          const own=await resolveCharacter(interaction.user.id);
-          const existing = lobby.findDuel([interaction.user.id, target], interaction.channelId);
+          if (!target || target===user.id) throw new DuelError("Choisissez un autre personnage attribué aujourd'hui.");
+          const own=await resolveCharacter(user.id);
+          const existing = lobby.findDuel([user.id, target], channelId);
           if (!existing && invitations.size >= 100) throw new DuelError("Trop de défis en attente. Réessayez plus tard.");
           id=existing?.id ?? "duel:"+randomBytes(16).toString("hex");
-          const players=existing?.players ?? [interaction.user.id,target];
-          if (!existing) { lobby.prepareDuel(interaction.user.id, target); lobby.createDuel({id,channel:interaction.channelId,players}); created = true; }
-          invitations.set(id,{...invitations.get(id),players,names:players.map(user=>user===interaction.user.id?own:name),expires:existing?.expires ?? now()+30*60*1000}); persist();
+          const players=existing?.players ?? [user.id,target];
+          if (!existing) { lobby.prepareDuel(user.id, target); lobby.createDuel({id,channel:channelId,players}); created = true; }
+          invitations.set(id,{...invitations.get(id),players,names:players.map(playerId=>playerId===user.id?own:name),expires:existing?.expires ?? now()+30*60*1000}); persist();
           const row={type:1,components:[{type:2,custom_id:"activity:"+id,label:"Rejoindre le duel",style:1}]};
           // DM messages contain no mention or identity of the other participant.
           const deliveries = await Promise.allSettled([
-            (async () => { const opponent = await interaction.client.users.fetch(target); await opponent.send({content:own+" te défie dans l'arène de Grancel. Plusieurs Poms t'y attendent.",components:[row],allowedMentions:{parse:[]}}); })(),
-            (async () => interaction.user.send({content:"Ton duel contre "+name+" est prêt dans l'arène de Grancel.",components:[row],allowedMentions:{parse:[]}}))(),
+            (async () => { if(inGame && lobby.isConnected(target))return; const opponent = await client.users.fetch(target); await opponent.send({content:own+" te défie dans l'arène de Grancel. Plusieurs Poms t'y attendent.",components:[row],allowedMentions:{parse:[]}}); })(),
+            (async () => inGame ? undefined : user.send({content:"Ton duel contre "+name+" est prêt dans l'arène de Grancel.",components:[row],allowedMentions:{parse:[]}}))(),
           ]);
-          delivered = deliveries.some(result => result.status === "fulfilled");
+          delivered = inGame ? deliveries[0].status === "fulfilled" : deliveries.some(result => result.status === "fulfilled");
           if (!delivered) throw new DuelError(deliveries.some(result => result.reason?.code === 50007)
             ? "Impossible d'envoyer les invitations privées. Ouvrez vos messages privés au bot puis relancez /duel."
             : "Aucune invitation n'a pu être envoyée. Réessayez dans un instant.");
-          lastInvite.set(interaction.user.id,now());
+          lastInvite.set(user.id,now());
           let content;
           if (deliveries[0].status === "rejected") {
             content = "Ton invitation reste valide, mais celle de "+name+" n'a pas pu être envoyée. "+(deliveries[0].reason?.code === 50007 ? "Ce personnage doit ouvrir ses messages privés au bot. " : "Discord a refusé l'envoi. ")+"Relance /duel dans 30 secondes pour renvoyer les invitations.";
@@ -56,16 +50,32 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
             content = "L'invitation de "+name+" reste valide, mais je n'ai pas pu t'envoyer la tienne. "+(deliveries[1].reason?.code === 50007 ? "Ouvre tes messages privés au bot. " : "Discord a refusé l'envoi. ")+"Relance /duel dans 30 secondes pour la recevoir.";
           } else {
             content = "Défi envoyé à "+name+". Ouvre le bouton reçu en message privé.";
-            if (created) {
-              try { await interaction.channel.send({content:own+" défie "+name+" dans l'arène de Grancel ! Les invitations sont privées.",allowedMentions:{parse:[]}}); }
+            if (created && !inGame) {
+              try { await channel.send({content:own+" défie "+name+" dans l'arène de Grancel ! Les invitations sont privées.",allowedMentions:{parse:[]}}); }
               catch { content += " L'annonce dans le salon n'a pas pu être publiée ; les invitations privées restent valides."; }
             }
           }
-          await interaction.editReply({content});
+          return {id,content};
         } catch(error) {
           if (created && !delivered) { invitations.delete(id); lobby.cancelDuel(id); persist(); }
-          await interaction.editReply({content:delivered?"Les invitations envoyées restent valides. La confirmation Discord a échoué.":error.code===50007?"Les messages privés doivent être ouverts pour les deux joueurs.":error instanceof DuelError || error instanceof ActivityError ? error.message : "Impossible d'envoyer les invitations Discord. Réessayez dans un instant."});
+          if(inGame && !delivered)throw error;
+          return {id,content:delivered?"Les invitations envoyées restent valides. La confirmation Discord a échoué.":error.code===50007?"Les messages privés doivent être ouverts pour les deux joueurs.":error instanceof DuelError || error instanceof ActivityError ? error.message : "Impossible d'envoyer les invitations Discord. Réessayez dans un instant."};
         }
+  }
+  return {
+    pending(user) { prune();return [...invitations].filter(([id,i])=>i.players.includes(user)&&lobby.duelStatus(id,user)?.accepted===false).map(([id,i])=>({id,opponent:i.names[i.players[0]===user?1:0]})); },
+    async challenge(user,requested,client) {const result=await invite({user,client,requested,channelId:spectatorChannel,inGame:true});if(!result.id)throw new DuelError(result.content);lobby.joinDuel(result.id,user.id);lobby.acceptDuel(result.id,user.id);return {message:"D\u00e9fi envoy\u00e9.",id:result.id};},
+    async accept(id,user,client) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation expir\u00e9e.",403);if(await resolveCharacter(user)!==i.names[i.players.indexOf(user)])throw new ActivityError("Votre personnage a chang\u00e9.",403);lobby.joinDuel(id,user);if(lobby.acceptDuel(id,user))await announce(id,i,client).catch(()=>{});return {message:"Duel rejoint."};},
+    decline(id,user) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation inaccessible.",403);lobby.cancelDuel(id);invitations.delete(id);persist();return {message:"D\u00e9fi refus\u00e9."};},
+    async handle(interaction) {
+      if (interaction.isAutocomplete?.() && interaction.commandName === "duel") {
+        const text=interaction.options.getFocused().toLocaleLowerCase("fr");
+        await interaction.respond(characterNames.filter(n=>n.toLocaleLowerCase("fr").includes(text)).slice(0,25).map(name=>({name,value:name}))); return true;
+      }
+      if (interaction.isChatInputCommand?.() && interaction.commandName === "duel") {
+        await interaction.deferReply({flags:64}); prune();
+        const result=await invite({user:interaction.user,client:interaction.client,channel:interaction.channel,channelId:interaction.channelId,requested:interaction.options.getString("personnage",true)});
+        try {await interaction.editReply({content:result.content});}catch{await interaction.editReply({content:"Les invitations envoy\u00e9es restent valides. La confirmation Discord a \u00e9chou\u00e9."});}
         return true;
       }
       if (interaction.isButton?.() && interaction.customId.startsWith("activity:duel:")) {

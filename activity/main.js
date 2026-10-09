@@ -1,3 +1,4 @@
+import {createTerminalUI} from "./terminal-ui.mjs";
 import {keyboardLayout} from "./controls.mjs";
 import { fetchJson, retryConnection } from "./network.mjs";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
@@ -22,6 +23,13 @@ const etat = {
   messageCursor: 0,
 };
 let scene, music;
+const terminal=createTerminalUI({
+ menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
+ action:body=>apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
+ changed:()=>wakePoll()
+});
+function bindScene(){scene.onAction(()=>wakePoll());scene.onTerminal(()=>void terminal.open());}
+
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 
 const mapTitle = map => map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
@@ -32,6 +40,7 @@ gameHud.style.cssText="position:fixed;right:16px;top:64px;z-index:22;padding:12p
 blindfold.id="sky-preparation"; blindfold.hidden=true; blindfold.style.cssText="position:fixed;inset:0;background:#17121c;z-index:14";
 document.body.append(blindfold,gameHud);
 document.getElementById("hud").style.zIndex="21";
+const huntText=document.createElement("span"),huntStart=document.createElement("button");huntStart.type="button";huntStart.textContent="D\u00e9marrer";huntText.style.display="block";huntStart.style.cssText="margin-top:8px";huntStart.hidden=true;gameHud.append(huntText,huntStart);huntStart.onclick=()=>void terminal.run({action:"hunt_start",invitation:huntState.id},gameHud);
 let huntState;
 function updateHunt(game) { huntState=game; drawHunt(); }
 function drawHunt() {
@@ -39,7 +48,8 @@ function drawHunt() {
  if(!g)return;
  const seconds=Math.max(0,Math.ceil((g.deadline-g.serverTime)/1000-(Date.now()-g.received)/1000));
  const timer=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
- gameHud.textContent = g.phase==="waiting" ? "Inscription ouverte : "+g.players+" joueurs.\nLe créateur lance la partie depuis Discord." : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Chasseur":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
+ huntStart.hidden=!(g.phase==="waiting"&&g.canStart);
+ huntText.textContent = g.phase==="waiting" ? "Prop Hunt \u00b7 "+g.players+" joueurs" : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Chasseur":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
 }
 setInterval(drawHunt,250);
 const leave = document.createElement("button"); leave.id="sky-leave"; leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
@@ -189,12 +199,13 @@ async function publier() {
     }),
   });
   const result = response;
+  terminal.setRequests(result.requests);
   const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
   etat.moi=ownPlayer;
   if (result.map !== (etat.map ?? "anterose") || (etat.sceneKey && result.sceneKey !== etat.sceneKey)) {
     scene.dispose(); etat.map = result.map;
     scene = await createSkyScene(toile, etat.map);
-    scene.onAction(() => wakePoll());
+    bindScene();
     await scene.me(ownPlayer);
     music.setTrack(musicUrl(etat.map));
     etat.messageCursor = result.messageCursor;
@@ -230,7 +241,7 @@ async function start() {
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
-  scene.onAction(() => wakePoll());
+  bindScene();
   music = createMapMusic(musicUrl(etat.map));
   leave.hidden = etat.map === "anterose";
   document.querySelector("#hud h1").textContent = mapTitle(etat.map);
@@ -241,7 +252,7 @@ async function start() {
     apercuLocal &&
     new URLSearchParams(location.search).has("inspect")
   )
-    window.__activityPreview = Object.assign(scene,{setHuntState:game=>updateHunt(game?{...game,received:Date.now()}:null)});
+    window.__activityPreview = Object.assign(scene,{setHuntState:game=>updateHunt(game?{...game,received:Date.now()}:null),setRequests:requests=>terminal.setRequests(requests)});
   if (__ACTIVITY_PREVIEW__ && apercuLocal) {
     const picker = document.getElementById("personnage");
     picker.hidden = false;
@@ -290,7 +301,7 @@ async function start() {
           etat.token = profile.activity_token; etat.messageCursor = profile.messageCursor ?? 0;
           etat.character = profile.character; etat.moi = profile.player;
           if (profile.map !== etat.map) {
-            scene.dispose(); etat.map = profile.map; scene = await createSkyScene(toile,etat.map); scene.onAction(() => wakePoll());
+            scene.dispose(); etat.map = profile.map; scene = await createSkyScene(toile,etat.map); bindScene();
             music.setTrack(musicUrl(etat.map));
           }
           await scene.resetSession(profile.player); etat.sceneKey = null;

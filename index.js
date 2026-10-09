@@ -222,6 +222,7 @@ const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || ''
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
 const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
+const capelModel=require("./activity/assets/sky/capel.json");
 const activiteService = createActivityLobby({
     huntGame,
     rolent: {
@@ -242,13 +243,14 @@ const activiteService = createActivityLobby({
       residents: require('./activity/assets/sky/arena/residents.json'),
       geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/arena/anterose.gltf'), 'utf8'))),
     },
-    grid: require('./activity/assets/sky/navigation.json'),
+    grid: require("./activity/terminal-world.cjs").terminalNavigation(require("./activity/assets/sky/navigation.json"),capelModel),
     residents: require('./activity/assets/sky/residents.json'),
-    geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/anterose.gltf'), 'utf8'))),
+    geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/anterose.gltf'),'utf8')),[{...capelModel,model:JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/capel/model.gltf'),'utf8'))}]),
     resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
 });
 const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
 const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
+const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {
@@ -299,13 +301,15 @@ app.post('/api/profile', async (req, res) => {
     }
 });
 app.get('/api/state', async (req, res) => {
-    try { res.set('Cache-Control', 'no-store');res.json(await activiteService.state(activiteBearer(req), undefined, Number(req.query.after))); }
+    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, undefined, Number(req.query.after));res.json({...state,requests:activiteDuels.pending(activiteService.identity(token).id)}); }
     catch(error){res.status(error.status || 500).json({erreur:error.message});}
 });
 app.post('/api/state', async (req, res) => {
-    try { res.set('Cache-Control', 'no-store');res.json(await activiteService.state(activiteBearer(req), req.body, req.body?.after)); }
+    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, req.body, req.body?.after);res.json({...state,requests:activiteDuels.pending(activiteService.identity(token).id)}); }
     catch(error){res.status(error.status || 500).json({erreur:error.message});}
 });
+app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
+app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
 app.use('/assets/sky', express.static(path.join(ACTIVITE_DOSSIER, 'assets', 'sky')));
 
 function envoyerClientActivite(nomFichier, res) {

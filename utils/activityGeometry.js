@@ -1,6 +1,6 @@
 // Share the actual GLTF surfaces with the authoritative projectile simulation.
 const THREE = require("three");
-function createActivityGeometry(gltf) {
+function createActivityScene(gltf) {
   const bytes = Buffer.from(gltf.buffers[0].uri.split(",")[1], "base64"),
     scene = new THREE.Group();
   function attribute(id) {
@@ -53,6 +53,12 @@ function createActivityGeometry(gltf) {
   }
   for (const id of gltf.scenes[gltf.scene ?? 0].nodes) node(id, scene);
   scene.updateMatrixWorld(true);
-  return require("../activity/surface-collision.cjs").createSurfaceCollision(THREE, scene);
+  return scene;
+}
+function createActivityGeometry(gltf,extras=[]) {
+ const scene=createActivityScene(gltf);
+ for(const {model,position,rotation=0}of extras){const object=createActivityScene(model);object.position.set(position.x,position.y,position.z);object.rotation.y=rotation;scene.add(object);}
+ scene.updateMatrixWorld(true);
+ return require("../activity/surface-collision.cjs").createSurfaceCollision(THREE,scene);
 }
 module.exports = { createActivityGeometry };

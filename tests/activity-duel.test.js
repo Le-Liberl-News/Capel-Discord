@@ -258,3 +258,50 @@ test("watching from an already open activity teleports without a second Discord 
  await manager.handle({isButton:()=>true,customId:'activity:watch:duel:live',user:{id:'c'},launchActivity:async()=>{throw Error('must not relaunch');},reply:async()=>{replied=true;}});
  const result=await lobby.state(viewer.activity_token);assert.equal(replied,true);assert.equal(result.map,'arena');assert.equal(result.health.spectator,true);
 });
+
+
+test("Capel challenges notify connected opponents in game and disclose only character names",async()=>{
+ const {lobby}=fixture();const a=await lobby.join({id:"real-alice",channel:"one"}),b=await lobby.join({id:"real-bob",channel:"two"});
+ let announcements=0,dm=0;const client={users:{fetch:async()=>{dm++;throw Error("No DM needed");}},channels:{fetch:async()=>({send:async msg=>{announcements++;assert.equal(msg.content.includes("real-"),false);return{id:"announcement"};}})}};
+ const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async name=>name==="Joshua"?"real-bob":"real-alice",characterNames:["Estelle","Joshua"]});
+ const invited=await duels.challenge({id:"real-alice"},"Joshua",client);assert.equal(dm,0);assert.equal(announcements,0);assert.deepEqual(duels.pending("real-alice"),[]);assert.deepEqual(duels.pending("real-bob"),[{id:invited.id,opponent:"Estelle"}]);assert.equal(JSON.stringify(duels.pending("real-bob")).includes("real-"),false);
+ await assert.rejects(()=>duels.accept(invited.id,"outsider",client));await duels.accept(invited.id,"real-bob",client);await duels.accept(invited.id,"real-bob",client);assert.equal(announcements,1);assert.deepEqual(duels.pending("real-bob"),[]);assert.equal((await lobby.state(a.activity_token)).map,"arena");assert.equal((await lobby.state(b.activity_token)).map,"arena");
+});
+
+test("Capel enforces proximity, active sessions and idempotent launches",async()=>{
+ const {createActivityTerminal}=require("../utils/activityTerminal");let map="anterose",point={x:1,y:0,z:1,hp:100},created=0,joined=0,started=0;
+ const lobby={identity:token=>{if(token!=="session")throw Object.assign(Error("Unauthorized"),{status:401});return{id:"private-user",map};},terminalPosition:async()=>point,huntSummary:()=>null,createHunt:()=>{created++;return{id:"hunt:one"};},joinHunt:()=>joined++,cancelHunt:()=>{},startHunt:()=>started++};
+ const terminal=createActivityTerminal({lobby,duels:{pending:()=>[]},client:{},resolveCharacter:async()=>"Estelle",assignedCharacters:async()=>["Estelle","Joshua"],terminal:{position:{x:1,y:0,z:1}}});
+ assert.deepEqual((await terminal.menu("session")).characters,["Joshua"]);await assert.rejects(()=>terminal.menu("invalid"));point.x=9;await assert.rejects(()=>terminal.menu("session"));point.x=1;map="arena";await assert.rejects(()=>terminal.menu("session"));map="anterose";point.hp=0;await assert.rejects(()=>terminal.menu("session"));point.hp=100;
+ const body={action:"hunt_create",request:"request-one",user:"spoofed-account"};await terminal.action("session",body);await terminal.action("session",body);assert.equal(created,1);assert.equal(joined,1);await assert.rejects(()=>terminal.action("session",{...body,action:"duel"}));map="rolent";await terminal.action("session",{action:"hunt_start",request:"request-two",invitation:"hunt:one"});assert.equal(started,1);
+});
+
+
+test("Capel native footprint blocks movement while its front stays reachable",async()=>{
+ const fs=require("node:fs"),path=require("node:path"),root=path.join(__dirname,"../activity/assets/sky");
+ const terminal=require("../activity/assets/sky/capel.json"),base=require("../activity/assets/sky/navigation.json"),{terminalNavigation}=require("../activity/terminal-world.cjs"),{route,cellAt,indexAt}=await import("../activity/movement.mjs");
+ const g=terminalNavigation(base,terminal),model=JSON.parse(fs.readFileSync(path.join(root,terminal.model))),geometry=require("../utils/activityGeometry").createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,"anterose.gltf"))),[{...terminal,model}]);
+ const cell=cellAt(g,terminal.position.x,terminal.position.z);assert.equal(g.cells[indexAt(g,cell.x,cell.z)],null);
+ assert.ok(route(g,g.spawn,{x:-2.8,y:0,z:-3.2}).length);assert.ok(Math.abs(geometry.floor(-2.8,-3.2,.5))<.01);
+ assert.ok(geometry.sweep({x:-2.5,y:.65,z:-3.2},{x:-5.4,y:.65,z:-3.2},.1));
+ assert.equal(model.images.some(i=>i.uri==="ATARI.png"),false);
+ for(const node of model.nodes){if(node.mesh===undefined)continue;for(const p of model.meshes[node.mesh].primitives){const a=model.accessors[p.attributes.POSITION];assert.ok(a.min[0]>-.8&&a.max[0]<.8);assert.ok(a.min[2]>-.6&&a.max[2]<1.1);}}
+});
+
+test("Capel Prop Hunt owner opens, two users join from their own sessions and start in Rolent",async()=>{
+ const {createActivityTerminal}=require("../utils/activityTerminal"),hunt=require("../utils/activityPropHuntGame").createPropHuntGame(),lobby=createActivityLobby({grid,huntGame:hunt,rolent:{grid},resolveCharacter:async id=>id==="one"?"Estelle":"Joshua"});
+ const a=await lobby.join({id:"one",channel:"one"}),b=await lobby.join({id:"two",channel:"two"});
+ const terminal=createActivityTerminal({lobby,duels:{pending:()=>[]},client:{},resolveCharacter:async id=>id==="one"?"Estelle":"Joshua",assignedCharacters:async()=>["Estelle","Joshua"],terminal:{position:grid.spawn}});
+ await terminal.action(a.activity_token,{request:"create-111",action:"hunt_create"});const game=(await terminal.menu(b.activity_token)).hunt;assert.equal(game.count,1);assert.equal(JSON.stringify(game).includes('"owner"'),false);
+ await terminal.action(b.activity_token,{request:"join-2222",action:"hunt_join",invitation:game.id});assert.equal((await lobby.state(a.activity_token)).game.canStart,true);assert.equal((await lobby.state(b.activity_token)).game.canStart,false);
+ await assert.rejects(()=>terminal.action(b.activity_token,{request:"start-222",action:"hunt_start",invitation:game.id}));await terminal.action(a.activity_token,{request:"start-111",action:"hunt_start",invitation:game.id});assert.equal((await lobby.state(b.activity_token)).game.phase,"preparation");
+});
+
+
+test("Capel offline invitations keep the existing private entry and declining releases the challenger",async()=>{
+ const {lobby}=fixture();const a=await lobby.join({id:"real-alice",channel:"guild"});let dm;
+ const client={users:{fetch:async id=>{assert.equal(id,"real-bob");return {send:async body=>dm=body};}}};
+ const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob",characterNames:["Joshua"]});
+ const result=await duels.challenge({id:"real-alice"},"Joshua",client);assert.equal(dm.content.includes("real-"),false);assert.equal(dm.components[0].components[0].custom_id,"activity:"+result.id);
+ assert.throws(()=>duels.decline(result.id,"outsider"));duels.decline(result.id,"real-bob");assert.deepEqual(duels.pending("real-bob"),[]);assert.equal((await lobby.state(a.activity_token)).map,"anterose");
+});

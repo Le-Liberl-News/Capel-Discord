@@ -1,0 +1,21 @@
+{
+  "id": "capel",
+  "name": "Capel",
+  "model": "capel/model.gltf",
+  "position": {
+    "x": -4.4,
+    "y": 0,
+    "z": -3.2
+  },
+  "rotation": 1.5707963267948966,
+  "bounds": {
+    "min": {
+      "x": -0.71,
+      "z": -0.5
+    },
+    "max": {
+      "x": 0.7,
+      "z": 0.99
+    }
+  }
+}

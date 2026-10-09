@@ -31,7 +31,7 @@ function createPropHuntGame({store=null,now=Date.now,chooseHunter=n=>randomInt(n
    for(const p of game.players)p.prop=props[randomInt(props.length)];
    game.phase='preparation';game.preparationEnds=now()+30000;game.ends=game.preparationEnds+game.duration*60000;save();return this.status(user);},
   role,policy,
-  status(user){tick();if(!game)return null;return {id:game.id,phase:game.phase,role:role(user),...policy(user),hunter:member(game.hunter)?.character,remaining:game.players.filter(p=>p.id!==game.hunter&&!p.found).length,deadline:game.phase==='preparation'?game.preparationEnds:game.ends,serverTime:now(),winner:game.winner,players:game.players.length};},
+  status(user){tick();if(!game)return null;return {id:game.id,phase:game.phase,canStart:game.owner===user,role:role(user),...policy(user),hunter:member(game.hunter)?.character,remaining:game.players.filter(p=>p.id!==game.hunter&&!p.found).length,deadline:game.phase==='preparation'?game.preparationEnds:game.ends,serverTime:now(),winner:game.winner,players:game.players.length};},
   render(players,user){tick();if(game?.phase==='preparation'&&user===game.hunter)return players.filter(p=>p.id===user).map(p=>({...p,...policy(p.id)}));return players.map(p=>({...p,...policy(p.id)}));},
   find(user,action,players,geometry){tick();const me=member(user);
    if(!action||typeof action.id!=='string'||!action.id||action.id.length>80)return {error:'Action invalide.'};

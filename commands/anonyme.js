@@ -99,6 +99,11 @@ async function getPseudoAnonyme(userId) {
     return PSEUDOS[nouvelIndex];
 }
 
+async function getAssignedCharacterNames() {
+ const [rows]=await db.query('SELECT pseudo_index FROM pseudos_anonymes');
+ return [...new Set(rows.map(row=>PSEUDOS[row.pseudo_index]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+
 async function getIdFromPseudo(pseudoRecherche) {
     const pseudoIndex = PSEUDOS.indexOf(pseudoRecherche);
 
@@ -198,5 +203,6 @@ module.exports = {
     getPseudoAnonyme,
     execute,
     monIdentite,
-    getIdFromPseudo
+    getIdFromPseudo,
+    getAssignedCharacterNames
 };

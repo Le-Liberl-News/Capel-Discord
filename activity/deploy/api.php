@@ -5,6 +5,7 @@ $routes = [
     'token' => '/api/token',
     'state' => '/api/state',
     'profile' => '/api/profile',
+    'terminal' => '/api/terminal',
 ];
 
 $route = $_GET['r'] ?? '';

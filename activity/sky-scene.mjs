@@ -1,3 +1,4 @@
+import terminalWorld from "./terminal-world.cjs";
 import {createDamageEffects,damageAmount} from "./damage-effects.mjs";
 import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
@@ -43,7 +44,11 @@ export async function createSkyScene(canvas, map = "anterose") {
   const loaded = await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
-  const model = loaded.scene;
+  const model = new THREE.Group();model.add(loaded.scene);
+  const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
+  let terminalObject=null;
+  if(terminal){const asset=await new GLTFLoader(loading).loadAsync(new URL(terminal.model,ASSETS).href);terminalObject=asset.scene;terminalObject.position.set(terminal.position.x,terminal.position.y,terminal.position.z);terminalObject.rotation.y=terminal.rotation;model.add(terminalObject);}
+
   scene.add(model);
   model.updateMatrixWorld(true);
   const collision = collisionModule.createSurfaceCollision(THREE, model);
@@ -69,9 +74,10 @@ export async function createSkyScene(canvas, map = "anterose") {
     }
   });
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
-  const grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
+  let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
+  if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = map === "arena" ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   let walkingGrid = grid, movementAllowed = true;
   const propCatalogue = map === "rolent" ? await fetch(new URL("props.json", mapAssets)).then(r => r.json()) : {};
@@ -114,7 +120,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     disposed = false;
   const actionQueue = [];
   const predictedShots = new Map();
-  let notifyAction = () => {};
+  let notifyAction = () => {},notifyTerminal=()=>{};
   let environment = { npcs: [], poms: [], pom: null, receivedAt: 0 },
     health = { hp: 100 },
     respawn = 0;
@@ -177,6 +183,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
       return;
     }
+    if(terminal&&terminalWorld.terminalNearby(me.position,terminal)&&raycaster.intersectObject(terminalObject,true).length){menu.hidden=true;path=[];notifyTerminal();return;}
     if (health.spectator) return;
     const ball = environment.poms.find(p => p.owner === localId) ?? environment.poms.filter(p => p.mode === "rest" && nearby(p,2)).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if (ball?.owner === localId) {
@@ -371,6 +378,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   let cursor={clientX:innerWidth/2,clientY:innerHeight/2};
   function keyboardInteraction() {
     const me=avatars.get(localId);if(!me||health.hp===0||health.spectator)return;
+    if(terminal&&terminalWorld.terminalNearby(me.position,terminal)){path=[];notifyTerminal();return;}
     const ball=environment.poms.find(p=>p.owner===localId);
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
     const nearby=environment.npcs.filter(n=>Math.hypot(n.x-me.position.x,n.z-me.position.z)<=2.2 && Math.abs(n.y-me.position.y)<.6).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z));
@@ -379,7 +387,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   function keydown(event) {
     if (!connected || !movementAllowed) return;
-    if (event.target.closest?.("input,textarea,select,[contenteditable]"))
+    if (document.querySelector("#sky-terminal[open]") || event.target.closest?.("input,textarea,select,button,[contenteditable]"))
       return;
     if(event.code === "Space") {event.preventDefault();if(!event.repeat)keyboardInteraction();return;}
     if (
@@ -687,6 +695,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     catalogue,
     ...(__ACTIVITY_PREVIEW__ ? { localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
+    onTerminal(callback) {notifyTerminal=callback;},
+    terminalPoint(){return terminal?{...terminal.position,y:terminal.position.y+.7}:null;},
     setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
     async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
     messages(messages) {

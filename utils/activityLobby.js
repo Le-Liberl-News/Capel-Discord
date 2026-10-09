@@ -54,6 +54,9 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
       pom:pom(result.pom), poms:result.poms?.map(pom) };
   }
   return {
+    identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
+    async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
+    duelStatus(id,user) {const d=duels.get(id);return d?.players.includes(user)?{accepted:d.accepted?.includes(user)??false}:null;},
     isConnected(user) { const session=sessions.get(active.get(user));return !!session && session.expires>now() && now()-(session.seen??-Infinity)<15000; },
     findDuel(players, channel) {
       prune();
