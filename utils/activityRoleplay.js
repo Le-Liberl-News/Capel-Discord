@@ -14,14 +14,14 @@ function gifInfo(bytes) {
 function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTimeout,clearTimer=clearTimeout}) {
   const crafts=new Map(),speechIds=new Set();let tail=Promise.resolve();
   const publish=payload=>{const operation=tail.catch(()=>{}).then(()=>send(payload));tail=operation;return operation;};
-  async function speech({id,character,text}) {
+  async function speech({id,character,text,match}) {
     if(speechIds.has(id))return;speechIds.add(id);if(speechIds.size>10000)speechIds.delete(speechIds.values().next().value);
-    const letters=Array.from(text);for(let i=0;i<letters.length;i+=1800)await publish({character,text:letters.slice(i,i+1800).join('')});
+    const letters=Array.from(text);for(let i=0;i<letters.length;i+=1800)await publish({character,match,text:letters.slice(i,i+1800).join('')});
   }
   function craft(event) {
     if(crafts.has(event.id))return;
     const record={...event,expires:now()+60000,published:false};crafts.set(event.id,record);
-    record.timer=setTimer(()=>{if(!record.published&&!record.sending){record.sending=publish({character:event.character,text:event.character+' lance '+event.technique+'.'}).then(()=>{record.published=true;}).catch(onError).finally(()=>{record.sending=null;});}},30000);record.timer?.unref?.();
+    record.timer=setTimer(()=>{if(!record.published&&!record.sending){record.sending=publish({character:record.character,match:record.match,text:record.character+' lance '+record.technique+'.'}).then(()=>{record.published=true;}).catch(onError).finally(()=>{record.sending=null;});}},30000);record.timer?.unref?.();
     for(const [id,r]of crafts)if(r.expires<now()){clearTimer(r.timer);crafts.delete(id);}
   }
   async function capture(user,body) {
@@ -31,7 +31,7 @@ function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTi
     if(record.published)return {posted:true};
     if(typeof body.gif!=='string'||body.gif.length>950000||(body.gif.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(body.gif)))fail('GIF invalide.');
     const bytes=Buffer.from(body.gif,'base64');try{gifInfo(bytes);}catch(e){fail(e.message);}
-    if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,text:record.character+' lance '+record.technique+'.',gif:bytes}).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}
+    if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,match:record.match,text:record.character+' lance '+record.technique+'.',gif:bytes}).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}
     await record.sending;return {posted:true};
   }
   return {speech,craft,capture,flush:()=>tail};

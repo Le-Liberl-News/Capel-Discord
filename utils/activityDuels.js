@@ -4,16 +4,25 @@ class DuelError extends Error {}
 function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, characterNames, store = null, spectatorChannel = "595259248984981516", now = Date.now }) {
   const invitations = new Map(), lastInvite = new Map();
   for (const [id,invitation] of store?.load() ?? []) if (invitation.expires>now()) invitations.set(id,invitation);
-  const announcing = new Set();
+  const announcing = new Map();
   const persist=()=>store?.save([...invitations]);
   async function announce(id,invitation,client) {
-    if(invitation.announced || announcing.has(id))return;
-    announcing.add(id);
-    try {
-      const channel=await client.channels.fetch(spectatorChannel);
-      const message=await channel.send({content:invitation.names.join(" contre ")+" : le duel commence dans l'arène de Grancel !",components:[{type:1,components:[{type:2,custom_id:"activity:watch:"+id,label:"Regarder depuis les tribunes",style:1}]}],allowedMentions:{parse:[]}});
-      invitation.announced=message.id??true;persist();
-    } finally {announcing.delete(id);}
+    if(invitation.thread&&invitation.announced){lobby.setDuelThread?.(id,invitation.thread);return invitation.thread;}
+    if(announcing.has(id))return announcing.get(id);
+    const operation=(async()=>{
+      let thread;
+      if(invitation.thread)thread=await client.channels.fetch(invitation.thread);
+      else {
+        const channel=await client.channels.fetch(spectatorChannel);
+        thread=await channel.threads.create({name:invitation.names.join(' contre ').slice(0,100),type:11,autoArchiveDuration:1440,reason:'Match dans l\u2019activit\u00e9'});
+        invitation.thread=thread.id;persist();
+      }
+      lobby.setDuelThread?.(id,thread.id);
+      const message=await thread.send({content:invitation.names.join(' contre ')+" : le duel commence dans l\u2019ar\u00e8ne de Grancel !",components:[{type:1,components:[{type:2,custom_id:'activity:watch:'+id,label:'Regarder depuis les tribunes',style:1}]}],allowedMentions:{parse:[]}});
+      invitation.announced=message.id??true;persist();return thread.id;
+    })();
+    announcing.set(id,operation);
+    try{return await operation;}finally{announcing.delete(id);}
   }
   const prune = () => { for (const [id,i] of invitations) if (i.expires<now()) { invitations.delete(id); lobby.cancelDuel(id); persist(); } };
   async function invite({user,client,channel,channelId,requested,inGame=false}) {
@@ -63,9 +72,10 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
         }
   }
   return {
+    async publicationThread(id,client) {const invitation=invitations.get(id);if(!invitation)throw new ActivityError('Match introuvable.',404);if(invitation.thread&&invitation.announced)return invitation.thread;lobby.validateSpectate(id);return announce(id,invitation,client);},
     pending(user) { prune();return [...invitations].filter(([id,i])=>i.players.includes(user)&&lobby.duelStatus(id,user)?.accepted===false).map(([id,i])=>({id,opponent:i.names[i.players[0]===user?1:0]})); },
     async challenge(user,requested,client) {const result=await invite({user,client,requested,channelId:spectatorChannel,inGame:true});if(!result.id)throw new DuelError(result.content);lobby.joinDuel(result.id,user.id);lobby.acceptDuel(result.id,user.id);return {message:"D\u00e9fi envoy\u00e9.",id:result.id};},
-    async accept(id,user,client) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation expir\u00e9e.",403);if(await resolveCharacter(user)!==i.names[i.players.indexOf(user)])throw new ActivityError("Votre personnage a chang\u00e9.",403);lobby.joinDuel(id,user);if(lobby.acceptDuel(id,user))await announce(id,i,client).catch(()=>{});return {message:"Duel rejoint."};},
+    async accept(id,user,client) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation expir\u00e9e.",403);if(await resolveCharacter(user)!==i.names[i.players.indexOf(user)])throw new ActivityError("Votre personnage a chang\u00e9.",403);lobby.joinDuel(id,user);if(lobby.acceptDuel(id,user))await announce(id,i,client).catch(error=>console.error('Activity match thread failed:',error.code??'unavailable'));return {message:"Duel rejoint."};},
     decline(id,user) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation inaccessible.",403);lobby.cancelDuel(id);invitations.delete(id);persist();return {message:"D\u00e9fi refus\u00e9."};},
     async handle(interaction) {
       if (interaction.isAutocomplete?.() && interaction.commandName === "duel") {
@@ -90,7 +100,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
           const ready=lobby.acceptDuel(id,interaction.user.id);
           if(ready && interaction.client?.channels) {
             try { await announce(id,invitation,interaction.client); }
-            catch { /* Keep the accepted duel; a retry can publish the announcement. */ }
+            catch(error) { console.error('Activity match thread failed:',error.code??'unavailable'); }
           }
         } catch(error) {
           lobby.leaveDuel(interaction.user.id);

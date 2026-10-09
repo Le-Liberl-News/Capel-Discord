@@ -38,7 +38,7 @@ test("separate Poms are atomic and a player cannot carry two",async()=>{
 });
 test("duel command uses character names and only private buttons launch",async()=>{
  let saved;const store={load:()=>saved,save:data=>saved=structuredClone(data)};
- const calls=[],{lobby}=fixture();const options={lobby,store,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"};let service=createActivityDuels(options);
+ const calls=[],{lobby}=fixture();const options={lobby,store,now:()=>0,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"};let service=createActivityDuels(options);
  const interaction={isChatInputCommand:()=>true,isButton:()=>false,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>calls.push(["private-a",data])},client:{users:{fetch:async()=>({send:async data=>calls.push(["private-b",data])})}},channel:{send:async data=>calls.push(["public",data])},deferReply:async()=>{},editReply:async data=>calls.push(["reply",data])};
  assert.equal(await service.handle(interaction),true);
  const publicMessage=calls.find(c=>c[0]==="public")[1];assert.equal(publicMessage.content.includes("real-"),false);assert.deepEqual(publicMessage.allowedMentions,{parse:[]});
@@ -180,7 +180,7 @@ test("world saves survive restart and empty maps without copying connected avata
 test("duel announces once after both accept and spectators use the upper grid",async()=>{
  const sent=[],{lobby}=fixture();
  const manager=createActivityDuels({lobby,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
- const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"595259248984981516");return {send:async data=>{sent.push({announcement:data});return {id:"broadcast"};}}}}};
+ const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"595259248984981516");return {threads:{create:async()=>({id:"match-thread",send:async data=>{sent.push({announcement:data});return {id:"broadcast"};}})}}}}};
  await manager.handle({isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>sent.push(data)},client,channel:{send:async()=>{}},deferReply:async()=>{},editReply:async()=>{}});
  const customId=sent[0].components[0].components[0].custom_id;
  const click=id=>({isButton:()=>true,customId,user:{id},channel:{isDMBased:()=>true},client,launchActivity:async()=>{}});
@@ -262,7 +262,7 @@ test("watching from an already open activity teleports without a second Discord 
 
 test("Capel challenges notify connected opponents in game and disclose only character names",async()=>{
  const {lobby}=fixture();const a=await lobby.join({id:"real-alice",channel:"one"}),b=await lobby.join({id:"real-bob",channel:"two"});
- let announcements=0,dm=0;const client={users:{fetch:async()=>{dm++;throw Error("No DM needed");}},channels:{fetch:async()=>({send:async msg=>{announcements++;assert.equal(msg.content.includes("real-"),false);return{id:"announcement"};}})}};
+ let announcements=0,dm=0;const client={users:{fetch:async()=>{dm++;throw Error("No DM needed");}},channels:{fetch:async()=>({threads:{create:async()=>({id:"match-thread",send:async msg=>{announcements++;assert.equal(msg.content.includes("real-"),false);return{id:"announcement"};}})}})}};
  const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async name=>name==="Joshua"?"real-bob":"real-alice",characterNames:["Estelle","Joshua"]});
  const invited=await duels.challenge({id:"real-alice"},"Joshua",client);assert.equal(dm,0);assert.equal(announcements,0);assert.deepEqual(duels.pending("real-alice"),[]);assert.deepEqual(duels.pending("real-bob"),[{id:invited.id,opponent:"Estelle"}]);assert.equal(JSON.stringify(duels.pending("real-bob")).includes("real-"),false);
  await assert.rejects(()=>duels.accept(invited.id,"outsider",client));await duels.accept(invited.id,"real-bob",client);await duels.accept(invited.id,"real-bob",client);assert.equal(announcements,1);assert.deepEqual(duels.pending("real-bob"),[]);assert.equal((await lobby.state(a.activity_token)).map,"arena");assert.equal((await lobby.state(b.activity_token)).map,"arena");
@@ -304,4 +304,36 @@ test("Capel offline invitations keep the existing private entry and declining re
  const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob",characterNames:["Joshua"]});
  const result=await duels.challenge({id:"real-alice"},"Joshua",client);assert.equal(dm.content.includes("real-"),false);assert.equal(dm.components[0].components[0].custom_id,"activity:"+result.id);
  assert.throws(()=>duels.decline(result.id,"outsider"));duels.decline(result.id,"real-bob");assert.deepEqual(duels.pending("real-bob"),[]);assert.equal((await lobby.state(a.activity_token)).map,"anterose");
+});
+test('accepted matches create distinct persistent threads, with one spectator button under concurrent retries',async()=>{
+ const {lobby}=fixture();let saved=[],creates=0,sends=0;const threads=new Map();
+ const store={load:()=>saved,save:data=>{saved=structuredClone(data);}};
+ const options={lobby,store,now:()=>0,characterNames:['Estelle','Joshua'],resolveCharacter:async id=>id==='real-alice'?'Estelle':'Joshua',resolveOpponent:async()=> 'real-bob'};
+ const manager=createActivityDuels(options);
+ const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='595259248984981516'?{threads:{create:async data=>{creates++;assert.equal(data.type,11);assert.equal(data.name,'Estelle contre Joshua');assert.doesNotMatch(JSON.stringify(data),/real-/);const thread={id:'thread-'+creates,send:async payload=>{sends++;assert.match(payload.components[0].components[0].custom_id,/^activity:watch:duel:/);assert.deepEqual(payload.allowedMentions.parse,[]);return{id:'message'};}};threads.set(thread.id,thread);return thread;}}}:threads.get(id)}};
+ const result=await manager.challenge({id:'real-alice'},'Joshua',client);
+ assert.equal(creates,0);await Promise.all([manager.accept(result.id,'real-bob',client),manager.accept(result.id,'real-bob',client)]);
+ assert.equal(creates,1);assert.equal(sends,1);assert.equal(await manager.publicationThread(result.id,client),'thread-1');
+ const restored=createActivityDuels(options);assert.equal(await restored.publicationThread(result.id,client),'thread-1');assert.equal(creates,1);
+ lobby.leaveDuel('real-alice');lobby.leaveDuel('real-bob');
+ const another=createActivityDuels({...options,store:null});const second=await another.challenge({id:'real-alice'},'Joshua',client);await another.accept(second.id,'real-bob',client);
+ assert.notEqual(result.id,second.id);assert.equal(await another.publicationThread(second.id,client),'thread-2');
+});
+test('failed opening post retries inside the saved thread instead of creating another',async()=>{
+ const {lobby}=fixture();let creates=0,posts=0;const thread={id:'retry-thread',send:async()=>{if(++posts===1)throw Error('temporary failure');return{id:'opening'};}};
+ const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='retry-thread'?thread:{threads:{create:async()=>{creates++;return thread;}}}}};
+ const manager=createActivityDuels({lobby,characterNames:['Estelle','Joshua'],resolveCharacter:async id=>id==='real-alice'?'Estelle':'Joshua',resolveOpponent:async()=> 'real-bob'});
+ const result=await manager.challenge({id:'real-alice'},'Joshua',client);await manager.accept(result.id,'real-bob',client);
+ assert.equal(await manager.publicationThread(result.id,client),'retry-thread');assert.equal(creates,1);assert.equal(posts,2);
+});
+test('match routing follows participants and spectators, and thread chat stays on its matching map',async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:'duel:routed',players:['real-alice','real-bob'],channel:'origin'});
+ lobby.joinDuel('duel:routed','real-alice');assert.equal(lobby.matchFor('real-alice'),null);
+ lobby.acceptDuel('duel:routed','real-alice');lobby.joinDuel('duel:routed','real-bob');lobby.acceptDuel('duel:routed','real-bob');
+ const player=await lobby.join({id:'real-alice',channel:'private'});await lobby.state(player.activity_token);lobby.setDuelThread('duel:routed','thread-one');assert.equal(lobby.matchFor('real-alice'),'duel:routed');
+ lobby.spectateDuel('duel:routed','watcher');assert.equal(lobby.matchFor('watcher'),'duel:routed');assert.equal(lobby.matchFor('unrelated'),null);
+ assert.equal(lobby.captureMessage({id:'thread-message',author:'real-alice',channel:'thread-one',text:'Bonjour'}),true);
+ assert.equal(lobby.captureMessage({id:'wrong-thread',author:'real-alice',channel:'thread-two',text:'Secret'}),false);
+ lobby.leaveDuel('real-alice');await lobby.state(player.activity_token);assert.equal(lobby.matchFor('real-alice'),null);
+ assert.equal(lobby.captureMessage({id:'old-thread',author:'real-alice',channel:'thread-one',text:'Old duel'}),false);
 });

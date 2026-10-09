@@ -18,3 +18,18 @@ test('only the craft owner can publish a bounded animated GIF, once even concurr
 test('GIF validation rejects excessive dimensions, frames and truncation',()=>{assert.throws(()=>gifInfo(animatedGif(4,321,64)));assert.throws(()=>gifInfo(animatedGif(25)));assert.throws(()=>gifInfo(animatedGif().subarray(0,30)));assert.throws(()=>gifInfo(animatedGif(1)));});
 test('all chat text is published in bounded chunks under character identity',async()=>{const posts=[];const relay=createActivityRoleplay({send:async p=>posts.push(p),setTimer:()=>null});const event={id:'speech',character:'Renne',text:'x'.repeat(4000)};await relay.speech(event);await relay.speech(event);assert.equal(posts.length,3);assert.equal(posts.map(p=>p.text).join(''),event.text);assert.ok(posts.every(p=>p.character==='Renne'&&p.text.length<=1800));});
 test('Discord sender never replies, pings, exposes an account or uses a webhook in another channel',async()=>{const posts=[],fallback=[];class Hook{async fetch(){return {channelId:'roleplay'};}async send(p){posts.push(p);}}const sender=createRoleplayDiscordSender({WebhookClient:Hook,webhookUrl:'fixture',channelId:'roleplay',baseUrl:'https://example.test',client:{}});await sender({character:'Renne',text:'@everyone',gif:animatedGif()});assert.equal(posts[0].username,'Renne');assert.deepEqual(posts[0].allowedMentions.parse,[]);assert.equal(posts[0].reply,undefined);assert.equal(posts[0].files[0].name,'craft.gif');class Wrong extends Hook{async fetch(){return {channelId:'other'};}}const safe=createRoleplayDiscordSender({WebhookClient:Wrong,webhookUrl:'fixture',channelId:'roleplay',client:{channels:{fetch:async id=>{assert.equal(id,'roleplay');return {guild:{},isTextBased:()=>true,send:async p=>fallback.push(p)};}}}});await safe({character:'Renne',text:'Bonjour'});assert.equal(posts.length,1);assert.equal(fallback[0].content,'**Renne** : Bonjour');});
+test('craft capture preserves its original match even after the player leaves it',async()=>{
+ const posts=[],relay=createActivityRoleplay({send:async p=>posts.push(p),setTimer:()=>null});
+ const event={id:'routed-craft',actor:'account',character:'Renne',technique:'Cercle sanglant',match:'match-one'};relay.craft(event);event.match='match-two';
+ await relay.speech({id:'routed-speech',character:'Renne',text:'En garde',match:'match-two'});
+ await relay.capture('account',{id:'routed-craft',match:'malicious-client-match',gif:animatedGif().toString('base64')});
+ assert.equal(posts[0].match,'match-two');assert.equal(posts[1].match,'match-one');assert.ok(posts[1].gif);
+});
+test('match thread GIFs cannot use a webhook belonging to a different parent channel',async()=>{
+ const posts=[];let hooks=0;class Hook{constructor(){hooks++;}async fetch(){return{channelId:'roleplay'};}async send(p){posts.push({hook:p});}}
+ const thread={id:'match-thread',parentId:'general',guild:{},isThread:()=>true,isTextBased:()=>true,send:async p=>posts.push({bot:p})};
+ const sender=createRoleplayDiscordSender({client:{channels:{fetch:async id=>{assert.equal(id,'match-thread');return thread;}}},WebhookClient:Hook,webhookUrl:'fixture',channelId:'roleplay'});
+ await sender({character:'Renne',text:'Craft',gif:animatedGif(),threadId:'match-thread'});
+ assert.equal(hooks,0);assert.equal(posts[0].bot.files[0].name,'craft.gif');assert.equal(posts[0].bot.content,'**Renne** : Craft');assert.deepEqual(posts[0].bot.allowedMentions.parse,[]);
+ thread.parentId='roleplay';await sender({character:'Renne',text:'Next',threadId:'match-thread'});assert.equal(posts[1].hook.threadId,'match-thread');assert.equal(posts[1].hook.username,'Renne');
+});

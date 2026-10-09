@@ -280,7 +280,7 @@ function createActivityService({
             messageStreams.set(session.channel, events.slice(-50));
           }
           if(point.action.type === "say" && actionResult.text) {
-            Promise.resolve().then(()=>onSay({id:point.action.id,character:session.character,text:actionResult.text})).catch(error=>console.error("Activity roleplay message failed:",error.code??"unavailable"));
+            Promise.resolve().then(()=>onSay({id:point.action.id,actor:session.id,character:session.character,text:actionResult.text})).catch(error=>console.error("Activity roleplay message failed:",error.code??"unavailable"));
           }
           session.actionResults.set(point.action.id,actionResult);
           if(session.actionResults.size>128)session.actionResults.delete(session.actionResults.keys().next().value);

@@ -57,11 +57,14 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
   return {
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
+    matchFor(user) { const target=destination(user),id=target.match?.replace(/^watch:/,'');const d=duels.get(id);return target.map==='arena'&&d?.players.every(p=>d.accepted?.includes(p))?id:null; },
+    setDuelThread(id,thread) { const d=duels.get(id);if(d){d.thread=thread;persist();} },
     duelStatus(id,user) {const d=duels.get(id);return d?.players.includes(user)?{accepted:d.accepted?.includes(user)??false}:null;},
     isConnected(user) { const session=sessions.get(active.get(user));return !!session && session.expires>now() && now()-(session.seen??-Infinity)<15000; },
     findDuel(players, channel) {
       prune();
       for (const [id, duel] of duels) {
+        if(duel.players.every(user=>duel.accepted?.includes(user))&&!duel.players.some(user=>assignments.get(user)===id))continue;
         if (duel.players.length === players.length && players.every(user => duel.players.includes(user) && (!assignments.has(user) || assignments.get(user) === id)))
           return { id, players: [...duel.players], expires: duel.expires };
       }
@@ -102,7 +105,7 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
       const target = destination(message.author), session = sessions.get(active.get(message.author));
       if (!session || session.key !== target.key) return false;
       const duelChannel = duels.get(assignments.get(message.author))?.channel;
-      if (!message.direct && !sources.get(message.author)?.has(message.channel) && duelChannel !== message.channel) return false;
+      if (!message.direct && !sources.get(message.author)?.has(message.channel) && duelChannel !== message.channel && duels.get(this.matchFor(message.author))?.thread !== message.channel) return false;
       return target.service.captureMessage({ ...message, channel: target.channel });
     },
     async join({id,channel}) {

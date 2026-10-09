@@ -9,3 +9,7 @@ Les messages saisis dans le jeu sont reproduits dans le salon 149937317848350721
 Un craft accepté déclenche une capture de la scène autour de son impact (288 × 216, 12 images). Le serveur vérifie l’auteur et publie le GIF une seule fois avec « Renne lance Cercle sanglant. ». Si aucune capture n’arrive, le texte seul est publié après 30 secondes. Aucun compte Discord, chat ou élément d’interface n’est inclus dans le GIF.
 
 `npm run activity:build` reconstruit le client et le worker GIF. `npm run activity:test` vérifie les règles de combat et le relais. `activity/tools/export-renne-combat.py --help` décrit l’export reproductible des ressources natives.
+
+Les duels acceptes ouvrent un fil public dans general (595259248984981516), nomme avec les deux personnages. Le premier message contient le bouton pour regarder depuis les tribunes. Les messages du jeu et GIF des participants/spectateurs vont dans ce fil tant qu’ils sont dans ce match. Hors match, le salon roleplay reste la destination habituelle.
+
+Le fil est enregistre avec le duel et reutilise apres un redemarrage ou une nouvelle tentative. Un nouveau defi apres le depart des deux joueurs ouvre un nouveau match et un nouveau fil. Le GIF conserve la destination du match au moment du craft, meme si son auteur change de map avant l’envoi. Le bot doit pouvoir creer des fils publics et envoyer des messages/fichiers dans general et ses fils. Aucun compte de joueur n’est mentionne ou ajoute au fil.
