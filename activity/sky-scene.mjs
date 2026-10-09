@@ -1,3 +1,4 @@
+import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
 import {createMovingPlatformView} from "./moving-platform-view.mjs";
 import {createSupportEffects} from "./support-effects.mjs";
 import dungeonMechanics from "./dungeon-mechanics.cjs";
@@ -60,7 +61,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
   let camera=walkingCamera,wasFlying=false,flightMotion={moving:false,dx:0,dz:0};
-  const version = new URL(import.meta.url).searchParams.get("v") ?? "duel-finish-20261009-3";
+  const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
@@ -69,6 +70,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = new THREE.Group();model.add(loaded.scene);
+  if(map==="tower4")removeNativeBackdrop(model);
+  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
   const teamPanel=inTower?createTowerTeam(ASSETS,catalogue):null;
   const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
@@ -812,6 +815,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     enemyEffects?.animate();supportEffects.update(avatars,Date.now()+jumpClockOffset);
     dungeonEffects?.update();
     const lightState=dayNight.update();
+    rooftopSky?.update(camera,lightState);
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     dialogues.update(time, avatars, camera);
     renderer.render(scene, camera);
@@ -1017,7 +1021,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
-      dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();

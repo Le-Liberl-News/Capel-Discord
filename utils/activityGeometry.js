@@ -38,6 +38,7 @@ function createActivityScene(gltf) {
     parent.add(group);
     if (n.mesh !== undefined)
       for (const p of gltf.meshes[n.mesh].primitives) {
+        if(gltf.materials?.[p.material]?.extras?.skyBackdrop)continue;
         const g = new THREE.BufferGeometry();
         g.setAttribute("position", attribute(p.attributes.POSITION));
         if (p.indices !== undefined) g.setIndex(attribute(p.indices));
