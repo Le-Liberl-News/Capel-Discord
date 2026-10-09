@@ -1,3 +1,5 @@
+import {createTavernBeer} from "./tavern-beer.mjs";
+import tavernWorld from "./tavern-world.cjs";
 import {createAvatarShadow} from "./avatar-shadow.mjs";
 import {createDuelFinish} from "./duel-finish.mjs";
 import {createDuelIntro} from "./duel-intro.mjs";
@@ -84,6 +86,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
     }
   });
+  const tavernBeer=map==="anterose"?createTavernBeer(THREE,scene):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows);
   const duelIntro=map==="arena"?createDuelIntro():null;
@@ -264,6 +267,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       return;
     }
     const options = [];
+    if(tavernBeer&&tavernWorld.beerNearby(me.position))options.push(["Boire une bi\u00e8re","drink",undefined]);
     const residents = environment.npcs
       .filter((n) => nearby(n) && Math.abs(n.y - me.position.y) < 0.6)
       .sort(
@@ -427,7 +431,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
     const nearby=environment.npcs.filter(n=>Math.hypot(n.x-me.position.x,n.z-me.position.z)<=2.2 && Math.abs(n.y-me.position.y)<.6).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z));
     const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
-    if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
+    if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
   function keydown(event) {
     if (!connected || !movementAllowed) return;
@@ -779,10 +783,10 @@ export async function createSkyScene(canvas, map = "anterose") {
     messages(messages) {
       dialogues.receive(messages);
     },
-    speak(text) {
+    speak(text,rp=false) {
       if (!connected || !text.trim()) return false;
       if (__ACTIVITY_PREVIEW__ && !new URLSearchParams(location.search).has("frame_id")) { this.say(text); return true; }
-      return !!queueAction("say", undefined, undefined, text.trim());
+      return !!queueAction("say", undefined, undefined, text.trim(),{rp});
     },
     say(text) {
       if (!__ACTIVITY_PREVIEW__) return;

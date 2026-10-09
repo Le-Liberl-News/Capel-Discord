@@ -231,10 +231,12 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
   send:async payload=>payload.map==="arena"?activityArenaSender(payload):activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
+const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
 const activiteService = createActivityLobby({
     huntGame,
     onDuelEnd:async event=>{activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
-    onSay:event=>activityRoleplay.speech({...event,match:activiteService.matchFor(event.actor)}),
+    onDrink:event=>activityTavern.drink(event),
+    onSay:require("./utils/activitySpeech").createActivitySpeech({relay:activityRoleplay,players:()=>state.players,matchFor:actor=>activiteService.matchFor(actor)}),
     onCraft:event=>activityRoleplay.craft({...event,match:activiteService.matchFor(event.actor)}),
     rolent: {
       grid: require('./activity/assets/sky/rolent/navigation.json'),

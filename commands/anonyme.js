@@ -147,22 +147,7 @@ async function execute(interaction) {
         const playerInstance = state.players[pseudo];
         const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
 
-        const estAlcoolise = playerInstance.statuts && playerInstance.statuts.some(s => s.nom === "alcoolise");
-        if (estAlcoolise && texte.length > 0) {
-            const mots = texte.split(' ');
-
-            texte = mots.map(mot => {
-                if (Math.random() < 0.15) {
-                    const bruit = Math.random() < 0.5 ? "*hic*" : "*hips*";
-                    return `${mot} ${bruit}`;
-                }
-                return mot;
-            }).join(' ');
-
-            if (!texte.includes('*hic*') && !texte.includes('*hips*')) {
-                texte += ' ... *hic*';
-            }
-        }
+        texte = require('../rpg/alcool').texteAlcoolise(texte, playerInstance);
 
         const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
         saveState();

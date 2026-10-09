@@ -20,6 +20,7 @@ function createActivityService({
   playerPolicy = () => ({}),
   combatEnabled = false,
   onSay = () => {},
+  onDrink = null,
   onCraft = () => {},
   onDefeat = () => {},
 }) {
@@ -284,7 +285,8 @@ function createActivityService({
             if (!text || Array.from(text).length > 4000) actionResult = { error: "Message invalide." };
             else if (now() - (session.lastSpeech ?? -Infinity) < 1000) actionResult = { error: "Attendez une seconde entre deux messages." };
             else { session.lastSpeech = now(); actionResult = { text, speaker: player.id, character: session.character }; }
-          } else if(player.duelProtected) actionResult={error:player.duelFinished?"Le duel est termine.":"Le combat va commencer."};
+          } else if(point.action.type==='drink'&&onDrink){actionResult=await onDrink({id:point.action.id,actor:session.id,character:session.character,player:{...player},channel:session.channel});}
+          else if(player.duelProtected) actionResult={error:player.duelFinished?"Le duel est termine.":"Le combat va commencer."};
           else actionResult = world.action(player, point.action, room);
           if (actionResult.text) {
             const events = messageStreams.get(session.channel) ?? [];
@@ -299,7 +301,7 @@ function createActivityService({
             messageStreams.set(session.channel, events.slice(-50));
           }
           if(point.action.type === "say" && actionResult.text) {
-            Promise.resolve().then(()=>onSay({id:point.action.id,actor:session.id,character:session.character,text:actionResult.text})).catch(error=>console.error("Activity roleplay message failed:",error.code??"unavailable"));
+            Promise.resolve().then(()=>onSay({id:point.action.id,actor:session.id,character:session.character,text:actionResult.text,rp:point.action.rp===true})).catch(error=>console.error("Activity roleplay message failed:",error.code??"unavailable"));
           }
           session.actionResults.set(point.action.id,actionResult);
           if(session.actionResults.size>128)session.actionResults.delete(session.actionResults.keys().next().value);

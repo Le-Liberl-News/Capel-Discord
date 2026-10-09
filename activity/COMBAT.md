@@ -25,3 +25,11 @@ Un craft accepté déclenche une capture de la scène autour de son impact (288 
 Les duels acceptes ouvrent un fil public dans general (595259248984981516), nomme avec les deux personnages. Le premier message contient le bouton pour regarder depuis les tribunes. Les messages du jeu et GIF des participants/spectateurs vont dans ce fil tant qu’ils sont dans ce match. Hors match, le salon roleplay reste la destination habituelle.
 
 Le fil est enregistre avec le duel et reutilise apres un redemarrage ou une nouvelle tentative. Un nouveau defi apres le depart des deux joueurs ouvre un nouveau match et un nouveau fil. Le GIF conserve la destination du match au moment du craft, meme si son auteur change de map avant l’envoi. Le bot doit pouvoir creer des fils publics et envoyer des messages/fichiers dans general et ses fils. Aucun compte de joueur n’est mentionne ou ajoute au fil.
+
+## RP et biere
+
+La case RP des reglages est desactivee par defaut et conservee sur l'appareil. Sans RP, le chat reste dans le jeu, y compris dans l'arene. Avec RP, les messages des autres cartes vont au salon roleplay ; ceux de l'arene vont au salon de l'arene. Cette option concerne le chat, pas les annonces de matchs et captures.
+
+Une chope est placee sur la table de l'etage de l'Anterose. Clic droit pres de la table puis Boire une biere, ou interaction mobile/espace. Trois bieres en dix minutes appliquent le statut RPG `alcoolise`, pour six tours selon les regles existantes de Capel. Il faut attendre quatre secondes entre deux consommations. Une annonce systeme est envoyee au salon RP lors de l'acquisition du statut. Les messages publies utilisent le meme ajout de hic/hips que la commande anonyme ; le texte en jeu reste intact.
+
+Etude de la tour PVE : [DUNGEON.md](DUNGEON.md).
