@@ -332,7 +332,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar = {mesh,prop,character,dead,hp:player.hp??100,info:{height:1},position:{x:player.x??spawn.x,y:player.y??spawn.y,z:player.z??spawn.z},target:null,heading:{dx:0,dz:-1},time:0};
       attachShadow(avatar,player.id);avatars.set(player.id,avatar); return avatar;
     }
-    const baseInfo = character==="Sieg"?{...catalogue[character],height:.8}:(catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]);
+    const baseInfo = (catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]);
     const battle=renneCombat&&renneCombat.metadataFor(character);
     const combatAssets=battle?await renneCombat.load(character):null;
     const info = battle ? (combatAssets.metadata.banks[dead?"4":"0"]??combatAssets.metadata.banks["0"]) :
