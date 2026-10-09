@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import * as THREE from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
+import {packTextures} from './pack-liberl-textures.mjs';
 const output=path.resolve(process.argv[2]),cache=path.resolve(process.argv[3]);
 const layout=JSON.parse(await fs.readFile(path.join(output,'layout.json'),'utf8'));
 const gltf={asset:{version:'2.0',generator:'Liberl native exterior assembler'},extensionsUsed:['KHR_materials_unlit'],buffers:[{uri:'terrain.bin',byteLength:0}],bufferViews:[],accessors:[],images:[],textures:[],materials:[],meshes:[],nodes:[],scenes:[{nodes:[]}],scene:0};
@@ -58,5 +59,5 @@ for(const region of layout.regions){
  console.log(region.id,primitives.length,'materials');
 }
 gltf.buffers[0].byteLength=byteLength;layout.statistics={maps:layout.regions.length,triangles,textures:gltf.images.length,bytes:byteLength,drawCalls:gltf.meshes.reduce((s,m)=>s+m.primitives.length,0)};
-const terrain=Buffer.concat(binary);layout.revision=crypto.createHash('sha256').update(terrain).digest('hex').slice(0,12);
+const terrain=Buffer.concat(binary),textures=await packTextures(gltf,output);layout.statistics.bytes+=textures.length;layout.revision=crypto.createHash('sha256').update(terrain).update(textures).digest('hex').slice(0,12);
 await fs.writeFile(path.join(output,'terrain.bin'),terrain);await fs.writeFile(path.join(output,'terrain.gltf'),JSON.stringify(gltf));await fs.writeFile(path.join(output,'layout.json'),JSON.stringify(layout,null,2)+'\n');console.log(layout.statistics);

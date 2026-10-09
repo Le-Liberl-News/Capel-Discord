@@ -15,7 +15,7 @@ const assets=new URL('./',location.href),layout=await fetch(new URL('layout.json
 const versioned=url=>{const result=new URL(url,assets);result.searchParams.set('v',layout.revision);return result.href;};
 const terrainURL=versioned('terrain.gltf'),terrain=await fetch(terrainURL).then(r=>{if(!r.ok)throw Error(`Terrain : HTTP ${r.status}`);return r.json();});
 const skyAssets=new URL('../tower4/',assets);
-const cached=await preloadAssets([...terrain.buffers,...terrain.images].map(item=>versioned(item.uri)).concat(PANORAMA_FILES.map(file=>versioned(new URL(file,skyAssets).href))),{onProgress:(done,total)=>status.textContent=`Chargement ${done}/${total}`});
+const cached=await preloadAssets([...terrain.buffers,...terrain.images].filter(item=>item.uri).map(item=>versioned(item.uri)).concat(PANORAMA_FILES.map(file=>versioned(new URL(file,skyAssets).href))),{onProgress:(done,total)=>status.textContent=`Chargement ${done}/${total}`});
 manager.setURLModifier(url=>url.startsWith('blob:')||url.startsWith('data:')?url:cached.resolve(versioned(url)));
 const loaded=await new GLTFLoader(manager).loadAsync(new URL('terrain.gltf',assets).href);scene.add(loaded.scene);
 loaded.scene.traverse(o=>{if(o.isMesh)for(const m of [].concat(o.material)){if(m.map){m.map.magFilter=THREE.NearestFilter;m.map.minFilter=THREE.LinearMipmapLinearFilter;}m.polygonOffset=true;m.polygonOffsetFactor=.1;}});

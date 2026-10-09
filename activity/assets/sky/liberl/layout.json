@@ -2305,8 +2305,8 @@
     "maps": 45,
     "triangles": 1032684,
     "textures": 367,
-    "bytes": 40666612,
+    "bytes": 73429495,
     "drawCalls": 913
   },
-  "revision": "bd001ffe1d93"
+  "revision": "eeebab65c745"
 }
