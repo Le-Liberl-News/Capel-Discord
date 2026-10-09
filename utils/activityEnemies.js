@@ -5,7 +5,7 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
  const valid=i=>i>=0&&i<grid.cells.length&&grid.cells[i]!==null;
  const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
  function path(from,to){const start=index(from),goal=index(to);if(!valid(start)||!valid(goal))return [];const parents=new Map([[start,null]]),queue=[start];for(let h=0;h<queue.length&&!parents.has(goal);h++){const i=queue[h];for(const j of [i-1,i+1,i-grid.width,i+grid.width])if(valid(j)&&Math.abs(j%grid.width-i%grid.width)<=1&&!parents.has(j)&&Math.abs(grid.cells[i]-grid.cells[j])<.35){parents.set(j,i);queue.push(j);}}if(!parents.has(goal))return [];const route=[];for(let j=goal;j!==start;j=parents.get(j))route.push(point(j));route.reverse();return route.filter((q,i)=>i===0||i===route.length-1||Math.sign(q.x-route[i-1].x)!==Math.sign(route[i+1].x-q.x)||Math.sign(q.z-route[i-1].z)!==Math.sign(route[i+1].z-q.z));}
- const enemies=new Map(spawns.map((home,i)=>{const id='world:enemy:'+i,saved=initialState?.enemies?.find(e=>e.id===id),restore=saved&&valid(index(saved));return[id,{id,enemy:true,character:'Mishy',name:'Mishy',...home,home:{...home},hp:75,maxHp:75,heading:{dx:0,dz:-1},state:'idle',moving:false,speed:2.1,path:[],nextPath:0,cooldown:0,patrolAt:now()+i*700,...(restore?{x:saved.x,y:saved.y,z:saved.z,hp:Number.isFinite(saved.hp)?Math.max(0,Math.min(75,saved.hp)):75,deadUntil:saved.deadUntil??0}: {})}];}));
+ const enemies=new Map(spawns.map((home,i)=>{const id='world:enemy:'+i,saved=initialState?.enemies?.find(e=>e.id===id),restore=saved&&valid(index(saved));return[id,{id,enemy:true,character:'Mishy',name:'Mishy',...home,home:{...home},hp:75,maxHp:75,heading:{dx:0,dz:-1},state:'idle',moving:false,speed:3.3,path:[],nextPath:0,cooldown:0,patrolAt:now()+i*700,...(restore?{x:saved.x,y:saved.y,z:saved.z,hp:Number.isFinite(saved.hp)?Math.max(0,Math.min(75,saved.hp)):75,deadUntil:saved.deadUntil??0}: {})}];}));
  let last=now();
  function tick(players){const time=now(),dt=Math.max(0,Math.min(.15,(time-last)/1000));last=time;
   for(const e of enemies.values()){
@@ -21,7 +21,7 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
     else if(time>=e.patrolAt){const angle=(time/3000+Number(e.id.split(':').at(-1)))% (Math.PI*2);goal={x:e.home.x+Math.cos(angle)*1.6,y:e.home.y,z:e.home.z+Math.sin(angle)*1.6};e.patrolAt=time+4500;e.state='patrol';}
     if(goal)e.path=path(e,goal);
    }
-   let budget=dt*(engaged?2.1:.8);e.moving=!!e.path.length;e.speed=engaged?2.1:.8;
+   let budget=dt*(engaged?3.3:1.3);e.moving=!!e.path.length;e.speed=engaged?3.3:1.3;
    while(budget>0&&e.path.length){const q=e.path[0],d=distance(e,q);if(d<.01){e.path.shift();continue;}const move=Math.min(d,budget);e.heading={dx:q.x-e.x,dz:q.z-e.z};e.x+=(q.x-e.x)/d*move;e.z+=(q.z-e.z)/d*move;e.y=q.y;budget-=move;if(move>=d)e.path.shift();}
    if(!e.path.length)e.moving=false;
   }

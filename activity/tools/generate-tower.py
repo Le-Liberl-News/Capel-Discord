@@ -43,7 +43,7 @@ for floor in range(1,4):
   p,q=platforms[a],platforms[b];dx,dz=q['x']-p['x'],q['z']-p['z'];length=math.hypot(dx,dz);ux,uz=dx/length,dz/length
   ra=1/math.sqrt((ux/p['rx'])**2+(uz/p['rz'])**2);rb=1/math.sqrt((ux/q['rx'])**2+(uz/q['rz'])**2)
   start=(p['x']+ux*(ra-.8),p['z']+uz*(ra-.8));end=(q['x']-ux*(rb-.8),q['z']-uz*(rb-.8));width=rng.uniform(2.5,3.4)
-  bridges.append({'a':a,'b':b,'start':start,'end':end,'width':width,'railings':rng.random()<.65})
+  bridges.append({'a':a,'b':b,'start':start,'end':end,'width':width,'railings':rng.random()<.65,'deckHeight':.06})
  groups=[[] for _ in textures]
  def triangle(points,mat,uv):
   for p,t in zip(points,uv):groups[mat].append((*p,*t))
@@ -80,12 +80,13 @@ for floor in range(1,4):
  for t in bridges:
   a,b=t['start'],t['end'];dx,dz=b[0]-a[0],b[1]-a[1];length=math.hypot(dx,dz);nx,nz=-dz/length,dx/length;w=t['width']/2
   corners=[(a[0]+nx*w,a[1]+nz*w),(a[0]-nx*w,a[1]-nz*w),(b[0]-nx*w,b[1]-nz*w),(b[0]+nx*w,b[1]+nz*w)]
+  t['polygon']=corners
   # The bridge atlas is masonry, while platforms use the irregular green paving.
-  quad([(x,0,z) for x,z in corners],3,[(0,0),(.45,0),(.45,length/4),(0,length/4)])
+  quad([(x,t['deckHeight'],z) for x,z in corners],3,[(0,0),(.45,0),(.45,length/4),(0,length/4)])
   for u,v in [(corners[0],corners[3]),(corners[2],corners[1])]:
-   vertical(u,v,-.9,0,1,[(0,.5),(length/4,.5),(length/4,.92),(0,.92)])
+   vertical(u,v,-.9,t['deckHeight'],1,[(0,.5),(length/4,.5),(length/4,.92),(0,.92)])
    if t['railings']:
-    vertical(u,v,0,.8,1,[(0,.03),(length/4,.03),(length/4,.48),(0,.48)])
+    vertical(u,v,t['deckHeight'],t['deckHeight']+.8,1,[(0,.03),(length/4,.03),(length/4,.48),(0,.48)])
     pillar(*u);pillars.append(u)
  # Accurate circular dais: paving, stone rim and the native central ornament.
  for i in [0,len(platforms)-1]:
@@ -114,7 +115,7 @@ for floor in range(1,4):
    walk=any(inside(p,t['polygon']) for t in platforms) or any(segment_distance(p,t['start'],t['end'])<t['width']/2-.25 for t in bridges)
    if walk and any(segment_distance(p,a,b)<.3 for a,b in walls):walk=False
    if walk and any(math.hypot(p[0]-a,p[1]-b)<.6 for a,b in pillars):walk=False
-   nav.append(0 if walk else None)
+   nav.append(max([t['deckHeight'] for t in bridges if inside(p,t['polygon'])],default=0) if walk else None)
  # Retain the connected network and verify each platform can be reached.
  point=lambda p:{'x':p['x'],'y':0,'z':p['z']}
  start=point(platforms[0]);start_idx=round((start['z']-origin['z'])/step)*width+round((start['x']-origin['x'])/step)

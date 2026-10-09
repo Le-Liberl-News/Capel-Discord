@@ -73,3 +73,5 @@ Les personnages sans attaque resteront non-combattants tant qu'aucune capacite n
 4. Retour a l'Anterose, sauvegarde de la progression et tests de connexite, collision et reconnexion.
 
 L'idee est faisable. Le gros travail est le kit de decor et l'IA action ; l'extraction des textures, le rendu des sprites et une grande partie du combat existent deja. Un vrai prototype jouable doit preceder l'ajout de boss, butin et evenements.
+
+Les ponts sont surélevés de 0,06 unité, avec la même hauteur dans la navigation. La tour utilise la musique FC `bgm[33]`, soit `ED6303.ogg` selon `t_bgmtbl._dt`. Les Mishy se déplacent à 3,3 unités/s en poursuite et 1,3 en patrouille.
