@@ -28,7 +28,20 @@ const terminal=createTerminalUI({
  action:body=>apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
  changed:()=>wakePoll()
 });
-function bindScene(){scene.onAction(()=>wakePoll());scene.onTerminal(()=>void terminal.open());}
+function bindScene(){scene.onAction(()=>wakePoll());scene.onTerminal(()=>void terminal.open());scene.onCraftCapture(event=>void publishCraftCapture(event));}
+async function publishCraftCapture({id,bytes}) {
+  if(__ACTIVITY_PREVIEW__ && !new URLSearchParams(location.search).has("frame_id")) {
+    if(window.__activityPreview)window.__activityPreview.lastCraftGif=new Blob([bytes],{type:"image/gif"});
+    return;
+  }
+  if(bytes.length>700000){scene.captureNotice("Capture trop volumineuse.");return;}
+  let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  const body=JSON.stringify({id,gif:btoa(binary)});
+  for(let attempt=0;attempt<3;attempt++){
+    try{await fetchJson(apiUrl("craft-capture"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body});return;}
+    catch(error){if(attempt===2 || [400,401,403].includes(error.status)){scene.captureNotice("Capture non publiée.");return;}await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));}
+  }
+}
 
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 

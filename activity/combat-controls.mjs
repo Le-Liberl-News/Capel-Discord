@@ -1,0 +1,24 @@
+import mechanics from './renne-combat.cjs';
+export function createCombatControls(attack) {
+  const root=document.createElement('div');root.id='sky-renne-actions';root.hidden=true;
+  const style=document.createElement('style');style.textContent='#sky-renne-actions{position:fixed;right:12px;bottom:18px;display:flex;gap:7px;z-index:27}#sky-renne-actions[hidden]{display:none}#sky-renne-actions button{width:54px;height:54px;border:1px solid #d5bc84;border-radius:50%;background:#292137;color:#ffe7b0;font:26px system-ui;touch-action:none;position:relative}#sky-renne-actions button:disabled{opacity:.45}#sky-renne-actions small{position:absolute;bottom:2px;right:9px;font:12px system-ui}body[data-sky-touch] #sky-renne-actions small{display:none}#sky-move-stick{display:none;position:fixed;left:18px;bottom:88px;width:108px;height:108px;border-radius:50%;border:1px solid #e2c99788;background:#211c2a66;z-index:25;touch-action:none}#sky-move-stick i{position:absolute;width:42px;height:42px;left:33px;top:33px;border-radius:50%;background:#ead29c99;pointer-events:none}body[data-sky-touch] #sky-move-stick:not([hidden]){display:block}body[data-sky-touch] #sky-combat{font-size:14px;padding:6px 8px;max-width:128px}body[data-sky-arena] #sky-music{left:16px;right:auto!important;bottom:142px!important}body[data-sky-arena][data-sky-touch] #sky-music{left:8px;bottom:267px!important}body[data-sky-arena][data-sky-touch] #sky-leave{bottom:213px!important}body[data-sky-editing] #sky-renne-actions,body[data-sky-editing] #sky-move-stick{display:none!important}@media(any-pointer:coarse),(max-width:600px){body[data-sky-arena] #sky-music{left:8px;bottom:267px!important}body[data-sky-arena] #sky-leave{bottom:213px!important}}';document.head.append(style);
+  const buttons=new Map(),cooldowns=new Map();
+  for(const [kind,icon]of [['basic','⚔'],['craft','◉'],['art','✦']]){
+    const button=document.createElement('button');button.type='button';button.title=button.ariaLabel=mechanics.RENNE[kind].name;button.textContent=icon;const key=document.createElement('small');key.textContent=mechanics.RENNE[kind].key.toUpperCase();button.append(key);buttons.set(kind,button);root.append(button);
+    let drag;
+    button.addEventListener('pointerdown',e=>{if(button.disabled)return;e.preventDefault();drag={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};button.setPointerCapture(e.pointerId);});
+    button.addEventListener('pointermove',e=>{if(drag&&drag.id===e.pointerId&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>15)drag.moved=true;});
+    button.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const moved=drag.moved;drag=null;if(button.hasPointerCapture(e.pointerId))button.releasePointerCapture(e.pointerId);attack(kind,moved?{clientX:e.clientX,clientY:e.clientY}:null);});
+    button.addEventListener('pointercancel',()=>{drag=null;});
+  }
+  const stick=document.createElement('div');stick.id='sky-move-stick';stick.hidden=true;stick.setAttribute('aria-label','Déplacement');const knob=document.createElement('i');stick.append(knob);document.body.append(root,stick);
+  let vector={x:0,y:0},touch=null,enabled=false;
+  function reset(){vector={x:0,y:0};touch=null;knob.style.transform='';}
+  const move=e=>{if(!touch||touch.id!==e.pointerId)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y,d=Math.hypot(dx,dy),scale=Math.min(1,42/(d||1));vector={x:dx*scale/42,y:dy*scale/42};knob.style.transform=`translate(${dx*scale}px,${dy*scale}px)`;};
+  stick.addEventListener('pointerdown',e=>{if(!enabled)return;e.preventDefault();const rect=stick.getBoundingClientRect();touch={id:e.pointerId,x:rect.left+54,y:rect.top+54};stick.setPointerCapture(e.pointerId);move(e);});stick.addEventListener('pointermove',move);stick.addEventListener('pointerup',reset);stick.addEventListener('pointercancel',reset);stick.addEventListener('lostpointercapture',reset);
+  return {vector:()=>vector,ready:kind=>(cooldowns.get(kind)??0)<=performance.now(),started(kind){cooldowns.set(kind,performance.now()+mechanics.RENNE[kind].cooldown);},rejected(kind){cooldowns.delete(kind);},update({arena,renne,connected,alive,spectator,busy,health}){
+    document.body.toggleAttribute("data-sky-arena",arena);
+    root.hidden=!arena||!renne||spectator;stick.hidden=!arena||spectator;enabled=connected&&alive&&!busy;if(!enabled)reset();
+    for(const [kind,button]of buttons){const remaining=health?.cooldowns?.[kind]-(health?.serverTime??0);if(remaining>0)cooldowns.set(kind,Math.max(cooldowns.get(kind)??0,performance.now()+remaining));button.disabled=!enabled||!this.ready(kind);}
+  },dispose(){reset();root.remove();stick.remove();style.remove();}};
+}

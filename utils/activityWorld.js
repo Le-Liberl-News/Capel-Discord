@@ -414,7 +414,7 @@ function createSingleActivityWorld({
     }),
   };
 }
-function createActivityWorld(options) {
+function createActivityWorldBase(options) {
   if (options.disablePoms) {
     const world = createSingleActivityWorld(options);
     return { ...world, snapshot: () => ({npcs:world.snapshot().npcs,poms:[],pom:null}),
@@ -441,6 +441,17 @@ function createActivityWorld(options) {
       if (index < 0) return { error: "Pom indisponible." };
       return worlds[index].action(player, command, players);
     },
+  };
+}
+function createActivityWorld(options) {
+  const world=createActivityWorldBase(options);
+  if(!options.combatEnabled)return world;
+  const combat=require("./activityCombat").createActivityCombat(options);
+  return {...world,
+    tick(players){world.tick(players);combat.tick(players);},
+    action(player,command,players){return command?.type==="attack" ? combat.action(player,command,players) : world.action(player,command,players);},
+    snapshot(){return {...world.snapshot(),combat:combat.snapshot()};},
+    cooldownsFor:combat.cooldownsFor,
   };
 }
 module.exports = { createActivityWorld, MAX_HP, DAMAGE, RESPAWN_MS };

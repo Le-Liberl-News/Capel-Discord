@@ -17,6 +17,9 @@ function createActivityService({
   store = null,
   navigationFor = () => grid,
   playerPolicy = () => ({}),
+  combatEnabled = false,
+  onSay = () => {},
+  onCraft = () => {},
 }) {
   const saved = store?.load() ?? {};
   const remembered = new Map(saved.players ?? []);
@@ -167,7 +170,7 @@ function createActivityService({
         };
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, initialState: worldStates[session.channel] });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, onCraft, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       Object.assign(player,{spectator:false,canMove:true,prop:null},playerPolicy(session.id));
@@ -176,7 +179,7 @@ function createActivityService({
       const previousRespawn = player.respawn ?? 0;
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && player.hp > 0 && !justRespawned && player.canMove !== false) {
+      if (point && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
         const x = Number(point.x),
           z = Number(point.z);
         if (!Number.isFinite(x) || !Number.isFinite(z))
@@ -253,7 +256,10 @@ function createActivityService({
         point.action.id.length <= 80
       ) {
         // A lost response may replay an action; never throw or talk twice.
-        if (session.lastAction !== point.action.id) {
+        session.actionIds ??= new Set();
+        session.actionResults ??= new Map();
+        if (!session.actionIds.has(point.action.id)) {
+          session.actionIds.add(point.action.id);
           session.lastAction = point.action.id;
           if (point.action.type === "say") {
             const text = typeof point.action.text === "string" ? point.action.text.trim() : "";
@@ -273,8 +279,13 @@ function createActivityService({
             });
             messageStreams.set(session.channel, events.slice(-50));
           }
+          if(point.action.type === "say" && actionResult.text) {
+            Promise.resolve().then(()=>onSay({id:point.action.id,character:session.character,text:actionResult.text})).catch(error=>console.error("Activity roleplay message failed:",error.code??"unavailable"));
+          }
+          session.actionResults.set(point.action.id,actionResult);
+          if(session.actionResults.size>128)session.actionResults.delete(session.actionResults.keys().next().value);
           session.actionResult = actionResult;
-        } else actionResult = session.actionResult;
+        } else actionResult = session.actionResults.get(point.action.id) ?? {};
       }
       session.playerState = { ...player };
       const environment = world.snapshot();
@@ -288,7 +299,9 @@ function createActivityService({
         health: {
           hp: player.hp,
           spectator: player.spectator,
-          canMove: player.canMove,
+          canMove: player.canMove !== false && now() >= (player.combatLockedUntil ?? 0),
+          combatLockedUntil: player.combatLockedUntil ?? 0,
+          cooldowns: world.cooldownsFor?.(player.id) ?? {},
           maxHp: MAX_HP,
           deadUntil: player.deadUntil,
           respawn: player.respawn ?? 0,

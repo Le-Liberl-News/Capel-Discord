@@ -38,7 +38,7 @@ export function createMapMusic(url) {
     button.textContent = "\u266b Musique indisponible";
     button.title = "Le fichier audio n\u2019a pas pu \u00eatre charg\u00e9.";
   });
-  const panel = document.createElement("div");
+  const panel = document.createElement("div"); panel.id="sky-music";
   panel.style.cssText = "position:fixed;right:16px;bottom:16px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #b49760;border-radius:4px;background:#201b18ee;color:#e8d5ad;font:12px system-ui";
   button.style.cssText = "border:0;background:transparent;color:inherit;cursor:pointer;font:inherit";
   const slider = document.createElement("input"); slider.type = "range"; slider.min = "0"; slider.max = "100"; slider.step = "1"; slider.value = String(Math.round(audio.volume * 100));

@@ -1,0 +1,326 @@
+{
+  "character": "Renne",
+  "banks": {
+    "0": {
+      "texture": "combat/renne-0.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "1": {
+      "texture": "combat/renne-1.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "2": {
+      "texture": "combat/renne-2.png",
+      "columns": 8,
+      "rows": 14,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 112,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "fps": 8
+    },
+    "3": {
+      "texture": "combat/renne-3.png",
+      "columns": 8,
+      "rows": 3,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 24,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2
+      ],
+      "fps": 8
+    },
+    "4": {
+      "texture": "combat/renne-4.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    },
+    "5": {
+      "texture": "combat/renne-5.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    },
+    "6": {
+      "texture": "combat/renne-6.png",
+      "columns": 8,
+      "rows": 2,
+      "frameWidth": 256,
+      "frameHeight": 160,
+      "frames": 16,
+      "directions": 8,
+      "height": 2.956521739130435,
+      "centerX": 0.0,
+      "centerY": 1.2010869565217392,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1
+      ],
+      "fps": 8
+    }
+  },
+  "sequences": {
+    "basic": [
+      {
+        "bank": 2,
+        "pose": 0,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 1,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 2,
+        "ms": 200
+      },
+      {
+        "bank": 2,
+        "pose": 3,
+        "ms": 60
+      },
+      {
+        "bank": 2,
+        "pose": 4,
+        "ms": 60
+      },
+      {
+        "bank": 2,
+        "pose": 5,
+        "ms": 60
+      },
+      {
+        "bank": 2,
+        "pose": 6,
+        "ms": 60
+      },
+      {
+        "bank": 2,
+        "pose": 7,
+        "ms": 60
+      },
+      {
+        "bank": 2,
+        "pose": 8,
+        "ms": 200
+      },
+      {
+        "bank": 2,
+        "pose": 9,
+        "ms": 50
+      },
+      {
+        "bank": 2,
+        "pose": 10,
+        "ms": 50
+      },
+      {
+        "bank": 2,
+        "pose": 11,
+        "ms": 50
+      },
+      {
+        "bank": 2,
+        "pose": 12,
+        "ms": 50
+      },
+      {
+        "bank": 2,
+        "pose": 13,
+        "ms": 50
+      }
+    ],
+    "spell": [
+      {
+        "bank": 5,
+        "pose": 0,
+        "ms": 130
+      },
+      {
+        "bank": 5,
+        "pose": 1,
+        "ms": 130
+      },
+      {
+        "bank": 5,
+        "pose": 2,
+        "ms": 130
+      },
+      {
+        "bank": 5,
+        "pose": 3,
+        "ms": 130
+      }
+    ],
+    "cast": [
+      {
+        "bank": 6,
+        "pose": 0,
+        "ms": 200
+      },
+      {
+        "bank": 6,
+        "pose": 1,
+        "ms": 200
+      }
+    ],
+    "craft": [
+      {
+        "bank": 0,
+        "pose": 0,
+        "ms": 200
+      },
+      {
+        "bank": 2,
+        "pose": 0,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 1,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 2,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 3,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 4,
+        "ms": 80
+      },
+      {
+        "bank": 2,
+        "pose": 5,
+        "ms": 80
+      }
+    ]
+  },
+  "source": {
+    "game": "Sky Third JP",
+    "as": "as04510._dt",
+    "sha256": "5d41eadc123a911d6de65b022ef08b186978bbe66b12fd1542b2c044b9ed944e",
+    "craftSlot": 17,
+    "effect": "SC cr153_00._ds"
+  }
+}

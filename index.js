@@ -185,6 +185,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+app.use('/api/craft-capture', express.json({limit:'1500kb'}));
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
 const upload = multer({ dest: 'uploads/' });
@@ -223,8 +224,16 @@ const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_
 const { createActivityLobby } = require('./utils/activityLobby.js');
 const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
 const capelModel=require("./activity/assets/sky/capel.json");
+const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
+  send:require('./utils/activityRoleplayDiscord').createRoleplayDiscordSender({client,WebhookClient,
+    channelId:process.env.ACTIVITY_ROLEPLAY_ID || '1499373178483507210',
+    webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL}),
+  onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
+});
 const activiteService = createActivityLobby({
     huntGame,
+    onSay:event=>activityRoleplay.speech(event),
+    onCraft:event=>activityRoleplay.craft(event),
     rolent: {
       grid: require('./activity/assets/sky/rolent/navigation.json'),
       residents: require('./activity/assets/sky/rolent/residents.json'),
@@ -237,6 +246,7 @@ const activiteService = createActivityLobby({
     },
     store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
     arena: {
+      combatEnabled: true,
       spectatorGrid: require("./activity/assets/sky/arena/spectator-navigation.json"),
       spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
       grid: require('./activity/assets/sky/arena/navigation.json'),
@@ -310,6 +320,10 @@ app.post('/api/state', async (req, res) => {
 });
 app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
 app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
+app.post('/api/craft-capture',async(req,res)=>{
+  try{const {id}=activiteService.identity(activiteBearer(req));res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}
+  catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Publication roleplay temporairement indisponible.'});}
+});
 app.use('/assets/sky', express.static(path.join(ACTIVITE_DOSSIER, 'assets', 'sky')));
 
 function envoyerClientActivite(nomFichier, res) {

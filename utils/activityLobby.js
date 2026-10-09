@@ -51,7 +51,8 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
     return { ...result, player:result.player && {...result.player,id:alias(result.player.id)},
       joueurs:result.joueurs?.map(p=>({...p,id:alias(p.id)})),
       messages:result.messages?.map(m=>({...m,id:alias(m.id),author:alias(m.author)})),
-      pom:pom(result.pom), poms:result.poms?.map(pom) };
+      pom:pom(result.pom), poms:result.poms?.map(pom),
+      combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},

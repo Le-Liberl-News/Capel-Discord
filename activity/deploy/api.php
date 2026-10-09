@@ -6,6 +6,7 @@ $routes = [
     'state' => '/api/state',
     'profile' => '/api/profile',
     'terminal' => '/api/terminal',
+    'craft-capture' => '/api/craft-capture',
 ];
 
 $route = $_GET['r'] ?? '';
