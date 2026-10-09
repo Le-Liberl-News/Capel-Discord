@@ -29,10 +29,14 @@ curl_setopt_array($requete, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST',
     CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: ' . $authorization],
-    CURLOPT_POSTFIELDS => $corps === false || $corps === '' ? null : $corps,
     CURLOPT_CONNECTTIMEOUT => 5,
     CURLOPT_TIMEOUT => 30,
 ]);
+
+// CURLOPT_POSTFIELDS switches cURL to POST, even when its value is null.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    curl_setopt($requete, CURLOPT_POSTFIELDS, $corps === false ? '' : $corps);
+}
 
 $reponse = curl_exec($requete);
 $code = curl_getinfo($requete, CURLINFO_HTTP_CODE);
