@@ -251,3 +251,8 @@ test("keyboard layouts select distinct movement keys and keyboard opening preser
  assert.equal(movementKeys("AZERTY").up,"z");assert.equal(movementKeys("AZERTY").left,"q");assert.equal(movementKeys("QWERTY").up,"w");assert.equal(movementKeys("QWERTY").left,"a");
  const full={width:390,height:844},short={width:390,height:360};assert.deepEqual(viewportSize(full,short,true),full);assert.deepEqual(viewportSize(full,short,false),short);assert.deepEqual(viewportSize(full,{width:844,height:390},true),{width:844,height:390});assert.equal(CAMERA_PITCH,Math.PI/4);assert.equal(CAMERA_ZOOM,5.5);
 });
+
+test("damage feedback uses confirmed HP losses, including lethal hits, without replaying snapshots",async()=>{
+ const {damageAmount}=await import("../activity/damage-effects.mjs");
+ assert.equal(damageAmount(undefined,{hp:75}),0);assert.equal(damageAmount({hp:100},{hp:75}),25);assert.equal(damageAmount({hp:75},{hp:75}),0);assert.equal(damageAmount({hp:75},{hp:100}),0);assert.equal(damageAmount({hp:20},{hp:0}),20);assert.equal(damageAmount({hp:100,npc:true},{hp:75,npc:true}),0);
+});

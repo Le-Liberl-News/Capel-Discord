@@ -1,3 +1,4 @@
+import {createDamageEffects,damageAmount} from "./damage-effects.mjs";
 import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
@@ -241,6 +242,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     menu.style.left = Math.min(event.clientX, innerWidth - 260) + "px";
     menu.style.top = Math.min(event.clientY, innerHeight - 180) + "px";
   }
+  const damageEffects=await createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading);
   const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
   const marker = new THREE.Mesh(
@@ -604,6 +606,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar.mesh.rotation.y = Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]);
       }
     }
+    damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
     if (me)
       follow.lerp(
         new THREE.Vector3(me.position.x, me.position.y, me.position.z),
@@ -738,6 +741,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     async sync(players) {
       const present = new Set([localId]);
       for (const player of players) {
+        const lost=damageAmount(avatars.get(player.id),player);
+        if(lost)damageEffects.hit(player.id,lost);
         if (player.id === localId) {
           const current = avatars.get(localId);
           if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null) || current.character !== (catalogue[player.character]?player.character:"Estelle")))
@@ -856,6 +861,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       labels.remove();
       style.remove();
       dialogues.dispose();
+      damageEffects.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();
       scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
