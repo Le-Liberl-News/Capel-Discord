@@ -7,6 +7,13 @@ function replayWindow(frames, frame, limit = REPLAY_FRAMES) {
   if (frames.length > limit) frames.shift();
   return frames;
 }
+function cloneReplayMaterial(source) {
+  const clone=source.clone();
+  // Keep the native day/night shader without modifying the live material.
+  clone.onBeforeCompile=source.onBeforeCompile;
+  clone.customProgramCacheKey=source.customProgramCacheKey;
+  return clone;
+}
 function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, model) {
   const width = 224, height = 168, target = new THREE.WebGLRenderTarget(width, height);
   target.texture.colorSpace = THREE.SRGBColorSpace;
@@ -49,7 +56,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     return clone;
   }
   function material(source) {
-    const clone = source.clone();
+    const clone = cloneReplayMaterial(source);
     ownedMaterials.add(clone);
     if (clone.map) clone.map = texture(source.map);
     if (source.clippingPlanes?.length) clone.clippingPlanes = cutaway.planes;
@@ -367,5 +374,6 @@ export {
   REPLAY_FRAMES,
   REPLAY_INTERVAL,
   createDuelFinish,
+  cloneReplayMaterial,
   replayWindow
 };

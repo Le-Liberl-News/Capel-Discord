@@ -310,3 +310,10 @@ test('scene history interpolates locally without changing recorded world states'
  assert.equal(historyPair(history,1500).b.time,1100);
  assert.deepEqual(history,before);assert.equal(historyPair([],1000),null);
 });
+
+
+test('cinematic materials keep native day/night shaders without changing live colours',async()=>{
+ const {cloneReplayMaterial}=await import('../activity/duel-finish.mjs');
+ const source=new THREE.MeshBasicMaterial({color:0xffccaa});source.onBeforeCompile=shader=>{shader.uniforms.testLight={value:.3};};source.customProgramCacheKey=()=> 'night';
+ const clone=cloneReplayMaterial(source),shader={uniforms:{}};clone.onBeforeCompile(shader);assert.equal(shader.uniforms.testLight.value,.3);assert.equal(clone.customProgramCacheKey(),'night');clone.color.set(0x000000);assert.equal(source.color.getHex(),0xffccaa);assert.notEqual(clone,source);clone.dispose();source.dispose();
+});
