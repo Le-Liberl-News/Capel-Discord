@@ -1,3 +1,4 @@
+import {keyboardLayout} from "./controls.mjs";
 import { fetchJson, retryConnection } from "./network.mjs";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { createMapMusic } from "./music.mjs";
@@ -21,6 +22,8 @@ const etat = {
   messageCursor: 0,
 };
 let scene, music;
+const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
+
 const mapTitle = map => map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
 const musicUrl = map => new URL(map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS);
 const gameHud = document.createElement("div"), blindfold = document.createElement("div");
@@ -36,10 +39,10 @@ function drawHunt() {
  if(!g)return;
  const seconds=Math.max(0,Math.ceil((g.deadline-g.serverTime)/1000-(Date.now()-g.received)/1000));
  const timer=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
- gameHud.textContent = g.phase==="waiting" ? "Inscription ouverte : "+g.players+" joueurs.\nLe créateur lance la partie depuis Discord." : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Actions / appui long sur mobile ; clic droit sur PC.":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
+ gameHud.textContent = g.phase==="waiting" ? "Inscription ouverte : "+g.players+" joueurs.\nLe créateur lance la partie depuis Discord." : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Chasseur":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
 }
 setInterval(drawHunt,250);
-const leave = document.createElement("button"); leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
+const leave = document.createElement("button"); leave.id="sky-leave"; leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
 const chat = document.createElement("form");
 chat.id = "sky-chat";
 chat.hidden = true;
@@ -61,6 +64,17 @@ const mobileStyle=document.createElement("style");mobileStyle.textContent="#sky-
 document.head.append(mobileStyle);document.body.append(chatToggle);
 chatToggle.addEventListener("click",()=>{const open=!chat.hasAttribute("data-open");chat.toggleAttribute("data-open",open);chatToggle.setAttribute("aria-expanded",String(open));if(open)chatInput.focus();else chatInput.blur();});
 chatInput.addEventListener("focus", () => window.dispatchEvent(new Event("blur")));
+// Keep the world framing stable when a mobile keyboard covers the activity.
+try{if(navigator.virtualKeyboard)navigator.virtualKeyboard.overlaysContent=true;}catch{}
+function keyboardInset(){const v=window.visualViewport;const editing=document.activeElement===chatInput;const inset=editing?Math.max(navigator.virtualKeyboard?.boundingRect?.height??0,innerHeight-(v?.height??innerHeight)-(v?.offsetTop??0),0):0;document.documentElement.style.setProperty("--sky-keyboard-inset",inset+"px");}
+chatInput.addEventListener("focus",()=>{document.body.dataset.skyEditing="true";keyboardInset();});navigator.virtualKeyboard?.addEventListener("geometrychange",keyboardInset);window.visualViewport?.addEventListener("resize",keyboardInset);addEventListener("resize",keyboardInset);chatInput.addEventListener("blur",()=>{delete document.body.dataset.skyEditing;document.documentElement.style.setProperty("--sky-keyboard-inset","0px");dispatchEvent(new Event("resize"));});
+const settings=document.createElement("details");settings.id="sky-settings";
+const gear=document.createElement("summary");gear.textContent="\u2699";gear.setAttribute("aria-label","R\u00e9glages");gear.title="R\u00e9glages";
+const layoutLabel=document.createElement("label");layoutLabel.textContent="Clavier ";const layoutSelect=document.createElement("select");for(const name of ["AZERTY","QWERTY"]){const option=document.createElement("option");option.value=name;option.textContent=name;layoutSelect.append(option);}layoutSelect.value=keyboardLayout();layoutSelect.addEventListener("change",()=>{try{localStorage.setItem("sky-keyboard",layoutSelect.value);}catch{}dispatchEvent(new Event("blur"));});layoutLabel.append(layoutSelect);
+const instructions=document.createElement("p");instructions.textContent="Fl\u00e8ches ou ZQSD / WASD : marcher. Espace : interagir (souris pour viser). E / R ou clic droit gliss\u00e9 : tourner la cam\u00e9ra.";settings.append(gear,layoutLabel,instructions);document.body.append(settings);
+const compactStyle=document.createElement("style");compactStyle.textContent=`body[data-sky-editing] #sky-chat{bottom:calc(12px + var(--sky-keyboard-inset,0px))!important}#sky-settings{position:fixed;left:16px;bottom:82px;z-index:31;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;padding:8px;max-width:280px;font:14px system-ui}#sky-settings summary{cursor:pointer;font-size:22px;list-style:none}#sky-settings select{font:inherit;padding:6px}body[data-sky-touch] #hud,body[data-sky-touch] #sky-settings{display:none}body[data-sky-touch] #sky-leave{top:auto!important;right:auto!important;left:8px;bottom:125px;max-width:155px}body[data-sky-touch] #sky-chat{bottom:calc(190px + var(--sky-keyboard-inset,0px))!important}@media(any-pointer:coarse),(max-width:600px){body[data-sky-ready] #hud,#sky-settings{display:none}#sky-leave{top:auto!important;right:auto!important;left:8px;bottom:125px;max-width:155px;min-height:44px}#sky-chat{bottom:calc(190px + var(--sky-keyboard-inset,0px))!important}#sky-prophunt{top:60px!important;left:8px;right:auto!important;max-width:220px!important}}`;
+document.head.append(compactStyle);
+
 function base64url(donnees) {
   const octets = new Uint8Array(donnees);
   let texte = "";
@@ -222,7 +236,7 @@ async function start() {
   leave.hidden = etat.map === "anterose";
   document.querySelector("#hud h1").textContent = mapTitle(etat.map);
   await scene.me({ ...etat.moi, character: etat.character });
-  chat.hidden = false;
+  chat.hidden = false;document.body.dataset.skyReady="true";
   if (
     __ACTIVITY_PREVIEW__ &&
     apercuLocal &&
@@ -265,10 +279,10 @@ async function start() {
     if (inFlight || stopped) return;
     inFlight = true; requested = false;
     try {
-      await publier(); failures = 0;
+      await publier(); failures = 0;connectionNotice.hidden=true;
       bandeau.textContent = "Votre personnage du jour : " + etat.character;
     } catch (error) {
-      scene.setConnected(false); failures++;
+      scene.setConnected(false); failures++;connectionNotice.textContent=error.message;connectionNotice.hidden=false;
       bandeau.textContent = error.message;
       if (error.status === 409) { inFlight = false; stopped = true; return; } // Do not steal control back from another window.
       if (error.status === 401) {

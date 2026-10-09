@@ -245,3 +245,9 @@ test("local prop changes preserve predicted position without retaining stale app
  assert.equal(next.prop,"barrel");assert.equal(next.id,"avatar:current");assert.deepEqual(positionOf(next),{x:3,y:0,z:5});
  const found=avatarAtPosition({...next,prop:null,character:"Phyllis"},{...old,prop:"barrel"});assert.equal(found.prop,null);assert.equal(found.character,"Phyllis");assert.deepEqual(Object.keys(positionOf(found)),["x","y","z"]);
 });
+
+test("keyboard layouts select distinct movement keys and keyboard opening preserves world size",async()=>{
+ const {movementKeys,viewportSize,CAMERA_PITCH,CAMERA_ZOOM}=await import("../activity/controls.mjs");
+ assert.equal(movementKeys("AZERTY").up,"z");assert.equal(movementKeys("AZERTY").left,"q");assert.equal(movementKeys("QWERTY").up,"w");assert.equal(movementKeys("QWERTY").left,"a");
+ const full={width:390,height:844},short={width:390,height:360};assert.deepEqual(viewportSize(full,short,true),full);assert.deepEqual(viewportSize(full,short,false),short);assert.deepEqual(viewportSize(full,{width:844,height:390},true),{width:844,height:390});assert.equal(CAMERA_PITCH,Math.PI/4);assert.equal(CAMERA_ZOOM,10);
+});

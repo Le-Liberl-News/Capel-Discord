@@ -128,6 +128,7 @@ client.once('clientReady', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
+    if (await require('./utils/activityEntry').handleActivityEntry(interaction)) return;
     if (await activiteDuels.handle(interaction)) return;
     if (await activitePropHunt.handle(interaction)) return;
     if (interaction.isButton()) {

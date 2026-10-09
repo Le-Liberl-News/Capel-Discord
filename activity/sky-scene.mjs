@@ -1,3 +1,4 @@
+import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
 import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
@@ -102,9 +103,9 @@ export async function createSkyScene(canvas, map = "anterose") {
   };
   let path = [],
     yaw = 0,
-    pitch = Math.PI / 4,
+    pitch = CAMERA_PITCH,
     drag = null,
-    zoom = 12,
+    zoom = CAMERA_ZOOM,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
     connected = true,
@@ -143,7 +144,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const touches=createTouchControls({
     tap:event=>{if(!connected)return;if(touchArmed){disarmTouch();interaction(event);}else click(event);},
     action:event=>{disarmTouch();interaction(event);},
-    camera:({dx,dy,scale})=>{menu.hidden=true;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch+dy*.005,Math.PI/9,Math.PI*5/12);zoom=THREE.MathUtils.clamp(zoom*scale,4,map==="arena"?30:15);resize();},
+    camera:({dx})=>{menu.hidden=true;yaw-=dx*.006;},
   });
   const oldHelp = document.getElementById("aide");
   if (oldHelp) oldHelp.hidden = true;
@@ -162,8 +163,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       Math.hypot(p.x - me.position.x, p.z - me.position.z) <= r &&
       Math.abs((p.y ?? 0) - me.position.y) < 1.8;
     pointer.set(
-      (event.clientX / innerWidth) * 2 - 1,
-      1 - (event.clientY / innerHeight) * 2,
+      (event.clientX / viewport.width) * 2 - 1,
+      1 - (event.clientY / viewport.height) * 2,
     );
     raycaster.setFromCamera(pointer, camera);
     if (environment.game?.role === "hunter" && environment.game.phase === "hunting") {
@@ -356,19 +357,29 @@ export async function createSkyScene(canvas, map = "anterose") {
     avatars.set(player.id, avatar);
     return avatar;
   }
+  let viewport={width:innerWidth,height:innerHeight};
   function resize() {
-    const aspect = innerWidth / innerHeight;
-    camera.left = -zoom * aspect;
-    camera.right = zoom * aspect;
-    camera.top = zoom;
-    camera.bottom = -zoom;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight, false);
+    const editing=!!document.activeElement?.closest?.("input,textarea,[contenteditable]");
+    viewport=viewportSize(viewport,{width:innerWidth,height:innerHeight},editing);
+    const aspect=viewport.width/viewport.height;
+    camera.left=-zoom*aspect;camera.right=zoom*aspect;camera.top=zoom;camera.bottom=-zoom;
+    camera.updateProjectionMatrix();renderer.setSize(viewport.width,viewport.height,false);
+    canvas.style.width=viewport.width+"px";canvas.style.height=viewport.height+"px";
+  }
+  let cursor={clientX:innerWidth/2,clientY:innerHeight/2};
+  function keyboardInteraction() {
+    const me=avatars.get(localId);if(!me||health.hp===0||health.spectator)return;
+    const ball=environment.poms.find(p=>p.owner===localId);
+    if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
+    const nearby=environment.npcs.filter(n=>Math.hypot(n.x-me.position.x,n.z-me.position.z)<=2.2 && Math.abs(n.y-me.position.y)<.6).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z));
+    const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
+    if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
   function keydown(event) {
     if (!connected || !movementAllowed) return;
     if (event.target.closest?.("input,textarea,select,[contenteditable]"))
       return;
+    if(event.code === "Space") {event.preventDefault();if(!event.repeat)keyboardInteraction();return;}
     if (
       [
         "ArrowUp",
@@ -402,8 +413,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     menu.hidden = true;
     if (health.hp === 0 || !movementAllowed) return;
     pointer.set(
-      (event.clientX / innerWidth) * 2 - 1,
-      (-event.clientY / innerHeight) * 2 + 1,
+      (event.clientX / viewport.width) * 2 - 1,
+      (-event.clientY / viewport.height) * 2 + 1,
     );
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObject(model, true);
@@ -450,6 +461,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     canvas.setPointerCapture(event.pointerId);
   }
   function pointermove(event) {
+    cursor={clientX:event.clientX,clientY:event.clientY};
     if(touches.has(event.pointerId)){event.preventDefault();touches.move(event);return;}
     if (!drag || event.pointerId !== drag.id) return;
     if (
@@ -459,11 +471,6 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (!drag.moved) return;
     menu.hidden = true;
     yaw -= (event.clientX - drag.x) * 0.006;
-    pitch = THREE.MathUtils.clamp(
-      pitch + (event.clientY - drag.y) * 0.005,
-      Math.PI / 9,
-      (Math.PI * 5) / 12,
-    );
     drag.x = event.clientX;
     drag.y = event.clientY;
   }
@@ -485,8 +492,7 @@ export async function createSkyScene(canvas, map = "anterose") {
 
   function wheel(event) {
     event.preventDefault();
-    zoom = THREE.MathUtils.clamp(zoom + event.deltaY * 0.005, 4, map === "arena" ? 30 : 15);
-    resize();
+
   }
   canvas.addEventListener("pointerdown", pointerdown);
   canvas.addEventListener("pointermove", pointermove);
@@ -529,11 +535,11 @@ export async function createSkyScene(canvas, map = "anterose") {
     forward.normalize();
     if (me && health.hp > 0 && movementAllowed) {
       const horizontal =
-        Number(keys.has("arrowright") || keys.has("d")) -
-        Number(keys.has("arrowleft") || keys.has("q") || keys.has("a"));
+        Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
+        Number(keys.has("arrowleft") || keys.has(movementKeys(keyboardLayout()).left));
       const vertical =
-        Number(keys.has("arrowup") || keys.has("z") || keys.has("w")) -
-        Number(keys.has("arrowdown") || keys.has("s"));
+        Number(keys.has("arrowup") || keys.has(movementKeys(keyboardLayout()).up)) -
+        Number(keys.has("arrowdown") || keys.has(movementKeys(keyboardLayout()).down));
       if (horizontal || vertical) {
         const length = Math.hypot(horizontal, vertical),
           dx = (right.x * horizontal + forward.x * vertical) / length,
@@ -595,10 +601,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(avatar.shadow)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
       avatar.mesh.rotation.z = avatar.fallbackDeath ? Math.PI / 2 : 0;
-      avatar.mesh.rotation.y = Math.atan2(
-        camera.position.x - avatar.position.x,
-        camera.position.z - avatar.position.z,
-      );
+      avatar.mesh.rotation.y = Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]);
       }
     }
     if (me)
@@ -645,8 +648,8 @@ export async function createSkyScene(canvas, map = "anterose") {
         a.position.y + a.info.height + 0.15,
         a.position.z,
       ).project(camera);
-      label.style.left = ((p.x + 1) * innerWidth) / 2 + "px";
-      label.style.top = ((1 - p.y) * innerHeight) / 2 + "px";
+      label.style.left = ((p.x + 1) * viewport.width) / 2 + "px";
+      label.style.top = ((1 - p.y) * viewport.height) / 2 + "px";
       label.hidden = p.z > 1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1;
       if (
         label.dataset.hp !== String(a.hp) ||
@@ -778,7 +781,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
-      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?22:12;resize(); }
+      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?18:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
       movementAllowed = health.canMove !== false;
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
@@ -798,9 +801,9 @@ export async function createSkyScene(canvas, map = "anterose") {
           (environment.poms.some(p => p.owner === localId)
             ? "Pom en main : clic droit pour tirer vers le point visé."
             : "Clic droit : parler / ramasser le Pom. Glisser : caméra.");
-      if(document.body.dataset.skyTouch && health.hp>0) status.textContent=environment.poms.some(p=>p.owner===localId)?"Actions puis toucher pour tirer.":"Toucher : marcher. Appui long : actions. Deux doigts : caméra.";
+      if((document.body.dataset.skyTouch||matchMedia("(any-pointer:coarse)").matches) && health.hp>0) status.textContent=health.spectator?"Spectateur":(health.hp??100)+" / 100 PV";
       if (health.spectator && map === "arena") status.textContent = "Tribunes : spectateur";
-      if (environment.game) status.textContent = result.notice ?? (document.body.dataset.skyTouch?"Toucher : marcher. Actions puis toucher un objet pour chercher.":"Rolent : clic droit pour chercher un objet proche.");
+      if (environment.game) status.textContent = result.notice ?? ((document.body.dataset.skyTouch||matchMedia("(any-pointer:coarse)").matches)?"":"Rolent : clic droit pour chercher un objet proche.");
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;
       if (result.actionResult?.id === actionQueue[0]?.id) actionQueue.shift();
@@ -830,12 +833,12 @@ export async function createSkyScene(canvas, map = "anterose") {
     screenPoint(point) {
       const p = new THREE.Vector3(point.x, point.y, point.z).project(camera);
       return {
-        x: ((p.x + 1) * innerWidth) / 2,
-        y: ((1 - p.y) * innerHeight) / 2,
+        x: ((p.x + 1) * viewport.width) / 2,
+        y: ((1 - p.y) * viewport.height) / 2,
       };
     },
     cameraAngles() {
-      return { yaw, pitch };
+      return { yaw, pitch, zoom };
     },
     position() {
       return avatars.get(localId)?.position ?? spawn;

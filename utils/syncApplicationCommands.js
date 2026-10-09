@@ -6,6 +6,7 @@ async function syncApplicationCommands(rest, commands) {
   const existing = await rest.get(route);
   const keys = ["id", "type", "name", "name_localizations", "description", "description_localizations", "handler", "contexts", "integration_types", "default_member_permissions", "nsfw"];
   const entryPoints = existing.filter(c => c.type === 4).map(c => Object.fromEntries(keys.filter(k => c[k] !== undefined).map(k => [k,c[k]])));
+  for(const entry of entryPoints)entry.handler=1;
   await rest.put(route, { body: [...commands, ...entryPoints] });
   const registered = await rest.get(route);
   for (const command of commands) {
