@@ -1,0 +1,10 @@
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+export async function loadLynx(THREE,assets,length=10,manager){
+ const raw=(await new GLTFLoader(manager).loadAsync(new URL('lynx/model.gltf',assets).href)).scene;
+ const bounds=new THREE.Box3().setFromObject(raw),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+ raw.position.set(-center.x,-bounds.min.y,-center.z);const container=new THREE.Group();container.add(raw);container.scale.setScalar(length/Math.max(size.x,size.z));
+ // Native Bobcat faces +Z; flight coordinates face -Z.
+ container.rotation.y=Math.PI;const model=new THREE.Group();model.add(container);
+ raw.traverse(o=>{if(o.isMesh)for(const m of [].concat(o.material)){if(m.map){m.map.magFilter=THREE.NearestFilter;m.map.minFilter=THREE.LinearFilter;}m.depthWrite=true;}});
+ return model;
+}

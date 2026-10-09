@@ -243,6 +243,7 @@ const activiteService = createActivityLobby({
     onDrink:event=>activityTavern.drink(event),
     onSay:require("./utils/activitySpeech").createActivitySpeech({relay:activityRoleplay,players:()=>state.players,matchFor:actor=>activiteService.matchFor(actor)}),
     onCraft:event=>activityRoleplay.craft({...event,match:activiteService.matchFor(event.actor)}),
+    airship:require('./utils/activityAirshipTerrain').loadAirshipTerrain(path.join(__dirname,'activity/assets/sky/liberl')),
     rolent: {
       grid: require('./activity/assets/sky/rolent/navigation.json'),
       residents: require('./activity/assets/sky/rolent/residents.json'),

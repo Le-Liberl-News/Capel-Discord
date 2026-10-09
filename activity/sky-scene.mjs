@@ -1,4 +1,8 @@
 import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
+import {createAirshipScene} from './airship-scene.mjs';
+import {loadLynx} from './lynx-model.mjs';
+import airshipPhysics from './airship-physics.cjs';
+import airshipConfig from './assets/sky/liberl/airship.json';
 import {createMovingPlatformView} from "./moving-platform-view.mjs";
 import {createSupportEffects} from "./support-effects.mjs";
 import dungeonMechanics from "./dungeon-mechanics.cjs";
@@ -39,6 +43,7 @@ export const ASSETS = new URL(
   location.href,
 );
 export async function createSkyScene(canvas, map = "anterose") {
+  if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inTower=/^tower[1-4]$/.test(map);
   const mapAssets = map === "anterose" ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
@@ -79,6 +84,11 @@ export async function createSkyScene(canvas, map = "anterose") {
   if(terminal){const asset=await new GLTFLoader(loading).loadAsync(new URL(terminal.model,ASSETS).href);terminalObject=asset.scene;terminalObject.position.set(terminal.position.x,terminal.position.y,terminal.position.z);terminalObject.rotation.y=terminal.rotation;model.add(terminalObject);}
 
   scene.add(model);
+  let lynxObject=null;
+  if(map==='anterose'){
+   lynxObject=await loadLynx(THREE,ASSETS,1.7,loading);lynxObject.position.set(airshipConfig.lobby.x,airshipConfig.lobby.y+.38,airshipConfig.lobby.z);scene.add(lynxObject);
+   const stand=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,.35,16),new THREE.MeshBasicMaterial({color:0x7e6741}));stand.position.set(airshipConfig.lobby.x,airshipConfig.lobby.y+.175,airshipConfig.lobby.z);scene.add(stand);
+  }
   model.updateMatrixWorld(true);
   const collision = collisionModule.createSurfaceCollision(THREE, model);
   model.traverse((object) => {
@@ -298,6 +308,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       return;
     }
     const options = [];
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby))options.push(['Piloter le Lynx','flight_board',undefined]);
     if(towerLayout){if(Number(map.slice(5))<4&&nearby(towerLayout.exit))options.push(["Monter","tower_step","up"]);if(Number(map.slice(5))>1&&nearby(towerLayout.start))options.push(["Descendre","tower_step","down"]);}
 
     if(tavernBeer&&tavernWorld.beerNearby(me.position))options.push(["Boire une bi\u00e8re","drink",undefined]);
@@ -462,6 +473,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   let cursor={clientX:innerWidth/2,clientY:innerHeight/2};
   function keyboardInteraction() {
     const me=avatars.get(localId);if(!me||health.hp===0||health.spectator)return;
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby)&&(!terminal||Math.hypot(me.position.x-airshipConfig.lobby.x,me.position.z-airshipConfig.lobby.z)<Math.hypot(me.position.x-terminal.position.x,me.position.z-terminal.position.z))){queueAction('flight_board');return;}
     if(terminal&&terminalWorld.terminalNearby(me.position,terminal)){path=[];notifyTerminal();return;}
     const ball=environment.poms.find(p=>p.owner===localId);
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
@@ -469,6 +481,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if(towerLayout&&Number(map.slice(5))<4&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<2.2){queueAction("tower_step","up");return;}
     if(towerLayout&&Number(map.slice(5))>1&&Math.hypot(me.position.x-towerLayout.start.x,me.position.z-towerLayout.start.z)<2.2){queueAction("tower_step","down");return;}
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby)){queueAction('flight_board');return;}
     if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
   function keydown(event) {
@@ -834,6 +847,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     attack:startAttack,
     captureNotice(text){status.textContent=text;},
     terminalPoint(){return terminal?{...terminal.position,y:terminal.position.y+.7}:null;},
+    lynxPoint(){return lynxObject?{...airshipConfig.lobby,y:airshipConfig.lobby.y+.9}:null;},
     setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
     async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); localJump=null;jumpPending=false;marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
     messages(messages) {

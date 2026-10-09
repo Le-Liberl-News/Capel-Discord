@@ -1,12 +1,13 @@
 const { randomBytes } = require("node:crypto");
 const { createActivityService, ActivityError } = require("./activityService");
 // Real Discord IDs stay inside the server. Every scene exposes random avatar IDs.
-function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, now = Date.now, ...options }) {
+function createActivityLobby({ arena, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
   const active = new Map(), lastSeen = new Map();
   const presenceGrace = 2 * 60 * 1000;
   const sources = new Map(), locations = new Map(), spectators = new Map();
   const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
+  const skies=airship&&require('./activityAirship').createActivityAirship({...airship,now,resolveCharacter:options.resolveCharacter,onSay:options.onSay});
   const stadium = arena && createActivityService({ ...options, ...arena, now, persistent: true, store: worldStores.arena,
     spawnFor: user => spectators.has(user) ? (arena.spectatorGrid?.spawn ?? arena.grid.spawn) : arena.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? arena.grid.spawn,
     onDefeat: finishDuel,
@@ -63,6 +64,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
   }
   function destination(user) {
     prune(); const id = assignments.get(user), duel = duels.get(id);
+    if(skies&&locations.get(user)==='liberl')return {key:'liberl',service:skies,map:'liberl',channel:'map:liberl',match:null};
     const floor=/^tower([1-4])$/.exec(locations.get(user)??"");if(floor&&towers[Number(floor[1])-1]){const map="tower"+floor[1];return {key:map,service:towers[Number(floor[1])-1],map,channel:"map:"+map,match:null};}
     if (city && locations.get(user) === "rolent") return {key:"rolent",service:city,map:"rolent",channel:"map:rolent",match:huntGame?.summary()?.id??null};
     return stadium && locations.get(user) === "arena" ? { key:"arena", service:stadium, map:"arena", channel:"map:arena", match:spectators.has(user) ? "watch:"+spectators.get(user) : duel ? id : null } : { key:"tavern", service:tavern, map:"anterose", channel:"map:anterose", match:null };
@@ -79,7 +81,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
-    refreshCharacter(user) { for(const service of [tavern,stadium,city,...towers])service?.refreshCharacter(user); },
+    refreshCharacter(user) { for(const service of [tavern,stadium,city,skies,...towers])service?.refreshCharacter(user); },
     duelCaptureFor(user){const id=assignments.get(user),duel=duels.get(id);return duel?.result&&now()-duel.result.at<60000?{id,...duel.result,actors:duel.players}:null;},
     matchFor(user) { const target=destination(user),id=target.match?.replace(/^watch:/,'');const d=duels.get(id);return target.map==='arena'&&d?.players.every(p=>d.accepted?.includes(p))?id:null; },
     setDuelThread(id,thread) { const d=duels.get(id);if(d){d.thread=thread;persist();} },
@@ -152,6 +154,15 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
       session.seen=now();
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
       if (["leave_duel","leave_map"].includes(point?.action?.type)) { huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }
+      let boardingError;
+      if(point?.action?.type==='flight_board'){
+       if(session.boardedAction===point.action.id){}
+       else if(!skies||destination(session.id).map!=='anterose')boardingError='Lynx indisponible.';
+       else{const snapshot=await session.service.state(session.token),player=snapshot.joueurs.find(p=>p.id===session.id);
+        if(!player||player.hp<=0||!require('../activity/airship-physics.cjs').airshipNearby(player,airship.config.lobby))boardingError='Approchez-vous du Lynx.';
+        else{release(session.id);skies.resetPlayer(session.id);locations.set(session.id,'liberl');session.boardedAction=point.action.id;persist();}
+       }
+      }
       let towerError;
       if(point?.action?.type==='tower_step'){
        session.towerActions??=new Set();const floor=Number((locations.get(session.id)??'').slice(5)),layout=tower[floor-1]?.layout;
@@ -169,7 +180,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
       }
       const searching=target.map==="rolent" && point?.action?.type==="hunt_find";
       if(point?.action?.type==='attack'&&point.action.target){const original=[...aliases].find(([,value])=>value===point.action.target)?.[0];point={...point,action:{...point.action,target:original??'invalid'}};}
-      const result=await session.service.state(session.token,changed?undefined:(searching||point?.action?.type==="tower_step")?{...point,action:undefined}:point,changed?undefined:after);
+      const result=await session.service.state(session.token,changed?undefined:(searching||['tower_step','flight_board'].includes(point?.action?.type))?{...point,action:undefined}:point,changed?undefined:after);
       if (target.map==="rolent" && huntGame) {
         if(searching&&!changed) {
           const original=[...aliases].find(([,value])=>value===point.action.target)?.[0];
@@ -191,7 +202,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
       if(duel?.result)publishResult(duelId,duel);
       const introduction=target.map==="arena"&&duel&&(arena.introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
       return {...sanitize(result),team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
-        actionResult:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
+        actionResult:boardingError?{id:point.action.id,error:boardingError}:point?.action?.type==='flight_board'?{id:point.action.id}:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },
   };
 }
