@@ -15,7 +15,7 @@ function cloneReplayMaterial(source) {
   return clone;
 }
 function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, model) {
-  const width = 224, height = 168, target = new THREE.WebGLRenderTarget(width, height);
+  const width = 448, height = 336, target = new THREE.WebGLRenderTarget(width, height);
   target.texture.colorSpace = THREE.SRGBColorSpace;
   const camera = new THREE.PerspectiveCamera(48, 4 / 3, 0.06, 350), pixels = new Uint8Array(width * height * 4), replay = new THREE.Scene();
   const registry = /* @__PURE__ */ new Map(), textures = /* @__PURE__ */ new Map(), ownedMaterials = /* @__PURE__ */ new Set(), ownedGeometry = /* @__PURE__ */ new Set(), cutaway = createArenaCutaway();
@@ -318,11 +318,11 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       if (phase.kind === "overhead") {
         scratchContext.putImageData(new ImageData(frame, width, height), 0, 0);
         scratchContext.fillStyle = "#0009";
-        scratchContext.fillRect(0, 0, width, 24);
+        scratchContext.fillRect(0, 0, width, 48);
         scratchContext.fillStyle = "#ffe7b0";
-        scratchContext.font = "15px AveriaSky,sans-serif";
+        scratchContext.font = "30px AveriaSky,sans-serif";
         scratchContext.textAlign = "center";
-        scratchContext.fillText("Victoire de " + result.winnerName, width / 2, 17, width - 12);
+        scratchContext.fillText("Victoire de " + result.winnerName, width / 2, 34, width - 24);
         frames.push(new Uint8Array(scratchContext.getImageData(0, 0, width, height).data));
       } else frames.push(new Uint8Array(frame));
     }

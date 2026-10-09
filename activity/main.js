@@ -34,7 +34,7 @@ async function publishCraftCapture({id,bytes}) {
     if(window.__activityPreview)window.__activityPreview.lastCraftGif=new Blob([bytes],{type:"image/gif"});
     return;
   }
-  if(bytes.length>700000){scene.captureNotice("Capture trop volumineuse.");return;}
+  if(bytes.length>3000000){scene.captureNotice("Capture trop volumineuse.");return;}
   let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
   const body=JSON.stringify({id,gif:btoa(binary)});
   for(let attempt=0;attempt<3;attempt++){
