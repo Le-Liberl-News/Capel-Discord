@@ -301,12 +301,17 @@ app.post('/api/token', async (req, res) => {
     }
 });
 
+const activityAccess=require('./utils/activityAccess').createActivityAccess({client});
+client.on('guildMemberRemove',member=>{if(member.guild.id===require('./utils/activityAccess').ACTIVITY_GUILD_ID)activityAccess.invalidate(member.id);});
+
 app.post('/api/profile', async (req, res) => {
     try {
         const response = await fetch('https://discord.com/api/users/@me', {headers: {Authorization: 'Bearer ' + activiteBearer(req)}});
         if (!response.ok) return res.status([401,403].includes(response.status) ? 401 : response.status === 429 ? 429 : 502).json({erreur: [401,403].includes(response.status) ? 'Identification Discord requise.' : 'Connexion Discord temporairement indisponible.'});
         const user = await response.json();
         const channel = await client.channels.fetch(String(req.body?.channel || ''));
+        activityAccess.assertContext(channel,String(req.body?.guild || ''),user.id);
+        await activityAccess.assertMember(user.id,{force:true});
         if (channel?.guild) {
           if (channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur:'Salon Discord invalide.'});
           const member = await channel.guild.members.fetch(user.id);
@@ -317,10 +322,13 @@ app.post('/api/profile', async (req, res) => {
         res.set('Cache-Control', 'no-store');
         res.json(await activiteService.join({id: user.id, channel: channel.id}));
     } catch (error) {
+        if(error.status)return res.status(error.status).json({erreur:error.message});
         const denied = [10003,10007,50001,50013].includes(error.code);
         res.status(denied ? 403 : 502).json({erreur: denied ? 'Impossible de rejoindre ce salon Discord.' : 'Connexion Discord temporairement indisponible.'});
     }
 });
+app.use(['/api/state','/api/terminal','/api/craft-capture'],async(req,res,next)=>{try{const {id}=activiteService.identity(activiteBearer(req));await activityAccess.assertMember(id);next();}catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Vérification du serveur temporairement indisponible.'});}});
+
 app.get('/api/state', async (req, res) => {
     try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, undefined, Number(req.query.after));res.json({...state,requests:activiteDuels.pending(activiteService.identity(token).id)}); }
     catch(error){res.status(error.status || 500).json({erreur:error.message});}
