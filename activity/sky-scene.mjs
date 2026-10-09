@@ -133,7 +133,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const touchButton=document.createElement("button");
   touchButton.id="sky-touch-action";touchButton.type="button";touchButton.textContent="Actions";
   touchButton.setAttribute("aria-pressed","false");
-  touchButton.title="Actions puis toucher la cible, ou appui long. Deux doigts : caméra.";
+  touchButton.title="Actions";
   if(matchMedia("(any-pointer:coarse)").matches)document.body.dataset.skyTouch="true";
   let touchArmed=false;
   function disarmTouch(){touchArmed=false;touchButton.setAttribute("aria-pressed","false");touchButton.textContent="Actions";}
@@ -781,7 +781,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
-      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?18:CAMERA_ZOOM;resize(); }
+      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?10:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
       movementAllowed = health.canMove !== false;
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
@@ -794,16 +794,9 @@ export async function createSkyScene(canvas, map = "anterose") {
         if (me) Object.assign(me.position, result.position);
       }
       respawn = health.respawn ?? 0;
-      if (health.hp > 0)
-        status.textContent =
-          health.hp +
-          " / 100 PV · " +
-          (environment.poms.some(p => p.owner === localId)
-            ? "Pom en main : clic droit pour tirer vers le point visé."
-            : "Clic droit : parler / ramasser le Pom. Glisser : caméra.");
-      if((document.body.dataset.skyTouch||matchMedia("(any-pointer:coarse)").matches) && health.hp>0) status.textContent=health.spectator?"Spectateur":(health.hp??100)+" / 100 PV";
+      if (health.hp > 0) status.textContent = health.hp + " / 100 PV";
       if (health.spectator && map === "arena") status.textContent = "Tribunes : spectateur";
-      if (environment.game) status.textContent = result.notice ?? ((document.body.dataset.skyTouch||matchMedia("(any-pointer:coarse)").matches)?"":"Rolent : clic droit pour chercher un objet proche.");
+      if (environment.game) status.textContent = result.notice ?? "";
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;
       if (result.actionResult?.id === actionQueue[0]?.id) actionQueue.shift();

@@ -48,7 +48,7 @@ chat.id = "sky-chat";
 chat.hidden = true;
 chat.style.cssText = "position:fixed;right:16px;bottom:70px;z-index:15;width:300px;max-width:calc(100vw - 32px);padding:10px;box-sizing:border-box;background:#211c2aee;border:1px solid #b49760;border-radius:5px;color:#ffe7b0;font:13px system-ui";
 const chatLabel = document.createElement("label");
-chatLabel.textContent = "Discussion de la map";
+chatLabel.textContent = "Discussion";
 const chatInput = document.createElement("input");
 chatInput.name = "message"; chatInput.maxLength = 4000; chatInput.autocomplete = "off";
 chatInput.placeholder = "Votre message…";
@@ -56,8 +56,7 @@ chatInput.style.cssText = "box-sizing:border-box;width:100%;padding:8px;margin:6
 chatLabel.append(chatInput);
 const chatSend = document.createElement("button"); chatSend.type = "submit"; chatSend.textContent = "Envoyer";
 chatSend.style.cssText = "padding:6px 12px;background:#f3dfb4;color:#332319;border:0;border-radius:3px;cursor:pointer";
-const chatHint = document.createElement("small"); chatHint.textContent = " Visible par les joueurs de cette map.";
-chat.append(chatLabel,chatSend,chatHint); document.body.append(chat);
+chat.append(chatLabel,chatSend); document.body.append(chat);
 chat.addEventListener("submit", event => { event.preventDefault(); if (scene?.speak(chatInput.value)) chatInput.value = ""; });
 const chatToggle=document.createElement("button");chatToggle.id="sky-chat-toggle";chatToggle.type="button";chatToggle.textContent="Discussion";chatToggle.setAttribute("aria-expanded","false");
 const mobileStyle=document.createElement("style");mobileStyle.textContent="#sky-chat-toggle{display:none;position:fixed;right:12px;bottom:138px;z-index:25;min-height:44px;padding:8px 12px;background:#211c2a;color:#ffe7b0;border:1px solid #b49760;border-radius:5px;font:15px AveriaSky,sans-serif}body[data-sky-touch] #sky-chat-toggle{display:block}body[data-sky-touch] #sky-chat:not([data-open]){display:none}body[data-sky-touch] #sky-chat{bottom:190px}@media(any-pointer:coarse),(max-width:600px){#sky-chat-toggle{display:block}#sky-chat:not([data-open]){display:none}#sky-chat{bottom:190px!important;z-index:26!important}}";
@@ -71,7 +70,7 @@ chatInput.addEventListener("focus",()=>{document.body.dataset.skyEditing="true";
 const settings=document.createElement("details");settings.id="sky-settings";
 const gear=document.createElement("summary");gear.textContent="\u2699";gear.setAttribute("aria-label","R\u00e9glages");gear.title="R\u00e9glages";
 const layoutLabel=document.createElement("label");layoutLabel.textContent="Clavier ";const layoutSelect=document.createElement("select");for(const name of ["AZERTY","QWERTY"]){const option=document.createElement("option");option.value=name;option.textContent=name;layoutSelect.append(option);}layoutSelect.value=keyboardLayout();layoutSelect.addEventListener("change",()=>{try{localStorage.setItem("sky-keyboard",layoutSelect.value);}catch{}dispatchEvent(new Event("blur"));});layoutLabel.append(layoutSelect);
-const instructions=document.createElement("p");instructions.textContent="Fl\u00e8ches ou ZQSD / WASD : marcher. Espace : interagir (souris pour viser). E / R ou clic droit gliss\u00e9 : tourner la cam\u00e9ra.";settings.append(gear,layoutLabel,instructions);document.body.append(settings);
+settings.append(gear,layoutLabel);document.body.append(settings);
 const compactStyle=document.createElement("style");compactStyle.textContent=`body[data-sky-editing] #sky-chat{bottom:calc(12px + var(--sky-keyboard-inset,0px))!important}#sky-settings{position:fixed;left:16px;bottom:82px;z-index:31;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;padding:8px;max-width:280px;font:14px system-ui}#sky-settings summary{cursor:pointer;font-size:22px;list-style:none}#sky-settings select{font:inherit;padding:6px}body[data-sky-touch] #hud,body[data-sky-touch] #sky-settings{display:none}body[data-sky-touch] #sky-leave{top:auto!important;right:auto!important;left:8px;bottom:125px;max-width:155px}body[data-sky-touch] #sky-chat{bottom:calc(190px + var(--sky-keyboard-inset,0px))!important}@media(any-pointer:coarse),(max-width:600px){body[data-sky-ready] #hud,#sky-settings{display:none}#sky-leave{top:auto!important;right:auto!important;left:8px;bottom:125px;max-width:155px;min-height:44px}#sky-chat{bottom:calc(190px + var(--sky-keyboard-inset,0px))!important}#sky-prophunt{top:60px!important;left:8px;right:auto!important;max-width:220px!important}}`;
 document.head.append(compactStyle);
 
@@ -271,7 +270,7 @@ async function start() {
       "Votre personnage du jour : " +
       etat.character +
       (scene.catalogue[etat.character] ? "" : " · sprite Estelle provisoire") +
-      "\nMonde partagé · Vos MP à Capel deviennent des bulles.";
+      "";
   }
   let failures = 0, timer, inFlight = false, requested = false, stopped = false;
   wakePoll = () => { requested = true; if (!inFlight && !stopped) { clearTimeout(timer); void poll(); } };
