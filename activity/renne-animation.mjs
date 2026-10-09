@@ -30,12 +30,12 @@ export async function createRenneCombat(THREE,scene,assets) {
     const effect={group,ring,vortex,bolt};effects.set(event.id,effect);return effect;
   }
   function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
-  function update(localId,capture,camera){for(const [id,event]of actions){const time=elapsed(event),spec=combatSpec(event.character??'Renne',event.kind),impact=event.impactAt-event.started;if(event.cancelled||time>event.endsAt-event.started+1100){capture.cancel(id);remove(id);continue;}const e=effects.get(id)??makeEffect(event);
+  function update(localId,capture,camera){for(const [id,event]of actions){const time=elapsed(event),spec=combatSpec(event.character??'Renne',event.kind),impact=event.impactAt-event.started;if(event.cancelled||time>event.endsAt-event.started+1100){capture?.cancel(id);remove(id);continue;}const e=effects.get(id)??makeEffect(event);
     const travelling=spec.projectile&&time>=spec.windup&&time<impact;const progress=Math.max(0,Math.min(1,(time-spec.windup)/(impact-spec.windup||1)));
     e.bolt.visible=travelling;e.bolt.position.set(event.origin.x+(event.aim.x-event.origin.x)*progress,event.origin.y+.9+(event.aim.y-event.origin.y)*progress,event.origin.z+(event.aim.z-event.origin.z)*progress);e.bolt.material.map.offset.x=(Math.floor(time/65)%4)/4;
     const age=(time-impact)/1000,visible=age>=0&&age<.85;e.group.visible=visible;e.group.position.set(event.aim.x,event.aim.y+.04,event.aim.z);e.ring.rotation.z=age*3;e.ring.scale.setScalar(.6+Math.max(0,age)*.7);e.ring.material.opacity=e.vortex.material.opacity=visible?Math.max(0,1-age/.85):0;e.vortex.material.rotation=age*5;
     if(event.kind==='art'&&time<spec.windup){e.group.visible=true;e.group.position.set(event.origin.x,event.origin.y+.04,event.origin.z);e.ring.scale.setScalar(.35);e.ring.material.opacity=.55;e.vortex.material.opacity=0;}
-    if(event.kind==='craft'&&event.actor===localId&&event.accepted&&!event.captureStarted&&time>=impact-350){event.captureStarted=true;capture.start(id,event.aim,camera);}
+    if(event.kind==='craft'&&event.actor===localId&&event.accepted&&!event.captureStarted&&time>=impact-350){event.captureStarted=true;capture?.start(id,event.aim,camera);}
   }}
   return {metadata,textures,metadataFor,load,actions,predict,receive,current,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();}};
 }

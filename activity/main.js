@@ -45,7 +45,7 @@ async function publishCraftCapture({id,bytes}) {
 
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 
-const mapTitle = map => map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+const mapTitle = map => /^tower[1-3]$/.test(map)?"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
 const musicUrl = map => new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : "music/anterose.ogg",ASSETS);
 const gameHud = document.createElement("div"), blindfold = document.createElement("div");
 gameHud.id="sky-prophunt"; gameHud.hidden=true;

@@ -1,4 +1,26 @@
-# Tour procedurale : etude de faisabilite
+# Prototype de tour partagee
+
+Trois etages sont implementes : `tower1`, `tower2`, `tower3`. Les layouts sont tires par le generateur puis fixes dans cette version : tous les joueurs voient le meme etage. Chaque carte utilise un petit kit de geometrie et trois textures natives de l'interieur SC d'Esmelas.
+
+Le Capel de l'Anterose permet d'entrer au premier etage. Les glyphes au sol permettent de monter ou descendre par clic droit / interaction, en etant a proximite. Le bouton de retour ramene a l'Anterose.
+
+Les actions de combat sont disponibles pour les personnages deja equipes. Les degats entre joueurs sont refuses par le serveur dans la tour. Aucun monstre ni Pom n'est ajoute. Les GIF de combat ne sont pas publies depuis cette zone.
+
+Le panneau lateral montre les personnages presents dans la tour, leurs portraits derives des sprites natifs, les PV et l'etage. Il couvre les trois etages et masque tous les comptes Discord. Les membres absents sont retires apres la fenetre de presence de vingt secondes.
+
+Generation locale :
+
+```powershell
+python activity/tools/generate-tower.py --textures E:/dev/sky-activity-tools/esmelas-study --seed 202610091
+```
+
+Le generateur garantit un chemin entre l'entree et la sortie et utilise une graine differente par etage. Le GLTF et la grille de navigation viennent du meme layout. La generation n'a pas lieu a chaque connexion. Pour changer une tour deja utilisee, il faut egalement reinitialiser ses etats de monde sauvegardes et ramener les joueurs a l'Anterose avant de publier de nouvelles cartes.
+
+Tests : connexite des trois layouts, surfaces reelles, entree authentifiee pres du Capel, transitions et reprises sans doublon, equipe entre plusieurs etages, combat sans degats allies, et rendu PC/mobile.
+
+---
+
+## Etude initiale de faisabilite
 
 ## Assets verifies
 

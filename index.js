@@ -234,6 +234,7 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
 const activiteService = createActivityLobby({
     huntGame,
+    tower:[1,2,3].map(floor=>{const root=path.join(__dirname,'activity/assets/sky/tower'+floor);return {grid:require(path.join(root,'navigation.json')),layout:require(path.join(root,'layout.json')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};}),
     onDuelEnd:async event=>{activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
     onDrink:event=>activityTavern.drink(event),
     onSay:require("./utils/activitySpeech").createActivitySpeech({relay:activityRoleplay,players:()=>state.players,matchFor:actor=>activiteService.matchFor(actor)}),
@@ -244,6 +245,7 @@ const activiteService = createActivityLobby({
       geometry: require('./utils/activityGeometry').createActivityGeometry(JSON.parse(require('fs').readFileSync(path.join(__dirname,'activity/assets/sky/rolent/anterose.gltf'),'utf8'))),
     },
     worldStores: {
+      ...Object.fromEntries([1,2,3].map(floor=>["tower"+floor,require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-tower"+floor+".json"))])),
       rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
       anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
       arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),

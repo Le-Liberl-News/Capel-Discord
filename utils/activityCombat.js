@@ -1,5 +1,5 @@
 const { combatSpec, attackPoint } = require("../activity/native-combat.cjs");
-function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {}, onDefeat = () => {} }) {
+function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {}, onDefeat = () => {}, canDamage = () => true }) {
   const attacks = new Map(), cooldowns = new Map();
   let players;
   const floor = point => {
@@ -18,7 +18,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if (!endpoint) return { error: "Visée invalide." };
     const ground = floor(endpoint);
     if (ground === null || !Number.isFinite(ground) || Math.abs(ground-endpoint.y)>1.2)
-      return { error: "Visez le sol de l’arène." };
+      return { error: "Visez le sol." };
     endpoint.y=ground;
     const from={...origin,y:origin.y+.85},to={...endpoint,y:endpoint.y+.85};
     const hit=geometry?.sweep(from,to,.12);
@@ -43,7 +43,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       const attacker=room.get(attack.actor),spec=combatSpec(attack.character,attack.kind);
       if(!attacker||attacker.hp<=0||attacker.character!==attack.character||attacker.spectator){attack.cancelled=true;continue;}
       for(const player of room.values()) {
-        if(player.id===attack.actor||player.hp<=0||player.spectator||player.duelProtected||Math.abs((player.y??0)-attack.aim.y)>.9)continue;
+        if(!canDamage(attacker,player)||player.id===attack.actor||player.hp<=0||player.spectator||player.duelProtected||Math.abs((player.y??0)-attack.aim.y)>.9)continue;
         let inRange=Math.hypot(player.x-attack.aim.x,player.z-attack.aim.z)<=spec.radius;
         if(attack.kind==="basic"&&!spec.projectile) {
           const dx=player.x-attack.origin.x,dz=player.z-attack.origin.z,d=Math.hypot(dx,dz),ax=attack.aim.x-attack.origin.x,az=attack.aim.z-attack.origin.z,ad=Math.hypot(ax,az);

@@ -15,6 +15,7 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  async function perform(token,body) {
   const {id}=lobby.identity(token);
   switch(body.action) {
+   case "tower": {await nearby(token);lobby.enterTower(id,1);return {message:"Tour rejointe."};}
    case "test_character": {
     await nearby(token);
     if(!testCharacters)throw new ActivityError("Test indisponible.",403);

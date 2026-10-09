@@ -1,3 +1,4 @@
+import {createTowerTeam} from "./tower-team.mjs";
 import {createTavernBeer} from "./tavern-beer.mjs";
 import tavernWorld from "./tavern-world.cjs";
 import {createAvatarShadow} from "./avatar-shadow.mjs";
@@ -32,6 +33,7 @@ export const ASSETS = new URL(
   location.href,
 );
 export async function createSkyScene(canvas, map = "anterose") {
+  const inTower=/^tower[1-3]$/.test(map);
   const mapAssets = map === "anterose" ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -58,6 +60,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = new THREE.Group();model.add(loaded.scene);
+  const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
+  const teamPanel=inTower?createTowerTeam(ASSETS,catalogue):null;
   const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
   let terminalObject=null;
   if(terminal){const asset=await new GLTFLoader(loading).loadAsync(new URL(terminal.model,ASSETS).href);terminalObject=asset.scene;terminalObject.position.set(terminal.position.x,terminal.position.y,terminal.position.z);terminalObject.rotation.y=terminal.rotation;model.add(terminalObject);}
@@ -116,10 +120,10 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
-  const renneCombat=map==="arena"?await createRenneCombat(THREE,scene,ASSETS):null;
+  const renneCombat=(map==="arena"||inTower)?await createRenneCombat(THREE,scene,ASSETS):null;
   let notifyCapture=()=>{};
   const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model):null;
-  const craftCapture=renneCombat?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
+  const craftCapture=(renneCombat&&!inTower)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event));
   function aimForAttack(event) {
     const me=avatars.get(localId);if(!me)return null;
@@ -267,6 +271,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       return;
     }
     const options = [];
+    if(towerLayout){if(Number(map.slice(5))<3&&nearby(towerLayout.exit))options.push(["Monter","tower_step","up"]);if(Number(map.slice(5))>1&&nearby(towerLayout.start))options.push(["Descendre","tower_step","down"]);}
+
     if(tavernBeer&&tavernWorld.beerNearby(me.position))options.push(["Boire une bi\u00e8re","drink",undefined]);
     const residents = environment.npcs
       .filter((n) => nearby(n) && Math.abs(n.y - me.position.y) < 0.6)
@@ -431,6 +437,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
     const nearby=environment.npcs.filter(n=>Math.hypot(n.x-me.position.x,n.z-me.position.z)<=2.2 && Math.abs(n.y-me.position.y)<.6).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z));
     const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
+    if(towerLayout&&Number(map.slice(5))<3&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<2.2){queueAction("tower_step","up");return;}
+    if(towerLayout&&Number(map.slice(5))>1&&Math.hypot(me.position.x-towerLayout.start.x,me.position.z-towerLayout.start.z)<2.2){queueAction("tower_step","down");return;}
     if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
   function keydown(event) {
@@ -602,7 +610,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const airForward=forward.clone(),airRight=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
     forward.y = 0;
     forward.normalize();
-    combatControls.update({arena:map==="arena",character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
+    combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     flightMotion={moving:false,dx:0,dz:0};
     if (me && health.hp > 0 && movementAllowed && !renneCombat?.current(localId)) {
@@ -851,6 +859,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         }
     },
     async world(result) {
+      teamPanel?.update(result.team);
       dayNight.sync(result.health?.serverTime);
       duelIntro?.receive(result.duel?.result?null:result.duel,result.health?.serverTime);
       duelFinish?.receive(result.duel,localId,result.health?.serverTime);
@@ -864,7 +873,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       };
       renneCombat?.receive(result.combat?.attacks??[],result.health?.serverTime??Date.now());
       if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);}}
-      combatControls.update({arena:map==="arena",character:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
+      combatControls.update({arena:map==="arena"||inTower,character:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
       for (const ball of environment.poms) {
         if (!projectiles.has(ball.id)) {
           projectiles.set(ball.id,createProjectilePlayback());
@@ -955,6 +964,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
       dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      teamPanel?.dispose();
       menu.remove();
       status.remove();
       labels.remove();

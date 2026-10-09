@@ -19,6 +19,7 @@ function createActivityService({
   navigationFor = () => grid,
   playerPolicy = () => ({}),
   combatEnabled = false,
+  canDamage = () => true,
   onSay = () => {},
   onDrink = null,
   onCraft = () => {},
@@ -180,7 +181,7 @@ function createActivityService({
       player.character=session.character;
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, onCraft, onDefeat, initialState: worldStates[session.channel] });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
