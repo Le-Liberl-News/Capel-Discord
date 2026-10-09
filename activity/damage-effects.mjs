@@ -7,13 +7,14 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
  texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=THREE.LinearFilter;
  const hits=[];
  return {
-  hit(id,amount) {
+  heal(id,amount){this.hit(id,amount,true);},
+  hit(id,amount,heal=false) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
-   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map,color:heal?0x70ff9a:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
    sprite.renderOrder=5;scene.add(sprite);
-   const number=document.createElement("div");number.className="sky-damage";number.textContent="\u2212"+amount;
-   number.style.cssText="position:absolute;pointer-events:none;transform:translate(-50%,-100%);color:#ffdc91;font:bold 25px AveriaSky,sans-serif;text-shadow:2px 2px 0 #51150f,-1px -1px 0 #51150f,0 0 5px #000;z-index:18";container.append(number);
+   const number=document.createElement("div");number.className="sky-damage";number.textContent=(heal?"+":"\u2212")+amount;
+   number.style.cssText="position:absolute;pointer-events:none;transform:translate(-50%,-100%);color:#ffdc91;font:bold 25px AveriaSky,sans-serif;text-shadow:2px 2px 0 #51150f,-1px -1px 0 #51150f,0 0 5px #000;z-index:18";if(heal)number.style.color="#7cffad";container.append(number);
    hits.push({id,sprite,number,time:0,lane:hits.filter(h=>h.id===id).length%3});
   },
   update(dt,camera,avatars,width,height) {

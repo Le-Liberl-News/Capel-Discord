@@ -21,7 +21,7 @@ Tests : connexite des trois layouts, surfaces reelles, entree authentifiee pres 
 
 ## Mishy et combat PVE
 
-Le serveur gere les PV, les positions et les coups. Mishy patrouille, poursuit a moins de 9 unites, reste a moins de 14 unites de sa plateforme et revient chez lui apres depart des joueurs. Le chemin respecte la grille et les ponts. Son coup annonce une zone rouge pendant 750 ms ; seuls les joueurs encore dedans a l'impact perdent 10 PV. Les murs et les differences de hauteur bloquent le coup. Recuperation : 1,6 s. PV : 75. Reapparition : 30 s. Les joueurs gardent leur reapparition de 10 s.
+Le serveur gere les PV, les positions et les coups. Mishy patrouille, poursuit a moins de 9 unites, reste a moins de 14 unites de sa plateforme et revient chez lui apres depart des joueurs. Le chemin respecte la grille et les ponts. Son coup annonce une éventail rouge pendant 420 ms ; seuls les joueurs encore dedans a l'impact perdent 10 PV. Les murs et les differences de hauteur bloquent le coup. Recuperation : 1,6 s. PV : 75. Reapparition : 30 s. Les joueurs gardent leur reapparition de 10 s.
 
 Les attaques, arts et crafts existants peuvent toucher ces ennemis. Le serveur refuse les degats entre joueurs. Les ennemis ne figurent pas dans l'equipe et leur barre de PV est rouge.
 
@@ -82,5 +82,12 @@ Les ponts sont surélevés de 0,06 unité, avec la même hauteur dans la navigat
 - Impulsion dans la direction du clavier/joystick ou du trajet en cours ; sans mouvement, saut sur place. Durée 1 s, portée 4,5 unités, hauteur 1,65. Le serveur valide le départ et calcule la trajectoire ; pas de double saut. Une chute ou un mur ramène au départ et enlève 20 PV.
 - Deux îlots par étage, sans pont, avec un vide de 2,2 unités et des ouvertures de départ dégagées.
 - Torches animées avec les frames FIRE natives et éclairage local vacillant, sur une ambiance sombre. La lumière locale utilise une atténuation par distance, sans ombre portée des torches.
-- Mishy : éventail plein de 117°, portée 1,9, préparation 420 ms, dégâts 10. Mishy ardent : sprite rose Azure `ch45400.itc`, visée verrouillée et boule de feu après 650 ms, dégâts 12.
+- Mishy : éventail plein de 117°, portée 1,9, préparation 420 ms, dégâts 10. Mishy ardent : sprite rose Azure `ch45400.itc`, trois boules de feu sans avertissement toutes les 650 ms, vitesse 8,5, dégâts 8 par boule.
 - Deux pièges par étage : rangées de feu toutes les 3,2 s, vitesse 5, dégâts 15. Hauteur 0,45 pour sauter par-dessus ; hauteur 2,35 pour passer au sol. Trajectoires et collisions balayées en 3D, arrêt contre les murs. Aucun dégât entre équipiers.
+
+## Combat mobile et plateformes
+
+- Les attaques restent utilisables en déplacement et en plein saut. Les coups simples suivent la position du personnage au moment de l’impact. Les animations d’attaque, art et craft jouent deux fois plus vite ; leurs délais de récupération restent distincts.
+- Le Mishy normal frappe exactement dans son éventail d’avertissement : même origine, angle et portée, avec un flash plein au sol à l’impact. Le Mishy rose tire trois projectiles légèrement écartés toutes les 650 ms, sans avertissement.
+- Deux plateformes mobiles par étage font la navette entre deux plateformes fixes. Elles transportent les personnages debout et servent de point de départ aux sauts. Leur cycle est partagé entre les clients et le serveur ; les positions relatives des passagers sont validées par le serveur.
+- Kloe : art Soin, +35 PV, sur soi par défaut ou sur un équipier sélectionné dans la tour, récupération 4,5 s. Kevin : art Bouclier personnel, absorbe 40 dégâts pendant 8 s, récupération 10 s. Les autres personnages conservent leurs arts existants.

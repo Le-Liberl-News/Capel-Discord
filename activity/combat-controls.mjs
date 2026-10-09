@@ -18,7 +18,7 @@ export function createCombatControls(attack) {
   stick.addEventListener('pointerdown',e=>{if(!enabled)return;e.preventDefault();const rect=stick.getBoundingClientRect();touch={id:e.pointerId,x:rect.left+54,y:rect.top+54};stick.setPointerCapture(e.pointerId);move(e);});stick.addEventListener('pointermove',move);stick.addEventListener('pointerup',reset);stick.addEventListener('pointercancel',reset);stick.addEventListener('lostpointercapture',reset);
   return {vector:()=>vector,ready:kind=>(cooldowns.get(kind)??0)<=performance.now(),started(kind,character){cooldowns.set(kind,performance.now()+mechanics.combatSpec(character,kind).cooldown);},rejected(kind){cooldowns.delete(kind);},update({arena,character,connected,alive,spectator,busy,health}){
     document.body.toggleAttribute("data-sky-arena",arena);
-    root.hidden=!arena||!mechanics.COMBAT[character]||spectator;stick.hidden=false;enabled=connected&&alive&&!busy;if(!enabled)reset();
-    for(const [kind,button]of buttons){const spec=mechanics.combatSpec(character,kind);button.hidden=!spec;if(spec)button.title=button.ariaLabel=spec.name;const remaining=health?.cooldowns?.[kind]-(health?.serverTime??0);if(remaining>0)cooldowns.set(kind,Math.max(cooldowns.get(kind)??0,performance.now()+remaining));button.disabled=!enabled||!this.ready(kind);}
+    root.hidden=!arena||!mechanics.COMBAT[character]||spectator;stick.hidden=false;enabled=connected&&alive;if(!enabled)reset();
+    for(const [kind,button]of buttons){const spec=mechanics.combatSpec(character,kind);button.hidden=!spec;if(spec)button.title=button.ariaLabel=spec.name;const remaining=health?.cooldowns?.[kind]-(health?.serverTime??0);if(remaining>0)cooldowns.set(kind,Math.max(cooldowns.get(kind)??0,performance.now()+remaining));button.disabled=!enabled||busy||!this.ready(kind);}
   },dispose(){reset();root.remove();stick.remove();style.remove();}};
 }

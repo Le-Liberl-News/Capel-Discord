@@ -27,6 +27,7 @@ function createActivityService({
   onCraft = () => {},
   onDefeat = () => {},
 }) {
+  const platforms=dungeon?require("../activity/moving-platforms.cjs").createMovingPlatforms({grid,definitions:dungeon.movingPlatforms??[],now}):null;
   const saved = store?.load() ?? {};
   const remembered = new Map(saved.players ?? []);
   const worldStates = saved.worlds ?? {};
@@ -156,7 +157,7 @@ function createActivityService({
     async state(token, point, after) {
       const session = sessionFor(token);
       await refresh(session);
-      const walkingGrid = navigationFor(session.id) ?? grid, step = walkingGrid.step;
+      const walkingGrid = platforms?.navigation()??navigationFor(session.id) ?? grid, step = walkingGrid.step;
       const index = (x,z) => {
         const a=Math.round((x-walkingGrid.origin.x)/step),b=Math.round((z-walkingGrid.origin.z)/step);
         return a<0||b<0||a>=walkingGrid.width||b>=walkingGrid.height ? -1 : b*walkingGrid.width+a;
@@ -168,6 +169,7 @@ function createActivityService({
         rooms.set(session.channel, room);
       }
       let player = room.get(session.id);
+      const restored=!player;
       if (!player)
         player = {
           id: session.id,
@@ -175,6 +177,7 @@ function createActivityService({
           seen: now() - 150,
           character: (session.playerState ?? remembered.get(session.id))?.character ?? session.character,
         };
+      if(restored)platforms?.restore(player);
       Object.assign(player,{spectator:false,canMove:true,duelProtected:false,duelFinished:false,noRespawn:false,prop:null},playerPolicy(session.id));
       const characterChanged=player.character!==session.character;
       if(characterChanged&&player.character==="Sieg")Object.assign(player,flight.landingPoint(walkingGrid,player));
@@ -183,7 +186,7 @@ function createActivityService({
       player.character=session.character;
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, enemySpawns, dungeon, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, enemySpawns, dungeon, platforms, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
@@ -196,7 +199,9 @@ function createActivityService({
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
       if (point && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
-        const takeoff=requestedJump?(point.action.origin??player):point;
+        let submitted=point;
+        if(platforms&&point.platform&&!requestedJump){const d=platforms.definitions.find(d=>d.id===point.platform.id),pos=d&&platforms.position(d.id);if(!d||![point.platform.x,point.platform.z].every(Number.isFinite)||Math.abs(point.platform.x)>d.width/2+.15||Math.abs(point.platform.z)>d.width/2+.15)throw new ActivityError('Plateforme invalide.');submitted={...point,x:pos.x+point.platform.x,z:pos.z+point.platform.z,trace:[]};}
+        const takeoff=requestedJump?(point.action.origin??player):submitted;
         const x = Number(takeoff.x),
           z = Number(takeoff.z),y=flying?Number(point.y):player.y;
         if(flying&&!Number.isFinite(y))throw new ActivityError("Altitude invalide.");
@@ -209,11 +214,11 @@ function createActivityService({
         // Sequence numbers let a retry replay an already acknowledged prefix.
         let samples = [{ x, y, z }],
           lastSequence = session.movementSequence ?? 0;
-        if (point.trace !== undefined) {
-          if (!Array.isArray(point.trace) || point.trace.length > 1024)
+        if (submitted.trace !== undefined) {
+          if (!Array.isArray(submitted.trace) || submitted.trace.length > 1024)
             throw new ActivityError("Invalid movement trace.");
           let sequence = 0;
-          for (const sample of point.trace) {
+          for (const sample of submitted.trace) {
             if (
               !sample ||
               !Number.isFinite(sample.x) ||
@@ -225,7 +230,7 @@ function createActivityService({
               throw new ActivityError("Invalid movement trace.");
             sequence = sample.sequence;
           }
-          samples = point.trace.filter(
+          samples = submitted.trace.filter(
             (sample) => sample.sequence > lastSequence,
           );
           samples = [...samples, { x, y, z }];
@@ -267,6 +272,7 @@ function createActivityService({
           player.x = x;
           player.z = z;
           player.y = walkingGrid.cells[index(x, z)];
+          if(platforms){const d=platforms.carrier(player);player.platformId=d?.id??null;if(d){const q=platforms.position(d.id);player.platformOffset={x:player.x-q.x,z:player.z-q.z};}}
         }
         }
       }

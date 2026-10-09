@@ -1,3 +1,4 @@
+const {applyDamage}=require('./activityDamage');
 // Authoritative room simulation. Coordinates and HP are never supplied by clients.
 const MAX_HP = 100,
   DAMAGE = 25,
@@ -153,6 +154,7 @@ function createSingleActivityWorld({
     last = time;
     for (const p of players.values()) {
       p.hp ??= MAX_HP;
+      if(p.shield?.until<=time)p.shield=null;
       p.deadUntil ??= 0;
       if (p.hp === 0 && !p.noRespawn && time >= p.deadUntil) {
         Object.assign(p, spawnFor(p.id));
@@ -280,7 +282,7 @@ function createSingleActivityWorld({
           );
         });
         if (struck) {
-          p.hp = Math.max(0, p.hp - DAMAGE);
+          applyDamage(p,DAMAGE,time);
           if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId,follow:"projectile",started:ball.launchedAt,releaseAt:ball.launchedAt,impactAt:ball.launchedAt+ball.flight*1000,trajectory:[...ball.trajectory.map(q=>({...q})),{t:ball.flight,x,y,z}]},at:time});}
           ball.x = x;
           ball.z = z;
@@ -454,7 +456,7 @@ function createActivityWorld(options) {
   const fire=options.dungeon?require('./activityDungeonFire').createDungeonFire({...options,traps:options.dungeon.traps??[]}):null;
   const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[],fire});
   return {...world,
-    tick(players){world.tick(players);jumps?.tick(players);enemies.tick(players);fire?.tick(players);combat.tick(new Map([...players,...enemies.entities]));},
+    tick(players){world.tick(players);options.platforms?.tick(players);jumps?.tick(players);enemies.tick(players);fire?.tick(players);combat.tick(new Map([...players,...enemies.entities]));},
     action(player,command,players){return command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,players) : world.action(player,command,players);},
     snapshot(){return {...world.snapshot(),combat:combat.snapshot(),enemies:enemies.snapshot(),fire:fire?.snapshot()??[]};},
     cooldownsFor:combat.cooldownsFor,

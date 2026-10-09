@@ -1,3 +1,5 @@
+import {createMovingPlatformView} from "./moving-platform-view.mjs";
+import {createSupportEffects} from "./support-effects.mjs";
 import dungeonMechanics from "./dungeon-mechanics.cjs";
 import {createDungeonEffects} from "./dungeon-effects.mjs";
 import {createEnemyEffects} from "./enemy-effects.mjs";
@@ -53,6 +55,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       r.json(),
     );
   if(inTower)Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  const supportEffects=createSupportEffects(THREE,scene);
   const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
   let camera=walkingCamera,wasFlying=false,flightMotion={moving:false,dx:0,dz:0};
@@ -105,6 +108,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   );
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = map === "arena" ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
+  const movingPlatforms=inTower?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
   const airBounds=flight.flightBounds(grid);
   let walkingGrid = grid, movementAllowed = true;
   const propCatalogue = map === "rolent" ? await fetch(new URL("props.json", mapAssets)).then(r => r.json()) : {};
@@ -140,10 +144,12 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   function startAttack(kind,event=cursor) {
     const me=avatars.get(localId);if(!renneCombat||!connected||!me||!renneMechanics.combatSpec(me.character,kind)||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||!combatControls.ready(kind))return false;
-    const aim=aimForAttack(event);if(!aim)return false;
-    const action=queueAction("attack",undefined,aim,undefined,{kind});if(!action)return false;
+    const spec=renneMechanics.combatSpec(me.character,kind);let target;
+    if(spec.effect==='heal'&&inTower&&event){pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);const allies=[...avatars].filter(([,a])=>!a.enemy&&!a.npc&&!a.dead);const hit=raycaster.intersectObjects(allies.map(([,a])=>a.mesh),true)[0];target=allies.find(([,a])=>a.mesh.id===hit?.object.id)?.[0];}
+    const aim=spec.effect?{...me.position}:aimForAttack(event);if(!aim)return false;
+    const action=queueAction("attack",undefined,aim,undefined,{kind,target});if(!action)return false;
     const predicted=renneCombat.predict(action.id,me.position,aim,kind,localId,me.character);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
-    path=[];marker.visible=false;combatControls.started(kind,me.character);
+    marker.visible=false;combatControls.started(kind,me.character);
     if(__ACTIVITY_PREVIEW__&&!new URLSearchParams(location.search).has("frame_id"))renneCombat.accept(action.id);
     return true;
   }
@@ -215,7 +221,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     return action;
   }
   function startJump(){
-    const me=avatars.get(localId);if(!inTower||!me||me.character==="Sieg"||localJump||Date.now()+jumpClockOffset<jumpReadyAt||!connected||!movementAllowed||health.hp<=0||renneCombat?.current(localId))return;
+    const me=avatars.get(localId);if(!inTower||!me||me.character==="Sieg"||localJump||Date.now()+jumpClockOffset<jumpReadyAt||!connected||!movementAllowed||health.hp<=0)return;
     const stick=combatControls.vector(),horizontal=Number(keys.has("arrowright")||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has("arrowleft")||keys.has(movementKeys(keyboardLayout()).left))+stick.x,vertical=Number(keys.has("arrowup")||keys.has(movementKeys(keyboardLayout()).up))-Number(keys.has("arrowdown")||keys.has(movementKeys(keyboardLayout()).down))-stick.y;
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
     let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
@@ -338,6 +344,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
+      avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;
       avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
@@ -416,7 +423,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       displayName: player.nom ?? player.name ?? player.character,
       dead,
       hp: player.hp ?? 100,
-      maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,
+      platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,
       npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -605,6 +612,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(isFlying!==wasFlying){wasFlying=isFlying;camera=isFlying?flightCamera:walkingCamera;pitch=isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
+    if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
     const distance=isFlying?3.4782608696:cameraDistance(map);
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
@@ -633,7 +641,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     flightMotion={moving:false,dx:0,dz:0};
-    if (me && !localJump && health.hp > 0 && movementAllowed && !renneCombat?.current(localId)) {
+    if (me && !localJump && health.hp > 0 && movementAllowed ) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
         Number(keys.has("arrowleft") || keys.has(movementKeys(keyboardLayout()).left)) + stick.x;
@@ -656,10 +664,13 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
     }
     jumpButton.hidden=!inTower||me?.character==="Sieg";
-    jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump||!!renneCombat?.current(localId);
+    jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump;
     for (const [id, avatar] of avatars) {
+      const carried=id!==localId&&!avatar.jump&&movingPlatforms&&avatar.platformId&&avatar.platformOffset;
+      let carriedMotion;
+      if(carried){const p=movingPlatforms.simulation.position(avatar.platformId,Date.now()+jumpClockOffset);if(p){avatar.platformRenderOffset??={...avatar.platformOffset,y:0};carriedMotion=advance(avatar.platformRenderOffset,[{...avatar.platformOffset,y:0}],seconds,6);Object.assign(avatar.position,{x:p.x+avatar.platformRenderOffset.x,y:p.y,z:p.z+avatar.platformRenderOffset.z});}}
       const jump=id===localId?localJump:avatar.jump;
-      if(jump&&!avatar.dead)Object.assign(avatar.position,dungeonMechanics.jumpDisplayPosition(grid,jump,Date.now()+jumpClockOffset));
+      if(jump&&!avatar.dead)Object.assign(avatar.position,dungeonMechanics.jumpDisplayPosition(walkingGrid,jump,Date.now()+jumpClockOffset));
       const ballState = environment.poms.find(p => p.id === id),
         isPom = id.startsWith("world:pom");
       if (isPom && ballState && (ballState.mode !== "held" || predictedShots.has(id)))
@@ -672,10 +683,12 @@ export async function createSkyScene(canvas, map = "anterose") {
           }
         : avatar.dead
           ? { moving: false, dx: 0, dz: 0 }
+          : carriedMotion
+            ? carriedMotion
           : jump
             ? {moving:true,dx:jump.dx,dz:jump.dz}
           : id === localId
-            ? renneCombat?.current(localId) || !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:advance(avatar.position, path, seconds, undefined, recordMovement)
+            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:advance(avatar.position, path, seconds, undefined, recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
@@ -794,6 +807,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         label.remove();
         nameplates.delete(id);
       }
+    enemyEffects?.animate();supportEffects.update(avatars,Date.now()+jumpClockOffset);
     dungeonEffects?.update();
     const lightState=dayNight.update();
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
@@ -868,13 +882,14 @@ export async function createSkyScene(canvas, map = "anterose") {
     async sync(players) {
       const present = new Set([localId]);
       for (const player of players) {
-        const lost=damageAmount(avatars.get(player.id),player);
+        const before=avatars.get(player.id);if(before?.hp>0&&player.hp>before.hp)damageEffects.heal(player.id,player.hp-before.hp);
+        const lost=damageAmount(before,player);
         if(lost)damageEffects.hit(player.id,lost);
         if (player.id === localId) {
           const current = avatars.get(localId);
           if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null) || current.character !== (catalogue[player.character]?player.character:"Estelle")))
             await setAvatar(avatarAtPosition(player,current.position));
-          else if (current) current.hp = player.hp ?? 100;
+          else if (current) {current.hp = player.hp ?? 100;current.shield=player.shield??null;}
           continue;
         }
         present.add(player.id);
@@ -889,7 +904,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     async world(result) {
       teamPanel?.update(result.team);
       enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
-      dayNight.sync(result.health?.serverTime);
+      dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();
       if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
         else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
@@ -962,6 +977,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     movement() {
       return {
         ...this.position(),
+        platform:movingPlatforms?.relative(this.position(),Date.now()+jumpClockOffset)??undefined,
         trace: movementTrace.map((p) => ({ ...p })),
         sequence: movementSequence,
       };
@@ -998,7 +1014,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
       dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
-      teamPanel?.dispose();enemyEffects?.dispose();dungeonEffects?.dispose();jumpButton.remove();
+      teamPanel?.dispose();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();
       labels.remove();

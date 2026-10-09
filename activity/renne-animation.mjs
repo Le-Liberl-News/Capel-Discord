@@ -14,18 +14,18 @@ export async function createRenneCombat(THREE,scene,assets) {
   for(const texture of [ringTexture,vortexTexture,fireTexture])texture.colorSpace=THREE.SRGBColorSpace;
   const actions=new Map();
   const effects=new Map();
-  function add(event,localStart,accepted=false){if(!actions.has(event.id))actions.set(event.id,{...event,localStart,accepted});else Object.assign(actions.get(event.id),{accepted:true,cancelled:event.cancelled,aim:event.aim});}
+  function add(event,localStart,accepted=false){if(!actions.has(event.id))actions.set(event.id,{...event,localStart,accepted});else Object.assign(actions.get(event.id),{accepted:true,cancelled:event.cancelled,aim:event.aim,origin:event.origin,target:event.target});}
   function receive(events,serverTime){for(const event of events){const elapsed=Math.max(0,serverTime-event.started);if(elapsed>event.endsAt-event.started+1200)continue;add(event,performance.now()-elapsed,true);}}
   function predict(id,origin,aim,kind,actor,character='Renne'){const spec=combatSpec(character,kind),point=attackPoint(origin,aim,kind,character);if(!point)return null;const travel=!spec.projectile?0:Math.hypot(point.x-origin.x,point.z-origin.z)/14*1000;const event={id,actor,kind,character,origin:{...origin},aim:point,started:0,impactAt:spec.windup+travel,endsAt:Math.max(spec.duration,spec.windup+travel+550)};add(event,performance.now());return event;}
   const elapsed=event=>performance.now()-event.localStart;
   function current(actor){return [...actions.values()].find(a=>a.actor===actor&&!a.cancelled&&elapsed(a)<combatSpec(a.character??'Renne',a.kind)?.duration);}
   function pose(event){const metadata=metadataFor(event.character??'Renne'),spec=combatSpec(event.character??'Renne',event.kind);let sequence=metadata.sequences[event.kind],time=elapsed(event),duration=spec.duration;
-    if(event.kind==='art'){if(time<spec.windup){sequence=metadata.sequences.spell;time%=sequence.reduce((n,f)=>n+f.ms,0);duration=sequence.reduce((n,f)=>n+f.ms,0);}else{sequence=metadata.sequences.cast;time-=spec.windup;duration=spec.duration-spec.windup;}}
+    if(event.kind==='art'){if(time<spec.windup){sequence=metadata.sequences.spell;time=time*2%sequence.reduce((n,f)=>n+f.ms,0);duration=sequence.reduce((n,f)=>n+f.ms,0);}else{sequence=metadata.sequences.cast;time-=spec.windup;duration=spec.duration-spec.windup;}}
     const total=sequence.reduce((n,f)=>n+f.ms,0);let cursor=Math.min(total-1,time/duration*total);for(const frame of sequence){if(cursor<frame.ms)return frame;cursor-=frame.ms;}return sequence.at(-1);
   }
-  function makeEffect(event){const group=new THREE.Group();scene.add(group);
-    const ring=new THREE.Mesh(new THREE.PlaneGeometry(4.2,4.2),new THREE.MeshBasicMaterial({map:ringTexture,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffab59:0xff81ba}));ring.rotation.x=-Math.PI/2;group.add(ring);
-    const vortex=new THREE.Sprite(new THREE.SpriteMaterial({map:vortexTexture,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffb04c:0xffb0d9}));vortex.scale.set(3.2,3.2,1);vortex.position.y=.7;group.add(vortex);
+  function makeEffect(event){const support=combatSpec(event.character??'Renne',event.kind)?.effect;const group=new THREE.Group();scene.add(group);
+    const ring=new THREE.Mesh(new THREE.PlaneGeometry(4.2,4.2),new THREE.MeshBasicMaterial({map:ringTexture,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,color:support==='heal'?0x64ffa2:support==='shield'?0x72caff:event.kind==='art'?0xffab59:0xff81ba}));ring.rotation.x=-Math.PI/2;group.add(ring);
+    const vortex=new THREE.Sprite(new THREE.SpriteMaterial({map:vortexTexture,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:support==='heal'?0x64ffa2:support==='shield'?0x72caff:event.kind==='art'?0xffb04c:0xffb0d9}));vortex.scale.set(3.2,3.2,1);vortex.position.y=.7;group.add(vortex);
     const boltMap=fireTexture.clone();boltMap.repeat.set(.25,1);const bolt=new THREE.Sprite(new THREE.SpriteMaterial({map:boltMap,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffffff:0xf78bd5}));bolt.scale.setScalar(event.kind==='basic'?.9:1.3);scene.add(bolt);
     const effect={group,ring,vortex,bolt};effects.set(event.id,effect);return effect;
   }

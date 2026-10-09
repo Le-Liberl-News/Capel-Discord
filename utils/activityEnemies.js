@@ -1,3 +1,4 @@
+const {applyDamage}=require('./activityDamage');
 const {inSector}=require('../activity/dungeon-mechanics.cjs');
 // Server-owned PvE enemies. A telegraphed strike can be dodged; no client supplies damage.
 function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initialState=null,fire=null}) {
@@ -11,11 +12,13 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
  function tick(players){const time=now(),dt=Math.max(0,Math.min(.15,(time-last)/1000));last=time;
   for(const e of enemies.values()){
    if(e.hp<=0){e.moving=false;e.state='dead';e.path=[];e.attack=null;if(!e.deadUntil)e.deadUntil=time+30000;if(time>=e.deadUntil){Object.assign(e,e.home,{hp:e.maxHp,deadUntil:0,state:'idle',cooldown:time+2000,patrolAt:time+1000});}continue;}
-   const targets=[...players.values()].filter(p=>p.hp>0&&!p.spectator&&Math.abs((p.y??0)-e.y)<1.2&&distance(p,e.home)<14);
+   if(e.impact&&time>e.impact.at+700)e.impact=null;
+   const targets=[...players.values()].filter(p=>p.hp>0&&!p.spectator&&Math.abs((p.y??0)-e.y)<(e.ranged?2.5:1.2)&&distance(p,e.home)<14);
    const target=targets.sort((a,b)=>distance(a,e)-distance(b,e))[0];
-   if(e.attack){e.state='attack';e.moving=false;if(time>=e.attack.at){const aim=e.attack.point;if(e.attack.kind==='fire'){fire?.launch({x:e.x,y:e.y+.7,z:e.z},{x:aim.x-e.x,y:0,z:aim.z-e.z},{speed:7,damage:12,ttl:2200});}else for(const p of targets){if(!inSector(p,e.attack))continue;const from={x:e.x,y:e.y+.65,z:e.z},to={x:p.x,y:(p.y??0)+.65,z:p.z},wall=geometry?.sweep(from,to,.05);if(wall&&wall.distance<distance(e,p)-.15)continue;p.hp=Math.max(0,p.hp-10);if(!p.hp)p.deadUntil=time+10000;}e.attack=null;e.cooldown=time+1600;e.state='idle';}continue;}
+   if(e.attack){e.state='attack';e.moving=false;if(time>=e.attack.at){const aim=e.attack.point;if(e.attack.kind==='fire'){fire?.launch({x:e.x,y:e.y+.7,z:e.z},{x:aim.x-e.x,y:0,z:aim.z-e.z},{speed:7,damage:12,ttl:2200});}else for(const p of targets){if(!inSector(p,e.attack))continue;const from={x:e.x,y:e.y+.65,z:e.z},to={x:p.x,y:(p.y??0)+.65,z:p.z},wall=geometry?.sweep(from,to,.05);if(wall&&wall.distance<distance(e,p)-.15)continue;applyDamage(p,10,time);if(!p.hp)p.deadUntil=time+10000;}e.impact={...e.attack,id:e.id+':'+e.attack.started,at:time};e.attack=null;e.cooldown=time+1600;e.state='idle';}continue;}
    const engaged=target&&distance(target,e)<9;
-   if(engaged&&distance(target,e)<(e.ranged?7:1.8)){e.moving=false;e.heading={dx:target.x-e.x,dz:target.z-e.z};if(time>=e.cooldown){const length=distance(target,e)||1;e.attack={kind:e.ranged?'fire':'melee',at:time+(e.ranged?650:420),started:time,origin:{x:e.x,y:e.y,z:e.z},direction:{dx:(target.x-e.x)/length,dz:(target.z-e.z)/length},radius:1.9,angle:Math.PI*.65,point:{x:target.x,y:target.y??0,z:target.z}};e.state='attack';}else e.state='idle';continue;}
+   if(engaged&&e.ranged&&distance(target,e)<8.5){e.moving=false;e.attack=null;e.heading={dx:target.x-e.x,dz:target.z-e.z};if(time>=e.cooldown){const angle=Math.atan2(target.z-e.z,target.x-e.x);for(const offset of [-.16,0,.16])fire?.launch({x:e.x,y:e.y+.7,z:e.z},{x:Math.cos(angle+offset),y:0,z:Math.sin(angle+offset)},{speed:8.5,damage:8,ttl:1800});e.cooldown=time+650;e.shootUntil=time+160;}e.state=time<(e.shootUntil??0)?'shoot':'idle';continue;}
+   if(engaged&&distance(target,e)<1.8){e.moving=false;e.heading={dx:target.x-e.x,dz:target.z-e.z};if(time>=e.cooldown){const length=distance(target,e)||1;e.attack={kind:'melee',at:time+420,started:time,origin:{x:e.x,y:e.y,z:e.z},direction:{dx:(target.x-e.x)/length,dz:(target.z-e.z)/length},radius:1.9,angle:Math.PI*.65,point:{x:target.x,y:target.y??0,z:target.z}};e.state='attack';}else e.state='idle';continue;}
    if(time>=e.nextPath){e.nextPath=time+900;let goal;
     if(engaged){goal=target;e.state='chase';}
     else if(distance(e,e.home)>2){goal=e.home;e.state='return';}

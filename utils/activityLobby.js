@@ -73,7 +73,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
       joueurs:result.joueurs?.map(p=>({...p,id:alias(p.id)})),
       messages:result.messages?.map(m=>({...m,id:alias(m.id),author:alias(m.author)})),
       pom:pom(result.pom), poms:result.poms?.map(pom),
-      combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
+      combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
@@ -168,6 +168,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
         Object.assign(session,{key:target.key,match:target.match,service:target.service,token:joined.activity_token}); changed=true;
       }
       const searching=target.map==="rolent" && point?.action?.type==="hunt_find";
+      if(point?.action?.type==='attack'&&point.action.target){const original=[...aliases].find(([,value])=>value===point.action.target)?.[0];point={...point,action:{...point.action,target:original??'invalid'}};}
       const result=await session.service.state(session.token,changed?undefined:(searching||point?.action?.type==="tower_step")?{...point,action:undefined}:point,changed?undefined:after);
       if (target.map==="rolent" && huntGame) {
         if(searching&&!changed) {

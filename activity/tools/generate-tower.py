@@ -44,6 +44,12 @@ for floor in range(1,4):
   ra=1/math.sqrt((ux/p['rx'])**2+(uz/p['rz'])**2);rb=1/math.sqrt((ux/q['rx'])**2+(uz/q['rz'])**2)
   start=(p['x']+ux*(ra-.8),p['z']+uz*(ra-.8));end=(q['x']-ux*(rb-.8),q['z']-uz*(rb-.8));width=rng.uniform(2.5,3.4)
   bridges.append({'a':a,'b':b,'start':start,'end':end,'width':width,'railings':rng.random()<.65,'deckHeight':.06})
+ ferries=[]
+ candidates=sorted((math.hypot(p['x']-q['x'],p['z']-q['z']),a,b) for a,p in enumerate(platforms) for b,q in enumerate(platforms) if a<b and (a,b) not in edges and (b,a) not in edges and 16<math.hypot(p['x']-q['x'],p['z']-q['z'])<27)
+ for _,a,b in candidates[:2]:
+  p,q=platforms[a],platforms[b];dx,dz=q['x']-p['x'],q['z']-p['z'];length=math.hypot(dx,dz);ux,uz=dx/length,dz/length
+  ra=1/math.sqrt((ux/p['rx'])**2+(uz/p['rz'])**2);rb=1/math.sqrt((ux/q['rx'])**2+(uz/q['rz'])**2)
+  ferries.append({'id':f'ferry:{len(ferries)}','from':{'x':p['x']+ux*(ra-.75),'z':p['z']+uz*(ra-.75)},'to':{'x':q['x']-ux*(rb-.75),'z':q['z']-uz*(rb-.75)},'width':2.6,'y':.12,'speed':1.6,'dwell':1800,'phase':floor*1300})
  islands=[];jump_links=[]
  for p in sorted(platforms,key=lambda p:math.hypot(p['x']-19,p['z']-19),reverse=True)[:2]:
   dx,dz=p['x']-19,p['z']-19;length=math.hypot(dx,dz);ux,uz=dx/length,dz/length
@@ -75,6 +81,7 @@ for floor in range(1,4):
    midpoint=((a[0]+b[0])/2,(a[1]+b[1])/2)
    opening=any(segment_distance(midpoint,t['start'],t['end'])<t['width']/2+.75 for t in bridges if i in (t['a'],t['b']))
    opening=opening or any(segment_distance(midpoint,(link['from']['x'],link['from']['z']),(link['to']['x'],link['to']['z']))<1.4 for link in jump_links)
+   opening=opening or any(segment_distance(midpoint,(t['from']['x'],t['from']['z']),(t['to']['x'],t['to']['z']))<2 for t in ferries)
    if opening:continue
    inner=[(p['x']+(v[0]-p['x'])*.95,p['z']+(v[1]-p['z'])*.95) for v in [a,b]]
    quad([(a[0],.045,a[1]),(b[0],.045,b[1]),(inner[1][0],.045,inner[1][1]),(inner[0][0],.045,inner[0][1])],4,[(0,.82),(.48,.82),(.48,.98),(0,.98)])
@@ -139,6 +146,6 @@ for floor in range(1,4):
  (out/'navigation.json').write_text(json.dumps(grid,separators=(',',':')),encoding='utf-8')
  torches=[{'id':f'torch:{i}','position':[p['x']+p['rx']*.6,1.8,p['z']+.5],'color':[1,.45,.12],'radius':6,'strength':1.9} for i,p in enumerate(platforms+islands)]
  traps=[{'id':f'trap:{i}','start':{'x':t['start'][0],'y':t['deckHeight'],'z':t['start'][1]},'end':{'x':t['end'][0],'y':t['deckHeight'],'z':t['end'][1]},'width':t['width']-.4,'height':.45 if i%2==0 else 2.35,'period':3200,'phase':i*900} for i,t in enumerate(bridges[:2])]
- layout={'version':2,'islands':islands,'jumpLinks':jump_links,'torches':torches,'traps':traps,'floor':floor,'seed':args.seed+floor,'start':start,'exit':end,'rooms':[point(p) for p in platforms],'platforms':platforms,'bridges':bridges,'tiles':[[k%width,k//width] for k in sorted(seen)],'source':'FC ED6_DT0A/c0411._x2 purpose-specific native texture atlas'}
+ layout={'version':2,'movingPlatforms':ferries,'islands':islands,'jumpLinks':jump_links,'torches':torches,'traps':traps,'floor':floor,'seed':args.seed+floor,'start':start,'exit':end,'rooms':[point(p) for p in platforms],'platforms':platforms,'bridges':bridges,'tiles':[[k%width,k//width] for k in sorted(seen)],'source':'FC ED6_DT0A/c0411._x2 purpose-specific native texture atlas'}
  (out/'layout.json').write_text(json.dumps(layout,indent=2),encoding='utf-8')
  print(f'Floor {floor}: {len(platforms)} platforms, {len(bridges)} bridges, {len(seen)} connected cells')
