@@ -180,7 +180,7 @@ test("world saves survive restart and empty maps without copying connected avata
 test("duel announces once after both accept and spectators use the upper grid",async()=>{
  const sent=[],{lobby}=fixture();
  const manager=createActivityDuels({lobby,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
- const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"595259248984981516");return {threads:{create:async()=>({id:"match-thread",send:async data=>{sent.push({announcement:data});return {id:"broadcast"};}})}}}}};
+ const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"1558125759682576475");return {threads:{create:async()=>({id:"match-thread",send:async data=>{sent.push({announcement:data});return {id:"broadcast"};}})}}}}};
  await manager.handle({isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>sent.push(data)},client,channel:{send:async()=>{}},deferReply:async()=>{},editReply:async()=>{}});
  const customId=sent[0].components[0].components[0].custom_id;
  const click=id=>({isButton:()=>true,customId,user:{id},channel:{isDMBased:()=>true},client,launchActivity:async()=>{}});
@@ -310,7 +310,7 @@ test('accepted matches create distinct persistent threads, with one spectator bu
  const store={load:()=>saved,save:data=>{saved=structuredClone(data);}};
  const options={lobby,store,now:()=>0,characterNames:['Estelle','Joshua'],resolveCharacter:async id=>id==='real-alice'?'Estelle':'Joshua',resolveOpponent:async()=> 'real-bob'};
  const manager=createActivityDuels(options);
- const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='595259248984981516'?{threads:{create:async data=>{creates++;assert.equal(data.type,11);assert.equal(data.name,'Estelle contre Joshua');assert.doesNotMatch(JSON.stringify(data),/real-/);const thread={id:'thread-'+creates,send:async payload=>{sends++;assert.match(payload.components[0].components[0].custom_id,/^activity:watch:duel:/);assert.deepEqual(payload.allowedMentions.parse,[]);return{id:'message'};}};threads.set(thread.id,thread);return thread;}}}:threads.get(id)}};
+ const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='1558125759682576475'?{threads:{create:async data=>{creates++;assert.equal(data.type,11);assert.equal(data.name,'Estelle contre Joshua');assert.doesNotMatch(JSON.stringify(data),/real-/);const thread={id:'thread-'+creates,send:async payload=>{sends++;assert.match(payload.components[0].components[0].custom_id,/^activity:watch:duel:/);assert.deepEqual(payload.allowedMentions.parse,[]);return{id:'message'};}};threads.set(thread.id,thread);return thread;}}}:threads.get(id)}};
  const result=await manager.challenge({id:'real-alice'},'Joshua',client);
  assert.equal(creates,0);await Promise.all([manager.accept(result.id,'real-bob',client),manager.accept(result.id,'real-bob',client)]);
  assert.equal(creates,1);assert.equal(sends,1);assert.equal(await manager.publicationThread(result.id,client),'thread-1');

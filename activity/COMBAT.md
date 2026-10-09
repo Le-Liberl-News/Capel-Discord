@@ -18,7 +18,7 @@ Dorothy demande encore son traitement particulier de photographie : son attaque 
 
 ## Messages et captures
 
-Les messages saisis dans le jeu sont reproduits dans le salon 1499373178483507210 sous le nom du personnage. Les messages Discord entrants et les dialogues PNJ ne sont pas retransmis.
+Les messages saisis dans l’arène sont reproduits dans le salon 1558125759682576475 sous le nom du personnage. Les autres cartes utilisent le salon 1499373178483507210. Les nouveaux threads de duel sont créés dans le salon 1558125759682576475 ; les GIF et résultats restent dans le thread du match. Les messages Discord entrants et les dialogues PNJ ne sont pas retransmis.
 
 Un craft accepté déclenche une capture de la scène autour de son impact (288 × 216, 12 images). Le serveur vérifie l’auteur et publie le GIF une seule fois avec « Renne lance Cercle sanglant. ». Si aucune capture n’arrive, le texte seul est publié après 30 secondes. Aucun compte Discord, chat ou élément d’interface n’est inclus dans le GIF.
 

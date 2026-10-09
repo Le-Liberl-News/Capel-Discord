@@ -6,13 +6,15 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
   const active = new Map(), lastSeen = new Map();
   const presenceGrace = 2 * 60 * 1000;
   const sources = new Map(), locations = new Map(), spectators = new Map();
-  const tavern = createActivityService({ ...options, now, persistent: true, store: worldStores.anterose });
+  const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
   const stadium = arena && createActivityService({ ...options, ...arena, now, persistent: true, store: worldStores.arena,
     spawnFor: user => spectators.has(user) ? (arena.spectatorGrid?.spawn ?? arena.grid.spawn) : arena.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? arena.grid.spawn,
     onDefeat: finishDuel,
+    onSay:event=>options.onSay?.({...event,map:"arena"}),
     navigationFor: user => spectators.has(user) ? (arena.spectatorGrid ?? arena.grid) : arena.grid,
     playerPolicy: user => {const duel=duels.get(assignments.get(user)),protectedNow=!!arena.introDuration&&!!duel&&(duel.readyAt===undefined||now()<duel.readyAt);const ended=!!duel?.result;return {spectator:spectators.has(user),canMove:!protectedNow&&!ended,duelProtected:protectedNow||ended,duelFinished:ended,noRespawn:ended,...(ended&&duel.result.loser===user?{hp:0,deadUntil:duel.result.at+10000}:{})};} });
   const city = rolent && createActivityService({ ...options,...rolent,now,persistent:true,store:worldStores.rolent,
+    onSay:event=>options.onSay?.({...event,map:"rolent"}),
     playerPolicy:user=>huntGame?.policy(user)??{} });
   const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(arena?.introDuration??0);}return data;};
   const saved=store?.load();

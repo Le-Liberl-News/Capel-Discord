@@ -66,3 +66,5 @@ test('all native combatants have valid local banks and server-owned actions, civ
  }
  assert.equal(combatSpec('Sieg','basic'),null);assert.equal(combatSpec('Grant','art'),null);assert.equal(combatSpec('__proto__','basic'),null);
 });
+
+ test('arena speech keeps its map destination through chunking and after relocation',async()=>{const posts=[],relay=createActivityRoleplay({send:async p=>posts.push(p)});const event={id:'arena-chat',character:'Renne',text:'x'.repeat(2000),map:'arena',match:'match'};const pending=relay.speech(event);event.map='anterose';await pending;assert.equal(posts.length,2);assert.ok(posts.every(p=>p.map==='arena'));const spoken=[];const lobby=createActivityLobby({grid,resolveCharacter:async()=> 'Renne',onSay:e=>spoken.push(e),arena:{grid}});lobby.createDuel({id:'map-chat',players:['a','b'],channel:'origin'});lobby.joinDuel('map-chat','a');const session=await lobby.join({id:'a',channel:'dm'});await lobby.state(session.activity_token,{x:session.player.x,z:session.player.z,action:{id:'arena-say',type:'say',text:'Bonjour'}});await new Promise(resolve=>setImmediate(resolve));assert.equal(spoken[0].map,'arena');});

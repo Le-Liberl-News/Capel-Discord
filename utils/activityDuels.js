@@ -1,7 +1,7 @@
 const { randomBytes } = require("node:crypto");
 const { ActivityError } = require("./activityService");
 class DuelError extends Error {}
-function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, characterNames, store = null, spectatorChannel = "595259248984981516", now = Date.now }) {
+function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, characterNames, store = null, spectatorChannel = "1558125759682576475", now = Date.now }) {
   const invitations = new Map(), lastInvite = new Map();
   for (const [id,invitation] of store?.load() ?? []) if (invitation.expires>now()) invitations.set(id,invitation);
   const announcing = new Map();

@@ -14,9 +14,9 @@ function gifInfo(bytes) {
 function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTimeout,clearTimer=clearTimeout}) {
   const crafts=new Map(),speechIds=new Set();let tail=Promise.resolve();
   const publish=payload=>{const operation=tail.catch(()=>{}).then(()=>send(payload));tail=operation;return operation;};
-  async function speech({id,character,text,match}) {
+  async function speech({id,character,text,match,map}) {
     if(speechIds.has(id))return;speechIds.add(id);if(speechIds.size>10000)speechIds.delete(speechIds.values().next().value);
-    const letters=Array.from(text);for(let i=0;i<letters.length;i+=1800)await publish({character,match,text:letters.slice(i,i+1800).join('')});
+    const letters=Array.from(text);for(let i=0;i<letters.length;i+=1800)await publish({character,match,map,text:letters.slice(i,i+1800).join('')});
   }
   function craft(event) {
     if(crafts.has(event.id))return;

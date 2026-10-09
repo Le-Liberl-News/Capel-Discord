@@ -226,8 +226,9 @@ const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({sto
 const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:require("./activity/assets/sky/characters.json")});
 const capelModel=require("./activity/assets/sky/capel.json");
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
+const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
-  send:async payload=>activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
+  send:async payload=>payload.map==="arena"?activityArenaSender(payload):activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
 const activiteService = createActivityLobby({
