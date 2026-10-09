@@ -55,8 +55,8 @@ for floor in range(1,4):
   r=.35
   for k in range(8):
    a=(x+r*math.cos(k*math.tau/8),z+r*math.sin(k*math.tau/8));b=(x+r*math.cos((k+1)*math.tau/8),z+r*math.sin((k+1)*math.tau/8))
-   vertical(a,b,-4,1.7,2,[(.03+k/8*.66,.55),(.03+(k+1)/8*.66,.55),(.03+(k+1)/8*.66,.82),(.03+k/8*.66,.82)])
-   triangle([(x,1.7,z),(a[0],1.7,a[1]),(b[0],1.7,b[1])],2,[(.195,.18),(.195+.17*math.cos(k*math.tau/8),.18+.16*math.sin(k*math.tau/8)),(.195+.17*math.cos((k+1)*math.tau/8),.18+.16*math.sin((k+1)*math.tau/8))])
+   vertical(a,b,-4,1.7,2,[(.03+k/8*.66,.12),(.03+(k+1)/8*.66,.12),(.03+(k+1)/8*.66,.45),(.03+k/8*.66,.45)])
+   triangle([(x,1.7,z),(a[0],1.7,a[1]),(b[0],1.7,b[1])],2,[(.195,.82),(.195+.17*math.cos(k*math.tau/8),.82+.16*math.sin(k*math.tau/8)),(.195+.17*math.cos((k+1)*math.tau/8),.82+.16*math.sin((k+1)*math.tau/8))])
  walls=[];pillars=[]
  for i,p in enumerate(platforms):
   poly=p['polygon'];center=(p['x'],0,p['z'])
@@ -69,12 +69,12 @@ for floor in range(1,4):
    opening=any(segment_distance(midpoint,t['start'],t['end'])<t['width']/2+.75 for t in bridges if i in (t['a'],t['b']))
    if opening:continue
    inner=[(p['x']+(v[0]-p['x'])*.95,p['z']+(v[1]-p['z'])*.95) for v in [a,b]]
-   quad([(a[0],.045,a[1]),(b[0],.045,b[1]),(inner[1][0],.045,inner[1][1]),(inner[0][0],.045,inner[0][1])],4,[(0,.025),(.48,.025),(.48,.16),(0,.16)])
+   quad([(a[0],.045,a[1]),(b[0],.045,b[1]),(inner[1][0],.045,inner[1][1]),(inner[0][0],.045,inner[0][1])],4,[(0,.82),(.48,.82),(.48,.98),(0,.98)])
    # Contiguous wall arcs, interspersed with completely open stretches.
    enclosed=(k//4+i+floor)%3==0
    if enclosed:
-    vertical(a,b,0,1.45,1,[(0,.02),(1,.02),(1,.48),(0,.48)])
-    quad([(a[0],1.45,a[1]),(b[0],1.45,b[1]),(inner[1][0],1.45,inner[1][1]),(inner[0][0],1.45,inner[0][1])],4,[(0,.025),(.48,.025),(.48,.16),(0,.16)])
+    vertical(a,b,0,1.45,1,[(0,.52),(1,.52),(1,.98),(0,.98)])
+    quad([(a[0],1.45,a[1]),(b[0],1.45,b[1]),(inner[1][0],1.45,inner[1][1]),(inner[0][0],1.45,inner[0][1])],4,[(0,.82),(.48,.82),(.48,.98),(0,.98)])
     p['walls'].append(k);walls.append([a,b])
     if k%4==0:pillar(*a);pillars.append(a)
  for t in bridges:
