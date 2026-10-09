@@ -105,6 +105,9 @@ def main():
     spec.loader.exec_module(module)
     module.read_x_to_gltf(str(args.model))
     model = json.loads(Path(str(args.model) + '.gltf').read_text())
+    # Some FC maps retain the developer's absolute Windows texture paths.
+    for image in model['images']:
+        image['uri'] = image['uri'].replace('\\', '/').rsplit('/', 1)[-1]
     needed = {image['uri'].lower().replace('.png', '._ds'): image['uri'] for image in model['images']}
     found = set()
     for archive in sorted(args.game.glob('*.dir')):
