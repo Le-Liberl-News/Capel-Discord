@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {createRooftopSky} from './rooftop-sky.mjs';
+import {createRooftopSky,PANORAMA_FILES} from './rooftop-sky.mjs';
+import {preloadAssets} from './asset-preload.mjs';
 async function main(){
 const canvas=document.querySelector('canvas'),status=document.querySelector('#status'),renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.setClearColor(0x26333e);
@@ -9,12 +10,16 @@ canvas.tabIndex=0;canvas.addEventListener('pointerdown',()=>canvas.focus());
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(45,1,.1,12000),controls=new OrbitControls(camera,canvas);
 let dirty=true;controls.addEventListener('change',()=>dirty=true);
 controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.99;controls.minDistance=2;controls.maxDistance=4000;
-const manager=new THREE.LoadingManager();manager.onProgress=(_,done,total)=>{status.textContent=`Chargement ${done}/${total}`;};
+const manager=new THREE.LoadingManager();manager.onError=url=>console.error('Asset failed:',url);manager.onProgress=(_,done,total)=>{status.textContent=`Chargement ${done}/${total}`;};
 const assets=new URL('./',location.href),layout=await fetch(new URL('layout.json',assets),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Chargement impossible');return r.json();});
-manager.setURLModifier(url=>{const result=new URL(url,assets);result.searchParams.set('v',layout.revision);return result.href;});
+const versioned=url=>{const result=new URL(url,assets);result.searchParams.set('v',layout.revision);return result.href;};
+const terrainURL=versioned('terrain.gltf'),terrain=await fetch(terrainURL).then(r=>{if(!r.ok)throw Error(`Terrain : HTTP ${r.status}`);return r.json();});
+const skyAssets=new URL('../tower4/',assets);
+const cached=await preloadAssets([...terrain.buffers,...terrain.images].map(item=>versioned(item.uri)).concat(PANORAMA_FILES.map(file=>versioned(new URL(file,skyAssets).href))),{onProgress:(done,total)=>status.textContent=`Chargement ${done}/${total}`});
+manager.setURLModifier(url=>url.startsWith('blob:')||url.startsWith('data:')?url:cached.resolve(versioned(url)));
 const loaded=await new GLTFLoader(manager).loadAsync(new URL('terrain.gltf',assets).href);scene.add(loaded.scene);
 loaded.scene.traverse(o=>{if(o.isMesh)for(const m of [].concat(o.material)){if(m.map){m.map.magFilter=THREE.NearestFilter;m.map.minFilter=THREE.LinearMipmapLinearFilter;}m.polygonOffset=true;m.polygonOffsetFactor=.1;}});
-const backdrop=new THREE.Group();backdrop.visible=false;scene.add(backdrop);const sky=await createRooftopSky(THREE,backdrop,new URL('../tower4/',assets),manager);
+const backdrop=new THREE.Group();backdrop.visible=false;scene.add(backdrop);const sky=await createRooftopSky(THREE,backdrop,skyAssets,manager);cached.dispose();
 document.querySelector('#panorama').onchange=e=>{backdrop.visible=e.target.checked;dirty=true;};
 const bounds=new THREE.Box3().setFromObject(loaded.scene),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
 const mapById=new Map(layout.regions.map(r=>[r.id,r]));
@@ -54,4 +59,4 @@ function frame(time){const dt=Math.min(.05,(time-last)/1000);last=time;
 requestAnimationFrame(frame);
 
 }
-main().catch(error=>{document.querySelector("#loading").textContent="Chargement impossible. Rechargez la page.";console.error(error);});
+main().catch(error=>{document.querySelector('#loading').textContent=`Chargement impossible : ${error.message}`;console.error(error);});
