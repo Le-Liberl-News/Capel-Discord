@@ -1,3 +1,4 @@
+import {createDayNight} from "./day-night.mjs";
 import {createRenneCombat} from "./renne-animation.mjs";
 import {createCraftCapture} from "./craft-capture.mjs";
 import {createCombatControls} from "./combat-controls.mjs";
@@ -40,7 +41,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     catalogue = await fetch(new URL("characters.json", ASSETS)).then((r) =>
       r.json(),
     );
-  const version = new URL(import.meta.url).searchParams.get("v") ?? "renne-20261009-1";
+  const version = new URL(import.meta.url).searchParams.get("v") ?? "daynight-20261009-1";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
@@ -78,6 +79,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     }
   });
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
+  const dayNight=createDayNight(THREE,model,map,mapShadows);
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
@@ -93,6 +95,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const shadowTexture=new THREE.CanvasTexture(shadowCanvas);
   function attachShadow(avatar,id) {
     if (id.startsWith("world:pom"))return avatar;
+    dayNight.apply(avatar.mesh);
     avatar.shadow=createContactShadow(THREE,shadowTexture);scene.add(avatar.shadow);return avatar;
   }
   function removeAvatar(avatar) {
@@ -716,6 +719,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         label.remove();
         nameplates.delete(id);
       }
+    dayNight.update();
     dialogues.update(time, avatars, camera);
     renderer.render(scene, camera);
     craftCapture?.update(time);
@@ -725,7 +729,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
     onCraftCapture(callback){notifyCapture=callback;},
@@ -805,6 +809,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         }
     },
     async world(result) {
+      dayNight.sync(result.health?.serverTime);
       environment = {
         game: result.game,
         npcs: result.npcs ?? [],
@@ -904,7 +909,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
-      combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      dayNight.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       menu.remove();
       status.remove();
       labels.remove();
