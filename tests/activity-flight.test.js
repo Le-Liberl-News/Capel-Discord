@@ -73,3 +73,5 @@ test('Sieg perches on the actual restaurant furniture without falling through it
  const fs=require('node:fs'),geometry=require('../utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'../activity/assets/sky/anterose.gltf')))),g=require('../activity/assets/sky/navigation.json');
  for(const [x,z]of [[-6.5,-4.5],[4,-4.5],[2.2,11.4]]){const floor=geometry.floor(x,z,4),p={x,y:floor+.7,z};for(let i=0;i<40;i++)flight.moveFlight(p,{x:0,y:-1,z:0},1/30,flight.flightBounds(g),geometry);assert.ok(Math.abs(p.y-floor-.08)<.03);assert.equal(flight.wingbeats(false,p.y,geometry.floor(x,z,p.y+.1)),false);assert.ok(flight.clearFlight({x,y:floor+.25,z},p,geometry));}
 });
+
+test('Sieg perch anchors use talons rather than the low tail in rear directions',()=>{const bird=require('../activity/assets/sky/characters.json').Sieg;assert.equal(bird.footContactRows.length,8);assert.ok(bird.footContactRows[2]<bird.frameHeight-10);for(let i=0;i<8;i++)assert.ok(Math.abs(bird.footOffsets[i]+bird.footContactRows[i]/bird.frameHeight*bird.height-bird.height)<1e-9);});
