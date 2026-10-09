@@ -234,9 +234,9 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
 const activiteService = createActivityLobby({
     huntGame,
-    tower:[1,2,3].map(floor=>{
+    tower:[1,2,3,4].map(floor=>{
       const root=path.join(__dirname,'activity/assets/sky/tower'+floor),grid=require(path.join(root,'navigation.json')),layout=require(path.join(root,'layout.json'));
-      return {grid,layout,enemySpawns:layout.rooms.slice(1,-1).filter(p=>Math.hypot(p.x-grid.spawn.x,p.z-grid.spawn.z)>8).slice(0,4).map((p,i)=>({...p,ranged:i%2===1})),
+      return {grid,layout,enemySpawns:layout.enemySpawns??layout.rooms.slice(1,-1).filter(p=>Math.hypot(p.x-grid.spawn.x,p.z-grid.spawn.z)>8).slice(0,4).map((p,i)=>({...p,ranged:i%2===1})),
         geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};
     }),
     onDuelEnd:async event=>{activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
@@ -249,7 +249,7 @@ const activiteService = createActivityLobby({
       geometry: require('./utils/activityGeometry').createActivityGeometry(JSON.parse(require('fs').readFileSync(path.join(__dirname,'activity/assets/sky/rolent/anterose.gltf'),'utf8'))),
     },
     worldStores: {
-      ...Object.fromEntries([1,2,3].map(floor=>["tower"+floor,require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-tower"+floor+"-v2.json"))])),
+      ...Object.fromEntries([1,2,3,4].map(floor=>["tower"+floor,require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-tower"+floor+"-v2.json"))])),
       rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
       anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
       arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),

@@ -32,6 +32,6 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
     material.customProgramCacheKey=()=>cache+'|sky-cycle-1|'+sources.length;material.needsUpdate=true;
   }});}
   apply(model);
-  return {apply,update(time=Date.now()) {state=skyTime(override??(time+clockOffset));uniforms.skyTint.value.set(...(map.startsWith("tower")?[.105,.125,.14]:state.tint));uniforms.skyLamps.value=map.startsWith("tower")?1:state.lamps;
+  return {apply,update(time=Date.now()) {state=skyTime(override??(time+clockOffset));uniforms.skyTint.value.set(...((map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:state.tint));uniforms.skyLamps.value=(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;
     if(extraSources.length) sources.forEach((source,i)=>uniforms["skyColor"+i].value.set(...source.color).multiplyScalar(source.strength*(.88+.09*Math.sin(time*.013+i*2.1)+.06*Math.sin(time*.027+i))));if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
 }

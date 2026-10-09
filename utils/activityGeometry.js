@@ -61,4 +61,4 @@ function createActivityGeometry(gltf,extras=[]) {
  scene.updateMatrixWorld(true);
  return require("../activity/surface-collision.cjs").createSurfaceCollision(THREE,scene);
 }
-module.exports = { createActivityGeometry };
+module.exports = { createActivityGeometry, createActivityScene };

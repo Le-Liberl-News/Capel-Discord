@@ -1,0 +1,41 @@
+{
+  "floor": 4,
+  "version": 1,
+  "outdoor": true,
+  "start": {
+    "x": 0,
+    "y": -2,
+    "z": -7.6
+  },
+  "exit": {
+    "x": 0,
+    "y": 0,
+    "z": 5,
+    "boss": true
+  },
+  "rooms": [
+    {
+      "x": 0,
+      "y": -2,
+      "z": -7.6
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 5,
+      "boss": true
+    }
+  ],
+  "enemySpawns": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 5,
+      "boss": true
+    }
+  ],
+  "torches": [],
+  "traps": [],
+  "movingPlatforms": [],
+  "source": "Original FC ED6_DT0A/c0403._x2 including native exterior backdrop and staircase"
+}

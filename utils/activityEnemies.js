@@ -1,4 +1,5 @@
 const {applyDamage}=require('./activityDamage');
+const {createTowerEnemies}=require('./activityTowerEnemies');
 const {inSector}=require('../activity/dungeon-mechanics.cjs');
 // Server-owned PvE enemies. A telegraphed strike can be dodged; no client supplies damage.
 function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initialState=null,fire=null}) {
@@ -7,9 +8,12 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
  const valid=i=>i>=0&&i<grid.cells.length&&grid.cells[i]!==null;
  const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
  function path(from,to){const start=index(from),goal=index(to);if(!valid(start)||!valid(goal))return [];const parents=new Map([[start,null]]),queue=[start];for(let h=0;h<queue.length&&!parents.has(goal);h++){const i=queue[h];for(const j of [i-1,i+1,i-grid.width,i+grid.width])if(valid(j)&&Math.abs(j%grid.width-i%grid.width)<=1&&!parents.has(j)&&Math.abs(grid.cells[i]-grid.cells[j])<.35){parents.set(j,i);queue.push(j);}}if(!parents.has(goal))return [];const route=[];for(let j=goal;j!==start;j=parents.get(j))route.push(point(j));route.reverse();return route.filter((q,i)=>i===0||i===route.length-1||Math.sign(q.x-route[i-1].x)!==Math.sign(route[i+1].x-q.x)||Math.sign(q.z-route[i-1].z)!==Math.sign(route[i+1].z-q.z));}
- const enemies=new Map(spawns.map((home,i)=>{const id='world:enemy:'+i,saved=initialState?.enemies?.find(e=>e.id===id),restore=saved&&valid(index(saved));return[id,{id,enemy:true,character:home.ranged?'MishyArdent':'Mishy',name:home.ranged?'Mishy ardent':'Mishy',...home,home:{...home},hp:75,maxHp:75,heading:{dx:0,dz:-1},state:'idle',moving:false,speed:3.3,path:[],nextPath:0,cooldown:0,patrolAt:now()+i*700,...(restore?{x:saved.x,y:saved.y,z:saved.z,hp:Number.isFinite(saved.hp)?Math.max(0,Math.min(75,saved.hp)):75,deadUntil:saved.deadUntil??0}: {})}];}));
+ const special=createTowerEnemies({grid,spawns,now,geometry,initialState,fire});
+ const enemies=new Map(spawns.map((home,i)=>{if(home.charger||home.boss)return null;const id='world:enemy:'+i,saved=initialState?.enemies?.find(e=>e.id===id),restore=saved&&valid(index(saved));return[id,{id,enemy:true,character:home.ranged?'MishyArdent':'Mishy',name:home.ranged?'Mishy ardent':'Mishy',...home,home:{...home},hp:75,maxHp:75,heading:{dx:0,dz:-1},state:'idle',moving:false,speed:3.3,path:[],nextPath:0,cooldown:0,patrolAt:now()+i*700,...(restore?{x:saved.x,y:saved.y,z:saved.z,hp:Number.isFinite(saved.hp)?Math.max(0,Math.min(75,saved.hp)):75,deadUntil:saved.deadUntil??0}: {})}];}).filter(Boolean));
+ const entities=new Map([...enemies,...special.entities]);
  let last=now();
  function tick(players){const time=now(),dt=Math.max(0,Math.min(.15,(time-last)/1000));last=time;
+  special.tick(players);
   for(const e of enemies.values()){
    if(e.hp<=0){e.moving=false;e.state='dead';e.path=[];e.attack=null;if(!e.deadUntil)e.deadUntil=time+30000;if(time>=e.deadUntil){Object.assign(e,e.home,{hp:e.maxHp,deadUntil:0,state:'idle',cooldown:time+2000,patrolAt:time+1000});}continue;}
    if(e.impact&&time>e.impact.at+700)e.impact=null;
@@ -30,6 +34,6 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
    if(!e.path.length)e.moving=false;
   }
  }
- return {entities:enemies,tick,snapshot:()=>[...enemies.values()].map(({path,nextPath,cooldown,patrolAt,home,...e})=>({...e,heading:{...e.heading},attack:e.attack?{...e.attack,point:{...e.attack.point}}:null}))};
+ return {entities,tick,snapshot:()=>[...enemies.values()].map(({path,nextPath,cooldown,patrolAt,home,...e})=>({...e,heading:{...e.heading},attack:e.attack?{...e.attack,point:{...e.attack.point}}:null})).concat(special.snapshot())};
 }
 module.exports={createActivityEnemies};

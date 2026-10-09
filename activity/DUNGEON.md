@@ -91,3 +91,13 @@ Les ponts sont surélevés de 0,06 unité, avec la même hauteur dans la navigat
 - Le Mishy normal frappe exactement dans son éventail d’avertissement : même origine, angle et portée, avec un flash plein au sol à l’impact. Le Mishy rose tire trois projectiles légèrement écartés toutes les 650 ms, sans avertissement.
 - Deux plateformes mobiles par étage font la navette entre deux plateformes fixes. Elles transportent les personnages debout et servent de point de départ aux sauts. Leur cycle est partagé entre les clients et le serveur ; les positions relatives des passagers sont validées par le serveur.
 - Kloe : art Soin, +35 PV, sur soi par défaut ou sur un équipier sélectionné dans la tour, récupération 4,5 s. Kevin : art Bouclier personnel, absorbe 40 dégâts pendant 8 s, récupération 10 s. Les autres personnages conservent leurs arts existants.
+
+## Sommet et chargeurs
+
+Deux bêtes cuirassées Azure (`data/monster/ch60050.itc`, 32 frames natives) sont ajoutées au troisième étage. Elles restent immobiles pendant un avertissement rectangulaire de 800 ms, largeur 1,4, puis chargent à 15 unités/s sur la trajectoire annoncée. Les murs et le vide raccourcissent la zone avant son affichage ; chaque passage inflige au maximum une fois 22 dégâts par joueur. Un déplacement latéral ou un saut permet d’esquiver.
+
+La sortie du troisième étage réutilise les marches natives FC `c0403._x2` et un palier de raccordement. La montée atteint 2 unités de hauteur et le passage au sommet se déclenche en arrivant sur le palier. Le quatrième espace partagé, nommé Sommet, est le modèle extérieur original `c0403._x2`, ses 25 textures, son escalier et son décor lointain. Aucun étage procédural supplémentaire n’est créé. X / interaction près du bas de l’escalier du sommet permet de redescendre.
+
+Sa Majesté Mishy, immobile au centre, possède 1 500 PV. Il alterne cercle ciblé (rayon 3,6, 25 dégâts), éventail (portée 8, 30 dégâts) et ligne (longueur 14, largeur 2,4, 20 dégâts), avec des avertissements de 1 à 1,2 seconde. Une salve radiale complète sa rotation. Les cris absurdes apparaissent uniquement en jeu. Sans joueur proche pendant 15 secondes, ses PV reviennent au maximum ; après sa mort, il réapparaît au bout de 2 minutes.
+
+Reconstruction locale : exporter `c0403._x2` dans `tower4`, construire sa navigation (pas 0,2, zone X -16..16 / Z -12..21, hauteur -2..0,5), régénérer les trois étages, puis lancer `node activity/tools/prepare-tower-roof.cjs`. Ce dernier outil extrait l’escalier natif, raccorde géométrie et navigation et ajoute les points d’apparition. Les fichiers de monde existants restent compatibles avec les plateformes déjà présentes.

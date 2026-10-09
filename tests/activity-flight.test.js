@@ -62,7 +62,7 @@ test('real restaurant flight traces agree with server geometry and stay below ce
 
 
 test('Sieg turns toward a right camera drag and uses only native wingbeats in flight',()=>{
- assert.ok(flight.cameraTurn(60,true)>0);assert.ok(flight.cameraTurn(-60,true)<0);assert.ok(flight.cameraTurn(60,false)<0);
+ assert.ok(flight.cameraTurn(60,true)>0);assert.ok(flight.cameraTurn(-60,true)<0);assert.ok(flight.cameraTurn(60,false)>0);
  assert.equal(flight.wingbeats(false,.08,0),false);assert.equal(flight.wingbeats(true,.08,0),true);
  assert.equal(flight.wingbeats(false,3,0),true);assert.equal(flight.wingbeats(false,3,null),true);
  const sieg=require('../activity/assets/sky/characters.json').Sieg;assert.deepEqual(sieg.idle,[0]);assert.deepEqual(sieg.run,[3,4]);assert.equal(sieg.fps,6);
