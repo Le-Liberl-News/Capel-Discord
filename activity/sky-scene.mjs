@@ -585,7 +585,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(isFlying!==wasFlying){wasFlying=isFlying;camera=isFlying?flightCamera:walkingCamera;pitch=isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
-    const distance=isFlying?5:cameraDistance(map);
+    const distance=isFlying?4:cameraDistance(map);
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
     camera.position.set(
@@ -893,7 +893,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
-      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?10:CAMERA_ZOOM;resize(); }
+      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?8:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
       movementAllowed = health.canMove !== false;
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }

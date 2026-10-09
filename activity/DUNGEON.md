@@ -1,6 +1,6 @@
 # Prototype de tour partagee
 
-Trois etages sont implementes : `tower1`, `tower2`, `tower3`. Les layouts sont tires par le generateur puis fixes dans cette version : tous les joueurs voient le meme etage. Chaque carte utilise un petit kit de geometrie et trois textures natives de l'interieur SC d'Esmelas.
+Trois etages sont implementes : `tower1`, `tower2`, `tower3`. Les layouts sont tires par le generateur puis fixes dans cette version : tous les joueurs voient le meme etage. Chaque carte assemble 8 a 9 plateformes arrondies ou allongees, des ponts de longueurs variables et des arcs de murs intermittents au-dessus du vide. Six textures natives de FC `c0411._x2` sont utilisees avec des UV propres aux sols, ponts, murs, bordures, piliers et cercles de transition.
 
 Le Capel de l'Anterose permet d'entrer au premier etage. Les glyphes au sol permettent de monter ou descendre par clic droit / interaction, en etant a proximite. Le bouton de retour ramene a l'Anterose.
 
@@ -11,10 +11,10 @@ Le panneau lateral montre les personnages presents dans la tour, leurs portraits
 Generation locale :
 
 ```powershell
-python activity/tools/generate-tower.py --textures E:/dev/sky-activity-tools/esmelas-study --seed 202610091
+python activity/tools/generate-tower.py --textures E:/dev/sky-activity-tools/esmelas-fc-0411 --seed 202610091
 ```
 
-Le generateur garantit un chemin entre l'entree et la sortie et utilise une graine differente par etage. Le GLTF et la grille de navigation viennent du meme layout. La generation n'a pas lieu a chaque connexion. Pour changer une tour deja utilisee, il faut egalement reinitialiser ses etats de monde sauvegardes et ramener les joueurs a l'Anterose avant de publier de nouvelles cartes.
+Le generateur garantit un chemin entre l'entree et la sortie et utilise une graine differente par etage. Le GLTF et la grille de navigation viennent du meme layout. La generation n'a pas lieu a chaque connexion. La version 2 utilise des fichiers de monde `activity-world-towerN-v2.json`, afin que les anciennes positions de la grille SC ne soient pas restaurees dans le vide. Pour changer une tour deja utilisee, il faut egalement reinitialiser ses etats de monde sauvegardes et ramener les joueurs a l'Anterose avant de publier de nouvelles cartes.
 
 Tests : connexite des trois layouts, surfaces reelles, entree authentifiee pres du Capel, transitions et reprises sans doublon, equipe entre plusieurs etages, combat sans degats allies, et rendu PC/mobile.
 

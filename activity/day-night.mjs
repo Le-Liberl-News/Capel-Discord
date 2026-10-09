@@ -32,5 +32,5 @@ export function createDayNight(THREE,model,map,shadows) {
     material.customProgramCacheKey=()=>cache+'|sky-cycle-1|'+sources.length;material.needsUpdate=true;
   }});}
   apply(model);
-  return {apply,update(time=Date.now()) {state=skyTime(override??(time+clockOffset));uniforms.skyTint.value.set(...(map.startsWith("tower")?[.65,.8,.85]:state.tint));uniforms.skyLamps.value=state.lamps;if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
+  return {apply,update(time=Date.now()) {state=skyTime(override??(time+clockOffset));uniforms.skyTint.value.set(...(map.startsWith("tower")?[.92,.96,.9]:state.tint));uniforms.skyLamps.value=state.lamps;if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
 }
