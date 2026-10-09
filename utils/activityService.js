@@ -20,6 +20,7 @@ function createActivityService({
   playerPolicy = () => ({}),
   combatEnabled = false,
   enemySpawns = [],
+  dungeon = null,
   canDamage = () => true,
   onSay = () => {},
   onDrink = null,
@@ -182,19 +183,22 @@ function createActivityService({
       player.character=session.character;
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, enemySpawns, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, enemySpawns, dungeon, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
       player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
+      const wasJumping=!!player.jump;
+      const requestedJump=dungeon&&point?.action?.type==="jump";
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
-        const x = Number(point.x),
-          z = Number(point.z),y=flying?Number(point.y):player.y;
+        const takeoff=requestedJump?(point.action.origin??player):point;
+        const x = Number(takeoff.x),
+          z = Number(takeoff.z),y=flying?Number(point.y):player.y;
         if(flying&&!Number.isFinite(y))throw new ActivityError("Altitude invalide.");
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
@@ -320,6 +324,8 @@ function createActivityService({
           ? { id: point.action.id, error: actionResult?.error }
           : undefined,
         health: {
+          jump: player.jump??null,
+          jumpReadyAt:player.jumpReadyAt??0,
           hp: player.hp,
           spectator: player.spectator,
           canMove: player.canMove !== false && now() >= (player.combatLockedUntil ?? 0),

@@ -75,3 +75,12 @@ Les personnages sans attaque resteront non-combattants tant qu'aucune capacite n
 L'idee est faisable. Le gros travail est le kit de decor et l'IA action ; l'extraction des textures, le rendu des sprites et une grande partie du combat existent deja. Un vrai prototype jouable doit preceder l'ajout de boss, butin et evenements.
 
 Les ponts sont surélevés de 0,06 unité, avec la même hauteur dans la navigation. La tour utilise la musique FC `bgm[33]`, soit `ED6303.ogg` selon `t_bgmtbl._dt`. Les Mishy se déplacent à 3,3 unités/s en poursuite et 1,3 en patrouille.
+
+## Sauts et dangers
+
+- Espace : saut dans la tour ; X : interaction avec les escaliers. Sur mobile, bouton ↥ pour sauter, Actions pour les escaliers.
+- Impulsion dans la direction du clavier/joystick ou du trajet en cours ; sans mouvement, saut sur place. Durée 1 s, portée 4,5 unités, hauteur 1,65. Le serveur valide le départ et calcule la trajectoire ; pas de double saut. Une chute ou un mur ramène au départ et enlève 20 PV.
+- Deux îlots par étage, sans pont, avec un vide de 2,2 unités et des ouvertures de départ dégagées.
+- Torches animées avec les frames FIRE natives et éclairage local vacillant, sur une ambiance sombre. La lumière locale utilise une atténuation par distance, sans ombre portée des torches.
+- Mishy : éventail plein de 117°, portée 1,9, préparation 420 ms, dégâts 10. Mishy ardent : sprite rose Azure `ch45400.itc`, visée verrouillée et boule de feu après 650 ms, dégâts 12.
+- Deux pièges par étage : rangées de feu toutes les 3,2 s, vitesse 5, dégâts 15. Hauteur 0,45 pour sauter par-dessus ; hauteur 2,35 pour passer au sol. Trajectoires et collisions balayées en 3D, arrêt contre les murs. Aucun dégât entre équipiers.

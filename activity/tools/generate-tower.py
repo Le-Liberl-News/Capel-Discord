@@ -44,6 +44,13 @@ for floor in range(1,4):
   ra=1/math.sqrt((ux/p['rx'])**2+(uz/p['rz'])**2);rb=1/math.sqrt((ux/q['rx'])**2+(uz/q['rz'])**2)
   start=(p['x']+ux*(ra-.8),p['z']+uz*(ra-.8));end=(q['x']-ux*(rb-.8),q['z']-uz*(rb-.8));width=rng.uniform(2.5,3.4)
   bridges.append({'a':a,'b':b,'start':start,'end':end,'width':width,'railings':rng.random()<.65,'deckHeight':.06})
+ islands=[];jump_links=[]
+ for p in sorted(platforms,key=lambda p:math.hypot(p['x']-19,p['z']-19),reverse=True)[:2]:
+  dx,dz=p['x']-19,p['z']-19;length=math.hypot(dx,dz);ux,uz=dx/length,dz/length
+  radius=1/math.sqrt((ux/p['rx'])**2+(uz/p['rz'])**2);r=2.2
+  cx,cz=p['x']+ux*(radius+r+2.2),p['z']+uz*(radius+r+2.2)
+  islands.append({'x':cx,'z':cz,'rx':r,'rz':r,'polygon':[(cx+r*math.cos(k*math.tau/16),cz+r*math.sin(k*math.tau/16)) for k in range(16)],'walls':[],'island':True})
+  jump_links.append({'from':{'x':p['x']+ux*(radius-.35),'y':0,'z':p['z']+uz*(radius-.35)},'to':{'x':cx-ux*(r-.35),'y':0,'z':cz-uz*(r-.35)}})
  groups=[[] for _ in textures]
  def triangle(points,mat,uv):
   for p,t in zip(points,uv):groups[mat].append((*p,*t))
@@ -58,7 +65,7 @@ for floor in range(1,4):
    vertical(a,b,-4,1.7,2,[(.03+k/8*.66,.12),(.03+(k+1)/8*.66,.12),(.03+(k+1)/8*.66,.45),(.03+k/8*.66,.45)])
    triangle([(x,1.7,z),(a[0],1.7,a[1]),(b[0],1.7,b[1])],2,[(.195,.82),(.195+.17*math.cos(k*math.tau/8),.82+.16*math.sin(k*math.tau/8)),(.195+.17*math.cos((k+1)*math.tau/8),.82+.16*math.sin((k+1)*math.tau/8))])
  walls=[];pillars=[]
- for i,p in enumerate(platforms):
+ for i,p in enumerate(platforms+islands):
   poly=p['polygon'];center=(p['x'],0,p['z'])
   for k,(a,b) in enumerate(zip(poly,poly[1:]+poly[:1])):
    pts=[center,(a[0],0,a[1]),(b[0],0,b[1])]
@@ -67,11 +74,12 @@ for floor in range(1,4):
    vertical(a,b,-4,0,1,[(0,.48),(1,.48),(1,.95),(0,.95)])
    midpoint=((a[0]+b[0])/2,(a[1]+b[1])/2)
    opening=any(segment_distance(midpoint,t['start'],t['end'])<t['width']/2+.75 for t in bridges if i in (t['a'],t['b']))
+   opening=opening or any(segment_distance(midpoint,(link['from']['x'],link['from']['z']),(link['to']['x'],link['to']['z']))<1.4 for link in jump_links)
    if opening:continue
    inner=[(p['x']+(v[0]-p['x'])*.95,p['z']+(v[1]-p['z'])*.95) for v in [a,b]]
    quad([(a[0],.045,a[1]),(b[0],.045,b[1]),(inner[1][0],.045,inner[1][1]),(inner[0][0],.045,inner[0][1])],4,[(0,.82),(.48,.82),(.48,.98),(0,.98)])
    # Contiguous wall arcs, interspersed with completely open stretches.
-   enclosed=(k//4+i+floor)%3==0
+   enclosed=not p.get('island') and (k//4+i+floor)%3==0
    if enclosed:
     vertical(a,b,0,1.45,1,[(0,.52),(1,.52),(1,.98),(0,.98)])
     quad([(a[0],1.45,a[1]),(b[0],1.45,b[1]),(inner[1][0],1.45,inner[1][1]),(inner[0][0],1.45,inner[0][1])],4,[(0,.82),(.48,.82),(.48,.98),(0,.98)])
@@ -112,14 +120,15 @@ for floor in range(1,4):
  for j in range(height):
   for k in range(width):
    p=(origin['x']+k*step,origin['z']+j*step)
-   walk=any(inside(p,t['polygon']) for t in platforms) or any(segment_distance(p,t['start'],t['end'])<t['width']/2-.25 for t in bridges)
+   walk=any(inside(p,t['polygon']) for t in platforms+islands) or any(segment_distance(p,t['start'],t['end'])<t['width']/2-.25 for t in bridges)
    if walk and any(segment_distance(p,a,b)<.3 for a,b in walls):walk=False
    if walk and any(math.hypot(p[0]-a,p[1]-b)<.6 for a,b in pillars):walk=False
    nav.append(max([t['deckHeight'] for t in bridges if inside(p,t['polygon'])],default=0) if walk else None)
  # Retain the connected network and verify each platform can be reached.
  point=lambda p:{'x':p['x'],'y':0,'z':p['z']}
  start=point(platforms[0]);start_idx=round((start['z']-origin['z'])/step)*width+round((start['x']-origin['x'])/step)
- seen={start_idx};queue=[start_idx]
+ seeds=[start_idx]+[round((p['z']-origin['z'])/step)*width+round((p['x']-origin['x'])/step) for p in islands]
+ seen=set(seeds);queue=seeds[:]
  for k in queue:
   for n in [k-1,k+1,k-width,k+width]:
    if 0<=n<len(nav) and abs(n%width-k%width)<=1 and nav[n] is not None and n not in seen:seen.add(n);queue.append(n)
@@ -128,6 +137,8 @@ for floor in range(1,4):
   ix=round((p['z']-origin['z'])/step)*width+round((p['x']-origin['x'])/step);assert ix in seen,'Disconnected platform'
  end=point(platforms[-1]);grid={'origin':origin,'step':step,'width':width,'height':height,'cells':nav,'spawn':start}
  (out/'navigation.json').write_text(json.dumps(grid,separators=(',',':')),encoding='utf-8')
- layout={'version':2,'floor':floor,'seed':args.seed+floor,'start':start,'exit':end,'rooms':[point(p) for p in platforms],'platforms':platforms,'bridges':bridges,'tiles':[[k%width,k//width] for k in sorted(seen)],'source':'FC ED6_DT0A/c0411._x2 purpose-specific native texture atlas'}
+ torches=[{'id':f'torch:{i}','position':[p['x']+p['rx']*.6,1.8,p['z']+.5],'color':[1,.45,.12],'radius':6,'strength':1.9} for i,p in enumerate(platforms+islands)]
+ traps=[{'id':f'trap:{i}','start':{'x':t['start'][0],'y':t['deckHeight'],'z':t['start'][1]},'end':{'x':t['end'][0],'y':t['deckHeight'],'z':t['end'][1]},'width':t['width']-.4,'height':.45 if i%2==0 else 2.35,'period':3200,'phase':i*900} for i,t in enumerate(bridges[:2])]
+ layout={'version':2,'islands':islands,'jumpLinks':jump_links,'torches':torches,'traps':traps,'floor':floor,'seed':args.seed+floor,'start':start,'exit':end,'rooms':[point(p) for p in platforms],'platforms':platforms,'bridges':bridges,'tiles':[[k%width,k//width] for k in sorted(seen)],'source':'FC ED6_DT0A/c0411._x2 purpose-specific native texture atlas'}
  (out/'layout.json').write_text(json.dumps(layout,indent=2),encoding='utf-8')
  print(f'Floor {floor}: {len(platforms)} platforms, {len(bridges)} bridges, {len(seen)} connected cells')

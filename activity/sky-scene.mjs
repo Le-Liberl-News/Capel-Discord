@@ -1,3 +1,5 @@
+import dungeonMechanics from "./dungeon-mechanics.cjs";
+import {createDungeonEffects} from "./dungeon-effects.mjs";
 import {createEnemyEffects} from "./enemy-effects.mjs";
 import {createTowerTeam} from "./tower-team.mjs";
 import {createTavernBeer} from "./tavern-beer.mjs";
@@ -42,7 +44,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     alpha: false,
   });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setClearColor(0x201b18);
+  renderer.setClearColor(inTower?0x06080b:0x201b18);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene(),
     walkingCamera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, map === "rolent" ? 350 : 150),
@@ -95,7 +97,8 @@ export async function createSkyScene(canvas, map = "anterose") {
   });
   const tavernBeer=map==="anterose"?createTavernBeer(THREE,scene):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
-  const dayNight=createDayNight(THREE,model,map,mapShadows);
+  const dayNight=createDayNight(THREE,model,map,mapShadows,towerLayout?.torches??[]);
+  const dungeonEffects=inTower?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
   const duelIntro=map==="arena"?createDuelIntro():null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
@@ -151,6 +154,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     keys = new Set();
   let movementSequence = 0;
   let movementTrace = [];
+  let localJump=null,jumpPending=false,jumpClockOffset=0,jumpReadyAt=0;
   const recordMovement = (point) => {
     movementTrace.push({ ...point, sequence: ++movementSequence });
     if (movementTrace.length > 1024) movementTrace.shift();
@@ -210,6 +214,16 @@ export async function createSkyScene(canvas, map = "anterose") {
     notifyAction();
     return action;
   }
+  function startJump(){
+    const me=avatars.get(localId);if(!inTower||!me||me.character==="Sieg"||localJump||Date.now()+jumpClockOffset<jumpReadyAt||!connected||!movementAllowed||health.hp<=0||renneCombat?.current(localId))return;
+    const stick=combatControls.vector(),horizontal=Number(keys.has("arrowright")||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has("arrowleft")||keys.has(movementKeys(keyboardLayout()).left))+stick.x,vertical=Number(keys.has("arrowup")||keys.has(movementKeys(keyboardLayout()).up))-Number(keys.has("arrowdown")||keys.has(movementKeys(keyboardLayout()).down))-stick.y;
+    const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
+    let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
+    if(!horizontal&&!vertical&&path.length){dx=path[0].x-me.position.x;dz=path[0].z-me.position.z;}const length=Math.hypot(dx,dz);const direction={dx:length?dx/length:0,dz:length?dz/length:0};
+    const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
+  }
+  const jumpButton=document.createElement("button");jumpButton.id="sky-jump";jumpButton.type="button";jumpButton.textContent="↥";jumpButton.title=jumpButton.ariaLabel="Sauter";jumpButton.hidden=!inTower;jumpButton.addEventListener("click",()=>{startJump();jumpButton.blur();});document.body.append(jumpButton);
+  touchStyle.textContent+="#sky-jump{position:fixed;right:12px;bottom:145px;width:54px;height:54px;border-radius:50%;border:1px solid #d5bc84;background:#292137;color:#ffe7b0;font:30px system-ui;z-index:27;touch-action:manipulation}#sky-jump[hidden]{display:none}#sky-jump:disabled{opacity:.45}body[data-sky-editing] #sky-jump{display:none}body[data-sky-touch] #sky-jump{left:136px;right:auto;bottom:146px}@media(any-pointer:coarse),(max-width:600px){#sky-jump{left:136px;right:auto;bottom:146px}}";
   function interaction(event) {
     const me = avatars.get(localId);
     if (!connected || !me || health.hp === 0) return;
@@ -324,7 +338,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
-      avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;
+      avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
       avatar.speed = player.speed ?? 0.8;
@@ -402,7 +416,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       displayName: player.nom ?? player.name ?? player.character,
       dead,
       hp: player.hp ?? 100,
-      maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,
+      maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,
       npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -450,8 +464,9 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (!connected || !movementAllowed) return;
     if (document.querySelector("#sky-terminal[open]") || event.target.closest?.("input,textarea,select,button,[contenteditable]"))
       return;
+    if(inTower&&event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
     if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();startAttack({KeyF:"basic",KeyG:"craft",KeyC:"art"}[event.code]);return;}
-    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"){keys.add(" ");return;}if(!event.repeat)keyboardInteraction();return;}
+    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
     if (
       [
         "ArrowUp",
@@ -618,7 +633,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     flightMotion={moving:false,dx:0,dz:0};
-    if (me && health.hp > 0 && movementAllowed && !renneCombat?.current(localId)) {
+    if (me && !localJump && health.hp > 0 && movementAllowed && !renneCombat?.current(localId)) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
         Number(keys.has("arrowleft") || keys.has(movementKeys(keyboardLayout()).left)) + stick.x;
@@ -640,7 +655,11 @@ export async function createSkyScene(canvas, map = "anterose") {
         marker.visible = false;
       }
     }
+    jumpButton.hidden=!inTower||me?.character==="Sieg";
+    jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump||!!renneCombat?.current(localId);
     for (const [id, avatar] of avatars) {
+      const jump=id===localId?localJump:avatar.jump;
+      if(jump&&!avatar.dead)Object.assign(avatar.position,dungeonMechanics.jumpDisplayPosition(grid,jump,Date.now()+jumpClockOffset));
       const ballState = environment.poms.find(p => p.id === id),
         isPom = id.startsWith("world:pom");
       if (isPom && ballState && (ballState.mode !== "held" || predictedShots.has(id)))
@@ -653,6 +672,8 @@ export async function createSkyScene(canvas, map = "anterose") {
           }
         : avatar.dead
           ? { moving: false, dx: 0, dz: 0 }
+          : jump
+            ? {moving:true,dx:jump.dx,dz:jump.dz}
           : id === localId
             ? renneCombat?.current(localId) || !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:advance(avatar.position, path, seconds, undefined, recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
@@ -773,6 +794,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         label.remove();
         nameplates.delete(id);
       }
+    dungeonEffects?.update();
     const lightState=dayNight.update();
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     dialogues.update(time, avatars, camera);
@@ -793,7 +815,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     captureNotice(text){status.textContent=text;},
     terminalPoint(){return terminal?{...terminal.position,y:terminal.position.y+.7}:null;},
     setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
-    async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
+    async resetSession(player) { touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); localJump=null;jumpPending=false;marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
     },
@@ -868,6 +890,10 @@ export async function createSkyScene(canvas, map = "anterose") {
       teamPanel?.update(result.team);
       enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
       dayNight.sync(result.health?.serverTime);
+      if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
+        if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
+        else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
+      }
       duelIntro?.receive(result.duel?.result?null:result.duel,result.health?.serverTime);
       duelFinish?.receive(result.duel,localId,result.health?.serverTime);
       if(result.characterChanged){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];keys.clear();}
@@ -926,6 +952,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     },
     correct(position, submitted) {
       const me = avatars.get(localId);
+      if(localJump||inTower&&health.jump)return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
         Object.assign(me.position, position);
         path = [];
@@ -971,7 +998,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
       dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
-      teamPanel?.dispose();enemyEffects?.dispose();
+      teamPanel?.dispose();enemyEffects?.dispose();dungeonEffects?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();
       labels.remove();

@@ -25,5 +25,32 @@
     "fps": 8,
     "height": 1.6,
     "source": "Azure data/chr/ch10200.itc; original locomotion frames reused for melee"
+  },
+  "MishyArdent": {
+    "texture": "enemies/mishy-ardent.png",
+    "columns": 8,
+    "rows": 5,
+    "frameWidth": 256,
+    "frameHeight": 241,
+    "frames": 40,
+    "idle": [
+      0
+    ],
+    "run": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "attack": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.6,
+    "source": "Azure data/chr/ch45400.itc; original locomotion frames reused for attacks"
   }
 }

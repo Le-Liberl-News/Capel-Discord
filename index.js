@@ -236,7 +236,7 @@ const activiteService = createActivityLobby({
     huntGame,
     tower:[1,2,3].map(floor=>{
       const root=path.join(__dirname,'activity/assets/sky/tower'+floor),grid=require(path.join(root,'navigation.json')),layout=require(path.join(root,'layout.json'));
-      return {grid,layout,enemySpawns:layout.rooms.slice(1,-1).filter(p=>Math.hypot(p.x-grid.spawn.x,p.z-grid.spawn.z)>8).slice(0,4),
+      return {grid,layout,enemySpawns:layout.rooms.slice(1,-1).filter(p=>Math.hypot(p.x-grid.spawn.x,p.z-grid.spawn.z)>8).slice(0,4).map((p,i)=>({...p,ranged:i%2===1})),
         geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};
     }),
     onDuelEnd:async event=>{activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
