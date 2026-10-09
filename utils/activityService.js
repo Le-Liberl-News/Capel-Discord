@@ -1,3 +1,4 @@
+const flight=require("../activity/flight.cjs");
 const { randomBytes } = require("node:crypto");
 const { createActivityWorld, MAX_HP } = require("./activityWorld");
 class ActivityError extends Error {
@@ -84,6 +85,7 @@ function createActivityService({
     return session;
   }
   return {
+    refreshCharacter(user) {for(const s of sessions.values())if(s.id===user)s.refreshAt=0;},
     captureMessage({
       id,
       channel,
@@ -166,22 +168,29 @@ function createActivityService({
           id: session.id,
           ...(session.playerState ?? remembered.get(session.id) ?? spawnFor(session.id)),
           seen: now() - 150,
-          character: session.character,
+          character: (session.playerState ?? remembered.get(session.id))?.character ?? session.character,
         };
+      Object.assign(player,{spectator:false,canMove:true,prop:null},playerPolicy(session.id));
+      const characterChanged=player.character!==session.character;
+      if(characterChanged&&player.character==="Sieg")Object.assign(player,flight.landingPoint(walkingGrid,player));
+      if(characterChanged)player.acceptedAt=now();
+      if(session.character==="Sieg"&&!player.prop&&(characterChanged||player.y<flight.flightBounds(walkingGrid).minY))player.y=Math.max(player.y+.4,flight.flightBounds(walkingGrid).minY);
+      player.character=session.character;
       let world = worlds.get(session.channel);
       if (!world) {
         world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, onCraft, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
-      Object.assign(player,{spectator:false,canMove:true,prop:null},playerPolicy(session.id));
       room.set(session.id, player);
       player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
+        const flying=session.character==="Sieg"&&!player.prop;
         const x = Number(point.x),
-          z = Number(point.z);
+          z = Number(point.z),y=flying?Number(point.y):player.y;
+        if(flying&&!Number.isFinite(y))throw new ActivityError("Altitude invalide.");
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
         const allowance =
@@ -189,7 +198,7 @@ function createActivityService({
           0.15;
         // Validate each travelled segment rather than the chord between polls.
         // Sequence numbers let a retry replay an already acknowledged prefix.
-        let samples = [{ x, z }],
+        let samples = [{ x, y, z }],
           lastSequence = session.movementSequence ?? 0;
         if (point.trace !== undefined) {
           if (!Array.isArray(point.trace) || point.trace.length > 1024)
@@ -200,6 +209,7 @@ function createActivityService({
               !sample ||
               !Number.isFinite(sample.x) ||
               !Number.isFinite(sample.z) ||
+              (flying&&!Number.isFinite(sample.y)) ||
               !Number.isSafeInteger(sample.sequence) ||
               sample.sequence <= sequence
             )
@@ -209,9 +219,14 @@ function createActivityService({
           samples = point.trace.filter(
             (sample) => sample.sequence > lastSequence,
           );
-          samples = [...samples, { x, z }];
+          samples = [...samples, { x, y, z }];
           lastSequence = Math.max(lastSequence, sequence);
         }
+        if(flying){
+          const bounds=flight.flightBounds(walkingGrid);let valid=flight.insideFlight({x,y,z},bounds),travelled=0,from=player;
+          for(const to of samples){travelled+=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);if(!valid||travelled>allowance||!flight.insideFlight(to,bounds)||!flight.clearFlight(from,to,geometry)){valid=false;break;}from=to;}
+          if(valid){session.movementSequence=lastSequence;player.acceptedAt=now();Object.assign(player,{x,y,z});}
+        }else {
         let valid = canWalk(x, z),
           travelled = 0,
           from = player;
@@ -243,6 +258,7 @@ function createActivityService({
           player.x = x;
           player.z = z;
           player.y = walkingGrid.cells[index(x, z)];
+        }
         }
       }
       player.seen = now();
@@ -323,6 +339,7 @@ function createActivityService({
           )
           .map(({ created, ...message }) => message),
         character: session.character,
+        characterChanged,
         position: { x: player.x, y: player.y, z: player.z },
         joueurs: [...room.values()].map(({ seen, lastTalk, acceptedAt, ...rest }) => rest),
       };

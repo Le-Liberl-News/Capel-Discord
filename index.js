@@ -223,6 +223,7 @@ const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || ''
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
 const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
+const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:require("./activity/assets/sky/characters.json")});
 const capelModel=require("./activity/assets/sky/capel.json");
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
@@ -255,11 +256,11 @@ const activiteService = createActivityLobby({
     grid: require("./activity/terminal-world.cjs").terminalNavigation(require("./activity/assets/sky/navigation.json"),capelModel),
     residents: require('./activity/assets/sky/residents.json'),
     geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/anterose.gltf'),'utf8')),[{...capelModel,model:JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/capel/model.gltf'),'utf8'))}]),
-    resolveCharacter: userId => require('./commands/anonyme.js').getPseudoAnonyme(userId)
+    resolveCharacter: userId => testCharacters.resolve(userId,require('./commands/anonyme.js').getPseudoAnonyme)
 });
 const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
 const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
-const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
+const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {

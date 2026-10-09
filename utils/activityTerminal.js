@@ -1,6 +1,6 @@
 const {terminalNearby}=require("../activity/terminal-world.cjs");
 const {ActivityError}=require("./activityService");
-function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,now=Date.now}) {
+function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,testCharacters=null,now=Date.now}) {
  const pending=new Map(),completed=new Map();
  async function nearby(token) {
   const identity=lobby.identity(token),p=await lobby.terminalPosition(token);
@@ -10,11 +10,17 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  }
  async function menu(token) {
   const {id}=await nearby(token),own=await resolveCharacter(id),characters=await assignedCharacters();
-  return {characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
+  return {testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
  }
  async function perform(token,body) {
   const {id}=lobby.identity(token);
   switch(body.action) {
+   case "test_character": {
+    await nearby(token);
+    if(!testCharacters)throw new ActivityError("Test indisponible.",403);
+    testCharacters.set(id,body.character);lobby.refreshCharacter(id);
+    return {message:"Personnage modifi\u00e9."};
+   }
    case "duel": {
     await nearby(token);
     if(typeof body.character!=="string"||!(await assignedCharacters()).includes(body.character))throw new ActivityError("Personnage indisponible.",400);
