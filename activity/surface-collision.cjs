@@ -14,7 +14,7 @@ function createSurfaceCollision(THREE, scene) {
     ray.near = 0;
     ray.far = length;
     let closest = null;
-    for (const [x, y, z] of [
+    for (const [x, y, z] of (radius > 0 ? [
       [0, 0, 0],
       [radius, 0, 0],
       [-radius, 0, 0],
@@ -22,7 +22,7 @@ function createSurfaceCollision(THREE, scene) {
       [0, -radius, 0],
       [0, 0, radius],
       [0, 0, -radius],
-    ]) {
+    ] : [[0,0,0]])) {
       ray.set(start.clone().add(new THREE.Vector3(x, y, z)), direction);
       const hit = ray.intersectObject(scene, true)[0];
       if (!hit || (closest && hit.distance >= closest.distance)) continue;

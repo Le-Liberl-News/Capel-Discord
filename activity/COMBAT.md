@@ -1,14 +1,26 @@
-﻿# Essai de combat : Renne
+# Combat : première passe native
 
-Dans l’arène uniquement : F, coup de faux (12 dégâts) ; C, Flèche de feu (20) ; G, Cercle sanglant (30). Les boutons correspondants sont disponibles sur mobile : toucher pour attaquer devant soi, glisser puis relâcher pour viser.
+36 personnages : 31 ont attaque / art / craft ; Grant, Don, Deen, Rais et Rocco ont attaque / craft. Sieg et les autres personnages sans séquence exploitable restent non combattants.
 
-Les animations proviennent des banques CH04510 à CH04516 et du script AS04510 de Sky the 3rd. Cercle sanglant utilise les textures natives cr153_00 de SC. Le serveur contrôle les dégâts, les obstacles, les délais et la mort ; les autres personnages ne disposent pas encore de ces attaques.
+- F : attaque ; C : art ; G : craft. Les mêmes trois icônes servent sur mobile. Une action absente est masquée.
+- Les poses et leurs banques viennent des AS audités. Le premier craft ayant des frames valides est choisi. Renne garde son Cercle sanglant déjà réglé.
+- Les dégâts de départ sont 12 / 20 / 30, avec des délais et des temps de récupération communs. Les tireurs ont une attaque à distance. Le serveur décide des impacts et des PV.
+- L’art est une Flèche de feu de test. Les autres crafts utilisent pour l’instant un effet d’impact commun, sans reproduire tous les déplacements, projectiles, invocations et effets de leur AS original.
+- Les noms « Craft 1 », etc. sont des identifiants de slots provisoires, pas une identification du nom français de la technique.
+
+## Réglages
+
+`assets/sky/combat/catalogue.json` contient, par personnage, `actions`, `sequences`, `banks` et `source`. Modifier `actions` pour les dégâts, portée, récupération et `projectile` ; `sequences` pour les poses `{bank, pose, ms}` ; conserver `source` pour identifier la routine AS.
+
+`tools/export-combat-catalogue.py` recrée les seules banques utilisées depuis les archives locales extraites et le relevé des AS. `--character` permet de réexporter un personnage. Aucun jeu complet décompressé n’est ajouté au serveur. Les textures sont chargées à la demande pour les personnages présents.
+
+Dorothy demande encore son traitement particulier de photographie : son attaque utilise des banques d’effets SC DT06 non intégrées dans cette passe. Les AS de support d’Aina et Dunan ne sont pas interprétés comme des attaques.
+
+## Messages et captures
 
 Les messages saisis dans le jeu sont reproduits dans le salon 1499373178483507210 sous le nom du personnage. Les messages Discord entrants et les dialogues PNJ ne sont pas retransmis.
 
 Un craft accepté déclenche une capture de la scène autour de son impact (288 × 216, 12 images). Le serveur vérifie l’auteur et publie le GIF une seule fois avec « Renne lance Cercle sanglant. ». Si aucune capture n’arrive, le texte seul est publié après 30 secondes. Aucun compte Discord, chat ou élément d’interface n’est inclus dans le GIF.
-
-`npm run activity:build` reconstruit le client et le worker GIF. `npm run activity:test` vérifie les règles de combat et le relais. `activity/tools/export-renne-combat.py --help` décrit l’export reproductible des ressources natives.
 
 Les duels acceptes ouvrent un fil public dans general (595259248984981516), nomme avec les deux personnages. Le premier message contient le bouton pour regarder depuis les tribunes. Les messages du jeu et GIF des participants/spectateurs vont dans ce fil tant qu’ils sont dans ce match. Hors match, le salon roleplay reste la destination habituelle.
 

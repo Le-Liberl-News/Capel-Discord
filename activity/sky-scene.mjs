@@ -6,7 +6,7 @@ import {createDayNight} from "./day-night.mjs";
 import {createRenneCombat} from "./renne-animation.mjs";
 import {createCraftCapture} from "./craft-capture.mjs";
 import {createCombatControls} from "./combat-controls.mjs";
-import renneMechanics from "./renne-combat.cjs";
+import renneMechanics from "./native-combat.cjs";
 import terminalWorld from "./terminal-world.cjs";
 import {createDamageEffects,damageAmount} from "./damage-effects.mjs";
 import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize} from "./controls.mjs";
@@ -109,7 +109,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   function removeAvatar(avatar) {
     scene.remove(avatar.mesh);
     if(avatar.shadow){scene.remove(avatar.shadow);avatar.shadow.geometry.dispose();avatar.shadow.material.dispose();}
-    if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else avatar.mesh.material.map.dispose(); avatar.mesh.material.dispose(); }
+    if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
@@ -126,11 +126,11 @@ export async function createSkyScene(canvas, map = "anterose") {
     const ground=collision.floor(point.x,point.z,point.y+.6);if(ground!==null)point.y=ground;return point;
   }
   function startAttack(kind,event=cursor) {
-    const me=avatars.get(localId);if(!renneCombat||!connected||!me||me.character!=="Renne"||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||!combatControls.ready(kind))return false;
+    const me=avatars.get(localId);if(!renneCombat||!connected||!me||!renneMechanics.combatSpec(me.character,kind)||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||!combatControls.ready(kind))return false;
     const aim=aimForAttack(event);if(!aim)return false;
     const action=queueAction("attack",undefined,aim,undefined,{kind});if(!action)return false;
-    const predicted=renneCombat.predict(action.id,me.position,aim,kind,localId);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
-    path=[];marker.visible=false;combatControls.started(kind);
+    const predicted=renneCombat.predict(action.id,me.position,aim,kind,localId,me.character);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
+    path=[];marker.visible=false;combatControls.started(kind,me.character);
     if(__ACTIVITY_PREVIEW__&&!new URLSearchParams(location.search).has("frame_id"))renneCombat.accept(action.id);
     return true;
   }
@@ -305,7 +305,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     let avatar = avatars.get(player.id);
     const dead = player.hp === 0;
     const prop = propCatalogue[player.prop] ? player.prop : null;
-    const character = catalogue[player.character]
+    const character = (catalogue[player.character]||renneMechanics.COMBAT[player.character])
       ? player.character
       : "Estelle";
     if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
@@ -332,9 +332,10 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar = {mesh,prop,character,dead,hp:player.hp??100,info:{height:1},position:{x:player.x??spawn.x,y:player.y??spawn.y,z:player.z??spawn.z},target:null,heading:{dx:0,dz:-1},time:0};
       attachShadow(avatar,player.id);avatars.set(player.id,avatar); return avatar;
     }
-    const baseInfo = character==="Sieg"?{...catalogue[character],height:.8}:catalogue[character];
-    const battle=renneCombat && character==="Renne";
-    const info = battle ? renneCombat.metadata.banks[dead?"4":"0"] :
+    const baseInfo = character==="Sieg"?{...catalogue[character],height:.8}:(catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]);
+    const battle=renneCombat&&renneCombat.metadataFor(character);
+    const combatAssets=battle?await renneCombat.load(character):null;
+    const info = battle ? (combatAssets.metadata.banks[dead?"4":"0"]??combatAssets.metadata.banks["0"]) :
       dead && baseInfo.death
         ? {
             ...baseInfo.death,
@@ -362,6 +363,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     texture.generateMipmaps = false;
     texture.repeat.set(1 / info.columns, 1 / info.rows);
     texture.needsUpdate = true;
+    let walkingTexture=null;
+    if(!battle&&!dead&&baseInfo.walk){const key=character+':walk';if(!textures.has(key))textures.set(key,textureLoader.loadAsync(new URL(baseInfo.walk.texture,ASSETS).href));walkingTexture=(await textures.get(key)).clone();walkingTexture.colorSpace=THREE.SRGBColorSpace;walkingTexture.magFilter=walkingTexture.minFilter=THREE.NearestFilter;walkingTexture.repeat.set(1/baseInfo.walk.columns,1/baseInfo.walk.rows);walkingTexture.needsUpdate=true;}
     const geometry = new THREE.PlaneGeometry(
       (info.height * info.frameWidth) / info.frameHeight,
       info.height,
@@ -388,9 +391,9 @@ export async function createSkyScene(canvas, map = "anterose") {
       npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
-      initialTexture:texture,
-      battleTextures:battle?new Map([...renneCombat.textures].map(([bank,base])=>{const clone=base.clone();clone.needsUpdate=true;return [bank,clone];})):null,
-      fallbackDeath: dead && !baseInfo.death && !battle,
+      initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,
+      battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=base.clone();clone.needsUpdate=true;return [bank,clone];})):null,
+      fallbackDeath: dead && !baseInfo.death && (!battle||!battle.banks["4"]),
       info,
       position: {
         x: player.x ?? spawn.x,
@@ -595,7 +598,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const airForward=forward.clone(),airRight=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
     forward.y = 0;
     forward.normalize();
-    combatControls.update({arena:map==="arena",renne:me?.character==="Renne",connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
+    combatControls.update({arena:map==="arena",character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     flightMotion={moving:false,dx:0,dz:0};
     if (me && health.hp > 0 && movementAllowed && !renneCombat?.current(localId)) {
@@ -656,7 +659,8 @@ export async function createSkyScene(canvas, map = "anterose") {
         forward,
       );
       let info=avatar.info,selectedPose;
-      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack):{bank:avatar.dead?4:motion.moving?1:0,pose:avatar.dead?0:Math.floor(avatar.time*8)%8};info=renneCombat.metadata.banks[selected.bank];avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;}
+      if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
+      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack):{bank:avatar.dead?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead?0:Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking,avatar.position.y,avatar.flightFloor);
       const poses=motion.moving||avatar.walking||beating?info.run:info.idle;
@@ -853,7 +857,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       };
       renneCombat?.receive(result.combat?.attacks??[],result.health?.serverTime??Date.now());
       if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);}}
-      combatControls.update({arena:map==="arena",renne:avatars.get(localId)?.character==="Renne",connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
+      combatControls.update({arena:map==="arena",character:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
       for (const ball of environment.poms) {
         if (!projectiles.has(ball.id)) {
           projectiles.set(ball.id,createProjectilePlayback());

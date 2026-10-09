@@ -250,7 +250,7 @@ const activiteService = createActivityLobby({
       combatEnabled: true,
       spectatorGrid: require("./activity/assets/sky/arena/spectator-navigation.json"),
       introDuration:9000,
-      spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
+      spawns: [{x:-1,y:0,z:3.25},{x:-1,y:0,z:-16.25}],
       grid: require('./activity/assets/sky/arena/navigation.json'),
       residents: require('./activity/assets/sky/arena/residents.json'),
       geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/arena/anterose.gltf'), 'utf8'))),

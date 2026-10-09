@@ -1,3 +1,4 @@
+import {createCharacterVoices} from './character-voices.mjs';
 import * as THREE from "three";
 import { placeDialogues } from "./dialogue-placement.mjs";
 import {
@@ -45,6 +46,7 @@ export async function createDialogues(assets) {
   const layer = document.createElement("div");
   layer.id = "sky-dialogues";
   document.body.append(layer);
+  const voices=createCharacterVoices(assets);
   const queue = new DialogueQueue(),
     active = new Map();
   const context = document.createElement("canvas").getContext("2d");
@@ -63,7 +65,8 @@ export async function createDialogues(assets) {
       Math.max(240, Math.max(textWidth, nameWidth) + 52),
     );
   }
-  function open(author, message, time) {
+  function open(author, message, time,avatar) {
+    voices.speak(avatar.character);
     const width = widthFor(message),
       pages = paginateDialogue(
         message.text,
@@ -124,7 +127,7 @@ export async function createDialogues(assets) {
         let item = active.get(id);
         if (!item) {
           const next = queue.next(id);
-          if (next) item = open(id, next, time);
+          if (next) item = open(id, next, time,avatar);
         }
         if (!item) continue;
         const width = widthFor(item.message);
@@ -217,6 +220,7 @@ export async function createDialogues(assets) {
       }
     },
     dispose() {
+      voices.dispose();
       layer.remove();
       style.remove();
       document.fonts.delete(font);

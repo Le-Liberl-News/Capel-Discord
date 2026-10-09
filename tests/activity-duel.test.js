@@ -403,3 +403,11 @@ test('a lethal Pom throw ends the match and its thread receives only the charact
  const client={channels:{fetch:async id=>{assert.equal(id,'thread-match');return {send:async p=>posts.push(p)};}}};
  await manager.publishResult(results[0],client);assert.equal(posts[0].content,'Victoire de **Estelle** !');assert.deepEqual(posts[0].allowedMentions.parse,[]);assert.equal(posts[0].enforceNonce,true);assert.match(posts[0].nonce,/^\d{1,20}$/);
 });
+
+
+test('production duel starts lie at the centres of opposite arena halves',()=>{
+ const fs=require('node:fs'),root=require('node:path').join(__dirname,'..'),source=fs.readFileSync(root+'/index.js','utf8'),g=require('../activity/assets/sky/arena/navigation.json');
+ const match=source.match(/spawns: \[\{x:(-?[\d.]+),y:0,z:(-?[\d.]+)\},\{x:(-?[\d.]+),y:0,z:(-?[\d.]+)\}\]/);assert.ok(match);const a={x:+match[1],z:+match[2]},b={x:+match[3],z:+match[4]},mid=-6.5;
+ assert.equal(a.x,-1);assert.equal(b.x,-1);assert.ok(a.z>mid&&b.z<mid);assert.ok(Math.abs((a.z+b.z)/2-mid)<.1);
+ for(const p of [a,b]){const x=Math.round((p.x-g.origin.x)/g.step),z=Math.round((p.z-g.origin.z)/g.step);assert.ok(Math.abs(g.cells[z*g.width+x])<.01);}
+});

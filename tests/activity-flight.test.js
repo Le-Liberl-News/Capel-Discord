@@ -67,3 +67,9 @@ test('Sieg turns toward a right camera drag and uses only native wingbeats in fl
  assert.equal(flight.wingbeats(false,3,0),true);assert.equal(flight.wingbeats(false,3,null),true);
  const sieg=require('../activity/assets/sky/characters.json').Sieg;assert.deepEqual(sieg.idle,[0]);assert.deepEqual(sieg.run,[3,4]);assert.equal(sieg.fps,6);
 });
+
+
+test('Sieg perches on the actual restaurant furniture without falling through its top',()=>{
+ const fs=require('node:fs'),geometry=require('../utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'../activity/assets/sky/anterose.gltf')))),g=require('../activity/assets/sky/navigation.json');
+ for(const [x,z]of [[-6.5,-4.5],[4,-4.5],[2.2,11.4]]){const floor=geometry.floor(x,z,4),p={x,y:floor+.7,z};for(let i=0;i<40;i++)flight.moveFlight(p,{x:0,y:-1,z:0},1/30,flight.flightBounds(g),geometry);assert.ok(Math.abs(p.y-floor-.08)<.03);assert.equal(flight.wingbeats(false,p.y,geometry.floor(x,z,p.y+.1)),false);assert.ok(flight.clearFlight({x,y:floor+.25,z},p,geometry));}
+});

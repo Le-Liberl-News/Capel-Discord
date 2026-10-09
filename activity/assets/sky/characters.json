@@ -1657,5 +1657,301 @@
     "directions": 8,
     "fps": 8,
     "height": 1.7
+  },
+  "Ries": {
+    "texture": "combat/as04150/0.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 252,
+    "frameHeight": 217,
+    "frames": 64,
+    "directions": 8,
+    "height": 2.8596899224806203,
+    "centerX": 0.0,
+    "centerY": 0.6127906976744186,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "fps": 8,
+    "walk": {
+      "texture": "combat/as04150/1.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 252,
+      "frameHeight": 217,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.8596899224806203,
+      "centerX": 0.0,
+      "centerY": 0.6127906976744186,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "death": {
+      "texture": "combat/as04150/4.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 252,
+      "frameHeight": 217,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.8596899224806203,
+      "centerX": 0.0,
+      "centerY": 0.6127906976744186,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    }
+  },
+  "Kevin": {
+    "texture": "combat/as04080/0.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 164,
+    "frameHeight": 127,
+    "frames": 64,
+    "directions": 8,
+    "height": 2.1590000000000003,
+    "centerX": 0.0,
+    "centerY": 0.8925000000000001,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "fps": 8,
+    "walk": {
+      "texture": "combat/as04080/1.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 164,
+      "frameHeight": 127,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.1590000000000003,
+      "centerX": 0.0,
+      "centerY": 0.8925000000000001,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "death": {
+      "texture": "combat/as04080/4.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 164,
+      "frameHeight": 127,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.1590000000000003,
+      "centerX": 0.0,
+      "centerY": 0.8925000000000001,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    }
+  },
+  "Walter": {
+    "texture": "combat/as04500/0.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 136,
+    "frameHeight": 126,
+    "frames": 64,
+    "directions": 8,
+    "height": 2.04,
+    "centerX": 0.0,
+    "centerY": 0.9876190476190475,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "fps": 8,
+    "walk": {
+      "texture": "combat/as04500/1.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 136,
+      "frameHeight": 126,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.04,
+      "centerX": 0.0,
+      "centerY": 0.9876190476190475,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "death": {
+      "texture": "combat/as04500/4.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 136,
+      "frameHeight": 126,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.04,
+      "centerX": 0.0,
+      "centerY": 0.9876190476190475,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    }
+  },
+  "Loewe": {
+    "texture": "combat/as04540/0.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 165,
+    "frameHeight": 156,
+    "frames": 64,
+    "directions": 8,
+    "height": 2.3263157894736843,
+    "centerX": 0.007456140350877193,
+    "centerY": 0.9394736842105262,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "fps": 8,
+    "walk": {
+      "texture": "combat/as04540/1.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 165,
+      "frameHeight": 156,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.3263157894736843,
+      "centerX": 0.007456140350877193,
+      "centerY": 0.9394736842105262,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "death": {
+      "texture": "combat/as04540/4.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 165,
+      "frameHeight": 156,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.3263157894736843,
+      "centerX": 0.007456140350877193,
+      "centerY": 0.9394736842105262,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    }
   }
 }

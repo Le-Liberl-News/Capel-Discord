@@ -123,3 +123,9 @@ test("a speaker near the top edge keeps a visible bubble pointing back to them",
     p.left >= 16 && p.top >= 16 && p.top + p.height <= viewport.height - 16,
   );
 });
+
+
+test('Sieg speech plays its native cry once and other characters stay silent',async()=>{
+ const {createCharacterVoices}=await import('../activity/character-voices.mjs');let plays=0,pauses=0,url;const sound={currentTime:5,play(){plays++;return Promise.resolve();},pause(){pauses++;}};
+ const voices=createCharacterVoices(new URL('https://example.test/assets/'),value=>{url=value;return sound;});voices.speak('Estelle');assert.equal(plays,0);voices.speak('Sieg');assert.equal(plays,1);assert.equal(sound.currentTime,0);assert.ok(url.endsWith('/sounds/sieg.ogg'));voices.dispose();assert.equal(pauses,1);
+});
