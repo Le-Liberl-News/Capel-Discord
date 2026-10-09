@@ -250,7 +250,7 @@ function createSingleActivityWorld({
         continue;
       }
       for (const p of players.values()) {
-        if (p.hp === 0 || p.spectator || p.id === ball.thrownBy) continue;
+        if (p.hp === 0 || p.spectator || p.duelProtected || p.id === ball.thrownBy) continue;
         const dx = x - ball.x,
           dy = y - ball.y,
           dz = z - ball.z,

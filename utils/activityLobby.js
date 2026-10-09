@@ -10,10 +10,10 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
   const stadium = arena && createActivityService({ ...options, ...arena, now, persistent: true, store: worldStores.arena,
     spawnFor: user => spectators.has(user) ? (arena.spectatorGrid?.spawn ?? arena.grid.spawn) : arena.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? arena.grid.spawn,
     navigationFor: user => spectators.has(user) ? (arena.spectatorGrid ?? arena.grid) : arena.grid,
-    playerPolicy: user => ({spectator:spectators.has(user)}) });
+    playerPolicy: user => {const duel=duels.get(assignments.get(user)),protectedNow=!!arena.introDuration&&!!duel&&(duel.readyAt===undefined||now()<duel.readyAt);return {spectator:spectators.has(user),canMove:!protectedNow,duelProtected:protectedNow};} });
   const city = rolent && createActivityService({ ...options,...rolent,now,persistent:true,store:worldStores.rolent,
     playerPolicy:user=>huntGame?.policy(user)??{} });
-  const makeDuel = data => data;
+  const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(arena?.introDuration??0);}return data;};
   const saved=store?.load();
   for (const [id,data] of saved?.duels ?? []) if (data.expires>now()) duels.set(id,makeDuel(data));
   for (const [user,id] of saved?.assignments ?? []) if (duels.has(id)) { assignments.set(user,id); lastSeen.set(user,now()); }
@@ -76,10 +76,10 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
       if (assignments.has(opponent)) throw new ActivityError("Le personnage ciblé est déjà dans un duel actif.");
       huntGame?.leave(user); spectators.delete(user); release(user); persist();
     },
-    createDuel({ id, channel, players }) {
+    createDuel({ id, channel, players, names = [] }) {
       prune(); if (!arena) throw new ActivityError("Arène indisponible.");
       for (const user of players) if (assignments.has(user)) throw new ActivityError("Un des personnages est déjà en duel.");
-      duels.set(id,makeDuel({channel,players,accepted:[],expires:now()+30*60*1000})); persist();
+      duels.set(id,makeDuel({channel,players,names,accepted:[],expires:now()+30*60*1000})); persist();
     },
     joinDuel(id, user) {
       prune(); const duel=duels.get(id);
@@ -88,7 +88,7 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
       huntGame?.leave(user); spectators.delete(user);
       assignments.set(user,id); locations.set(user,"arena"); lastSeen.set(user,now()); persist();
     },
-    acceptDuel(id,user) { const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); persist(); return duel.players.every(p=>duel.accepted.includes(p)); },
+    acceptDuel(id,user) { const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(arena.introDuration??0);}persist(); return ready; },
     validateSpectate(id) { prune();const duel=duels.get(id);if(!duel||!duel.players.every(p=>duel.accepted?.includes(p)))throw new ActivityError("Ce duel n'est pas disponible.",403); },
     spectateDuel(id,user) { prune(); const duel=duels.get(id); if (!duel||!duel.players.every(p=>duel.accepted?.includes(p))) throw new ActivityError("Ce duel n'est pas disponible.",403);
       if (duel.players.includes(user)) return;
@@ -147,7 +147,9 @@ function createActivityLobby({ arena, rolent = null, huntGame = null, store = nu
         if(result.game.role==="hunter" && result.game.phase==="preparation") result.messages=result.messages.filter(m=>m.author===session.id);
         result.health={...result.health,...huntGame.policy(session.id)};
       }
-      return {...sanitize(result),map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
+      const duelId=target.match?.replace(/^watch:/,""),duel=duels.get(duelId);
+      const introduction=target.map==="arena"&&duel&&arena.introDuration&&duel.startsAt!==undefined?{id:duelId,startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[]}:null;
+      return {...sanitize(result),duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
         actionResult:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },
   };

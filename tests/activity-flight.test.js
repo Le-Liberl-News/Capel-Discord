@@ -59,3 +59,11 @@ test('real restaurant flight traces agree with server geometry and stay below ce
  for(let i=1;i<=90;i++){flight.moveFlight(p,i<30?{x:0,y:1,z:0}:{x:1,y:.5,z:1},1/30,bounds,geometry,q=>trace.push({...q,sequence:++sequence}));time=i*1000/30;if(i%10===0){const state=await service.state(bird.activity_token,{...p,trace});assert.ok(Math.hypot(state.position.x-p.x,state.position.y-p.y,state.position.z-p.z)<.02,'server rejected local flight');trace=[];}}
  assert.ok(p.y>.5);assert.ok(Math.hypot(p.x-g.spawn.x,p.z-g.spawn.z)>.5);
 });
+
+
+test('Sieg turns toward a right camera drag and uses only native wingbeats in flight',()=>{
+ assert.ok(flight.cameraTurn(60,true)>0);assert.ok(flight.cameraTurn(-60,true)<0);assert.ok(flight.cameraTurn(60,false)<0);
+ assert.equal(flight.wingbeats(false,.08,0),false);assert.equal(flight.wingbeats(true,.08,0),true);
+ assert.equal(flight.wingbeats(false,3,0),true);assert.equal(flight.wingbeats(false,3,null),true);
+ const sieg=require('../activity/assets/sky/characters.json').Sieg;assert.deepEqual(sieg.idle,[0]);assert.deepEqual(sieg.run,[3,4]);assert.equal(sieg.fps,6);
+});

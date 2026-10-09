@@ -256,3 +256,11 @@ test("damage feedback uses confirmed HP losses, including lethal hits, without r
  const {damageAmount}=await import("../activity/damage-effects.mjs");
  assert.equal(damageAmount(undefined,{hp:75}),0);assert.equal(damageAmount({hp:100},{hp:75}),25);assert.equal(damageAmount({hp:75},{hp:75}),0);assert.equal(damageAmount({hp:75},{hp:100}),0);assert.equal(damageAmount({hp:20},{hp:0}),20);assert.equal(damageAmount({hp:100,npc:true},{hp:75,npc:true}),0);
 });
+
+
+test('duel introduction follows the FC presentation order and never replays an expired match',async()=>{
+ const {duelPhase}=await import('../activity/duel-intro.mjs');const duel={startsAt:1000,readyAt:10000};
+ assert.equal(duelPhase(duel,500).kind,'overview');assert.equal(duelPhase(duel,3000).side,0);
+ assert.equal(duelPhase(duel,5000).side,1);assert.equal(duelPhase(duel,7500).kind,'versus');
+ assert.equal(duelPhase(duel,9500).kind,'begin');assert.equal(duelPhase(duel,10000),null);assert.equal(duelPhase(null,0),null);
+});

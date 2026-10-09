@@ -28,4 +28,6 @@ function moveFlight(position,vector,seconds,bounds,geometry,record=()=>{}) {
 }
 function approachFlight(position,target,seconds,speed=6){if(!target)return {moving:false,dx:0,dz:0};const dx=target.x-position.x,dy=target.y-position.y,dz=target.z-position.z,length=Math.hypot(dx,dy,dz),fraction=length?Math.min(1,Math.max(0,seconds)*speed/length):0;position.x+=dx*fraction;position.y+=dy*fraction;position.z+=dz*fraction;return {moving:length>.00001,dx:length?dx/length:0,dz:length?dz/length:0};}
 function landingPoint(grid,p){let best=grid.spawn,score=Infinity;for(let i=0;i<grid.cells.length;i++){const y=grid.cells[i];if(!Number.isFinite(y))continue;const q={x:grid.origin.x+i%grid.width*grid.step,y,z:grid.origin.z+Math.floor(i/grid.width)*grid.step},d=(q.x-p.x)**2+(q.z-p.z)**2+4*(q.y-p.y)**2;if(d<score){score=d;best=q;}}return {...best};}
-module.exports={FLIGHT_SPEED,FLIGHT_RADIUS,flightBounds,insideFlight,clearFlight,moveFlight,approachFlight,landingPoint};
+function cameraTurn(dx,flying){return dx*.006*(flying?1:-1);}
+function wingbeats(moving,y,floor){return moving||!Number.isFinite(floor)||y-floor>.16;}
+module.exports={cameraTurn,wingbeats,FLIGHT_SPEED,FLIGHT_RADIUS,flightBounds,insideFlight,clearFlight,moveFlight,approachFlight,landingPoint};

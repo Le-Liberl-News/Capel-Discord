@@ -1,3 +1,4 @@
+import {createDuelIntro} from "./duel-intro.mjs";
 import flight from "./flight.cjs";
 import {createDayNight} from "./day-night.mjs";
 import {createRenneCombat} from "./renne-animation.mjs";
@@ -39,12 +40,12 @@ export async function createSkyScene(canvas, map = "anterose") {
   const scene = new THREE.Scene(),
     walkingCamera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, map === "rolent" ? 350 : 150),
     avatars = new Map(),
-    catalogue = await fetch(new URL("characters.json", ASSETS)).then((r) =>
+    catalogue = await fetch(new URL("characters.json", ASSETS),{cache:"no-store"}).then((r) =>
       r.json(),
     );
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
   let camera=walkingCamera,wasFlying=false,flightMotion={moving:false,dx:0,dz:0};
-  const version = new URL(import.meta.url).searchParams.get("v") ?? "sieg-20261009-1";
+  const version = new URL(import.meta.url).searchParams.get("v") ?? "arena-intro-20261009-2";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
@@ -83,6 +84,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   });
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows);
+  const duelIntro=map==="arena"?createDuelIntro():null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
@@ -183,7 +185,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const touches=createTouchControls({
     tap:event=>{if(!connected)return;if(touchArmed){disarmTouch();interaction(event);}else click(event);},
     action:event=>{disarmTouch();interaction(event);},
-    camera:({dx,dy})=>{menu.hidden=true;yaw-=dx*.006;if(avatars.get(localId)?.character==="Sieg")pitch=Math.max(-1.48,Math.min(1.48,pitch+(dy??0)*.006));},
+    camera:({dx,dy})=>{menu.hidden=true;yaw+=flight.cameraTurn(dx,avatars.get(localId)?.character==="Sieg");if(avatars.get(localId)?.character==="Sieg")pitch=Math.max(-1.48,Math.min(1.48,pitch+(dy??0)*.006));},
   });
   const oldHelp = document.getElementById("aide");
   if (oldHelp) oldHelp.hidden = true;
@@ -518,7 +520,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       drag.moved = true;
     if (!drag.moved) return;
     menu.hidden = true;
-    yaw -= (event.clientX - drag.x) * 0.006;
+    yaw += flight.cameraTurn(event.clientX-drag.x,avatars.get(localId)?.character==="Sieg");
     if(avatars.get(localId)?.character==="Sieg")pitch=Math.max(-1.48,Math.min(1.48,pitch+(event.clientY-drag.y)*.006));
     drag.x = event.clientX;
     drag.y = event.clientY;
@@ -578,6 +580,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(hit){const length=Math.hypot(desired.x-target.x,desired.y-target.y,desired.z-target.z),fraction=Math.max(.01,(hit.distance-.12)/length);camera.position.set(target.x+(desired.x-target.x)*fraction,target.y+(desired.y-target.y)*fraction,target.z+(desired.z-target.z)*fraction);}
     }
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
+    duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
     cutaway?.update(camera, follow);
     const right = {
@@ -651,7 +654,9 @@ export async function createSkyScene(canvas, map = "anterose") {
       );
       let info=avatar.info,selectedPose;
       if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack):{bank:avatar.dead?4:motion.moving?1:0,pose:avatar.dead?0:Math.floor(avatar.time*8)%8};info=renneCombat.metadata.banks[selected.bank];avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;}
-      const poses=motion.moving||avatar.walking||(avatar.character==="Sieg"&&!avatar.dead)?info.run:info.idle;
+      if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
+      const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking,avatar.position.y,avatar.flightFloor);
+      const poses=motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*8+(avatar.direction%(info.directions??8));
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
@@ -749,7 +754,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   return {
     spawn,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position}}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
     onCraftCapture(callback){notifyCapture=callback;},
@@ -830,6 +835,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     },
     async world(result) {
       dayNight.sync(result.health?.serverTime);
+      duelIntro?.receive(result.duel,result.health?.serverTime);
       if(result.characterChanged){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];keys.clear();}
       environment = {
         game: result.game,
@@ -930,7 +936,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
-      dayNight.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      dayNight.dispose();duelIntro?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       menu.remove();
       status.remove();
       labels.remove();

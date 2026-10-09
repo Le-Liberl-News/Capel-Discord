@@ -248,6 +248,7 @@ const activiteService = createActivityLobby({
     arena: {
       combatEnabled: true,
       spectatorGrid: require("./activity/assets/sky/arena/spectator-navigation.json"),
+      introDuration:9000,
       spawns: [{x:-6,y:0,z:3},{x:6,y:0,z:3}],
       grid: require('./activity/assets/sky/arena/navigation.json'),
       residents: require('./activity/assets/sky/arena/residents.json'),
@@ -259,8 +260,8 @@ const activiteService = createActivityLobby({
     resolveCharacter: userId => testCharacters.resolve(userId,require('./commands/anonyme.js').getPseudoAnonyme)
 });
 const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
-const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
-const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
+const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({client,lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
+const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {

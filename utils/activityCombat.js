@@ -43,7 +43,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       const attacker=room.get(attack.actor),spec=RENNE[attack.kind];
       if(!attacker||attacker.hp<=0||attacker.character!=="Renne"||attacker.spectator){attack.cancelled=true;continue;}
       for(const player of room.values()) {
-        if(player.id===attack.actor||player.hp<=0||player.spectator||Math.abs((player.y??0)-attack.aim.y)>.9)continue;
+        if(player.id===attack.actor||player.hp<=0||player.spectator||player.duelProtected||Math.abs((player.y??0)-attack.aim.y)>.9)continue;
         let inRange=Math.hypot(player.x-attack.aim.x,player.z-attack.aim.z)<=spec.radius;
         if(attack.kind==="basic") {
           const dx=player.x-attack.origin.x,dz=player.z-attack.origin.z,d=Math.hypot(dx,dz),ax=attack.aim.x-attack.origin.x,az=attack.aim.z-attack.origin.z,ad=Math.hypot(ax,az);

@@ -22,7 +22,7 @@ const etat = {
   character: "Estelle",
   messageCursor: 0,
 };
-let scene, music;
+let scene, music, lastDuelIntro=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
  action:body=>apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
@@ -46,7 +46,7 @@ async function publishCraftCapture({id,bytes}) {
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 
 const mapTitle = map => map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
-const musicUrl = map => new URL(map === "arena" ? "music/arena.ogg" : "music/anterose.ogg",ASSETS);
+const musicUrl = map => new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : "music/anterose.ogg",ASSETS);
 const gameHud = document.createElement("div"), blindfold = document.createElement("div");
 gameHud.id="sky-prophunt"; gameHud.hidden=true;
 gameHud.style.cssText="position:fixed;right:16px;top:64px;z-index:22;padding:12px;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;font:16px AveriaSky,sans-serif;white-space:pre-line";
@@ -232,6 +232,7 @@ async function publier() {
   scene.acknowledgeMovement(result.movementSequence ?? submitted.sequence);
   scene.correct(result.position, submitted);
   updateHunt(result.game ? {...result.game,received:Date.now()} : null);
+  if(result.duel&&result.duel.id!==lastDuelIntro&&result.health.serverTime<result.duel.readyAt){lastDuelIntro=result.duel.id;music.restart();}
   await scene.world(result);
   await scene.sync([
     ...result.joueurs,

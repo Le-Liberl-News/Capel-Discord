@@ -384,3 +384,13 @@ test("spectators are immune even at projectile height and cannot pick up the Pom
  f.world.action(a,{type:'pickup'},f.players);f.world.action(a,{type:'throw',aim:{x:7,y:.9,z:1}},f.players);f.tick(.5);
  assert.equal(b.hp,100);assert.ok(f.world.action(b,{type:'pickup'},f.players).error);
 });
+
+
+test('a Pom cannot damage a participant during the duel presentation',()=>{
+ for(const protectedNow of [false,true]){
+  const f=fixture();f.players.get('b').duelProtected=protectedNow;
+  assert.deepEqual(f.world.action(f.players.get('a'),{type:'pickup'},f.players),{});
+  assert.deepEqual(f.world.action(f.players.get('a'),{type:'throw',aim:{x:8,y:.9,z:1}},f.players),{});
+  f.tick(.5);assert.equal(f.players.get('b').hp,protectedNow?100:75);
+ }
+});

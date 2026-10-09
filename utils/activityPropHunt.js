@@ -1,11 +1,19 @@
 const {ActivityError}=require('./activityService');
-function createActivityPropHunt({lobby,resolveCharacter}) {
+function createActivityPropHunt({lobby,resolveCharacter,client,generalChannel="595259248984981516"}) {
+ const announcements=new Map();
+ async function announce(game,fallback){
+  if(announcements.has(game.id))return announcements.get(game.id);
+  const task=(async()=>{const channel=client?await client.channels.fetch(generalChannel):fallback;if(!channel?.send)throw new ActivityError("Salon des annonces indisponible.");return channel.send(panel(game));})();
+  announcements.set(game.id,task);
+  try {const message=await task;for(const id of announcements.keys())if(id!==game.id)announcements.delete(id);return message;}catch(error){announcements.delete(game.id);throw error;}
+ }
  const panel=summary=>({content:'Prop Hunt a Rolent \u2014 inscriptions ouvertes.\n30 secondes pour se cacher, puis '+summary.duration+' minutes de recherche. Les apparences sont des objets de la ville.',components:[{type:1,components:[{type:2,custom_id:'prophunt:signup:'+summary.id,label:'Participer',style:1},{type:2,custom_id:'prophunt:start:'+summary.id,label:'Demarrer',style:3}]}],allowedMentions:{parse:[]}});
- return {async handle(interaction){
+ async function started(state){const game=lobby.huntSummary(),message=await announcements.get(game?.id);if(message?.edit)await message.edit({content:"Prop Hunt commence ! "+state.hunter+" cherche les autres personnages.\n30 secondes de preparation, puis "+game.duration+" minutes de recherche.",components:[],allowedMentions:{parse:[]}});}
+ return {announce,started,async handle(interaction){
   if(interaction.isChatInputCommand?.()&&interaction.commandName==='prophunt'){
    await interaction.deferReply({flags:64});
    let opened;
-   try{const game=opened=lobby.createHunt(interaction.user.id,interaction.options.getInteger('duree')??10);await interaction.channel.send(panel(game));await interaction.editReply({content:'Partie ouverte. Utilise Participer, ouvre le bouton prive, puis Demarrer quand les joueurs sont dans Rolent.'});}
+   try{const game=opened=lobby.createHunt(interaction.user.id,interaction.options.getInteger('duree')??10);await announce(game,interaction.channel);await interaction.editReply({content:'Partie ouverte. Utilise Participer, ouvre le bouton prive, puis Demarrer quand les joueurs sont dans Rolent.'});}
    catch(error){if(opened)lobby.cancelHunt(opened.id,interaction.user.id);await interaction.editReply({content:error instanceof ActivityError?error.message:'Impossible de creer la partie. Reessayez.'});}
    return true;
   }

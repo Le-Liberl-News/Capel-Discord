@@ -1,6 +1,6 @@
 const {terminalNearby}=require("../activity/terminal-world.cjs");
 const {ActivityError}=require("./activityService");
-function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,testCharacters=null,now=Date.now}) {
+function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,now=Date.now}) {
  const pending=new Map(),completed=new Map();
  async function nearby(token) {
   const identity=lobby.identity(token),p=await lobby.terminalPosition(token);
@@ -31,11 +31,11 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
    case "hunt_create": {
     await nearby(token);
     const character=await resolveCharacter(id),game=lobby.createHunt(id,10);
-    try {lobby.joinHunt(game.id,id,character);}catch(error){lobby.cancelHunt(game.id,id);throw error;}
+    try {await announceHunt(game);lobby.joinHunt(game.id,id,character);}catch(error){lobby.cancelHunt(game.id,id);throw error;}
     return {message:"Partie ouverte."};
    }
    case "hunt_join":await nearby(token);lobby.validateJoinHunt(body.invitation,id);lobby.joinHunt(body.invitation,id,await resolveCharacter(id));return {message:"Partie rejointe."};
-   case "hunt_start":lobby.startHunt(body.invitation,id);return {message:"Partie lanc\u00e9e."};
+   case "hunt_start":{const state=lobby.startHunt(body.invitation,id);try{await huntStarted(state);}catch(error){console.error("Activity Prop Hunt announcement failed:",error.code??"unavailable");}return {message:"Partie lanc\u00e9e."};}
    default:throw new ActivityError("Action inconnue.",400);
   }
  }

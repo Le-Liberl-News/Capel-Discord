@@ -33,3 +33,8 @@ test('match thread GIFs cannot use a webhook belonging to a different parent cha
  assert.equal(hooks,0);assert.equal(posts[0].bot.files[0].name,'craft.gif');assert.equal(posts[0].bot.content,'**Renne** : Craft');assert.deepEqual(posts[0].bot.allowedMentions.parse,[]);
  thread.parentId='roleplay';await sender({character:'Renne',text:'Next',threadId:'match-thread'});assert.equal(posts[1].hook.threadId,'match-thread');assert.equal(posts[1].hook.username,'Renne');
 });
+
+
+test('duel presentation protects targets from damage even when another match attacks them',()=>{
+ for(const kind of ['basic','art','craft']){const f=fixture();f.players.get('victim').duelProtected=true;f.start(kind);f.tick(1800);assert.equal(f.players.get('victim').hp,100);}
+});

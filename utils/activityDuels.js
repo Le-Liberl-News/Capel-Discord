@@ -39,7 +39,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
           if (!existing && invitations.size >= 100) throw new DuelError("Trop de défis en attente. Réessayez plus tard.");
           id=existing?.id ?? "duel:"+randomBytes(16).toString("hex");
           const players=existing?.players ?? [user.id,target];
-          if (!existing) { lobby.prepareDuel(user.id, target); lobby.createDuel({id,channel:channelId,players}); created = true; }
+          if (!existing) { lobby.prepareDuel(user.id, target); lobby.createDuel({id,channel:channelId,players,names:players.map(playerId=>playerId===user.id?own:name)}); created = true; }
           invitations.set(id,{...invitations.get(id),players,names:players.map(playerId=>playerId===user.id?own:name),expires:existing?.expires ?? now()+30*60*1000}); persist();
           const row={type:1,components:[{type:2,custom_id:"activity:"+id,label:"Rejoindre le duel",style:1}]};
           // DM messages contain no mention or identity of the other participant.

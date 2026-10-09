@@ -54,7 +54,7 @@ export function createMapMusic(url) {
   document.addEventListener("keydown", gesture);
   update();
   void play();
-  return { setTrack(url) { audio.pause(); audio.src = url.href; audio.load(); void play(); }, dispose() {
+  return { restart(){audio.currentTime=0;void play();}, setTrack(url) { audio.pause(); audio.src = url.href; audio.load(); void play(); }, dispose() {
     audio.pause();
     document.removeEventListener("pointerdown", gesture);
     document.removeEventListener("keydown", gesture);

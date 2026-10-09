@@ -170,7 +170,7 @@ function createActivityService({
           seen: now() - 150,
           character: (session.playerState ?? remembered.get(session.id))?.character ?? session.character,
         };
-      Object.assign(player,{spectator:false,canMove:true,prop:null},playerPolicy(session.id));
+      Object.assign(player,{spectator:false,canMove:true,duelProtected:false,prop:null},playerPolicy(session.id));
       const characterChanged=player.character!==session.character;
       if(characterChanged&&player.character==="Sieg")Object.assign(player,flight.landingPoint(walkingGrid,player));
       if(characterChanged)player.acceptedAt=now();
@@ -184,6 +184,7 @@ function createActivityService({
       room.set(session.id, player);
       player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
+      for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
       if (point && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
@@ -282,7 +283,8 @@ function createActivityService({
             if (!text || Array.from(text).length > 4000) actionResult = { error: "Message invalide." };
             else if (now() - (session.lastSpeech ?? -Infinity) < 1000) actionResult = { error: "Attendez une seconde entre deux messages." };
             else { session.lastSpeech = now(); actionResult = { text, speaker: player.id, character: session.character }; }
-          } else actionResult = world.action(player, point.action, room);
+          } else if(player.duelProtected) actionResult={error:"Le combat va commencer."};
+          else actionResult = world.action(player, point.action, room);
           if (actionResult.text) {
             const events = messageStreams.get(session.channel) ?? [];
             events.push({

@@ -337,3 +337,42 @@ test('match routing follows participants and spectators, and thread chat stays o
  lobby.leaveDuel('real-alice');await lobby.state(player.activity_token);assert.equal(lobby.matchFor('real-alice'),null);
  assert.equal(lobby.captureMessage({id:'old-thread',author:'real-alice',channel:'thread-one',text:'Old duel'}),false);
 });
+
+
+test('Capel announces Prop Hunt in general once, without revealing an account, and aborts on failure',async()=>{
+ const {createActivityPropHunt}=require('../utils/activityPropHunt'),{createActivityTerminal}=require('../utils/activityTerminal');
+ let announced=0,created=0,joined=0,cancelled=0,edited;const lobby={identity:()=>({id:'private-user',map:'anterose'}),terminalPosition:async()=>({...grid.spawn,hp:100}),createHunt:()=>({id:'game-'+(++created),duration:10}),huntSummary:()=>({id:'game-'+created,duration:10}),startHunt:()=>({hunter:'Joshua'}),joinHunt:()=>joined++,cancelHunt:()=>cancelled++};
+ const client={channels:{fetch:async id=>{
+  assert.equal(id,'595259248984981516');
+  return {send:async body=>{announced++;assert.doesNotMatch(JSON.stringify(body),/private-user/);assert.match(body.components[0].components[0].custom_id,/prophunt:signup:/);return {id:'announcement',edit:async body=>edited=body};}};
+ }}};
+ const manager=createActivityPropHunt({lobby,client});
+ const terminal=createActivityTerminal({lobby,announceHunt:manager.announce,huntStarted:manager.started,terminal:{position:grid.spawn},resolveCharacter:async()=> 'Estelle'});
+ await terminal.action('token',{action:'hunt_create',request:'request-111'});await terminal.action('token',{action:'hunt_create',request:'request-111'});
+ assert.equal(announced,1);assert.equal(created,1);assert.equal(joined,1);
+ await terminal.action("token",{action:"hunt_start",request:"request-start",invitation:"game-1"});assert.match(edited.content,/Joshua/);assert.deepEqual(edited.components,[]);
+ const failing=createActivityTerminal({lobby,announceHunt:async()=>{throw Error('Discord down');},terminal:{position:grid.spawn},resolveCharacter:async()=> 'Estelle'});
+ await assert.rejects(()=>failing.action('token',{action:'hunt_create',request:'request-222'}));assert.equal(cancelled,1);assert.equal(joined,1);
+});
+
+test('duel intro starts only after both accept, persists once and blocks movement and combat until ready',async()=>{
+ let time=1000,saved;const store={load:()=>saved,save:s=>saved=structuredClone(s)};
+ const config={grid,store,now:()=>time,resolveCharacter:async()=> 'Renne',arena:{grid,combatEnabled:true,introDuration:9000,spawns:[grid.spawn,{x:4,y:0,z:1}],residents:{npcs:[],ballSpawns:[{x:1,y:.9,z:2}]}}};
+ const lobby=createActivityLobby(config);lobby.createDuel({id:'match',channel:'room',players:['private-a','private-b'],names:['Renne','Joshua']});
+ lobby.joinDuel('match','private-a');lobby.acceptDuel('match','private-a');const a=await lobby.join({id:'private-a',channel:'dm'});
+ const waiting=await lobby.state(a.activity_token);assert.equal(waiting.health.canMove,false);assert.equal(waiting.duel,null);
+ lobby.joinDuel('match','private-b');lobby.acceptDuel('match','private-b');
+ const intro=await lobby.state(a.activity_token,{x:2,z:1,action:{id:'too-early',type:'pickup',target:'world:pom:0'}});
+ assert.equal(intro.health.canMove,false);assert.deepEqual(intro.position,grid.spawn);assert.match(intro.actionResult.error,/commencer/);
+ assert.equal(intro.duel.readyAt,10500);assert.equal(JSON.stringify(intro).includes('private-'),false);
+ time+=500;lobby.acceptDuel('match','private-b');assert.equal((await lobby.state(a.activity_token)).duel.readyAt,10500);
+ time=10500;const ready=await lobby.state(a.activity_token,{x:2,z:1,action:{id:'ready',type:'pickup',target:'world:pom:0'}});assert.equal(ready.health.canMove,true);assert.equal(ready.position.x,2);
+ const restored=createActivityLobby(config);assert.equal(saved.duels[0][1].readyAt,10500);assert.ok(restored.duelStatus('match','private-a').accepted);
+});
+
+
+test('matches saved before the introduction update remain playable without replaying a presentation',async()=>{
+ const saved={duels:[['legacy',{players:['a','b'],accepted:['a','b'],expires:100000}]],assignments:[['a','legacy'],['b','legacy']],locations:[['a','arena'],['b','arena']]};
+ const lobby=createActivityLobby({grid,now:()=>0,store:{load:()=>saved,save:()=>{}},resolveCharacter:async()=> 'Estelle',arena:{grid,introDuration:9000}});
+ const a=await lobby.join({id:'a',channel:'dm'});const state=await lobby.state(a.activity_token);assert.equal(state.health.canMove,true);assert.equal(state.duel.readyAt,0);
+});
