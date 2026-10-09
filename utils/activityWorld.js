@@ -449,10 +449,11 @@ function createActivityWorld(options) {
   const world=createActivityWorldBase(options);
   if(!options.combatEnabled)return world;
   const combat=require("./activityCombat").createActivityCombat(options);
+  const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[]});
   return {...world,
-    tick(players){world.tick(players);combat.tick(players);},
+    tick(players){world.tick(players);enemies.tick(players);combat.tick(new Map([...players,...enemies.entities]));},
     action(player,command,players){return command?.type==="attack" ? combat.action(player,command,players) : world.action(player,command,players);},
-    snapshot(){return {...world.snapshot(),combat:combat.snapshot()};},
+    snapshot(){return {...world.snapshot(),combat:combat.snapshot(),enemies:enemies.snapshot()};},
     cooldownsFor:combat.cooldownsFor,
   };
 }

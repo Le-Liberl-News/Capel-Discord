@@ -238,6 +238,7 @@ async function publier() {
   await scene.sync([
     ...result.joueurs,
     ...(result.npcs ?? []),
+    ...(result.enemies??[]).filter(e=>e.hp>0||((e.deadUntil??0)-(result.health?.serverTime??Date.now()))>28000),
     ...(result.poms ?? (result.pom ? [{id:"world:pom",...result.pom}] : [])).map(p=>({character:"Pom",npc:true,...p})),
   ]);
   scene.messages(result.messages ?? []);

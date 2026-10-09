@@ -1,3 +1,4 @@
+import {createEnemyEffects} from "./enemy-effects.mjs";
 import {createTowerTeam} from "./tower-team.mjs";
 import {createTavernBeer} from "./tavern-beer.mjs";
 import tavernWorld from "./tavern-world.cjs";
@@ -49,6 +50,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     catalogue = await fetch(new URL("characters.json", ASSETS),{cache:"no-store"}).then((r) =>
       r.json(),
     );
+  if(inTower)Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
   let camera=walkingCamera,wasFlying=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "duel-finish-20261009-3";
@@ -321,6 +324,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
+      avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
       avatar.speed = player.speed ?? 0.8;
@@ -398,6 +402,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       displayName: player.nom ?? player.name ?? player.character,
       dead,
       hp: player.hp ?? 100,
+      maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,
       npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -585,7 +590,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(isFlying!==wasFlying){wasFlying=isFlying;camera=isFlying?flightCamera:walkingCamera;pitch=isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
-    const distance=isFlying?4:cameraDistance(map);
+    const distance=isFlying?3.4782608696:cameraDistance(map);
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
     camera.position.set(
@@ -654,12 +659,12 @@ export async function createSkyScene(canvas, map = "anterose") {
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
                 seconds,
-                avatar.npc && id !== "world:pom" ? avatar.speed + 0.1 : 6,
+                (avatar.npc||avatar.enemy) && id !== "world:pom" ? avatar.speed + 0.1 : 6,
               );
       if (motion.moving || avatar.walking || (avatar.character==="Sieg"&&!avatar.dead)) {
         if (motion.moving) avatar.heading = { dx: motion.dx, dz: motion.dz };
         avatar.time += seconds;
-      } else if (avatar.npc && !avatar.dead) avatar.time += seconds;
+      } else if ((avatar.npc || avatar.enemyAttack) && !avatar.dead) avatar.time += seconds;
       else avatar.time = 0;
       if (!avatar.prop) {
       const attack=avatar.dead?null:renneCombat?.current(id);
@@ -675,7 +680,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack):{bank:avatar.dead?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead?0:Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking,avatar.position.y,avatar.flightFloor);
-      const poses=motion.moving||avatar.walking||beating?info.run:info.idle;
+      const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*8+(avatar.direction%(info.directions??8));
       avatar.renderFrame={pose,info};
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
@@ -754,7 +759,8 @@ export async function createSkyScene(canvas, map = "anterose") {
           const bar = document.createElement("div"),
             fill = document.createElement("i");
           bar.className = "sky-hp";
-          fill.style.width = a.hp + "%";
+          fill.style.width = 100*a.hp/(a.maxHp??100) + "%";
+          if(a.enemy)fill.style.background="#e76552";
           bar.append(fill);
           label.append(bar);
         }
@@ -860,6 +866,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     },
     async world(result) {
       teamPanel?.update(result.team);
+      enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
       dayNight.sync(result.health?.serverTime);
       duelIntro?.receive(result.duel?.result?null:result.duel,result.health?.serverTime);
       duelFinish?.receive(result.duel,localId,result.health?.serverTime);
@@ -893,7 +900,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
-      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?8:CAMERA_ZOOM;resize(); }
+      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
       movementAllowed = health.canMove !== false;
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
@@ -964,7 +971,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
       dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
-      teamPanel?.dispose();
+      teamPanel?.dispose();enemyEffects?.dispose();
       menu.remove();
       status.remove();
       labels.remove();

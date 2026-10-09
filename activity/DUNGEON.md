@@ -4,7 +4,7 @@ Trois etages sont implementes : `tower1`, `tower2`, `tower3`. Les layouts sont t
 
 Le Capel de l'Anterose permet d'entrer au premier etage. Les glyphes au sol permettent de monter ou descendre par clic droit / interaction, en etant a proximite. Le bouton de retour ramene a l'Anterose.
 
-Les actions de combat sont disponibles pour les personnages deja equipes. Les degats entre joueurs sont refuses par le serveur dans la tour. Aucun monstre ni Pom n'est ajoute. Les GIF de combat ne sont pas publies depuis cette zone.
+Les actions de combat sont disponibles pour les personnages deja equipes. Les degats entre joueurs sont refuses par le serveur dans la tour. Quatre Mishy d'Azure sont places par etage, sur les plateformes intermediaires. Aucun Pom n'est ajoute. Les GIF de combat ne sont pas publies depuis cette zone.
 
 Le panneau lateral montre les personnages presents dans la tour, leurs portraits derives des sprites natifs, les PV et l'etage. Il couvre les trois etages et masque tous les comptes Discord. Les membres absents sont retires apres la fenetre de presence de vingt secondes.
 
@@ -17,6 +17,19 @@ python activity/tools/generate-tower.py --textures E:/dev/sky-activity-tools/esm
 Le generateur garantit un chemin entre l'entree et la sortie et utilise une graine differente par etage. Le GLTF et la grille de navigation viennent du meme layout. La generation n'a pas lieu a chaque connexion. La version 2 utilise des fichiers de monde `activity-world-towerN-v2.json`, afin que les anciennes positions de la grille SC ne soient pas restaurees dans le vide. Pour changer une tour deja utilisee, il faut egalement reinitialiser ses etats de monde sauvegardes et ramener les joueurs a l'Anterose avant de publier de nouvelles cartes.
 
 Tests : connexite des trois layouts, surfaces reelles, entree authentifiee pres du Capel, transitions et reprises sans doublon, equipe entre plusieurs etages, combat sans degats allies, et rendu PC/mobile.
+
+
+## Mishy et combat PVE
+
+Le serveur gere les PV, les positions et les coups. Mishy patrouille, poursuit a moins de 9 unites, reste a moins de 14 unites de sa plateforme et revient chez lui apres depart des joueurs. Le chemin respecte la grille et les ponts. Son coup annonce une zone rouge pendant 750 ms ; seuls les joueurs encore dedans a l'impact perdent 10 PV. Les murs et les differences de hauteur bloquent le coup. Recuperation : 1,6 s. PV : 75. Reapparition : 30 s. Les joueurs gardent leur reapparition de 10 s.
+
+Les attaques, arts et crafts existants peuvent toucher ces ennemis. Le serveur refuse les degats entre joueurs. Les ennemis ne figurent pas dans l'equipe et leur barre de PV est rouge.
+
+Sprite : Azure `data/chr/ch10200.itc`, 40 frames / 8 directions. Le fichier contient la locomotion, pas une animation de combat dediee : ces frames sont reutilisees pour le corps a corps. Les frames sont converties avec [Cradle](https://github.com/Aureole-Suite/Cradle), puis alignees aux pieds. Seuls `enemies/mishy.png` et les metadonnees sont publies.
+
+```powershell
+python activity/tools/export-mishy.py --game "C:/GOG Games/The Legend of Heroes Trails to Azure" --cradle E:/dev/sky-activity-tools/cradle-images.exe
+```
 
 ---
 

@@ -17,7 +17,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, huntGame = null
     onSay:event=>options.onSay?.({...event,map:"rolent"}),
     playerPolicy:user=>huntGame?.policy(user)??{} });
   const towerArrivals=new Map(),towerTeam=new Map();
-  const towers=tower.map((floor,i)=>createActivityService({...options,...floor,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:()=>false,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
+  const towers=tower.map((floor,i)=>createActivityService({...options,...floor,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:(_actor,target)=>target.enemy===true,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
   const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(arena?.introDuration??0);}return data;};
   const saved=store?.load();
   for (const [id,data] of saved?.duels ?? []) if (data.expires>now()) duels.set(id,makeDuel(data));

@@ -1,5 +1,5 @@
 export const CAMERA_PITCH = Math.PI / 4;
-export const CAMERA_ZOOM = 4.4;
+export const CAMERA_ZOOM = 3.8260869565;
 export function movementKeys(layout) {
  return layout === "QWERTY" ? {up:"w",left:"a",down:"s",right:"d"} : {up:"z",left:"q",down:"s",right:"d"};
 }

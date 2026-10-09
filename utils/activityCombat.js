@@ -53,7 +53,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         const from={x:attack.kind==="basic"&&!spec.projectile?attack.origin.x:attack.aim.x,y:(attack.kind==="basic"&&!spec.projectile?attack.origin.y:attack.aim.y)+.85,z:attack.kind==="basic"&&!spec.projectile?attack.origin.z:attack.aim.z};
         const to={x:player.x,y:(player.y??0)+.85,z:player.z},wall=geometry?.sweep(from,to,.08);
         if(wall && Math.hypot(wall.point.x-from.x,wall.point.y-from.y,wall.point.z-from.z)<Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z)-.15)continue;
-        player.hp=Math.max(0,player.hp-spec.damage);if(player.hp===0){player.deadUntil=time+10000;onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt,endsAt:attack.endsAt,origin:{...attack.origin},aim:{...attack.aim}},at:time});}
+        player.hp=Math.max(0,player.hp-spec.damage);if(player.hp===0){player.deadUntil=time+(player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt,endsAt:attack.endsAt,origin:{...attack.origin},aim:{...attack.aim}},at:time});}
         attack.hits.push({id:player.id,damage:spec.damage});
       }
     }
