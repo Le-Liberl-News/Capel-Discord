@@ -21,6 +21,7 @@ function createActivityService({
   combatEnabled = false,
   onSay = () => {},
   onCraft = () => {},
+  onDefeat = () => {},
 }) {
   const saved = store?.load() ?? {};
   const remembered = new Map(saved.players ?? []);
@@ -170,7 +171,7 @@ function createActivityService({
           seen: now() - 150,
           character: (session.playerState ?? remembered.get(session.id))?.character ?? session.character,
         };
-      Object.assign(player,{spectator:false,canMove:true,duelProtected:false,prop:null},playerPolicy(session.id));
+      Object.assign(player,{spectator:false,canMove:true,duelProtected:false,duelFinished:false,noRespawn:false,prop:null},playerPolicy(session.id));
       const characterChanged=player.character!==session.character;
       if(characterChanged&&player.character==="Sieg")Object.assign(player,flight.landingPoint(walkingGrid,player));
       if(characterChanged)player.acceptedAt=now();
@@ -178,7 +179,7 @@ function createActivityService({
       player.character=session.character;
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, onCraft, initialState: worldStates[session.channel] });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, onCraft, onDefeat, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
@@ -283,7 +284,7 @@ function createActivityService({
             if (!text || Array.from(text).length > 4000) actionResult = { error: "Message invalide." };
             else if (now() - (session.lastSpeech ?? -Infinity) < 1000) actionResult = { error: "Attendez une seconde entre deux messages." };
             else { session.lastSpeech = now(); actionResult = { text, speaker: player.id, character: session.character }; }
-          } else if(player.duelProtected) actionResult={error:"Le combat va commencer."};
+          } else if(player.duelProtected) actionResult={error:player.duelFinished?"Le duel est termine.":"Le combat va commencer."};
           else actionResult = world.action(player, point.action, room);
           if (actionResult.text) {
             const events = messageStreams.get(session.channel) ?? [];

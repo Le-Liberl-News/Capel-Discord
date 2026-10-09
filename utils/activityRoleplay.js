@@ -27,13 +27,14 @@ function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTi
   async function capture(user,body) {
     const record=crafts.get(body?.id);
     const fail=(message,status=400)=>{const e=new Error(message);e.status=status;throw e;};
-    if(!record||record.actor!==user||record.expires<now())fail('Capture expirée ou inaccessible.',403);
+    if(!record||(record.actors?!record.actors.includes(user):record.actor!==user)||record.expires<now())fail('Capture expirée ou inaccessible.',403);
     if(record.published)return {posted:true};
     if(typeof body.gif!=='string'||body.gif.length>950000||(body.gif.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(body.gif)))fail('GIF invalide.');
     const bytes=Buffer.from(body.gif,'base64');try{gifInfo(bytes);}catch(e){fail(e.message);}
-    if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,match:record.match,text:record.character+' lance '+record.technique+'.',gif:bytes}).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}
+    if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,match:record.match,text:record.text??record.character+' lance '+record.technique+'.',gif:bytes,fileName:record.actors?"last-action.gif":undefined}).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}
     await record.sending;return {posted:true};
   }
-  return {speech,craft,capture,flush:()=>tail};
+  function finish(event){if(crafts.has(event.captureId))return;crafts.set(event.captureId,{actors:event.actors,character:event.winnerName,match:event.id,text:"Dernière action — ralenti.",expires:(event.at??now())+60000,published:false});for(const [id,r]of crafts)if(r.expires<now()){clearTimer(r.timer);crafts.delete(id);}}
+  return {speech,craft,finish,capture,flush:()=>tail};
 }
 module.exports={createActivityRoleplay,gifInfo};

@@ -10,6 +10,7 @@ function createSingleActivityWorld({
   geometry = null,
   spawnFor = () => grid.spawn,
   initialState = null,
+  onDefeat = () => {},
 }) {
   const index = (x, z) => {
     const a = Math.round((x - grid.origin.x) / grid.step),
@@ -153,7 +154,7 @@ function createSingleActivityWorld({
     for (const p of players.values()) {
       p.hp ??= MAX_HP;
       p.deadUntil ??= 0;
-      if (p.hp === 0 && time >= p.deadUntil) {
+      if (p.hp === 0 && !p.noRespawn && time >= p.deadUntil) {
         Object.assign(p, spawnFor(p.id));
         p.hp = MAX_HP;
         p.deadUntil = 0;
@@ -279,7 +280,7 @@ function createSingleActivityWorld({
         });
         if (struck) {
           p.hp = Math.max(0, p.hp - DAMAGE);
-          if (p.hp === 0) p.deadUntil = time + RESPAWN_MS;
+          if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId},at:time});}
           ball.x = x;
           ball.z = z;
           ball.y = y;

@@ -2,7 +2,7 @@
 
 ## Usage souhaité
 
-Une application lancée sur le PC, ouverte dans le navigateur, avec notre rendu Three.js et les mêmes collisions que l’activité. Deux espaces : **Map** et **Attaque**. Les archives FC/SC/Third restent en lecture seule sur le disque. Chacun indique ses chemins une fois ; un cache local fournit modèles, sprites et effets prêts à prévisualiser. L’éditeur n’a pas besoin d’un compte Discord pour tester.
+Une application lancée sur le PC, ouverte dans le navigateur, avec notre rendu Three.js et les mêmes collisions que l’activité. Deux espaces : **Map** et **Attaque**. La bibliothèque peut importer de nouveaux assets depuis tous les jeux, sans se limiter aux assets déjà présents sur le serveur. Les archives FC/SC/Third restent en lecture seule sur vos PC. Le serveur reçoit uniquement la sélection utilisée, jamais une extraction complète du jeu. Chacun indique ses chemins une fois ; un cache local fournit modèles, sprites et effets prêts à prévisualiser. L’éditeur n’a pas besoin d’un compte Discord pour tester.
 
 ### Map
 
@@ -66,3 +66,14 @@ Cette proposition ne constitue pas un éditeur déjà livré. Elle évite de con
 Adaptation courte de FC `ED6_DT01/t4104._sn` : panorama, présentation du premier côté, second côté, retour au centre et lancement. Le script natif fait aussi entrer des équipes par les portes et contient des dialogues d’arbitre ; ces éléments ne sont pas reproduits dans notre duel à deux joueurs. Les neuf secondes sont synchronisées par le serveur. Déplacements, attaques et dégâts sont bloqués pour les participants jusqu’au départ. Les duels déjà acceptés lors d’un redémarrage gardent leur état, sans rejouer l’intro.
 
 Musique de combat locale : FC `BGM/ED6404.ogg`, publiée comme `music/arena.ogg` (Challenger Invited). La piste repart au début lors d’un nouveau duel ; les préférences de volume et de sourdine sont conservées. Catalogue officiel de l’OST : https://www.falcom.co.jp/music-data/sora-ost
+
+
+## Ajouts : ombres et fin de duel
+
+La bibliothèque locale pourra réimporter des modèles, sprites ou effets qui ne sont pas encore sur le serveur. Seule la sélection utile est publiée ; aucune extraction complète du jeu n’est conservée sur l’hébergement.
+
+Les personnages ont désormais une ombre qui utilise l’alpha de leur frame animée. Sa direction de sprite est choisie depuis leur orientation et celle de la lumière, indépendamment de la caméra. La silhouette est projetée sur un sol horizontal à la hauteur détectée sous le personnage ; c’est une adaptation pour nos sprites 2D, pas une simulation de corps en volume ni une projection sur tous les murs et marches. Les accessoires de Prop Hunt gardent une ombre de contact.
+
+Un duel se termine au premier passage à zéro PV constaté par le serveur, y compris avec un Pom. Le vainqueur est l’autre duelliste. Les participants sont bloqués et protégés ; le perdant ne réapparaît pas automatiquement pendant l’écran de résultat. Le résultat est persisté, annoncé dans le thread sans compte Discord, puis chacun peut retourner à l’Antérose. Un nouveau défi crée un nouveau match.
+
+Le client garde au maximum vingt images de 224 × 168 pixels, à environ dix images par seconde, uniquement pendant son duel. L’écran de victoire montre ces dernières images en GIF à 250 ms par frame. Un GIF valide peut être envoyé par l’un des deux participants, une seule fois, vers le thread original du match. Le résultat textuel ne dépend pas de la capture ; un client absent ou sans frames suffisantes ne peut pas fournir le ralenti. Il n’y a pas d’enregistrement permanent de toutes les parties, ni de ralentissement de la simulation serveur.

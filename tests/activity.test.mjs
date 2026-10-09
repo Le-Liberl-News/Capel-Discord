@@ -264,3 +264,18 @@ test('duel introduction follows the FC presentation order and never replays an e
  assert.equal(duelPhase(duel,5000).side,1);assert.equal(duelPhase(duel,7500).kind,'versus');
  assert.equal(duelPhase(duel,9500).kind,'begin');assert.equal(duelPhase(duel,10000),null);assert.equal(duelPhase(null,0),null);
 });
+
+
+test('sprite shadows project the silhouette along the light and retain ground height',async()=>{
+ const {projectShadow,shadowDirection,shadowBasis}=await import('../activity/avatar-shadow.mjs');
+ const p={x:2,y:2,z:3};const east=projectShadow(p,0,{x:1,y:1,z:0});assert.deepEqual(east,{x:0,y:.022,z:3});
+ const west=projectShadow(p,0,{x:-1,y:1,z:0});assert.equal(west.x,4);
+ const upstairs=projectShadow(p,1,{x:1,y:1,z:0});assert.equal(upstairs.x,1);assert.equal(upstairs.y,1.022);
+ assert.notDeepEqual(shadowDirection(.25),shadowDirection(.75));
+ const light=shadowDirection(.5),basis=shadowBasis(light);assert.equal(Math.abs(basis.right.x*light.x+basis.right.z*light.z),0);assert.ok(Math.hypot(basis.right.x,basis.right.z)>.99);
+});
+
+test('duel replay retains only the last twenty frames',async()=>{
+ const {replayWindow}=await import('../activity/duel-finish.mjs');const frames=[];for(let i=0;i<100;i++)replayWindow(frames,i);
+ assert.equal(frames.length,20);assert.equal(frames[0],80);assert.equal(frames.at(-1),99);
+});

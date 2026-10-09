@@ -1,5 +1,5 @@
 const { RENNE, attackPoint } = require("../activity/renne-combat.cjs");
-function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {} }) {
+function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {}, onDefeat = () => {} }) {
   const attacks = new Map(), cooldowns = new Map();
   let players;
   const floor = point => {
@@ -53,7 +53,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         const from={x:attack.kind==="basic"?attack.origin.x:attack.aim.x,y:(attack.kind==="basic"?attack.origin.y:attack.aim.y)+.85,z:attack.kind==="basic"?attack.origin.z:attack.aim.z};
         const to={x:player.x,y:(player.y??0)+.85,z:player.z},wall=geometry?.sweep(from,to,.08);
         if(wall && Math.hypot(wall.point.x-from.x,wall.point.y-from.y,wall.point.z-from.z)<Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z)-.15)continue;
-        player.hp=Math.max(0,player.hp-spec.damage);if(player.hp===0)player.deadUntil=time+10000;
+        player.hp=Math.max(0,player.hp-spec.damage);if(player.hp===0){player.deadUntil=time+10000;onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique},at:time});}
         attack.hits.push({id:player.id,damage:spec.damage});
       }
     }

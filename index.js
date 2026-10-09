@@ -232,6 +232,7 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
 });
 const activiteService = createActivityLobby({
     huntGame,
+    onDuelEnd:async event=>{activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
     onSay:event=>activityRoleplay.speech({...event,match:activiteService.matchFor(event.actor)}),
     onCraft:event=>activityRoleplay.craft({...event,match:activiteService.matchFor(event.actor)}),
     rolent: {
@@ -322,7 +323,7 @@ app.post('/api/state', async (req, res) => {
 app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
 app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
 app.post('/api/craft-capture',async(req,res)=>{
-  try{const {id}=activiteService.identity(activiteBearer(req));res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}
+  try{const {id}=activiteService.identity(activiteBearer(req));const replay=activiteService.duelCaptureFor(id);if(replay)activityRoleplay.finish(replay);res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}
   catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Publication roleplay temporairement indisponible.'});}
 });
 app.use('/assets/sky', express.static(path.join(ACTIVITE_DOSSIER, 'assets', 'sky')));

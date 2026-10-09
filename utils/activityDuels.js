@@ -72,6 +72,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
         }
   }
   return {
+    async publishResult(event,client){const thread=await client.channels.fetch(await this.publicationThread(event.id,client));return thread.send({content:"Victoire de **"+event.winnerName+"** !",allowedMentions:{parse:[]},nonce:BigInt('0x'+require('node:crypto').createHash('sha256').update(event.captureId).digest('hex').slice(0,16)).toString(),enforceNonce:true});},
     async publicationThread(id,client) {const invitation=invitations.get(id);if(!invitation)throw new ActivityError('Match introuvable.',404);if(invitation.thread&&invitation.announced)return invitation.thread;lobby.validateSpectate(id);return announce(id,invitation,client);},
     pending(user) { prune();return [...invitations].filter(([id,i])=>i.players.includes(user)&&lobby.duelStatus(id,user)?.accepted===false).map(([id,i])=>({id,opponent:i.names[i.players[0]===user?1:0]})); },
     async challenge(user,requested,client) {const result=await invite({user,client,requested,channelId:spectatorChannel,inGame:true});if(!result.id)throw new DuelError(result.content);lobby.joinDuel(result.id,user.id);lobby.acceptDuel(result.id,user.id);return {message:"D\u00e9fi envoy\u00e9.",id:result.id};},

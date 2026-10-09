@@ -38,3 +38,12 @@ test('match thread GIFs cannot use a webhook belonging to a different parent cha
 test('duel presentation protects targets from damage even when another match attacks them',()=>{
  for(const kind of ['basic','art','craft']){const f=fixture();f.players.get('victim').duelProtected=true;f.start(kind);f.tick(1800);assert.equal(f.players.get('victim').hp,100);}
 });
+
+
+test('last action GIF accepts either duelist, rejects outsiders and posts once to its original match',async()=>{
+ const posts=[],relay=createActivityRoleplay({send:async p=>posts.push(p)});
+ relay.finish({id:'match-one',captureId:'duel-result:one',actors:['one','two'],winnerName:'Renne'});
+ const body={id:'duel-result:one',gif:animatedGif().toString('base64'),match:'forged'};
+ await assert.rejects(()=>relay.capture('outsider',body),{status:403});
+ await Promise.all([relay.capture('one',body),relay.capture('two',body)]);assert.equal(posts.length,1);assert.equal(posts[0].match,'match-one');assert.match(posts[0].text,/ralenti/);assert.ok(posts[0].gif);
+});

@@ -1,3 +1,5 @@
+import {createAvatarShadow} from "./avatar-shadow.mjs";
+import {createDuelFinish} from "./duel-finish.mjs";
 import {createDuelIntro} from "./duel-intro.mjs";
 import flight from "./flight.cjs";
 import {createDayNight} from "./day-night.mjs";
@@ -45,7 +47,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     );
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
   let camera=walkingCamera,wasFlying=false,flightMotion={moving:false,dx:0,dz:0};
-  const version = new URL(import.meta.url).searchParams.get("v") ?? "arena-intro-20261009-2";
+  const version = new URL(import.meta.url).searchParams.get("v") ?? "duel-finish-20261009-3";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
@@ -102,7 +104,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   function attachShadow(avatar,id) {
     if (id.startsWith("world:pom"))return avatar;
     dayNight.apply(avatar.mesh);
-    avatar.shadow=createContactShadow(THREE,shadowTexture);avatar.shadow.visible=avatar.character!=="Sieg";scene.add(avatar.shadow);return avatar;
+    avatar.shadow=avatar.prop?createContactShadow(THREE,shadowTexture):createAvatarShadow(THREE,avatar,collision,map);scene.add(avatar.shadow);return avatar;
   }
   function removeAvatar(avatar) {
     scene.remove(avatar.mesh);
@@ -113,6 +115,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=map==="arena"?await createRenneCombat(THREE,scene,ASSETS):null;
   let notifyCapture=()=>{};
+  const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel")):null;
   const craftCapture=renneCombat?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event));
   function aimForAttack(event) {
@@ -665,7 +668,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         avatar.position.y,
         avatar.position.z,
       );
-      if(avatar.shadow)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
+      if(avatar.shadow&&!avatar.shadow.userData.update)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
       avatar.mesh.rotation.z = avatar.fallbackDeath ? Math.PI / 2 : 0;
       if(avatar.character==="Sieg"&&!avatar.dead)avatar.mesh.quaternion.copy(camera.quaternion);
@@ -744,10 +747,12 @@ export async function createSkyScene(canvas, map = "anterose") {
         label.remove();
         nameplates.delete(id);
       }
-    dayNight.update();
+    const lightState=dayNight.update();
+    for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     dialogues.update(time, avatars, camera);
     renderer.render(scene, camera);
     craftCapture?.update(time);
+    duelFinish?.update(time,avatars,camera);
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);
@@ -835,7 +840,8 @@ export async function createSkyScene(canvas, map = "anterose") {
     },
     async world(result) {
       dayNight.sync(result.health?.serverTime);
-      duelIntro?.receive(result.duel,result.health?.serverTime);
+      duelIntro?.receive(result.duel?.result?null:result.duel,result.health?.serverTime);
+      duelFinish?.receive(result.duel,localId,result.health?.serverTime);
       if(result.characterChanged){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];keys.clear();}
       environment = {
         game: result.game,
@@ -936,7 +942,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
-      dayNight.dispose();duelIntro?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       menu.remove();
       status.remove();
       labels.remove();

@@ -6,8 +6,8 @@ function createRoleplayDiscordSender({client,WebhookClient,channelId,webhookUrl,
     webhookPromise ??= (async()=>{const candidate=new WebhookClient({url:webhookUrl});try{const details=await candidate.fetch();return details.channelId===channelId?candidate:null;}catch{return null;}})();
     return webhookPromise;
   }
-  return async ({character,text,gif,threadId})=>{
-    const files=gif?[{attachment:gif,name:'craft.gif'}]:[];
+  return async ({character,text,gif,threadId,fileName})=>{
+    const files=gif?[{attachment:gif,name:fileName??'craft.gif'}]:[];
     const allowedMentions={parse:[],repliedUser:false};
     const thread=threadId?await client.channels.fetch(threadId):null;
     if(threadId&&(!thread?.isThread?.()||!thread.guild))throw new Error("Match thread unavailable");
