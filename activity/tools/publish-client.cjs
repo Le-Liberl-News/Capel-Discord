@@ -26,7 +26,7 @@ const fs = require("node:fs/promises"),
       if (e.isDirectory()) await hash(file);
       else {
         if (
-          [".php", ".js", ".json", ".gltf", ".txt"].includes(path.extname(file))
+          [".php", ".html", ".css", ".js", ".json", ".gltf", ".txt"].includes(path.extname(file))
         )
           await fs.writeFile(
             file,
