@@ -64,3 +64,35 @@ test('landing is server-authoritative and a repeated action does not restart the
  const frames=Array.from({length:120},(_,i)=>({sequence:i+1,controls:{throttle:1,pitch:1,roll:1}}));time=2000;
  const next=await service.state(a.activity_token,{action,flight:{frames}});assert.ok(next.airship.y<first.airship.y);assert.equal(next.airship.x,25);assert.equal(next.airship.crashes,0);
 });
+test('the pilot walks independently beside the parked Lynx, then boards only their own nearby ship',async()=>{
+ let time=0;const service=createActivityAirship({config:{spawn},ground:flat,now:()=>time}),a=await service.join({id:'a',channel:'one'});
+ let r=await service.state(a.activity_token,{action:{id:'exit',type:'flight_exit'}});assert.equal(r.mode,'foot');const start={...r.position};assert.notDeepEqual(start,spawn);
+ time=2000;r=await service.state(a.activity_token,{flight:{frames:Array.from({length:120},(_,i)=>({sequence:i+1,mode:'foot',controls:{dx:1,dz:0}}))}});
+ assert.ok(r.position.x>start.x+6.9);assert.equal(r.airship.x,0);assert.equal(r.airship.z,0);assert.equal(r.joueurs[0].mode,'foot');
+ r=await service.state(a.activity_token,{action:{id:'far-enter',type:'flight_enter'}});assert.match(r.actionResult.error,/Approchez/);assert.equal(r.mode,'foot');
+ time=4000;r=await service.state(a.activity_token,{flight:{frames:Array.from({length:120},(_,i)=>({sequence:i+121,mode:'foot',controls:{dx:-1,dz:0}}))}});
+ r=await service.state(a.activity_token,{action:{id:'enter',type:'flight_enter'}});assert.equal(r.mode,'pilot');assert.equal(r.position.x,0);
+});
+test('native walking surfaces allow a safe exit at Bose and a return home recalls the ship',async()=>{
+ assert.ok(terrain.surface.floor(terrain.config.spawn.x,terrain.config.spawn.z,terrain.config.spawn.y+.6)!==null);
+ const service=createActivityAirship(terrain),a=await service.join({id:'a',channel:'one'}),r=await service.state(a.activity_token,{action:{id:'native-exit',type:'flight_exit'}});assert.equal(r.mode,'foot');
+ const grid={origin:{x:0,z:0},width:10,height:10,step:1,cells:Array(100).fill(0),spawn:{x:2,y:0,z:2}},worldStore={data:null,load(){return this.data;},save(value){this.data=structuredClone(value);}},lobby=createActivityLobby({grid,airship:{...terrain,config:{...terrain.config,door:grid.spawn}},worldStores:{liberl:worldStore},resolveCharacter:async()=> 'Estelle'}),joined=await lobby.join({id:'b',channel:'one'});
+ await lobby.state(joined.activity_token);await lobby.state(joined.activity_token,{action:{id:'hangar',type:'hangar_enter'}});await lobby.state(joined.activity_token,{action:{id:'board',type:'flight_board'}});
+ await lobby.state(joined.activity_token,{action:{id:'exit',type:'flight_exit'}});const home=await lobby.state(joined.activity_token,{action:{id:'home',type:'leave_map'}});assert.equal(home.map,'anterose');assert.equal(worldStore.data.ships.length,0);
+});
+test('walking collides with native walls, rejects void and high steps, and slides along obstacles',()=>{
+ const THREE=require('three'),root=new THREE.Group(),floor=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshBasicMaterial());floor.rotation.x=-Math.PI/2;root.add(floor);
+ const wall=new THREE.Mesh(new THREE.BoxGeometry(.2,3,10),new THREE.MeshBasicMaterial());wall.position.set(1,1.5,0);root.add(wall);
+ const surface=require('../activity/walking-surface.cjs').createWalkingSurface(THREE,root),walk=require('../activity/liberl-walking.cjs'),p={x:0,y:0,z:0};
+ for(let i=0;i<60;i++)walk.stepWalk(p,{dx:1,dz:0},surface);assert.ok(p.x<.9);assert.equal(p.y,0);
+ const z=p.z;for(let i=0;i<20;i++)walk.stepWalk(p,{dx:1,dz:1},surface);assert.ok(p.z>z+.7);assert.ok(p.x<.9);
+ const edge={x:0,y:0,z:4.99};walk.stepWalk(edge,{dx:0,dz:1},surface);assert.equal(edge.z,4.99);
+ const high={x:0,y:0,z:0};walk.stepWalk(high,{dx:1,dz:0},{floor:()=>2});assert.equal(high.x,0);
+});
+test('foot mode survives restart while stale flight frames never move the parked ship',async()=>{
+ let time=0,data={ships:[]};const store={load:()=>structuredClone(data),save:v=>data=structuredClone(v)},options={config:{spawn},ground:flat,store,now:()=>time};
+ let service=createActivityAirship(options),a=await service.join({id:'a',channel:'one'}),r=await service.state(a.activity_token,{action:{id:'exit',type:'flight_exit'}}),position={...r.position};
+ time=1000;r=await service.state(a.activity_token,{x:999,y:999,z:999,flight:{frames:Array.from({length:60},(_,i)=>({sequence:i+1,mode:'pilot',controls:{throttle:1,roll:1,pitch:1}}))}});
+ assert.deepEqual(r.position,position);assert.equal(r.airship.x,0);assert.equal(r.airship.sequence,60);
+ service.leave(a.activity_token);service=createActivityAirship(options);a=await service.join({id:'a',channel:'other'});assert.equal(a.player.mode,'foot');assert.equal(a.player.x,position.x);assert.equal(a.player.airship.sequence,0);
+});

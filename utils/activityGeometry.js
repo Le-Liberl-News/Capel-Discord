@@ -1,7 +1,7 @@
 // Share the actual GLTF surfaces with the authoritative projectile simulation.
 const THREE = require("three");
-function createActivityScene(gltf) {
-  const bytes = Buffer.from(gltf.buffers[0].uri.split(",")[1], "base64"),
+function createActivityScene(gltf,buffers=null) {
+  const bytes = buffers?.[0]??Buffer.from(gltf.buffers[0].uri.split(",")[1], "base64"),
     scene = new THREE.Group();
   function attribute(id) {
     const a = gltf.accessors[id],
@@ -9,6 +9,7 @@ function createActivityScene(gltf) {
       n = { SCALAR: 1, VEC3: 3 }[a.type],
       size = { 5123: 2, 5125: 4, 5126: 4 }[a.componentType],
       values = [];
+    if(buffers&&!v.byteStride){const source=buffers[v.buffer],offset=source.byteOffset+(v.byteOffset??0)+(a.byteOffset??0),Type={5123:Uint16Array,5125:Uint32Array,5126:Float32Array}[a.componentType];return new THREE.BufferAttribute(new Type(source.buffer,offset,a.count*n),n);}
     for (let i = 0; i < a.count; i++)
       for (let j = 0; j < n; j++) {
         const o =

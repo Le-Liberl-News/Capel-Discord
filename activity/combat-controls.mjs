@@ -16,9 +16,9 @@ export function createCombatControls(attack) {
   function reset(){vector={x:0,y:0};touch=null;knob.style.transform='';}
   const move=e=>{if(!touch||touch.id!==e.pointerId)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y,d=Math.hypot(dx,dy),scale=Math.min(1,42/(d||1));vector={x:dx*scale/42,y:dy*scale/42};knob.style.transform=`translate(${dx*scale}px,${dy*scale}px)`;};
   stick.addEventListener('pointerdown',e=>{if(!enabled)return;e.preventDefault();const rect=stick.getBoundingClientRect();touch={id:e.pointerId,x:rect.left+54,y:rect.top+54};stick.setPointerCapture(e.pointerId);move(e);});stick.addEventListener('pointermove',move);stick.addEventListener('pointerup',reset);stick.addEventListener('pointercancel',reset);stick.addEventListener('lostpointercapture',reset);
-  return {vector:()=>vector,ready:kind=>(cooldowns.get(kind)??0)<=performance.now(),started(kind,character){cooldowns.set(kind,performance.now()+mechanics.combatSpec(character,kind).cooldown);},rejected(kind){cooldowns.delete(kind);},update({arena,character,connected,alive,spectator,busy,health}){
+  return {vector:()=>vector,ready:kind=>(cooldowns.get(kind)??0)<=performance.now(),started(kind,character){cooldowns.set(kind,performance.now()+mechanics.combatSpec(character,kind).cooldown);},rejected(kind){cooldowns.delete(kind);},update({arena,character,connected,alive,spectator,busy,health,visible=true}){
     document.body.toggleAttribute("data-sky-arena",arena);
-    root.hidden=!arena||!mechanics.COMBAT[character]||spectator;stick.hidden=false;enabled=connected&&alive;if(!enabled)reset();
+    root.hidden=!arena||!mechanics.COMBAT[character]||spectator;stick.hidden=!visible;enabled=connected&&alive&&visible;if(!enabled)reset();
     for(const [kind,button]of buttons){const spec=mechanics.combatSpec(character,kind);button.hidden=!spec;if(spec)button.title=button.ariaLabel=spec.name;const remaining=health?.cooldowns?.[kind]-(health?.serverTime??0);if(remaining>0)cooldowns.set(kind,Math.max(cooldowns.get(kind)??0,performance.now()+remaining));button.disabled=!enabled||busy||!this.ready(kind);}
   },dispose(){reset();root.remove();stick.remove();style.remove();}};
 }

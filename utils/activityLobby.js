@@ -155,7 +155,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       if (active.get(session.id)!==token) throw new ActivityError("Activité ouverte dans une autre fenêtre.",409);
       session.seen=now();
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
-      if (["leave_duel","leave_map"].includes(point?.action?.type)) { huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }
+      if (["leave_duel","leave_map"].includes(point?.action?.type)) { skies?.resetPlayer(session.id);huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }
       let boardingError;
       if(point?.action?.type==='hangar_enter'&&session.hangarAction!==point.action.id){
        if(!hangar||!['anterose'].includes(destination(session.id).map))boardingError='Passage indisponible.';
