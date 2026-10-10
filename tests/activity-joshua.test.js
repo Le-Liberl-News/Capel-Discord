@@ -44,3 +44,9 @@ test('the runtime resolves every selected EF and texture relative to the public 
  try{const {createDamageEffects}=await import('../activity/damage-effects.mjs'),THREE={TextureLoader:class {async loadAsync(){return {dispose(){}};}}};const effects=await createDamageEffects(THREE,{}, {},new URL('https://fixture.invalid/assets/sky/effects/fire-frames.png'));effects.dispose();assert.ok(requests.includes('animations/SC/damage0.json'));assert.ok(requests.includes('animations/SC/mg050_1.json'));}
  finally{global.fetch=originalFetch;global.Image=originalImage;}
 });
+
+
+test('Joshua charges for one full second before releasing his art with the native casting halo',()=>{
+ const spec=combatSpec('Joshua','art');assert.equal(spec.windup,1000);assert.equal(spec.castDuration,1000);assert.equal(spec.castEffect,'SC/mgaria0._ef');assert.ok(spec.duration>=spec.windup);
+ const f=fixture(),j=f.players.get('j');assert.ok(f.combat.action(j,{id:'wind',kind:'art',aim:{x:2,y:0,z:0}},f.players).combatId);f.tick(999);assert.equal(f.players.get('a').hp,100);f.tick(1);assert.equal(f.players.get('a').hp,80);
+});

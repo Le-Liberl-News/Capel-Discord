@@ -774,7 +774,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       else avatar.mesh.rotation.y = Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]);
       }
     }
-    renneCombat?.update(localId,craftCapture,camera);
+    renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
     if (me)
       follow.lerp(

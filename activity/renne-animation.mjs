@@ -1,4 +1,4 @@
-import {loadNativeEffects,nativeEffectSprite} from './native-effects.mjs';
+import {loadNativeEffects,nativeEffectSprite,nativeCastingHalo} from './native-effects.mjs';
 import mechanics from './native-combat.cjs';
 const {COMBAT,combatSpec,attackPoint}=mechanics;
 export async function createRenneCombat(THREE,scene,assets) {
@@ -32,10 +32,12 @@ export async function createRenneCombat(THREE,scene,assets) {
     const spec=combatSpec(event.character??'Renne',event.kind),player=spec.nativeEffect&&native.get(spec.nativeEffect.toLowerCase());
     const assembly=player?nativeEffectSprite(THREE,player,spec.shape==='line'?4:3):null;
     if(assembly)scene.add(assembly.sprite);
-    const effect={group,ring,vortex,bolt,assembly};effects.set(event.id,effect);return effect;
+    const haloPlayer=spec.castEffect&&native.get(spec.castEffect.toLowerCase()),halo=haloPlayer?nativeCastingHalo(THREE,haloPlayer):null;if(halo)scene.add(halo.group);
+    const effect={group,ring,vortex,bolt,assembly,halo};effects.set(event.id,effect);return effect;
   }
-  function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);if(e.assembly){scene.remove(e.assembly.sprite);e.assembly.dispose();}for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
-  function update(localId,capture,camera){for(const [id,event]of actions){const time=elapsed(event),spec=combatSpec(event.character??'Renne',event.kind),impact=event.impactAt-event.started;if(event.cancelled||time>event.endsAt-event.started+1100){capture?.cancel(id);remove(id);continue;}const e=effects.get(id)??makeEffect(event);
+  function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);if(e.halo){scene.remove(e.halo.group);e.halo.dispose();}if(e.assembly){scene.remove(e.assembly.sprite);e.assembly.dispose();}for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
+  function update(localId,capture,camera,avatars){for(const [id,event]of actions){const time=elapsed(event),spec=combatSpec(event.character??'Renne',event.kind),impact=event.impactAt-event.started;if(event.cancelled||time>event.endsAt-event.started+1100){capture?.cancel(id);remove(id);continue;}const e=effects.get(id)??makeEffect(event);
+    if(e.halo){e.halo.group.visible=time>=0&&time<spec.castDuration;const position=avatars?.get(event.actor)?.position??event.origin;e.halo.group.position.set(position.x,position.y,position.z);if(e.halo.group.visible)e.halo.draw(time);}
     const travelling=spec.projectile&&time>=spec.windup&&time<impact;const progress=Math.max(0,Math.min(1,(time-spec.windup)/(impact-spec.windup||1)));
     e.bolt.visible=travelling;e.bolt.position.set(event.origin.x+(event.aim.x-event.origin.x)*progress,event.origin.y+.9+(event.aim.y-event.origin.y)*progress,event.origin.z+(event.aim.z-event.origin.z)*progress);e.bolt.material.map.offset.x=(Math.floor(time/65)%4)/4;
     const age=(time-impact)/1000,visible=age>=0&&age<.85;e.group.visible=visible;e.group.position.set(event.aim.x,event.aim.y+.04,event.aim.z);e.ring.rotation.z=age*3;e.ring.scale.setScalar(.6+Math.max(0,age)*.7);e.ring.material.opacity=e.vortex.material.opacity=visible?Math.max(0,1-age/.85):0;e.vortex.material.rotation=age*5;
