@@ -2,6 +2,32 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const physics=require('../activity/airship-physics.cjs'),{loadAirshipTerrain}=require('../utils/activityAirshipTerrain'),{createActivityAirship}=require('../utils/activityAirship'),{createActivityLobby}=require('../utils/activityLobby');
 const terrain=loadAirshipTerrain(require('node:path').join(__dirname,'../activity/assets/sky/liberl'));
 const flat={meta:{origin:{x:-10000,z:-10000},width:20000,height:20000,step:1,minY:0,maxY:400},floor:()=>0},spawn={x:0,y:0,z:0,yaw:0};
+test('selected exit checks distance, native floor, ship footprint and headroom',async()=>{
+ const walk=require('../activity/liberl-walking.cjs'),ship=physics.initialAirship(spawn);
+ assert.equal(walk.exitPoint(ship,flat,{x:20,y:0,z:0}),null);
+ assert.equal(walk.exitPoint(ship,flat,{x:6,y:8,z:0}),null);
+ assert.equal(walk.exitPoint(ship,flat,{x:0,y:0,z:0}),null);
+ assert.equal(walk.exitPoint(ship,{...flat,sweep:()=>({})},{x:6,y:0,z:0}),null);
+ const service=createActivityAirship({config:{spawn},ground:flat}),a=await service.join({id:'a',channel:'one'});
+ let r=await service.state(a.activity_token,{action:{id:'bad-exit',type:'flight_exit',target:{x:999,y:0,z:0}}});assert.equal(r.mode,'pilot');assert.ok(r.actionResult.error);
+ r=await service.state(a.activity_token,{action:{id:'good-exit',type:'flight_exit',target:{x:6,y:0,z:0}}});assert.equal(r.mode,'foot');assert.deepEqual(r.position,{x:6,y:0,z:0});
+});
+test('vertical takeoff clears surrounding roofs before acquiring forward speed',()=>{
+ const ground={...flat,floor:(x,z)=>Math.abs(x)<1&&Math.abs(z)<1?0:20},s=physics.initialAirship(spawn);
+ assert.equal(physics.startTakeoff(s,ground),null);assert.equal(s.takeoff.y,32);
+ for(let i=0;i<200;i++)physics.stepAirship(s,{throttle:1,roll:1,pitch:-1},ground,spawn);
+ assert.equal(s.x,0);assert.equal(s.z,0);assert.ok(s.y>25);assert.equal(s.crashes,0);
+ for(let i=0;i<60;i++)physics.stepAirship(s,{throttle:.5,roll:0,pitch:0},ground,spawn);
+ assert.equal(s.takeoff,undefined);assert.equal(s.grounded,false);assert.ok(Math.hypot(s.vx,s.vz)>8);assert.ok(s.y>=31);assert.equal(s.crashes,0);
+});
+test('crash returns to the last completed landing, including after a server restart',async()=>{
+ const s={...physics.initialAirship(spawn),x:30,y:1,z:20,grounded:false,yaw:1};assert.equal(physics.startLanding(s,flat),null);
+ for(let i=0;i<180;i++)physics.stepAirship(s,{throttle:0,roll:0,pitch:0},flat,spawn);assert.deepEqual(s.checkpoint,{x:30,y:0,z:20,yaw:1});
+ const store={load:()=>({ships:[['a',{character:'Estelle',airship:{...s,x:40,y:.01,z:40,grounded:false,vy:-10}}]]}),save:()=>{}};let time=0;
+ const service=createActivityAirship({config:{spawn},ground:flat,store,now:()=>time}),a=await service.join({id:'a',channel:'one'});
+ time=2200;const r=await service.state(a.activity_token,{flight:{frames:Array.from({length:132},(_,i)=>({sequence:i+1,controls:{throttle:0,roll:0,pitch:0}}))}});
+ assert.equal(r.airship.crashes,1);assert.equal(r.airship.grounded,true);assert.equal(r.airship.x,30);assert.equal(r.airship.z,20);assert.equal(r.airship.yaw,1);
+});
 function launch(ground=flat,start=spawn,n=600,pitch=.16){const s=physics.initialAirship(start);for(let i=0;i<n;i++)physics.stepAirship(s,{throttle:1,roll:0,pitch:s.pitch<pitch?1:0},ground,start);return s;}
 test('Lynx accelerates on the runway then lifts off, without instant movement',()=>{const s=physics.initialAirship(spawn);physics.stepAirship(s,{throttle:1,pitch:1,roll:0},flat,spawn);assert.equal(s.grounded,true);assert.ok(Math.hypot(s.vx,s.vz)<1);const flying=launch();assert.equal(flying.grounded,false);assert.ok(flying.y>10);assert.ok(flying.z<-100);});
 test('the native Bose runway permits a real takeoff before its ramp',()=>{const s=launch(terrain.ground,terrain.config.spawn,300,.4);assert.equal(s.crashes,0);assert.equal(s.grounded,false);assert.ok(s.y>terrain.config.spawn.y+2);});

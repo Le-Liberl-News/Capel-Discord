@@ -1,23 +1,31 @@
 const DT=1/60,GRAVITY=8,STALL_SPEED=5.5,MAX_SPEED=18,MAX_ROLL=Math.PI/3;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function groundField(meta,cells){return {meta,floor(x,z){const a=Math.round((x-meta.origin.x)/meta.step),b=Math.round((z-meta.origin.z)/meta.step);if(a<0||b<0||a>=meta.width||b>=meta.height)return null;const y=cells[b*meta.width+a];return Number.isFinite(y)&&y>-1000?y:null;}};}
-function initialAirship(spawn){return {x:spawn.x,y:spawn.y,z:spawn.z,yaw:spawn.yaw??0,pitch:0,roll:0,vx:0,vy:0,vz:0,throttle:0,grounded:true,sequence:0,crashes:0};}
+function initialAirship(spawn){return {x:spawn.x,y:spawn.y,z:spawn.z,yaw:spawn.yaw??0,pitch:0,roll:0,vx:0,vy:0,vz:0,throttle:0,grounded:true,sequence:0,crashes:0,checkpoint:{...spawn}};}
 function validControls(c){return !!c&&['pitch','roll','throttle'].every(k=>Number.isFinite(c[k]))&&Math.abs(c.pitch)<=1&&Math.abs(c.roll)<=1&&c.throttle>=0&&c.throttle<=1;}
 function airshipNearby(p,lobby,radius=2.4){return !!p&&Math.hypot(p.x-lobby.x,p.z-lobby.z)<=radius&&Math.abs(p.y-lobby.y)<1.2;}
-function resetAirship(state,spawn,crash=false){const sequence=state.sequence,crashes=state.crashes+(crash?1:0);delete state.landing;delete state.crashRemaining;Object.assign(state,initialAirship(spawn),{sequence,crashes});return state;}
+function resetAirship(state,spawn,crash=false){const sequence=state.sequence,crashes=state.crashes+(crash?1:0);delete state.landing;delete state.takeoff;delete state.crashRemaining;Object.assign(state,initialAirship(spawn),{sequence,crashes});return state;}
 function startLanding(s,ground){
  if(s.grounded)return 'Le Lynx est déjà posé.';
- if(s.crashRemaining||s.landing)return 'Manœuvre en cours.';
+ if(s.crashRemaining||s.landing||s.takeoff)return 'Manœuvre en cours.';
  if(Math.hypot(s.vx,s.vz)>10)return 'Ralentissez avant de vous poser.';
  const y=ground.floor(s.x,s.z);
  if(y===null||s.y<y)return 'Aucune surface sous le Lynx.';
  s.landing={x:s.x,y,z:s.z};s.throttle=0;return null;
 }
-function crashAirship(s,point){Object.assign(s,{...point,vx:0,vy:0,vz:0,throttle:0,crashRemaining:2,crashes:s.crashes+1});delete s.landing;return s;}
+function startTakeoff(s,ground){
+ if(!s.grounded)return 'Le Lynx est déjà en vol.';
+ if(s.landing||s.takeoff||s.crashRemaining)return 'Manœuvre en cours.';
+ let ceiling=s.y;for(let x=-12;x<=12;x+=2)for(let z=-12;z<=12;z+=2){const y=ground.floor(s.x+x,s.z+z);if(y!==null)ceiling=Math.max(ceiling,y);}
+ const y=ceiling+12;if(y>ground.meta.maxY)return 'Pas assez de hauteur disponible.';
+ s.checkpoint={x:s.x,y:s.y,z:s.z,yaw:s.yaw};s.takeoff={y};s.grounded=false;s.vx=s.vy=s.vz=0;s.throttle=0;return null;
+}
+function crashAirship(s,point){Object.assign(s,{...point,vx:0,vy:0,vz:0,throttle:0,crashRemaining:2,crashes:s.crashes+1});delete s.landing;delete s.takeoff;return s;}
 function stepAirship(s,c,ground,spawn){
  if(!validControls(c))return s;
- if(s.crashRemaining>0){s.crashRemaining-=DT;if(s.crashRemaining<=0)resetAirship(s,spawn);return s;}
- if(s.landing){const t=s.landing;s.throttle=0;s.vx=s.vz=0;s.pitch*=.9;s.roll*=.9;s.x=t.x;s.z=t.z;s.vy=-Math.min(2.5,Math.max(.5,(s.y-t.y)*1.2));s.y=Math.max(t.y,s.y+s.vy*DT);if(s.y<=t.y){s.grounded=true;s.vy=0;s.pitch=s.roll=0;delete s.landing;}return s;}
+ if(s.crashRemaining>0){s.crashRemaining-=DT;if(s.crashRemaining<=0)resetAirship(s,s.checkpoint??spawn);return s;}
+ if(s.landing){const t=s.landing;s.throttle=0;s.vx=s.vz=0;s.pitch*=.9;s.roll*=.9;s.x=t.x;s.z=t.z;s.vy=-Math.min(2.5,Math.max(.5,(s.y-t.y)*1.2));s.y=Math.max(t.y,s.y+s.vy*DT);if(s.y<=t.y){s.grounded=true;s.vy=0;s.pitch=s.roll=0;s.checkpoint={x:s.x,y:s.y,z:s.z,yaw:s.yaw};delete s.landing;}return s;}
+ if(s.takeoff){s.vx=s.vz=0;s.pitch=s.roll=0;s.throttle=0;s.y=Math.min(s.takeoff.y,s.y+8*DT);s.vy=8;if(s.y>=s.takeoff.y){delete s.takeoff;s.vy=0;s.vx=-Math.sin(s.yaw)*9;s.vz=-Math.cos(s.yaw)*9;s.throttle=.5;}return s;}
  s.throttle=c.throttle;
  const targetRoll=-c.roll*MAX_ROLL;s.roll+=(targetRoll-s.roll)*Math.min(1,DT*8);
  s.pitch=clamp(s.pitch+c.pitch*DT*.55,-.65,.65);
@@ -44,7 +52,7 @@ function stepAirship(s,c,ground,spawn){
  Object.assign(s,{x:nx,y:ny,z:nz});
  if(s.y>ground.meta.maxY){s.y=ground.meta.maxY;s.vy=Math.min(0,s.vy);s.pitch=Math.min(0,s.pitch);}
  const margin=600,m=ground.meta;
- if(s.y<m.minY-100||s.x<m.origin.x-margin||s.z<m.origin.z-margin||s.x>m.origin.x+m.width*m.step+margin||s.z>m.origin.z+m.height*m.step+margin)resetAirship(s,spawn,true);
+ if(s.y<m.minY-100||s.x<m.origin.x-margin||s.z<m.origin.z-margin||s.x>m.origin.x+m.width*m.step+margin||s.z>m.origin.z+m.height*m.step+margin)resetAirship(s,s.checkpoint??spawn,true);
  return s;
 }
-module.exports={DT,STALL_SPEED,MAX_SPEED,MAX_ROLL,groundField,initialAirship,validControls,stepAirship,resetAirship,airshipNearby,startLanding};
+module.exports={DT,STALL_SPEED,MAX_SPEED,MAX_ROLL,groundField,initialAirship,validControls,stepAirship,resetAirship,airshipNearby,startLanding,startTakeoff};
