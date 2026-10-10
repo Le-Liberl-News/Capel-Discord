@@ -250,6 +250,8 @@ const activiteService = createActivityLobby({
       geometry: require('./utils/activityGeometry').createActivityGeometry(JSON.parse(require('fs').readFileSync(path.join(__dirname,'activity/assets/sky/rolent/anterose.gltf'),'utf8'))),
     },
     worldStores: {
+      liberl: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-liberl.json")),
+      hangar: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-hangar.json")),
       ...Object.fromEntries([1,2,3,4].map(floor=>["tower"+floor,require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-tower"+floor+"-v2.json"))])),
       rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
       anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),

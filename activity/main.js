@@ -28,7 +28,7 @@ const terminal=createTerminalUI({
  action:body=>apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
  changed:()=>wakePoll()
 });
-function bindScene(){scene.onAction(()=>{if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onCraftCapture(event=>void publishCraftCapture(event));}
+function bindScene(){scene.onAction(()=>{if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onCraftCapture(event=>void publishCraftCapture(event));}
 async function previewTravel(map){if(!__ACTIVITY_PREVIEW__)return;const previous=scene;scene=null;previous.dispose();etat.map=map;scene=await createSkyScene(toile,map);bindScene();await scene.me({...etat.moi,...scene.spawn,character:etat.character});scene.setConnected(true);leave.hidden=map==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map);if(window.__activityPreview)window.__activityPreview=scene;music?.setTrack(musicUrl(map));}
 async function publishCraftCapture({id,bytes}) {
   if(__ACTIVITY_PREVIEW__ && !new URLSearchParams(location.search).has("frame_id")) {
@@ -46,7 +46,7 @@ async function publishCraftCapture({id,bytes}) {
 
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 
-const mapTitle = map => map==='liberl'?'Liberl · Lynx':/^tower[1-4]$/.test(map)?map==="tower4"?"Tour d’Esmelas · Sommet":"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+const mapTitle = map => map==='hangar'?'Antérose · Lynx':map==='liberl'?'Liberl · Lynx':/^tower[1-4]$/.test(map)?map==="tower4"?"Tour d’Esmelas · Sommet":"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
 const musicUrl = map => new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : /^tower[1-4]$/.test(map) ? "music/esmelas.ogg" : "music/anterose.ogg",ASSETS);
 const gameHud = document.createElement("div"), blindfold = document.createElement("div");
 gameHud.id="sky-prophunt"; gameHud.hidden=true;

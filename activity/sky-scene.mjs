@@ -1,5 +1,6 @@
 import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
 import {createAirshipScene} from './airship-scene.mjs';
+import hangarWorld from './hangar-world.cjs';
 import {loadLynx} from './lynx-model.mjs';
 import airshipPhysics from './airship-physics.cjs';
 import airshipConfig from './assets/sky/liberl/airship.json';
@@ -45,7 +46,7 @@ export const ASSETS = new URL(
 export async function createSkyScene(canvas, map = "anterose") {
   if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inTower=/^tower[1-4]$/.test(map);
-  const mapAssets = map === "anterose" ? ASSETS : new URL(map + "/", ASSETS);
+  const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false,
@@ -71,7 +72,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
   renderer.localClippingEnabled = !!cutaway;
-  const loaded = await new GLTFLoader(loading).loadAsync(
+  const loaded = map==="hangar"?{scene:new THREE.Group()}:await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = new THREE.Group();model.add(loaded.scene);
@@ -85,9 +86,16 @@ export async function createSkyScene(canvas, map = "anterose") {
 
   scene.add(model);
   let lynxObject=null;
+  if(map==='hangar'){
+   const paving=document.createElement('canvas');paving.width=paving.height=128;const ctx=paving.getContext('2d');ctx.fillStyle='#807765';ctx.fillRect(0,0,128,128);ctx.strokeStyle='#625c50';ctx.lineWidth=3;ctx.strokeRect(0,0,128,128);ctx.beginPath();ctx.moveTo(0,64);ctx.lineTo(128,64);ctx.moveTo(64,0);ctx.lineTo(64,64);ctx.moveTo(32,64);ctx.lineTo(32,128);ctx.stroke();const stone=new THREE.CanvasTexture(paving);stone.colorSpace=THREE.SRGBColorSpace;stone.wrapS=stone.wrapT=THREE.RepeatWrapping;stone.repeat.set(10,12);
+   const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,24),new THREE.MeshBasicMaterial({map:stone,side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;model.add(floor);
+   lynxObject=await loadLynx(THREE,ASSETS,10,loading);model.add(lynxObject);
+
+  }
+  let hangarDoor=null;
   if(map==='anterose'){
-   lynxObject=await loadLynx(THREE,ASSETS,1.7,loading);lynxObject.position.set(airshipConfig.lobby.x,airshipConfig.lobby.y+.38,airshipConfig.lobby.z);scene.add(lynxObject);
-   const stand=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,.35,16),new THREE.MeshBasicMaterial({color:0x7e6741}));stand.position.set(airshipConfig.lobby.x,airshipConfig.lobby.y+.175,airshipConfig.lobby.z);scene.add(stand);
+   hangarDoor=new THREE.Group();hangarDoor.position.set(airshipConfig.door.x,airshipConfig.door.y,airshipConfig.door.z);
+   const door=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.3,.16),new THREE.MeshBasicMaterial({color:0x564333}));door.position.y=1.15;hangarDoor.add(door);model.add(hangarDoor);
   }
   model.updateMatrixWorld(true);
   const collision = collisionModule.createSurfaceCollision(THREE, model);
@@ -114,12 +122,13 @@ export async function createSkyScene(canvas, map = "anterose") {
   });
   const tavernBeer=map==="anterose"?createTavernBeer(THREE,scene):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
-  const dayNight=createDayNight(THREE,model,map,mapShadows,towerLayout?.torches??[]);
+  const dayNight=createDayNight(THREE,model,map,mapShadows,map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.torches??[]);
   const dungeonEffects=inTower?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
   const duelIntro=map==="arena"?createDuelIntro():null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
+  if(map==="hangar")grid=hangarWorld.grid;
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = map === "arena" ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
@@ -183,7 +192,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     yaw = 0,
     pitch = CAMERA_PITCH,
     drag = null,
-    zoom = CAMERA_ZOOM,
+    zoom = map==="hangar"?8.5:CAMERA_ZOOM,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
     connected = true,
@@ -307,8 +316,10 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
       return;
     }
+    if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door)&&raycaster.intersectObject(hangarDoor,true).length){queueAction('hangar_enter');return;}
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)&&raycaster.intersectObject(lynxObject,true).length){queueAction('flight_board');return;}
     const options = [];
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby))options.push(['Piloter le Lynx','flight_board',undefined]);
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6))options.push(['Piloter le Lynx','flight_board',undefined]);
     if(towerLayout){if(Number(map.slice(5))<4&&nearby(towerLayout.exit))options.push(["Monter","tower_step","up"]);if(Number(map.slice(5))>1&&nearby(towerLayout.start))options.push(["Descendre","tower_step","down"]);}
 
     if(tavernBeer&&tavernWorld.beerNearby(me.position))options.push(["Boire une bi\u00e8re","drink",undefined]);
@@ -473,7 +484,8 @@ export async function createSkyScene(canvas, map = "anterose") {
   let cursor={clientX:innerWidth/2,clientY:innerHeight/2};
   function keyboardInteraction() {
     const me=avatars.get(localId);if(!me||health.hp===0||health.spectator)return;
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby)&&(!terminal||Math.hypot(me.position.x-airshipConfig.lobby.x,me.position.z-airshipConfig.lobby.z)<Math.hypot(me.position.x-terminal.position.x,me.position.z-terminal.position.z))){queueAction('flight_board');return;}
+    if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door)){queueAction('hangar_enter');return;}
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)&&(!terminal||Math.hypot(me.position.x-airshipConfig.lobby.x,me.position.z-airshipConfig.lobby.z)<Math.hypot(me.position.x-terminal.position.x,me.position.z-terminal.position.z))){queueAction('flight_board');return;}
     if(terminal&&terminalWorld.terminalNearby(me.position,terminal)){path=[];notifyTerminal();return;}
     const ball=environment.poms.find(p=>p.owner===localId);
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
@@ -481,7 +493,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if(towerLayout&&Number(map.slice(5))<4&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<2.2){queueAction("tower_step","up");return;}
     if(towerLayout&&Number(map.slice(5))>1&&Math.hypot(me.position.x-towerLayout.start.x,me.position.z-towerLayout.start.z)<2.2){queueAction("tower_step","down");return;}
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby)){queueAction('flight_board');return;}
+    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)){queueAction('flight_board');return;}
     if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
   function keydown(event) {
@@ -756,7 +768,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
     if (me)
       follow.lerp(
-        new THREE.Vector3(me.position.x, me.position.y, me.position.z),
+        new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),
         1 - Math.exp(-seconds * 7),
       );
     if (!path.length) marker.visible = false;

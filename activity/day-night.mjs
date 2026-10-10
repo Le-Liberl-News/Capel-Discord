@@ -19,7 +19,7 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
   sources.forEach((source,i)=>{uniforms['skyLight'+i]={value:new THREE.Vector4(...source.position,source.radius)};uniforms['skyColor'+i]={value:new THREE.Vector3(...source.color).multiplyScalar(source.strength)};});
   let override=null,clockOffset=0,state=skyTime();
   function apply(root) {root.traverse(object=>{if(!object.isMesh)return;for(const material of [].concat(object.material??[])){
-    if(materials.has(material)||material.isShadowMaterial||material.isShaderMaterial)continue;materials.add(material);
+    if(materials.has(material)||material.isShadowMaterial||material.isShaderMaterial||material.userData?.skyEmissive)continue;materials.add(material);
     const previous=material.onBeforeCompile,cache=material.customProgramCacheKey();
     material.onBeforeCompile=function(shader,renderer){previous.call(this,shader,renderer);Object.assign(shader.uniforms,uniforms);
       shader.vertexShader='varying vec3 vSkyWorld;\n'+shader.vertexShader;
@@ -33,5 +33,5 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
   }});}
   apply(model);
   return {apply,update(time=Date.now()) {state=skyTime(override??(time+clockOffset));uniforms.skyTint.value.set(...((map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:state.tint));uniforms.skyLamps.value=(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;
-    if(extraSources.length) sources.forEach((source,i)=>uniforms["skyColor"+i].value.set(...source.color).multiplyScalar(source.strength*(.88+.09*Math.sin(time*.013+i*2.1)+.06*Math.sin(time*.027+i))));if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
+    if(extraSources.length) sources.forEach((source,i)=>{uniforms['skyLight'+i].value.set(...source.position,source.radius);uniforms["skyColor"+i].value.set(...source.color).multiplyScalar(source.strength*(.88+.09*Math.sin(time*.013+i*2.1)+.06*Math.sin(time*.027+i)));});if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
 }
