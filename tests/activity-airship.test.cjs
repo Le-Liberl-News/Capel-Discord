@@ -7,6 +7,23 @@ test('Lynx accelerates on the runway then lifts off, without instant movement',(
 test('the native Bose runway permits a real takeoff before its ramp',()=>{const s=launch(terrain.ground,terrain.config.spawn,300,.4);assert.equal(s.crashes,0);assert.equal(s.grounded,false);assert.ok(s.y>terrain.config.spawn.y+2);});
 test('cutting throttle keeps momentum, and low speed loses altitude',()=>{const s=launch();const before=Math.hypot(s.vx,s.vz);physics.stepAirship(s,{throttle:0,pitch:0,roll:0},flat,spawn);assert.ok(Math.hypot(s.vx,s.vz)>before*.99);Object.assign(s,{x:0,y:30,z:0,vx:0,vz:3,vy:0,pitch:0,grounded:false});for(let i=0;i<60;i++)physics.stepAirship(s,{throttle:0,pitch:0,roll:0},flat,spawn);assert.ok(s.y<29);});
 test('banking right curves the trajectory right while preserving forward movement',()=>{const s=launch();const x=s.x,z=s.z;for(let i=0;i<150;i++)physics.stepAirship(s,{throttle:1,pitch:0,roll:1},flat,spawn);assert.ok(s.roll<-.5);assert.ok(s.yaw<0);assert.ok(s.x>x+2);assert.ok(s.z<z);});
+test('cruise stays compact and a full bank turns around within three seconds',()=>{
+ const s=launch(flat,spawn,1200,0.16),start={x:s.x,z:s.z,yaw:s.yaw};
+ assert.ok(Math.hypot(s.vx,s.vz)<=18.01);
+ Object.assign(s,{y:100,pitch:0,vy:0});
+ for(let i=0;i<12;i++)physics.stepAirship(s,{throttle:1,pitch:0,roll:1},flat,spawn);
+ assert.ok(s.yaw<start.yaw-.1);assert.ok(s.x>start.x+.05);
+ for(let i=12;i<180;i++)physics.stepAirship(s,{throttle:1,pitch:0,roll:1},flat,spawn);
+ assert.ok(s.yaw<start.yaw-Math.PI);assert.ok(Math.hypot(s.x-start.x,s.z-start.z)<35);assert.equal(s.crashes,0);
+});
+test('low throttle supports slow exploration and releasing bank retains a short drift',()=>{
+ const s={...physics.initialAirship(spawn),y:100,grounded:false,vz:-7.2};
+ for(let i=0;i<600;i++)physics.stepAirship(s,{throttle:.4,pitch:0,roll:0},flat,spawn);
+ assert.ok(Math.hypot(s.vx,s.vz)<8);assert.ok(s.y>=100);
+ for(let i=0;i<60;i++)physics.stepAirship(s,{throttle:.4,pitch:0,roll:1},flat,spawn);
+ const yaw=s.yaw,roll=s.roll;physics.stepAirship(s,{throttle:.4,pitch:0,roll:0},flat,spawn);
+ assert.ok(s.yaw<yaw);assert.ok(s.roll>roll&&s.roll<0);
+});
 test('hard impact resets the Lynx safely onto its runway',()=>{const s={...launch(),y:.001,vy:-12,pitch:0};physics.stepAirship(s,{throttle:0,pitch:0,roll:0},flat,spawn);assert.equal(s.crashes,1);assert.equal(s.grounded,true);assert.equal(s.x,spawn.x);assert.equal(s.throttle,0);});
 test('server simulates sequenced controls, ignores client positions and avoids double application',async()=>{let now=0;const service=createActivityAirship({...terrain,now:()=>now,resolveCharacter:async()=> 'Estelle'}),session=await service.join({id:'pilot',channel:'map:liberl'}),frames=[],local=physics.initialAirship(terrain.config.spawn);
  for(let i=1;i<=120;i++){const controls={throttle:1,pitch:local.pitch<.16?1:0,roll:0};physics.stepAirship(local,controls,terrain.ground,terrain.config.spawn);local.sequence=i;frames.push({sequence:i,controls});}now=2000;
