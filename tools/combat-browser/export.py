@@ -19,7 +19,9 @@ def sequence(data,entries,end,slot,available,dynamic):
  for _ in range(1600):
   if not end<=pc<len(data):break
   visited[pc]=visited.get(pc,0)+1
-  if visited[pc]>2:break
+  if visited[pc]>2:
+   if stack:pc=stack.pop();continue
+   break
   it=decoder._decode_one(data,pc);values=[int.from_bytes(data[pc+o.offset:pc+o.offset+o.size],'little') for o in it.operands if o.kind!='string']
   if it.opcode==0x6a and tuple(values[1:3]) in dynamic:mapping[values[0]]=dynamic[tuple(values[1:3])]
   if it.opcode==0x22 and values[0]==255 and end<=values[2]<len(data):stack.append(it.end);pc=values[2];continue
