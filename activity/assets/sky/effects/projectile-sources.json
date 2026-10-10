@@ -19,5 +19,26 @@
     ],
     "effect": "cr04080",
     "part": 12
+  },
+  "cannon": {
+    "game": "Third",
+    "texture": "effalp0._DS",
+    "crop": [
+      64,
+      0,
+      96,
+      32
+    ],
+    "impact": "btbomb00._EF"
+  },
+  "hit-glow": {
+    "game": "Third",
+    "texture": "effadd0._DS",
+    "crop": [
+      32,
+      64,
+      64,
+      96
+    ]
   }
 }

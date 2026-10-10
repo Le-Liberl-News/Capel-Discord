@@ -46,10 +46,10 @@
     "slot": 27,
     "craft": {
       "name": "Requiem",
-      "nativeEffect": "Third/sc003_10._ef",
-      "effectDuration": 5500,
-      "windup": 3950,
-      "duration": 14986,
+      "nativeEffect": "SC/sc003_11._ef",
+      "effectDuration": 220,
+      "windup": 640,
+      "duration": 4640,
       "projectile": false,
       "selfTarget": true,
       "range": 6,
@@ -57,15 +57,18 @@
       "damage": 48,
       "hitOffsets": [
         0,
-        2120,
-        2620,
-        3120,
-        3620,
-        6350
+        500,
+        1000,
+        1500,
+        2000,
+        2500,
+        3000,
+        3500
       ],
       "cooldown": 8500,
       "nativeTiming": true,
-      "radialShots": true
+      "sweepShots": true,
+      "sweepArc": 0.4
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -191,7 +194,9 @@
       "shotVisual": "cannon",
       "lobHeight": 2.4,
       "radius": 1.7,
-      "groundTarget": true
+      "groundTarget": true,
+      "nativeEffect": "Third/btbomb00._ef",
+      "effectDuration": 1200
     }
   },
   "Zin": {
@@ -227,6 +232,9 @@
       "buffDuration": 10000,
       "selfTarget": true,
       "persistentBuff": true
+    },
+    "basic": {
+      "hitEffect": "Third/msc0614._ef"
     }
   },
   "Kevin": {

@@ -1,0 +1,20 @@
+{
+  "wine-glass": {
+    "texture": "T11I2402._DS",
+    "crop": [
+      64,
+      192,
+      75,
+      224
+    ]
+  },
+  "candlestick": {
+    "texture": "T11I2702._DS",
+    "crop": [
+      76,
+      20,
+      87,
+      49
+    ]
+  }
+}

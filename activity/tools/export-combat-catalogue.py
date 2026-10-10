@@ -57,6 +57,9 @@ for row in rows:
   if not sequences['basic']:raise ValueError('No playable self frames')
   if heroes.get(row['character'],{}).get('slot') is not None:
    craftSlot=heroes[row['character']]['slot'];sequences['craft']=sequence(data,entries,end,craftSlot,files,native_timing=row['character']=='Olivier')
+  if row['character']=='Olivier':
+   # Requiem's luth bank contains individual poses; skip the rose prelude.
+   sequences['craft']=[{'bank':12,'pose':i,'ms':80,'heading':0} for i in range(4,12)]+[{'bank':12,'pose':12,'ms':500,'heading':i*45,'firing':True} for i in range(8)]
   if row['character']=='Estelle':
    sequences['craft']=sequence(data,entries,end,17,files);craftSlot=17
   if row['character']=='Joshua':

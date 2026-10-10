@@ -1,5 +1,5 @@
 export async function loadBakedEffect(THREE,assets,name,frames){
- const map=await new THREE.TextureLoader().loadAsync(new URL(`effects/${name}-frames.png`,assets).href);
+ const map=await new THREE.TextureLoader().loadAsync(new URL(`effects/${name}-frames.png?v=combat-20261010-2`,assets).href);
  map.colorSpace=THREE.SRGBColorSpace;map.generateMipmaps=false;map.minFilter=map.magFilter=THREE.LinearFilter;
  return {map,frames,columns:8,rows:Math.ceil(frames/8),dispose(){map.dispose();}};
 }

@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
  const {NativeEffectPlayer}=await import('../native-effect-player.mjs');
  const entries=JSON.parse(await fs.readFile(path.join(root,'catalogue.json'),'utf8'));
  const heroes=JSON.parse(await fs.readFile(path.join(root,'../../combat/hero-actions.json'),'utf8'));
- const heroEffects=[...new Set(Object.values(heroes).flatMap(h=>Object.values(h).filter(a=>a?.nativeEffect).map(a=>a.nativeEffect)))];
+ const heroEffects=['Third/msc0614._ef',...new Set(Object.values(heroes).flatMap(h=>Object.values(h).filter(a=>a?.nativeEffect).map(a=>a.nativeEffect)))];
  const specs=[...['mg011_0','damage0','damage1','damage2','damage3','damage5'].map(name=>({id:`sc/${name}._ef`,name,frames:name.startsWith('damage')?24:54,zoom:4})),...heroEffects.map(id=>({id,name:id.toLowerCase().replace('/','-').replace('._ef',''),frames:90,zoom:2}))];
  const metadata=process.argv.some(a=>a==='--heroes-only'||a.startsWith('--only='))?JSON.parse(await fs.readFile(path.join(root,'../hero-frames.json'),'utf8')):{};
  for(const {id,name,frames,zoom} of specs){

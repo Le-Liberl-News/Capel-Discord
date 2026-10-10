@@ -120,5 +120,23 @@
     "frames": 90,
     "duration": 1800,
     "size": 4
+  },
+  "third/msc0614._ef": {
+    "name": "third-msc0614",
+    "frames": 90,
+    "duration": null,
+    "size": 4
+  },
+  "sc/sc003_11._ef": {
+    "name": "sc-sc003_11",
+    "frames": 90,
+    "duration": 220,
+    "size": 4
+  },
+  "third/btbomb00._ef": {
+    "name": "third-btbomb00",
+    "frames": 90,
+    "duration": 1200,
+    "size": 4
   }
 }

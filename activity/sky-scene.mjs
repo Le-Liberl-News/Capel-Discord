@@ -773,7 +773,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       );
       let info=avatar.info,selectedPose;
       if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
-      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack):{bank:avatar.dead?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead?0:Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;}
+      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack):{bank:avatar.dead?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead?0:Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
@@ -872,7 +872,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
     enemyEffects?.animate();supportEffects.update(avatars,Date.now()+jumpClockOffset);
     dungeonEffects?.update();
-    tavernTables?.update(time);
+    tavernTables?.update(time,camera);
     const lightState=dayNight.update();
     rooftopSky?.update(camera,lightState);
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
