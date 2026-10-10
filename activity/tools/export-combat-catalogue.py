@@ -4,6 +4,7 @@ from pathlib import Path
 from export_sky_assets import decode_sprite, Image
 p=argparse.ArgumentParser();p.add_argument('--character');p.add_argument('--audit',type=Path,required=True);p.add_argument('--extracted',type=Path,required=True);p.add_argument('--decoder-directory',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
 sys.path.insert(0,str(a.decoder_directory));import third_as as decoder
+heroes=json.loads((Path(__file__).resolve().parents[1]/'assets/sky/combat/hero-actions.json').read_text(encoding='utf8'))
 rows=json.loads(a.audit.read_text(encoding='utf8'))['characters'];catalogue=json.loads((a.output/'catalogue.json').read_text(encoding='utf8')) if a.character else {};omitted=[]
 def sequence(data,entries,end,slot,available):
  pc=entries[slot];bank=0;result=[];stack=[];visited={}
@@ -39,6 +40,9 @@ for row in rows:
  for i,b in enumerate(source['banks']):
   folder=a.extracted/(game+'-'+b['archive'][-2:].lower())/b['archive'];ch=folder/b['ch'].lower();cp=folder/b['cp'].lower()
   if ch.exists() and cp.exists():files[i]=(ch,cp)
+ if row['character']=='Olivier':
+  for bank,ch in [(12,'ch0426a'),(13,'ch0426c')]:
+   folder=a.extracted/'third-27/ED6_DT27';files[bank]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
  try:
   sequences={'basic':sequence(data,entries,end,5,files)}
   if row['art']:sequences.update(spell=sequence(data,entries,end,6,files),cast=sequence(data,entries,end,7,files))
@@ -48,6 +52,8 @@ for row in rows:
     seq=sequence(data,entries,end,slot,files)
     if seq:craftSlot=slot;sequences['craft']=seq;break
   if not sequences['basic']:raise ValueError('No playable self frames')
+  if heroes.get(row['character'],{}).get('slot') is not None:
+   craftSlot=heroes[row['character']]['slot'];sequences['craft']=sequence(data,entries,end,craftSlot,files)
   if row['character']=='Estelle':
    sequences['craft']=sequence(data,entries,end,17,files);craftSlot=17
   if row['character']=='Joshua':

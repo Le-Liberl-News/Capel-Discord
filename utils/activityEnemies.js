@@ -1,3 +1,4 @@
+const {immobilized,movementFactor}=require('../activity/combat-status.cjs');
 const {applyDamage}=require('./activityDamage');
 const {createTowerEnemies}=require('./activityTowerEnemies');
 const {inSector}=require('../activity/dungeon-mechanics.cjs');
@@ -16,6 +17,7 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
   special.tick(players);
   for(const e of enemies.values()){
    if(e.hp<=0){e.moving=false;e.state='dead';e.path=[];e.attack=null;if(!e.deadUntil)e.deadUntil=time+30000;if(time>=e.deadUntil){Object.assign(e,e.home,{hp:e.maxHp,deadUntil:0,state:'idle',cooldown:time+2000,patrolAt:time+1000});}continue;}
+   if(immobilized(e,time)){e.moving=false;e.state='stunned';continue;}
    if(e.impact&&time>e.impact.at+700)e.impact=null;
    const targets=[...players.values()].filter(p=>p.hp>0&&!p.spectator&&Math.abs((p.y??0)-e.y)<(e.ranged?2.5:1.2)&&distance(p,e.home)<14);
    const target=targets.sort((a,b)=>distance(a,e)-distance(b,e))[0];
@@ -29,7 +31,7 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
     else if(time>=e.patrolAt){const angle=(time/3000+Number(e.id.split(':').at(-1)))% (Math.PI*2);goal={x:e.home.x+Math.cos(angle)*1.6,y:e.home.y,z:e.home.z+Math.sin(angle)*1.6};e.patrolAt=time+4500;e.state='patrol';}
     if(goal)e.path=path(e,goal);
    }
-   let budget=dt*(engaged?3.3:1.3);e.moving=!!e.path.length;e.speed=engaged?3.3:1.3;
+   let budget=dt*(engaged?3.3:1.3)*movementFactor(e,time);e.moving=!!e.path.length;e.speed=(engaged?3.3:1.3)*movementFactor(e,time);
    while(budget>0&&e.path.length){const q=e.path[0],d=distance(e,q);if(d<.01){e.path.shift();continue;}const move=Math.min(d,budget);e.heading={dx:q.x-e.x,dz:q.z-e.z};e.x+=(q.x-e.x)/d*move;e.z+=(q.z-e.z)/d*move;e.y=q.y;budget-=move;if(move>=d)e.path.shift();}
    if(!e.path.length)e.moving=false;
   }

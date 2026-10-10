@@ -33,7 +33,9 @@ def effect(identifier):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(definition, ensure_ascii=False, separators=(',', ':')), encoding='utf8')
 
-for identifier in [f'SC/damage{i}._ef' for i in [0,1,2,3,5]] + ['SC/mg050_0._ef', 'SC/sc001_10._ef', 'SC/mgaria0._ef', 'SC/mg011_0._ef']:
+heroes=json.loads((output.parents[1]/'combat/hero-actions.json').read_text(encoding='utf8'))
+hero_effects={action['nativeEffect'] for hero in heroes.values() for action in hero.values() if isinstance(action,dict) and action.get('nativeEffect')}
+for identifier in sorted(hero_effects) + [f'SC/damage{i}._ef' for i in [0,1,2,3,5]] + ['SC/mg050_0._ef', 'SC/sc001_10._ef', 'SC/mgaria0._ef', 'SC/mg011_0._ef']:
     effect(identifier)
 (output / 'catalogue.json').write_text(json.dumps(list(selected.values()), ensure_ascii=False, separators=(',', ':')), encoding='utf8')
 print(len(selected), 'assemblies exported')

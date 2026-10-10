@@ -1,0 +1,241 @@
+{
+  "Joshua": {
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Soul Blur",
+      "nativeEffect": "SC/mg065_0._ef",
+      "effectDuration": 1800,
+      "element": "time",
+      "damage": 24
+    }
+  },
+  "Scherazard": {
+    "slot": 17,
+    "craft": {
+      "name": "Fouet constricteur",
+      "nativeEffect": "Third/cr171_01._ef",
+      "effectDuration": 1400,
+      "windup": 800,
+      "duration": 2800,
+      "projectile": false,
+      "groundTarget": true,
+      "range": 8,
+      "radius": 1,
+      "shape": "line",
+      "status": "slow",
+      "statusDuration": 4000,
+      "slowFactor": 0.45
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Lame de vent",
+      "nativeEffect": "SC/mg050_0._ef",
+      "effectDuration": 3000,
+      "element": "wind"
+    }
+  },
+  "Olivier": {
+    "slot": 27,
+    "craft": {
+      "name": "Requiem",
+      "nativeEffect": "Third/sc003_10._ef",
+      "effectDuration": 1400,
+      "windup": 800,
+      "duration": 3600,
+      "projectile": false,
+      "selfTarget": true,
+      "range": 6,
+      "radius": 6,
+      "damage": 48,
+      "hitOffsets": [
+        0,
+        200,
+        400,
+        600,
+        800,
+        1000
+      ]
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Épine d’argent",
+      "nativeEffect": "SC/mg103_0._ef",
+      "effectDuration": 1800,
+      "element": "mirage",
+      "damage": 24
+    }
+  },
+  "Kloe": {
+    "slot": 17,
+    "craft": {
+      "name": "Sturm",
+      "nativeEffect": "Third/cr191_00._ef",
+      "effectDuration": 1400,
+      "windup": 800,
+      "duration": 2800,
+      "projectile": false,
+      "targetRequired": true,
+      "range": 3,
+      "radius": 0.8,
+      "status": "stun",
+      "statusDuration": 1100,
+      "hitOffsets": [
+        0,
+        350,
+        700
+      ],
+      "damage": 30
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Lacrym",
+      "nativeEffect": "SC/mg110_0._ef",
+      "effectDuration": 1800,
+      "effect": "heal",
+      "heal": 35,
+      "damage": 0,
+      "targetRequired": true,
+      "cooldown": 4500
+    }
+  },
+  "Agate": {
+    "slot": 17,
+    "craft": {
+      "name": "Impact enflammé",
+      "nativeEffect": "Third/cr201_00._ef",
+      "effectDuration": 1400,
+      "windup": 400,
+      "duration": 2200,
+      "projectile": false,
+      "groundTarget": true,
+      "leap": true,
+      "range": 7,
+      "radius": 2,
+      "damage": 35,
+      "leapDuration": 900
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Forte",
+      "nativeEffect": "SC/mg087_0._ef",
+      "effectDuration": 1800,
+      "effect": "attackBuff",
+      "damage": 0,
+      "buffAttack": 0.25,
+      "buffDuration": 10000,
+      "selfTarget": true
+    }
+  },
+  "Tita": {
+    "slot": 16,
+    "craft": {
+      "name": "Smoke Cannon",
+      "nativeEffect": "Third/cr210_00._ef",
+      "effectDuration": 1400,
+      "windup": 800,
+      "duration": 2800,
+      "projectile": false,
+      "groundTarget": true,
+      "range": 8,
+      "radius": 1.7,
+      "status": "blind",
+      "statusDuration": 5000
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Matière noire",
+      "nativeEffect": "SC/mg070_0._ef",
+      "effectDuration": 1800,
+      "element": "space",
+      "damage": 24
+    }
+  },
+  "Zin": {
+    "slot": 17,
+    "craft": {
+      "name": "True Distend",
+      "nativeEffect": "Third/cr221_00._ef",
+      "effectDuration": 1400,
+      "windup": 2800,
+      "duration": 2800,
+      "projectile": false,
+      "effect": "powerBuff",
+      "damage": 0,
+      "buffAttack": 0.6,
+      "buffDefense": 0.6,
+      "buffDuration": 10000,
+      "selfTarget": true,
+      "lockMovement": true
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Crest",
+      "nativeEffect": "SC/mg086_0._ef",
+      "effectDuration": 1800,
+      "effect": "defenseBuff",
+      "damage": 0,
+      "buffDefense": 0.25,
+      "buffDuration": 10000,
+      "selfTarget": true
+    }
+  },
+  "Kevin": {
+    "slot": 19,
+    "craft": {
+      "name": "Carreau gorgone",
+      "nativeEffect": "Third/cr04080._ef",
+      "effectDuration": 1400,
+      "windup": 800,
+      "duration": 2800,
+      "projectile": true,
+      "groundTarget": true,
+      "range": 9,
+      "radius": 0.8,
+      "status": "stone",
+      "statusDuration": 3000
+    },
+    "art": {
+      "castEffect": "SC/mgaria0._ef",
+      "castDuration": 1000,
+      "windup": 2000,
+      "duration": 3000,
+      "projectile": false,
+      "name": "Earth Guard",
+      "nativeEffect": "SC/mg075_0._ef",
+      "effectDuration": 1800,
+      "effect": "guard",
+      "damage": 0,
+      "selfTarget": true,
+      "shieldDuration": 30000,
+      "cooldown": 10000
+    }
+  }
+}

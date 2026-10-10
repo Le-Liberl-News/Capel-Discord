@@ -159,6 +159,7 @@ function createSingleActivityWorld({
       if (p.hp === 0 && !p.noRespawn && time >= p.deadUntil) {
         Object.assign(p, spawnFor(p.id));
         p.jump=null;p.jumpTickAt=null;
+        for(const key of ['guard','shield','attackBuff','defenseBuff','slowUntil','slowFactor','stunUntil','stoneUntil','blindUntil'])delete p[key];
         p.hp = MAX_HP;
         p.deadUntil = 0;
         p.respawn = (p.respawn ?? 0) + 1;
@@ -457,7 +458,7 @@ function createActivityWorld(options) {
   const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[],fire});
   return {...world,
     tick(players){world.tick(players);options.platforms?.tick(players);jumps?.tick(players);enemies.tick(players);fire?.tick(players);combat.tick(new Map([...players,...enemies.entities]));},
-    action(player,command,players){return command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,players) : world.action(player,command,players);},
+    action(player,command,players){return command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,new Map([...players,...enemies.entities])) : world.action(player,command,players);},
     snapshot(){return {...world.snapshot(),combat:combat.snapshot(),enemies:enemies.snapshot(),fire:fire?.snapshot()??[]};},
     cooldownsFor:combat.cooldownsFor,
   };

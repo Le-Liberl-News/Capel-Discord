@@ -1,5 +1,5 @@
 const JUMP_DURATION=1, JUMP_HEIGHT=1.65, JUMP_SPEED=4.5;
-function jumpPosition(jump,time){const t=Math.max(0,Math.min(1.35,(time-jump.started)/1000));return {x:jump.origin.x+jump.dx*JUMP_SPEED*Math.min(t,JUMP_DURATION),y:jump.origin.y+4*JUMP_HEIGHT*t*(1-t),z:jump.origin.z+jump.dz*JUMP_SPEED*Math.min(t,JUMP_DURATION)};}
+function jumpPosition(jump,time){const t=Math.max(0,Math.min(1.35,(time-jump.started)/1000));return {x:jump.statusStop?.x??jump.origin.x+jump.dx*JUMP_SPEED*Math.min(t,JUMP_DURATION),y:jump.origin.y+4*JUMP_HEIGHT*t*(1-t),z:jump.statusStop?.z??jump.origin.z+jump.dz*JUMP_SPEED*Math.min(t,JUMP_DURATION)};}
 function jumpDisplayPosition(grid,jump,time){const destination=jumpPosition(jump,jump.started+1000),x=Math.round((destination.x-grid.origin.x)/grid.step),z=Math.round((destination.z-grid.origin.z)/grid.step),floor=x<0||z<0||x>=grid.width||z>=grid.height?null:grid.cells[z*grid.width+x];return time>=jump.started+1000&&floor!==null?{...destination,y:floor}:jumpPosition(jump,time);}
 function inSector(p,a){const dx=p.x-a.origin.x,dz=p.z-a.origin.z,d=Math.hypot(dx,dz),heading=a.direction;return d<=a.radius&&Math.abs((p.y??0)-a.origin.y)<.85&&(d<1e-6||(dx*heading.dx+dz*heading.dz)/d>=Math.cos(a.angle/2));}
 function projectilePoint(p,time){const t=Math.max(0,(time-p.started)/1000);return {x:p.origin.x+p.vx*t,y:p.origin.y+p.vy*t,z:p.origin.z+p.vz*t};}

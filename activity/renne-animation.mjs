@@ -1,8 +1,8 @@
 import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {createEarthWave,prepareEarthWave} from './earth-wave.mjs';
 import {createBlackFangTrail} from './black-fang-effects.mjs';
-import dashMechanics from './black-fang.cjs';
-const {dashPosition}=dashMechanics;
+import dashMechanics from './combat-motion.cjs';
+const {combatMotion}=dashMechanics;
 import {loadNativeEffects,nativeEffectSprite,nativeCastingHalo} from './native-effects.mjs';
 import mechanics from './native-combat.cjs';
 const {COMBAT,combatSpec,attackPoint}=mechanics;
@@ -11,6 +11,8 @@ export async function createRenneCombat(THREE,scene,assets) {
   const native=await loadNativeEffects(assets);
   const earthBank=await prepareEarthWave(THREE,assets);
   const earthArt=await loadBakedEffect(THREE,assets,'mg011_0',54);
+  const heroDefinitions=await fetch(new URL('effects/hero-frames.json',assets)).then(r=>{if(!r.ok)throw Error('Effets des techniques introuvables');return r.json();});
+  const heroBanks=new Map(await Promise.all(Object.entries(heroDefinitions).filter(([id])=>!id.includes('/damage')&&!id.includes('/mg011')).map(async([id,info])=>[id,{...await loadBakedEffect(THREE,assets,info.name,info.frames),size:info.size,duration:info.duration}])));
   const [metadata,ringTexture,vortexTexture,fireTexture]=await Promise.all([
     Promise.resolve(COMBAT.Renne),
     loader.loadAsync(new URL('combat/blood-circle.png',assets).href),loader.loadAsync(new URL('combat/blood-vortex.png',assets).href),loader.loadAsync(new URL('effects/fire-frames.png',assets).href),
@@ -25,9 +27,9 @@ export async function createRenneCombat(THREE,scene,assets) {
   const effects=new Map();
   function add(event,localStart,accepted=false){if(!actions.has(event.id))actions.set(event.id,{...event,localStart,accepted});else Object.assign(actions.get(event.id),{accepted:true,cancelled:event.cancelled,aim:event.aim,origin:event.origin,target:event.target});}
   function receive(events,serverTime){for(const event of events){const elapsed=Math.max(0,serverTime-event.started);if(elapsed>event.endsAt-event.started+1200)continue;const spec=combatSpec(event.character,event.kind),replay=spec?.dash&&!actions.has(event.id)&&elapsed<spec.windup+spec.dashDuration?Math.min(elapsed,spec.windup):elapsed;add(event,performance.now()-replay,true);}}
-  function predict(id,origin,aim,kind,actor,character='Renne'){const spec=combatSpec(character,kind),point=attackPoint(origin,aim,kind,character);if(!point)return null;const travel=spec.dash?spec.dashDuration:!spec.projectile?0:Math.hypot(point.x-origin.x,point.z-origin.z)/14*1000;const event={id,actor,kind,character,origin:{...origin},aim:point,started:0,impactAt:spec.windup+travel,endsAt:Math.max(spec.duration,spec.windup+travel+(spec.effectDuration??550))};add(event,performance.now());return event;}
+  function predict(id,origin,aim,kind,actor,character='Renne'){const spec=combatSpec(character,kind),point=attackPoint(origin,aim,kind,character);if(!point)return null;const travel=spec.leap?spec.leapDuration:spec.dash?spec.dashDuration:!spec.projectile?0:Math.hypot(point.x-origin.x,point.z-origin.z)/14*1000;const event={id,actor,kind,character,origin:{...origin},aim:point,started:0,impactAt:spec.windup+travel,endsAt:Math.max(spec.duration,spec.windup+travel+(spec.effectDuration??550))};add(event,performance.now());return event;}
   const elapsed=event=>performance.now()-event.localStart;
-  function dash(actor){const event=[...actions.values()].find(a=>a.actor===actor&&!a.cancelled&&!a.dashFinished&&combatSpec(a.character,a.kind)?.dash);return event?{event,...dashPosition(event,elapsed(event),combatSpec(event.character,event.kind))}:null;}
+  function dash(actor){const event=[...actions.values()].find(a=>{const spec=combatSpec(a.character,a.kind);return a.actor===actor&&!a.cancelled&&!a.dashFinished&&(spec?.dash||spec?.leap);});return event?{event,...combatMotion(event,elapsed(event),combatSpec(event.character,event.kind))}:null;}
   function current(actor){return [...actions.values()].find(a=>a.actor===actor&&!a.cancelled&&elapsed(a)<combatSpec(a.character??'Renne',a.kind)?.duration);}
   function pose(event){const metadata=metadataFor(event.character??'Renne'),spec=combatSpec(event.character??'Renne',event.kind);let sequence=metadata.sequences[event.kind],time=elapsed(event),duration=spec.duration;
     if(event.kind==='art'&&!spec.poseSequence){if(time<spec.windup){sequence=metadata.sequences.spell;time=time*2%sequence.reduce((n,f)=>n+f.ms,0);duration=sequence.reduce((n,f)=>n+f.ms,0);}else{sequence=metadata.sequences.cast;time-=spec.windup;duration=spec.duration-spec.windup;}}
@@ -38,7 +40,8 @@ export async function createRenneCombat(THREE,scene,assets) {
     const vortex=new THREE.Sprite(new THREE.SpriteMaterial({map:vortexTexture,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:support==='heal'?0x64ffa2:support==='shield'?0x72caff:event.kind==='art'?0xffb04c:0xffb0d9}));vortex.scale.set(3.2,3.2,1);vortex.position.y=.7;group.add(vortex);
     const boltMap=fireTexture.clone();boltMap.repeat.set(.25,1);const bolt=new THREE.Sprite(new THREE.SpriteMaterial({map:boltMap,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffffff:0xf78bd5}));bolt.scale.setScalar(1.3);scene.add(bolt);
     const spec=combatSpec(event.character??'Renne',event.kind),player=spec.nativeEffect&&native.get(spec.nativeEffect.toLowerCase());
-    const assembly=spec.nativeEffect==='SC/mg011_0._ef'&&!spec.wave?bakedEffectSprite(THREE,earthArt,4):player&&!spec.wave?nativeEffectSprite(THREE,player,spec.shape==='line'||spec.element==='earth'?4:3,spec.element==='earth'?4:2):null;
+    const baked=heroBanks.get(spec.nativeEffect?.toLowerCase());
+    const assembly=baked?bakedEffectSprite(THREE,baked,baked.size):spec.nativeEffect==='SC/mg011_0._ef'&&!spec.wave?bakedEffectSprite(THREE,earthArt,4):player&&!spec.wave?nativeEffectSprite(THREE,player,spec.shape==='line'||spec.element==='earth'?4:3,spec.element==='earth'?4:2):null;
     if(assembly)scene.add(assembly.sprite);
     const haloPlayer=spec.castEffect&&native.get(spec.castEffect.toLowerCase()),halo=haloPlayer?nativeCastingHalo(THREE,haloPlayer):null;if(halo)scene.add(halo.group);
     const trail=spec.dash&&assembly?createBlackFangTrail(THREE,scene,event,spec,assembly,player):null;
@@ -58,5 +61,5 @@ export async function createRenneCombat(THREE,scene,assets) {
     if(spec.element==='wind'){e.ring.material.color.set(0x72ffb4);e.vortex.material.color.set(0xa1ffe4);}
     if(event.kind==='craft'&&event.actor===localId&&event.accepted&&!event.captureStarted&&time>=impact-350){event.captureStarted=true;capture?.start(id,event.aim,camera);}
   }}
-  return {metadata,textures,metadataFor,load,actions,predict,receive,current,dash,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});earthBank?.dispose();earthArt.dispose();ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();}};
+  return {metadata,textures,metadataFor,load,actions,predict,receive,current,dash,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});earthBank?.dispose();earthArt.dispose();for(const bank of heroBanks.values())bank.dispose();ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();}};
 }

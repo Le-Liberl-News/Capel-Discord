@@ -22,3 +22,16 @@ test('confirmed damage flash is placed in front of the target and keeps scenery 
   fx.dispose();assert.equal(scene.children.length,0);
  }finally{global.document=previous;}
 });
+
+test('native polar particles use angle, height and radius rather than a thirty-unit radius',async()=>{
+ const {NativeEffectPlayer}=await import('../activity/native-effect-player.mjs');
+ const previous=global.fetch;const definition={id:'test/polar',game:'test',textures:[null],children:[],parts:[{enabled:true,index:0,duration:100,flags:0,renderFlags:1,textureIndex:0,primitive:0,position:[{flags:2,time:0,jitter:0,min:[30,.2,.5],max:[30,.2,.5]}],rotation:[],scale:[],color:[],emissions:[]}]};
+ global.fetch=async()=>({ok:true,json:async()=>definition});
+ try{const p=await new NativeEffectPlayer([],()=>{}).load({id:'test/polar',animation:'fixture'}),state=p.state(p.instances[0],0);assert.ok(Math.abs(state.position[0]-Math.cos(Math.PI/6)*.5)<1e-6);assert.equal(state.position[1],.2);assert.ok(Math.abs(state.position[2]-.25)<1e-6);}finally{global.fetch=previous;}
+});
+
+test('a short craft plays the whole baked assembly rather than cutting off its final frames',async()=>{
+ const THREE=await import('three'),{bakedEffectSprite}=await import('../activity/baked-effects.mjs');
+ const bank={map:new THREE.Texture(),frames:90,columns:8,rows:12,duration:1400},effect=bakedEffectSprite(THREE,bank,4);
+ effect.draw(1399);assert.equal(effect.sprite.material.map.offset.x,1/8);assert.equal(effect.sprite.material.map.offset.y,0);effect.dispose();bank.map.dispose();
+});

@@ -18,8 +18,8 @@ function vectorKeys(keys,kind,seed,ordinal){
     let value=key.min.map((v,j)=>lerp(v,key.max[j],rng()));
     if(kind==='scale'&&(key.flags&2))value=[value[0],value[0],value[0]];
     if(kind==='position'&&(key.flags&2)){
-      // Native cylindrical placement: radius, height, angle in degrees.
-      const angle=value[2]*Math.PI/180;value=[Math.cos(angle)*value[0],value[1],Math.sin(angle)*value[0]];
+      // Native cylindrical placement: angle in degrees, height, radius.
+      const angle=value[0]*Math.PI/180;value=[Math.cos(angle)*value[2],value[1],Math.sin(angle)*value[2]];
     }
     if(kind==='rotation')value=value.map((v,j)=>v*((key.flags&(2<<j))?ordinal:1));
     if(key.flags&1)value=add(value,origin);

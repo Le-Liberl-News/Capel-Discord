@@ -1,0 +1,122 @@
+{
+  "sc/mg011_0._ef": {
+    "name": "mg011_0",
+    "frames": 54,
+    "size": 4
+  },
+  "sc/damage0._ef": {
+    "name": "damage0",
+    "frames": 24,
+    "size": 4
+  },
+  "sc/damage1._ef": {
+    "name": "damage1",
+    "frames": 24,
+    "size": 4
+  },
+  "sc/damage2._ef": {
+    "name": "damage2",
+    "frames": 24,
+    "size": 4
+  },
+  "sc/damage3._ef": {
+    "name": "damage3",
+    "frames": 24,
+    "size": 4
+  },
+  "sc/damage5._ef": {
+    "name": "damage5",
+    "frames": 24,
+    "size": 4
+  },
+  "sc/mg065_0._ef": {
+    "name": "sc-mg065_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  },
+  "third/cr171_01._ef": {
+    "name": "third-cr171_01",
+    "frames": 90,
+    "duration": 1400,
+    "size": 4
+  },
+  "sc/mg050_0._ef": {
+    "name": "sc-mg050_0",
+    "frames": 90,
+    "duration": 3000,
+    "size": 4
+  },
+  "third/sc003_10._ef": {
+    "name": "third-sc003_10",
+    "frames": 90,
+    "duration": 1400,
+    "size": 9
+  },
+  "sc/mg103_0._ef": {
+    "name": "sc-mg103_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  },
+  "third/cr191_00._ef": {
+    "name": "third-cr191_00",
+    "frames": 90,
+    "duration": 1400,
+    "size": 4
+  },
+  "third/cr201_00._ef": {
+    "name": "third-cr201_00",
+    "frames": 90,
+    "duration": 1400,
+    "size": 4
+  },
+  "sc/mg087_0._ef": {
+    "name": "sc-mg087_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  },
+  "third/cr210_00._ef": {
+    "name": "third-cr210_00",
+    "frames": 90,
+    "duration": 1400,
+    "size": 4
+  },
+  "sc/mg070_0._ef": {
+    "name": "sc-mg070_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  },
+  "third/cr221_00._ef": {
+    "name": "third-cr221_00",
+    "frames": 90,
+    "duration": 1400,
+    "size": 4
+  },
+  "sc/mg086_0._ef": {
+    "name": "sc-mg086_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  },
+  "third/cr04080._ef": {
+    "name": "third-cr04080",
+    "frames": 90,
+    "duration": 1400,
+    "size": 4
+  },
+  "sc/mg075_0._ef": {
+    "name": "sc-mg075_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  },
+  "sc/mg110_0._ef": {
+    "name": "sc-mg110_0",
+    "frames": 90,
+    "duration": 1800,
+    "size": 4
+  }
+}

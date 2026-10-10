@@ -1,3 +1,4 @@
+const {immobilized,movementFactor}=require('../activity/combat-status.cjs');
 const flight=require("../activity/flight.cjs");
 const { randomBytes } = require("node:crypto");
 const { createActivityWorld, MAX_HP } = require("./activityWorld");
@@ -197,7 +198,7 @@ function createActivityService({
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
         let submitted=point;
         if(platforms&&point.platform&&!requestedJump){const d=platforms.definitions.find(d=>d.id===point.platform.id),pos=d&&platforms.position(d.id);if(!d||![point.platform.x,point.platform.z].every(Number.isFinite)||Math.abs(point.platform.x)>d.width/2+.15||Math.abs(point.platform.z)>d.width/2+.15)throw new ActivityError('Plateforme invalide.');submitted={...point,x:pos.x+point.platform.x,z:pos.z+point.platform.z,trace:[]};}
@@ -208,7 +209,7 @@ function createActivityService({
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
         const allowance =
-          Math.min(5, Math.max(0.15, (now() - (player.acceptedAt ?? player.seen)) / 1000)) * 4.5 +
+          Math.min(5, Math.max(0.15, (now() - (player.acceptedAt ?? player.seen)) / 1000)) * 4.5 * movementFactor(player,now()) +
           0.15;
         // Validate each travelled segment rather than the chord between polls.
         // Sequence numbers let a retry replay an already acknowledged prefix.
@@ -335,9 +336,11 @@ function createActivityService({
           jumpReadyAt:player.jumpReadyAt??0,
           hp: player.hp,
           spectator: player.spectator,
-          canMove: player.canMove !== false && now() >= (player.combatLockedUntil ?? 0),
+          canMove: player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0),
           combatLockedUntil: player.combatLockedUntil ?? 0,
           cooldowns: world.cooldownsFor?.(player.id) ?? {},
+          movementFactor:movementFactor(player,now()),
+          blindUntil:player.blindUntil??0,
           maxHp: MAX_HP,
           deadUntil: player.deadUntil,
           respawn: player.respawn ?? 0,

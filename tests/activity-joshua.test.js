@@ -33,7 +33,7 @@ test('all damage sources retain separately numbered impacts after shield absorpt
 });
 test('Olivier has his own verified banks and Joshua uses AS 19 and the bank dynamically loaded by Black Fang',()=>{
  assert.equal(COMBAT.Olivier.source.as,'as04260._dt');assert.ok(Object.values(COMBAT.Olivier.banks).every(b=>b.texture.includes('as04260')));
- assert.deepEqual(COMBAT.Joshua.sequences.art.map(f=>f.pose),[0,1,2]);assert.ok(COMBAT.Joshua.sequences.craft.some(f=>f.bank===12));assert.equal(combatSpec('Joshua','art').element,'wind');
+ assert.deepEqual(COMBAT.Joshua.sequences.art.map(f=>f.pose),[0,1,2]);assert.ok(COMBAT.Joshua.sequences.craft.some(f=>f.bank===12));assert.equal(combatSpec('Joshua','art').element,'time');
 });
 
 test('the runtime resolves every selected EF and texture relative to the public Sky asset directory',async()=>{
@@ -48,7 +48,7 @@ test('the runtime resolves every selected EF and texture relative to the public 
 
 test('Joshua charges for one full second before releasing his art with the native casting halo',()=>{
  const spec=combatSpec('Joshua','art');assert.equal(spec.windup,1000);assert.equal(spec.castDuration,1000);assert.equal(spec.castEffect,'SC/mgaria0._ef');assert.ok(spec.duration>=spec.windup);
- const f=fixture(),j=f.players.get('j');assert.ok(f.combat.action(j,{id:'wind',kind:'art',aim:{x:2,y:0,z:0}},f.players).combatId);f.tick(999);assert.equal(f.players.get('a').hp,100);f.tick(1);assert.equal(f.players.get('a').hp,80);
+ const f=fixture(),j=f.players.get('j');assert.ok(f.combat.action(j,{id:'wind',kind:'art',aim:{x:2,y:0,z:0}},f.players).combatId);f.tick(999);assert.equal(f.players.get('a').hp,100);f.tick(1);assert.equal(f.players.get('a').hp,76);
 });
 
 
