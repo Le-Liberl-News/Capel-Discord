@@ -27,3 +27,5 @@ Le lecteur EF est une reconstitution locale, pas le moteur original. Les géomé
 Si E: manque de place, les sources The 3rd peuvent être déplacées dans `~/.codex/sky-effect-work/third-33/ED6_DT33` ; l’export les retrouve à cet emplacement.
 
 Modèles d’effets X3 : `python tools/combat-browser/export_models.py cr04150b`. Le lecteur utilise le maillage et ses UV ; la déformation du squelette interne du modèle reste à compléter. Les déclenchements retardés et les cercles posés au sol sont pris en charge.
+
+Campanella d�Azure : `python tools/combat-browser/export-azure.py`. Ajoute les six banques natives `ch03600`, `ch03650` � `ch03654` sous **Campanella (Azure)** ; les planches sont locales. Les banques montrent les poses disponibles, sans pr�tendre reproduire les timings des scripts de combat Azure.

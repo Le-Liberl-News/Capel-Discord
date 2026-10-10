@@ -13,7 +13,8 @@ if a.animations_only:
 repo=Path(__file__).resolve().parents[2];sys.path.insert(0,str(repo/'activity/tools'));from export_sky_assets import decode_sprite,decode_model_texture,Image
 sys.path.insert(0,str(a.decoder));import third_as as decoder
 out=a.output;out.mkdir(parents=True,exist_ok=True);characters={};warnings=[]
-previous=json.loads((out/'catalogue.json').read_text(encoding='utf-8'))['characters'] if (out/'catalogue.json').exists() else {}
+previous_catalogue=json.loads((out/'catalogue.json').read_text(encoding='utf-8')) if (out/'catalogue.json').exists() else {}
+previous=previous_catalogue.get('characters',{})
 def sequence(data,entries,end,slot,available,dynamic):
  pc=entries[slot];bank=0;mapping={int(k):k for k in available if k.isdigit()};result=[];stack=[];visited={}
  for _ in range(1600):
@@ -98,7 +99,7 @@ for row in rows:
 for name,info in avatars.items():
  if name not in characters:characters[name]={'source':info['texture'],'game':'Sky','banks':{'0':{**info,'texture':'/assets/'+info['texture'],'source':info['texture']}},'routines':{},'configured':configured.get(name)}
 if a.sprites_only:
- catalogue=json.loads((out/'catalogue.json').read_text(encoding='utf-8'));catalogue['characters']=characters;catalogue['warnings']=warnings
+ catalogue=json.loads((out/'catalogue.json').read_text(encoding='utf-8'));characters.update(catalogue.get('localCharacters',{}));catalogue['characters']=characters;catalogue['warnings']=warnings
  (out/'catalogue.json').write_text(json.dumps(catalogue,ensure_ascii=False),encoding='utf-8');print(warnings);raise SystemExit()
 effects=[]
 for folder in [a.extracted/'sc-33/ED6_DT33',third_effects]:
@@ -114,5 +115,6 @@ for folder in [a.extracted/'sc-33/ED6_DT33',third_effects]:
 from native_effects import export_effects,export_additive_textures
 export_additive_textures([a.extracted/'sc-33/ED6_DT33',third_effects],effects,out)
 animations=export_effects([a.extracted/'sc-33/ED6_DT33',third_effects],effects,out)
-(out/'catalogue.json').write_text(json.dumps({'characters':characters,'effects':effects,'animations':animations,'warnings':warnings},ensure_ascii=False),encoding='utf-8')
+characters.update(previous_catalogue.get('localCharacters',{}))
+(out/'catalogue.json').write_text(json.dumps({'localCharacters':previous_catalogue.get('localCharacters',{}),'characters':characters,'effects':effects,'animations':animations,'warnings':warnings},ensure_ascii=False),encoding='utf-8')
 print(len(characters),'personnages,',len(effects),'textures,',len(warnings),'avertissements',flush=True)
