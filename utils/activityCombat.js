@@ -84,11 +84,16 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
           const t=Math.max(0,Math.min(1,projection));
           inRange=projection>=0&&projection<=1&&Math.hypot(player.x-attack.origin.x-dx*t,player.z-attack.origin.z-dz*t)<=spec.radius+(player.boss?2:0);
         }
+        if(spec.wave){
+          const dx=attack.aim.x-attack.origin.x,dz=attack.aim.z-attack.origin.z,length2=dx*dx+dz*dz;
+          const t=((player.x-attack.origin.x)*dx+(player.z-attack.origin.z)*dz)/(length2||1);
+          inRange=inRange&&t>=Math.max(0,(hitIndex-.5)/(hitOffsets.length-1))&&t<=Math.min(1,(hitIndex+.5)/(hitOffsets.length-1))&&!attack.hits.some(h=>h.id===player.id);
+        }
         if(!inRange)continue;
         const from={x:attack.kind==="basic"&&!spec.projectile?attack.origin.x:attack.aim.x,y:(attack.kind==="basic"&&!spec.projectile?attack.origin.y:attack.aim.y)+.85,z:attack.kind==="basic"&&!spec.projectile?attack.origin.z:attack.aim.z};
         const to={x:player.x,y:(player.y??0)+.85,z:player.z},wall=geometry?.sweep(from,to,.08);
         if(wall && Math.hypot(wall.point.x-from.x,wall.point.y-from.y,wall.point.z-from.z)<Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z)-.15)continue;
-        const dealt=applyDamage(player,spec.damage/hitOffsets.length,attack.impactAt+hitOffsets[hitIndex]);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt,endsAt:attack.endsAt,origin:{...attack.origin},aim:{...attack.aim}},at:time});}
+        const dealt=applyDamage(player,spec.damage/(spec.wave?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex]);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+(spec.wave?hitOffsets[hitIndex]:0),endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
         attack.hits.push({id:player.id,hitIndex,at:attack.impactAt+hitOffsets[hitIndex],...dealt});
       }
     }

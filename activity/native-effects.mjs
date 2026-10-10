@@ -11,12 +11,12 @@ async function loadBank(assets) {
  return players;
 }
 
-export function nativeEffectSprite(THREE,player,size=2) {
+export function nativeEffectSprite(THREE,player,size=2,zoom=2) {
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
  sprite.scale.setScalar(size);sprite.renderOrder=5;
- return {sprite,draw(ms){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,256,256);player.draw(ctx,ms,256,256,2,false);map.needsUpdate=true;},dispose(){map.dispose();sprite.material.dispose();}};
+ return {sprite,draw(ms){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,256,256);player.draw(ctx,ms,256,256,zoom,false);map.needsUpdate=true;},dispose(){map.dispose();sprite.material.dispose();}};
 }
 
 // Native mgaria0: rising particles and a tapered, textured cylinder around the caster.

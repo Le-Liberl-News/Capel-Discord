@@ -366,6 +366,8 @@ export async function createSkyScene(canvas, map = "anterose") {
   marker.rotation.x = -Math.PI / 2;
   marker.visible = false;
   scene.add(marker);
+  const aimLine=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0xffd984,transparent:true,opacity:.38,depthWrite:false,side:THREE.DoubleSide}));
+  aimLine.rotation.x=-Math.PI/2;aimLine.visible=false;scene.add(aimLine);
   async function setAvatar(player) {
     let avatar = avatars.get(player.id);
     const dead = player.hp === 0;
@@ -784,7 +786,8 @@ export async function createSkyScene(canvas, map = "anterose") {
         new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),
         1 - Math.exp(-seconds * 7),
       );
-    if(craftTarget&&me&&!me.dead&&connected){const point=aimForAttack(cursor,true),target=point&&renneMechanics.attackPoint(me.position,point,'craft',me.character);marker.visible=!!target;if(target){marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
+    aimLine.visible=false;
+    if(craftTarget&&me&&!me.dead&&connected){const point=aimForAttack(cursor,true),target=point&&renneMechanics.attackPoint(me.position,point,'craft',me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,'craft')?.shape==='line';if(target){marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,(target.y+me.position.y)/2+.07,(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,'craft').radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
       if (!pomAvatar) continue;

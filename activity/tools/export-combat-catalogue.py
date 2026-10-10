@@ -48,6 +48,8 @@ for row in rows:
     seq=sequence(data,entries,end,slot,files)
     if seq:craftSlot=slot;sequences['craft']=seq;break
   if not sequences['basic']:raise ValueError('No playable self frames')
+  if row['character']=='Estelle':
+   sequences['craft']=sequence(data,entries,end,17,files);craftSlot=17
   if row['character']=='Joshua':
    sequences['art']=sequence(data,entries,end,19,files)
    sequences['craft']=[f for f in sequence(data,entries,end,27,files) if f['bank']==12]
@@ -73,6 +75,9 @@ for row in rows:
   if row['character'] in ['Olivier','Tita','Kevin','Josette','Kanone','Gilbert','Dorothy']:actions['basic'].update(range=8,radius=.7,projectile=True,windup=350)
   if sequences.get('spell') and sequences.get('cast'):actions['art']={'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1800,'range':9,'radius':1.4,'projectile':True}
   if sequences.get('craft'):actions['craft']={'name':f'Craft {craftSlot-15}','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':max(1650,min(2500,sum(f['ms'] for f in sequences['craft']))),'range':6,'radius':1.9,'projectile':False}
+  if row['character']=='Estelle':
+   actions['art'].update(name='Lance de terre',element='earth',nativeEffect='SC/mg011_0._ef',effectDuration=1800,projectile=False,windup=2000,duration=2600,castEffect='SC/mgaria0._ef',castDuration=1000)
+   actions['craft'].update(name='Onde sismique',shape='line',groundTarget=True,wave=True,hitOffsets=list(range(0,961,120)),range=8,radius=.75,windup=420,duration=1060,effectDuration=1700,nativeEffect='SC/mg011_0._ef')
   if row['character']=='Joshua':
    actions['art'].update(name='Lame de vent',element='wind',effectDuration=3000,nativeEffect='SC/mg050_0._ef',poseSequence='art',projectile=False,windup=2000,duration=2400,castEffect='SC/mgaria0._ef',castDuration=1000)
    actions['craft'].update(name='Black Fang',shape='line',dash=True,groundTarget=True,hitOffsets=[0,160,320],range=9,radius=.8,windup=160,dashDuration=440,duration=1100,effectDuration=750,nativeEffect='SC/sc001_10._ef')
