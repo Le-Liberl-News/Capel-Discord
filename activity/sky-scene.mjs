@@ -22,7 +22,7 @@ import {createCraftCapture} from "./craft-capture.mjs";
 import {createCombatControls} from "./combat-controls.mjs";
 import renneMechanics from "./native-combat.cjs";
 import terminalWorld from "./terminal-world.cjs";
-import {createDamageEffects,damageAmount} from "./damage-effects.mjs";
+import {createDamageEffects,damageAmount,newDamageEvents} from "./damage-effects.mjs";
 import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
@@ -159,20 +159,24 @@ export async function createSkyScene(canvas, map = "anterose") {
   const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model):null;
   const craftCapture=(renneCombat&&!inTower)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event));
-  function aimForAttack(event) {
+  function aimForAttack(event,groundOnly=false) {
     const me=avatars.get(localId);if(!me)return null;
-    if(event){pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);const candidates=[...avatars].filter(([id,a])=>id!==localId&&!a.npc&&!a.dead);const hit=raycaster.intersectObjects([model,...candidates.map(([,a])=>a.mesh)],true).find(hit=>!cutaway||!model.getObjectById(hit.object.id)||cutaway.visible(hit.point));if(hit){const avatar=candidates.find(([,a])=>a.mesh.id===hit.object.id)?.[1];return avatar?{...avatar.position}:{x:hit.point.x,y:hit.point.y,z:hit.point.z};}}
+    if(event){pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);const candidates=groundOnly?[]:[...avatars].filter(([id,a])=>id!==localId&&!a.npc&&!a.dead);const hit=raycaster.intersectObjects([model,...candidates.map(([,a])=>a.mesh)],true).find(hit=>(!groundOnly||(hit.face&&Math.abs(hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).y)>.45))&&(!cutaway||!model.getObjectById(hit.object.id)||cutaway.visible(hit.point)));if(hit){const avatar=candidates.find(([,a])=>a.mesh.id===hit.object.id)?.[1];return avatar?{...avatar.position}:{x:hit.point.x,y:hit.point.y,z:hit.point.z};}if(groundOnly)return null;}
     const dx=me.heading.dx||0,dz=me.heading.dz||-1,length=Math.hypot(dx,dz)||1;
     const point={x:me.position.x+dx/length*4,y:me.position.y,z:me.position.z+dz/length*4};
     const ground=collision.floor(point.x,point.z,point.y+.6);if(ground!==null)point.y=ground;return point;
   }
-  function startAttack(kind,event=cursor) {
+  let craftTarget=false,lastCombatDash=null;
+  function startAttack(kind,event=cursor,confirmed=false) {
     const me=avatars.get(localId);if(!renneCombat||!connected||!me||!renneMechanics.combatSpec(me.character,kind)||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||!combatControls.ready(kind))return false;
     const spec=renneMechanics.combatSpec(me.character,kind);let target;
+    if(spec.groundTarget&&!confirmed){craftTarget=true;combatControls.targeting('craft');marker.visible=true;return true;}
     if(spec.effect==='heal'&&inTower&&event){pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);const allies=[...avatars].filter(([,a])=>!a.enemy&&!a.npc&&!a.dead);const hit=raycaster.intersectObjects(allies.map(([,a])=>a.mesh),true)[0];target=allies.find(([,a])=>a.mesh.id===hit?.object.id)?.[0];}
-    const aim=spec.effect?{...me.position}:aimForAttack(event);if(!aim)return false;
+    const aim=spec.effect?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
+    craftTarget=false;combatControls.targeting(null);
     const action=queueAction("attack",undefined,aim,undefined,{kind,target});if(!action)return false;
     const predicted=renneCombat.predict(action.id,me.position,aim,kind,localId,me.character);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
+    if(spec.dash){localJump=null;jumpPending=false;}
     marker.visible=false;combatControls.started(kind,me.character);
     if(__ACTIVITY_PREVIEW__&&!new URLSearchParams(location.search).has("frame_id"))renneCombat.accept(action.id);
     return true;
@@ -450,7 +454,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       character,
       displayName: player.nom ?? player.name ?? player.character,
       dead,
-      hp: player.hp ?? 100,
+      hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
       platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,
       npc: !!player.npc,
       walking: !!player.moving,
@@ -502,6 +506,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (!connected || !movementAllowed) return;
     if (document.querySelector("#sky-terminal[open]") || event.target.closest?.("input,textarea,select,button,[contenteditable]"))
       return;
+    if(event.code==="Escape"){craftTarget=false;combatControls.targeting(null);marker.visible=false;return;}
     if(inTower&&event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
     if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();startAttack({KeyF:"basic",KeyG:"craft",KeyC:"art"}[event.code]);return;}
     if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
@@ -531,12 +536,13 @@ export async function createSkyScene(canvas, map = "anterose") {
     keys.delete(event.key.toLowerCase());
   }
   function blur() {
-    keys.clear();
+    keys.clear();craftTarget=false;
     endDrag();touches.reset();disarmTouch();
   }
   function click(event) {
     if (event.button !== 0) return;
     menu.hidden = true;
+    if(craftTarget){startAttack('craft',event,true);return;}
     if (health.hp === 0 || !movementAllowed) return;
     pointer.set(
       (event.clientX / viewport.width) * 2 - 1,
@@ -735,6 +741,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       else avatar.time = 0;
       if (!avatar.prop) {
       const attack=avatar.dead?null:renneCombat?.current(id);
+      if(attack&&renneMechanics.combatSpec(avatar.character,attack.kind)?.dash&&!attack.dashShown){attack.dashShown=true;Object.assign(avatar.position,attack.aim);if(id===localId){path=[];movementTrace=[];}}
       if(attack)avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
       avatar.direction = facing(
         avatar.heading.dx,
@@ -774,7 +781,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),
         1 - Math.exp(-seconds * 7),
       );
-    if (!path.length) marker.visible = false;
+    if(craftTarget&&me&&!me.dead&&connected){const point=aimForAttack(cursor,true),target=point&&renneMechanics.attackPoint(me.position,point,'craft',me.character);marker.visible=!!target;if(target){marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
       if (!pomAvatar) continue;
@@ -919,16 +926,20 @@ export async function createSkyScene(canvas, map = "anterose") {
       for (const player of players) {
         const before=avatars.get(player.id);if(before?.hp>0&&player.hp>before.hp)damageEffects.heal(player.id,player.hp-before.hp);
         const lost=damageAmount(before,player);
-        if(lost)damageEffects.hit(player.id,lost);
+        const events=newDamageEvents(before,player);
+        if(events.length)for(const event of events)damageEffects.hit(player.id,event.amount,false,Math.min(.3,(event.at-events[0].at)/1000));
+        else if(lost&&!player.damageEvents)damageEffects.hit(player.id,lost);
         if (player.id === localId) {
           const current = avatars.get(localId);
           if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null) || current.character !== (catalogue[player.character]?player.character:"Estelle")))
             await setAvatar(avatarAtPosition(player,current.position));
           else if (current) {current.hp = player.hp ?? 100;current.shield=player.shield??null;}
+          const updated=avatars.get(localId);if(updated){updated.damageSequence=player.damageSequence??0;updated.damageEvents=player.damageEvents;}
           continue;
         }
         present.add(player.id);
         await setAvatar(player);
+        const updated=avatars.get(player.id);if(updated){updated.damageSequence=player.damageSequence??0;updated.damageEvents=player.damageEvents;}
       }
       for (const [id, avatar] of avatars)
         if (!present.has(id)) {
@@ -941,6 +952,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
       dialogues.receive((result.enemies??[]).filter(e=>e.utterance&&e.hp>0).map(e=>({id:e.utterance.id,author:e.id,character:e.name,text:e.utterance.text})));
       const boss=(result.enemies??[]).find(e=>e.boss);bossPanel.hidden=!boss; if(boss){bossPanel.textContent=boss.name+' · '+boss.hp+' / '+boss.maxHp+' PV';}
+      const dash=result.health?.combatDash;
+      if(dash&&dash!==lastCombatDash){lastCombatDash=dash;const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];localJump=null;craftTarget=false;}
       dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();
       if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
@@ -957,7 +970,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         receivedAt: performance.now(),
       };
       renneCombat?.receive(result.combat?.attacks??[],result.health?.serverTime??Date.now());
-      if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);}}
+      if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);if(renneMechanics.combatSpec(event.character,event.kind)?.dash){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];}}}
       combatControls.update({arena:map==="arena"||inTower,character:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
       for (const ball of environment.poms) {
         if (!projectiles.has(ball.id)) {
@@ -1004,7 +1017,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     },
     correct(position, submitted) {
       const me = avatars.get(localId);
-      if(localJump||inTower&&health.jump)return;
+      if(localJump||inTower&&health.jump||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&renneMechanics.combatSpec(e.character,e.kind)?.dash))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
         Object.assign(me.position, position);
         path = [];
@@ -1012,9 +1025,11 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
     },
     movement() {
+      const pending=[...(renneCombat?.actions.values()??[])].find(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&renneMechanics.combatSpec(e.character,e.kind)?.dash);
       return {
-        ...this.position(),
+        ...(pending?.origin??this.position()),
         platform:movingPlatforms?.relative(this.position(),Date.now()+jumpClockOffset)??undefined,
+        combatDash:lastCombatDash??undefined,
         trace: movementTrace.map((p) => ({ ...p })),
         sequence: movementSequence,
       };

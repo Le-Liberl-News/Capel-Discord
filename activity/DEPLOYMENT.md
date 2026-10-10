@@ -1,6 +1,6 @@
 # Publication de l’activité Antérose
 
-Le client publié exige une ouverture dans Discord. Le personnage vient exclusivement de getPseudoAnonyme côté bot ; les bulles viennent des nouveaux messages du salon dont l’auteur possède un avatar actif. Aucun sélecteur ni formulaire de test n’est présent dans les pages ou le bundle de production.
+Le client publié exige une ouverture dans Discord. Le personnage vient de getPseudoAnonyme côté bot, avec une sélection temporaire au Capel autorisée côté serveur jusqu’au 10 octobre 2026 à minuit (Paris) ; les bulles viennent des nouveaux messages du salon dont l’auteur possède un avatar actif. Le sélecteur d’aperçu local et le formulaire de test de bulle restent absents de la page de production.
 
 1. Dans Capel-Discord, exécuter npm run activity:build puis npm run activity:test. Le build de production fixe __ACTIVITY_PREVIEW__ à false.
 2. Commiter la version du bot, puis exécuter node activity/tools/publish-client.cjs E:/dev/Website/activite. Ce script copie seulement les fichiers PHP, le bundle et les assets ; release.json contient le commit du bot et les empreintes des fichiers.

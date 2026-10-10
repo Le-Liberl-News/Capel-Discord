@@ -1,6 +1,6 @@
 const COMBAT=require('./assets/sky/combat/catalogue.json');
 const SUPPORT={Kloe:{name:'Soin',effect:'heal',heal:35,damage:0,projectile:false,cooldown:4500},Kevin:{name:'Bouclier',effect:'shield',shield:40,shieldDuration:8000,damage:0,projectile:false,cooldown:10000}};
-function combatSpec(character,kind){const raw=Object.hasOwn(COMBAT,character)&&Object.hasOwn(COMBAT[character].actions,kind)?COMBAT[character].actions[kind]:null;return raw?{...raw,windup:raw.windup/2,duration:raw.duration/2,...(kind==='art'?SUPPORT[character]:{})}:null;}
+function combatSpec(character,kind){const raw=Object.hasOwn(COMBAT,character)&&Object.hasOwn(COMBAT[character].actions,kind)?COMBAT[character].actions[kind]:null;return raw?{...raw,windup:raw.windup/2,duration:raw.duration/2,hitOffsets:raw.hitOffsets?.map(t=>t/2),...(kind==='art'?SUPPORT[character]:{})}:null;}
 function attackPoint(origin,aim,kind,character='Renne'){
  const spec=combatSpec(character,kind);if(spec?.effect)return {...origin};
  if(!spec||!aim||![aim.x,aim.y,aim.z].every(Number.isFinite))return null;

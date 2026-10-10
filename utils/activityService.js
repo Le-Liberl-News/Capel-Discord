@@ -197,7 +197,7 @@ function createActivityService({
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
         let submitted=point;
         if(platforms&&point.platform&&!requestedJump){const d=platforms.definitions.find(d=>d.id===point.platform.id),pos=d&&platforms.position(d.id);if(!d||![point.platform.x,point.platform.z].every(Number.isFinite)||Math.abs(point.platform.x)>d.width/2+.15||Math.abs(point.platform.z)>d.width/2+.15)throw new ActivityError('Plateforme invalide.');submitted={...point,x:pos.x+point.platform.x,z:pos.z+point.platform.z,trace:[]};}
@@ -330,6 +330,7 @@ function createActivityService({
           ? { id: point.action.id, error: actionResult?.error }
           : undefined,
         health: {
+          combatDash:player.combatDash??null,
           jump: player.jump??null,
           jumpReadyAt:player.jumpReadyAt??0,
           hp: player.hp,

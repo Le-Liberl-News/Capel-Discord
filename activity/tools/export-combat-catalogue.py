@@ -27,7 +27,14 @@ def sequence(data,entries,end,slot,available):
 for row in rows:
  if row['category'] not in ['trio','attack-craft','attack'] or row['character']=='Renne':continue
  if a.character and row['character']!=a.character:continue
- source=row['source'];game=source['game'].lower();asfolder=a.extracted/('sc-subtitle-base' if game=='sc' else 'third-30')/'ED6_DT30';data=(asfolder/source['file']).read_bytes();_,end,entries=decoder.craft_table(data)
+ source=dict(row['source'])
+ if row['character']=='Olivier':
+  source['file']='as04260._dt';source['banks']=[{**b,'ch':b['ch'].replace('0425','0426'),'cp':b['cp'].replace('0425','0426')} for b in source['banks']]
+ if row['character']=='Joshua':
+  source['banks']=[{'ch':f'CH0420{n:x}._CH','cp':f'CH0420{n:x}P._CP','archive':'ED6_DT27'} for n in range(13)]
+  # AS 27 opcode 0x6A explicitly loads CH0420A/CP0420AP into bank 12.
+  source['banks'][12]={'ch':'CH0420A._CH','cp':'CH0420AP._CP','archive':'ED6_DT27'}
+ game=source['game'].lower();asfolder=a.extracted/('sc-subtitle-base' if game=='sc' else 'third-30')/'ED6_DT30';data=(asfolder/source['file']).read_bytes();_,end,entries=decoder.craft_table(data)
  files={}
  for i,b in enumerate(source['banks']):
   folder=a.extracted/(game+'-'+b['archive'][-2:].lower())/b['archive'];ch=folder/b['ch'].lower();cp=folder/b['cp'].lower()
@@ -41,6 +48,10 @@ for row in rows:
     seq=sequence(data,entries,end,slot,files)
     if seq:craftSlot=slot;sequences['craft']=seq;break
   if not sequences['basic']:raise ValueError('No playable self frames')
+  if row['character']=='Joshua':
+   sequences['art']=sequence(data,entries,end,19,files)
+   sequences['craft']=[f for f in sequence(data,entries,end,27,files) if f['bank']==12]
+   craftSlot=27
   if 'spell' in sequences and (not sequences['spell'] or not sequences['cast']):sequences.pop('spell');sequences.pop('cast')
   needed={0,1,4}.intersection(files)|{f['bank'] for seq in sequences.values() for f in seq}
   frames={bank:decode_sprite(files[bank][0].read_bytes(),files[bank][1].read_bytes()) for bank in needed}
@@ -62,11 +73,16 @@ for row in rows:
   if row['character'] in ['Olivier','Tita','Kevin','Josette','Kanone','Gilbert','Dorothy']:actions['basic'].update(range=8,radius=.7,projectile=True,windup=350)
   if sequences.get('spell') and sequences.get('cast'):actions['art']={'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1800,'range':9,'radius':1.4,'projectile':True}
   if sequences.get('craft'):actions['craft']={'name':f'Craft {craftSlot-15}','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':max(1650,min(2500,sum(f['ms'] for f in sequences['craft']))),'range':6,'radius':1.9,'projectile':False}
+  if row['character']=='Joshua':
+   actions['art'].update(name='Lame de vent',element='wind',effectDuration=3000,nativeEffect='SC/mg050_0._ef',poseSequence='art',projectile=False,windup=720,duration=1400)
+   actions['craft'].update(name='Black Fang',shape='line',dash=True,groundTarget=True,hitOffsets=[0,160,320],range=9,radius=.8,windup=160,duration=900,nativeEffect='SC/sc001_10._ef')
   catalogue[row['character']]={'character':row['character'],'banks':banks,'sequences':sequences,'actions':actions,'source':{'game':source['game'],'as':source['file'],'sha256':hashlib.sha256(data).hexdigest(),'craftSlot':craftSlot}}
   print(row['character'],list(actions),craftSlot)
  except Exception as e:omitted.append({'character':row['character'],'reason':str(e)});print('OMITTED',row['character'],str(e))
 # Retain the existing hand-tuned Renne implementation.
 renne=json.loads((a.output/'renne.json').read_text(encoding='utf8'));renne['actions']={'basic':{'name':'Coup de faux','key':'f','damage':12,'cooldown':700,'windup':300,'duration':650,'range':2.5,'radius':1.05},'art':{'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1650,'range':9,'radius':1.4,'projectile':True},'craft':{'name':'Cercle sanglant','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':1650,'range':8,'radius':1.9,'projectile':True}};catalogue['Renne']=renne
 (a.output/'catalogue.json').write_text(json.dumps(catalogue,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf8')
+if a.character and (a.output/'export-report.json').exists():
+ omitted=[e for e in json.loads((a.output/'export-report.json').read_text(encoding='utf8'))['omitted'] if e['character']!=a.character]+omitted
 (a.output/'export-report.json').write_text(json.dumps({'characters':len(catalogue),'omitted':omitted},ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 print('Exported',len(catalogue),'characters; omitted',len(omitted))

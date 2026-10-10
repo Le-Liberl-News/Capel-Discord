@@ -14,6 +14,7 @@ require("esbuild").buildSync({
 const types = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript",
+  ".mjs": "application/javascript",
   ".json": "application/json",
   ".png": "image/png",
   ".ttf": "font/ttf",
