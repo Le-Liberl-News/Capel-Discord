@@ -23,4 +23,4 @@ Le résultat public du duel contient `action` :
 
 Pour une future charge ou un saut, utiliser `follow: "actor"` et animer la position réelle de l’acteur : la relecture reprendra aussi sa hauteur. Sans historique complet (reconnexion après le KO), les plans utilisent les derniers états disponibles.
 
-Le GIF reprend les quatre plans : 24 images de 448 × 336, palette de 64 couleurs, durée de 7,44 secondes. Il utilise le relais de capture existant ; un seul des deux joueurs suffit pour le publier dans le thread du match. Le texte de victoire reste indépendant de la capture.
+Le GIF reprend les quatre plans : jusqu’à 93 images de 448 × 336 à 12,5 images/s, palette de 64 couleurs, durée d’environ 7,4 secondes. La caméra et les positions interpolées sont rendues à cette cadence, sans interpolation entre les poses des sprites. La limite du relais est de 96 images et 8 Mo pour les fins de duel ; les GIF de crafts restent limités à 24 images et 3 Mo. Il utilise le relais de capture existant ; un seul des deux joueurs suffit pour le publier dans le thread du match. Le texte de victoire reste indépendant de la capture.

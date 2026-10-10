@@ -2,6 +2,7 @@ import { facing } from "./movement.mjs";
 import { createArenaCutaway } from "./scene-visibility.mjs";
 import { CINEMATIC_DURATION, cinematicPhase, trajectoryPoint, historyPair } from "./cinematic.mjs";
 const REPLAY_FRAMES = 20, REPLAY_INTERVAL = 100;
+const GIF_INTERVAL=80,GIF_FRAMES=Math.ceil(CINEMATIC_DURATION/GIF_INTERVAL);
 function replayWindow(frames, frame, limit = REPLAY_FRAMES) {
   frames.push(frame);
   if (frames.length > limit) frames.shift();
@@ -193,7 +194,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     workerTimer = setTimeout(() => {
       worker?.terminate();
       worker = null;
-    }, 15e3);
+    }, 45e3);
     worker.onmessage = ({ data }) => {
       clearTimeout(workerTimer);
       worker?.terminate();
@@ -207,7 +208,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       worker = null;
     };
     const buffers = frames.map((frame) => frame.buffer);
-    worker.postMessage({ frames: buffers, width, height, delay: 310, colors: 64 }, buffers);
+    worker.postMessage({ frames: buffers, width, height, delay: Math.round(CINEMATIC_DURATION/frames.length/10)*10, colors: 64 }, buffers);
     frames = [];
   }
   function read(renderTarget, w, h, output) {
@@ -309,7 +310,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     context.putImageData(new ImageData(read(displayTarget, w, hh, displayPixels), w, hh), 0, 0);
     flash.style.opacity = String(phase.kind === "impact" ? Math.max(0, 1 - phase.progress * 8) * 0.65 : 0);
     title.style.opacity = phase.kind === "overhead" ? "1" : "0";
-    const captureIndex = Math.min(23, Math.floor(elapsed / 310));
+    const captureIndex = Math.min(GIF_FRAMES-1, Math.floor(elapsed / GIF_INTERVAL));
     if (captureIndex > lastCapture) {
       lastCapture = captureIndex;
       camera.aspect = 4 / 3;

@@ -185,7 +185,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-app.use('/api/craft-capture', express.json({limit:'5mb'}));
+app.use('/api/craft-capture', express.json({limit:'11mb'}));
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
 const upload = multer({ dest: 'uploads/' });
