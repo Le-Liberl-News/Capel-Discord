@@ -6,10 +6,10 @@ const {COMBAT,combatSpec}=require('../activity/native-combat.cjs');
 const grid={origin:{x:-12,z:-12},step:1,width:25,height:25,cells:Array(625).fill(0),spawn:{x:0,y:0,z:0}};
 function fixture(extra={}){let time=1000;const players=new Map([['j',{id:'j',character:'Joshua',hp:100,x:0,y:0,z:0}],['a',{id:'a',hp:100,x:2,y:0,z:0}],['b',{id:'b',hp:100,x:5,y:0,z:.5}],['outside',{id:'outside',hp:100,x:3,y:0,z:2}]]);const combat=createActivityCombat({grid,now:()=>time,...extra});return {players,combat,start:()=>combat.action(players.get('j'),{id:'fang',kind:'craft',aim:{x:7,y:0,z:0}},players),tick(ms){time+=ms;combat.tick(players);}};}
 test('Black Fang crosses its selected segment and applies three distinct impacts to every enemy on that segment',()=>{
- const f=fixture();assert.ok(f.start().combatId);assert.equal(f.players.get('j').x,7);
- f.tick(79);assert.equal(f.players.get('a').hp,100);
+ const f=fixture();assert.ok(f.start().combatId);assert.equal(f.players.get('j').x,0);
+ f.tick(80);assert.equal(f.players.get('j').x,0);f.tick(110);assert.equal(f.players.get('j').x,3.5);assert.equal(f.players.get('a').hp,100);f.tick(109);assert.equal(f.players.get('a').hp,100);
  for(let i=1;i<=3;i++){f.tick(i===1?1:80);for(const id of ['a','b']){assert.equal(f.players.get(id).hp,100-10*i);assert.equal(f.players.get(id).damageEvents.length,i);}}
- assert.equal(f.players.get('outside').hp,100);f.tick(1000);assert.equal(f.players.get('a').hp,70);
+ assert.equal(f.players.get('j').x,7);assert.equal(f.players.get('outside').hp,100);f.tick(1000);assert.equal(f.players.get('a').hp,70);
  assert.equal(f.combat.snapshot().attacks[0].hits.length,6);assert.ok(f.start().error);
 });
 test('Black Fang respects party protections and cannot traverse a missing floor or a wall',()=>{
@@ -18,13 +18,13 @@ test('Black Fang respects party protections and cannot traverse a missing floor 
  const wall=fixture({geometry:{floor:()=>0,sweep:(a,b)=>a.x<3&&b.x>3?{point:{x:3,y:.85,z:0}}:null}});wall.start();wall.tick(1000);assert.equal(wall.players.get('b').hp,100);assert.equal(wall.players.get('j').x,2.8);
 });
 test('Black Fang can land from a jump while still requiring a continuous accessible floor',()=>{
- const f=fixture();Object.assign(f.players.get('j'),{y:1.5,jump:{id:'jump'}});assert.ok(f.start().combatId);assert.equal(f.players.get('j').jump,null);assert.equal(f.players.get('j').y,0);f.tick(400);assert.equal(f.players.get('a').hp,70);
+ const f=fixture();Object.assign(f.players.get('j'),{y:1.5,jump:{id:'jump'}});assert.ok(f.start().combatId);assert.equal(f.players.get('j').jump,null);assert.equal(f.players.get('j').y,1.5);f.tick(460);assert.equal(f.players.get('j').y,0);assert.equal(f.players.get('a').hp,70);
 });
 test('a stale movement sample cannot undo an accepted dash; acknowledged movement resumes normally',async()=>{
  let time=1000;const service=createActivityService({grid,combatEnabled:true,now:()=>time,resolveCharacter:async()=> 'Joshua'}),joined=await service.join({id:'j',channel:'arena'}),token=joined.activity_token;
- const cast=await service.state(token,{x:0,z:0,action:{id:'dash',type:'attack',kind:'craft',aim:{x:6,y:0,z:0}}});assert.equal(cast.position.x,6);
- time+=200;const stale=await service.state(token,{x:0,z:0});assert.equal(stale.position.x,6);
- time+=200;const walk=await service.state(token,{x:6.5,z:0,combatDash:'dash'});assert.equal(walk.position.x,6.5);
+ const cast=await service.state(token,{x:0,z:0,action:{id:'dash',type:'attack',kind:'craft',aim:{x:6,y:0,z:0}}});assert.equal(cast.position.x,0);assert.equal(cast.health.canMove,false);
+ time+=190;const midway=await service.state(token,{x:6,z:0,combatDash:'dash'});assert.equal(midway.position.x,3);assert.equal(midway.health.canMove,false);time+=110;const stale=await service.state(token,{x:0,z:0});assert.equal(stale.position.x,6);
+ time+=150;const walk=await service.state(token,{x:6.5,z:0,combatDash:'dash'});assert.equal(walk.position.x,6.5);
 });
 test('all damage sources retain separately numbered impacts after shield absorption, including bosses',async()=>{
  const p={hp:1500,shield:{hp:5,until:3000}};applyDamage(p,12,1000);applyDamage(p,20,1100);assert.deepEqual(p.damageEvents.map(e=>e.amount),[7,20]);
@@ -49,4 +49,21 @@ test('the runtime resolves every selected EF and texture relative to the public 
 test('Joshua charges for one full second before releasing his art with the native casting halo',()=>{
  const spec=combatSpec('Joshua','art');assert.equal(spec.windup,1000);assert.equal(spec.castDuration,1000);assert.equal(spec.castEffect,'SC/mgaria0._ef');assert.ok(spec.duration>=spec.windup);
  const f=fixture(),j=f.players.get('j');assert.ok(f.combat.action(j,{id:'wind',kind:'art',aim:{x:2,y:0,z:0}},f.players).combatId);f.tick(999);assert.equal(f.players.get('a').hp,100);f.tick(1);assert.equal(f.players.get('a').hp,80);
+});
+
+
+test('the Black Fang blade covers the entire travelled diagonal, with afterimages behind the moving actor',async()=>{
+ const THREE=await import('three'),{createBlackFangTrail}=await import('../activity/black-fang-effects.mjs'),{dashPosition}=require('../activity/black-fang.cjs');
+ const previous=global.document;global.document={createElement:()=>({width:0,height:0,getContext:()=>({drawImage(){}})})};
+ const scene=new THREE.Scene(),origin={x:2,y:1,z:3},aim={x:8,y:1,z:11},event={origin,aim},spec=combatSpec('Joshua','craft'),map=new THREE.Texture(),avatar={mesh:new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map}))};
+ const assembly={sprite:{material:{map}},draw(){}},player={root:{parts:[{}, {textureIndex:0,uv:[0,0,1,1]}],textures:[{texture:'native'}]},textureImages:new Map([['native',{width:32,height:32}]])};
+ let trail;
+ try{
+  trail=createBlackFangTrail(THREE,scene,event,spec,assembly,player);const halfway=dashPosition(event,190,spec);assert.deepEqual(halfway.position,{x:5,y:1,z:7});trail.draw(190,avatar);scene.updateMatrixWorld(true);
+  const blade=scene.children[0].children[0],a=new THREE.Vector3(-.5,0,0).applyMatrix4(blade.matrixWorld),b=new THREE.Vector3(.5,0,0).applyMatrix4(blade.matrixWorld);
+  assert.ok(Math.hypot(a.x-origin.x,a.z-origin.z)<1e-6);assert.ok(Math.hypot(b.x-5,b.z-7)<1e-6);
+  trail.draw(300,avatar);scene.updateMatrixWorld(true);const end=new THREE.Vector3(.5,0,0).applyMatrix4(blade.matrixWorld);assert.ok(Math.hypot(end.x-aim.x,end.z-aim.z)<1e-6);
+  assert.equal(scene.children[0].children.length,11);trail.draw(851,avatar);assert.equal(scene.children[0].visible,false);
+ }finally{trail?.dispose();avatar.mesh.geometry.dispose();avatar.mesh.material.dispose();map.dispose();global.document=previous;}
+ assert.equal(scene.children.length,0);
 });

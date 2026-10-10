@@ -2,7 +2,7 @@
 
 Joshua utilise `as04200._dt` de The 3rd. Son art reprend les poses de l’entrée **19 (Craft 4)** ; l’effet de vent est l’assemblage **SC/mg050_0._ef**, nommé ウィンドカッタ dans le fichier, et son effet enfant `mg050_1`. L’incantation dure une seconde avant le lancement : le halo **SC/mgaria0._ef** utilise son cylindre texturé et ses particules autour de Joshua, y compris pendant un déplacement.
 
-Black Fang reprend l’entrée **27**. La commande **0x6A** charge explicitement les ressources `CH0420A` / `CH0420AP` dans la banque **12** : cette banque est différente de `CH0420C`. Les poses de cette banque servent à la traversée ; les poses de chute de la mise en scène originale sont écartées. Le trajet sélectionné inflige **3 × 10 PV**, aux instants 80, 160 et 240 ms. Les murs et les trous bloquent la traversée ; les alliés de la tour restent protégés.
+Black Fang reprend l’entrée **27**. La commande **0x6A** charge explicitement les ressources `CH0420A` / `CH0420AP` dans la banque **12** : cette banque est différente de `CH0420C`. Les poses de cette banque servent à la traversée ; les poses de chute de la mise en scène originale sont écartées. Joshua traverse le segment en **220 ms**, après 80 ms de préparation. Une lame étirée et des rémanences suivent toute la longueur. Le trajet sélectionné inflige **3 × 10 PV**, aux instants 300, 380 et 460 ms. Les murs et les trous bloquent la traversée ; les alliés de la tour restent protégés.
 
 Olivier utilise **as04260**, vérifié sur les sprites décodés. **as04250** représente une autre tenue de Joshua.
 

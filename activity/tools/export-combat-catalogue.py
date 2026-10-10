@@ -75,7 +75,7 @@ for row in rows:
   if sequences.get('craft'):actions['craft']={'name':f'Craft {craftSlot-15}','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':max(1650,min(2500,sum(f['ms'] for f in sequences['craft']))),'range':6,'radius':1.9,'projectile':False}
   if row['character']=='Joshua':
    actions['art'].update(name='Lame de vent',element='wind',effectDuration=3000,nativeEffect='SC/mg050_0._ef',poseSequence='art',projectile=False,windup=2000,duration=2400,castEffect='SC/mgaria0._ef',castDuration=1000)
-   actions['craft'].update(name='Black Fang',shape='line',dash=True,groundTarget=True,hitOffsets=[0,160,320],range=9,radius=.8,windup=160,duration=900,nativeEffect='SC/sc001_10._ef')
+   actions['craft'].update(name='Black Fang',shape='line',dash=True,groundTarget=True,hitOffsets=[0,160,320],range=9,radius=.8,windup=160,dashDuration=440,duration=1100,effectDuration=750,nativeEffect='SC/sc001_10._ef')
   catalogue[row['character']]={'character':row['character'],'banks':banks,'sequences':sequences,'actions':actions,'source':{'game':source['game'],'as':source['file'],'sha256':hashlib.sha256(data).hexdigest(),'craftSlot':craftSlot}}
   print(row['character'],list(actions),craftSlot)
  except Exception as e:omitted.append({'character':row['character'],'reason':str(e)});print('OMITTED',row['character'],str(e))

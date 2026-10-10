@@ -680,7 +680,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     flightMotion={moving:false,dx:0,dz:0};
-    if (me && !localJump && health.hp > 0 && movementAllowed ) {
+    if (me && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
         Number(keys.has("arrowleft") || keys.has(movementKeys(keyboardLayout()).left)) + stick.x;
@@ -705,10 +705,12 @@ export async function createSkyScene(canvas, map = "anterose") {
     jumpButton.hidden=!inTower||me?.character==="Sieg";
     jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump;
     for (const [id, avatar] of avatars) {
-      const carried=id!==localId&&!avatar.jump&&movingPlatforms&&avatar.platformId&&avatar.platformOffset;
+      const dash=avatar.dead?null:renneCombat?.dash(id);
+      if(dash){Object.assign(avatar.position,dash.position);avatar.target={...dash.position};if(id===localId){path=[];movementTrace=[];}dash.event.dashFinished=!dash.active;}
+      const carried=!dash&&id!==localId&&!avatar.jump&&movingPlatforms&&avatar.platformId&&avatar.platformOffset;
       let carriedMotion;
       if(carried){const p=movingPlatforms.simulation.position(avatar.platformId,Date.now()+jumpClockOffset);if(p){avatar.platformRenderOffset??={...avatar.platformOffset,y:0};carriedMotion=advance(avatar.platformRenderOffset,[{...avatar.platformOffset,y:0}],seconds,6);Object.assign(avatar.position,{x:p.x+avatar.platformRenderOffset.x,y:p.y,z:p.z+avatar.platformRenderOffset.z});}}
-      const jump=id===localId?localJump:avatar.jump;
+      const jump=dash?null:id===localId?localJump:avatar.jump;
       if(jump&&!avatar.dead)Object.assign(avatar.position,dungeonMechanics.jumpDisplayPosition(walkingGrid,jump,Date.now()+jumpClockOffset));
       const ballState = environment.poms.find(p => p.id === id),
         isPom = id.startsWith("world:pom");
@@ -722,6 +724,8 @@ export async function createSkyScene(canvas, map = "anterose") {
           }
         : avatar.dead
           ? { moving: false, dx: 0, dz: 0 }
+          : dash
+            ? {moving:dash.active,dx:dash.event.aim.x-dash.event.origin.x,dz:dash.event.aim.z-dash.event.origin.z}
           : carriedMotion
             ? carriedMotion
           : jump
@@ -741,7 +745,6 @@ export async function createSkyScene(canvas, map = "anterose") {
       else avatar.time = 0;
       if (!avatar.prop) {
       const attack=avatar.dead?null:renneCombat?.current(id);
-      if(attack&&renneMechanics.combatSpec(avatar.character,attack.kind)?.dash&&!attack.dashShown){attack.dashShown=true;Object.assign(avatar.position,attack.aim);if(id===localId){path=[];movementTrace=[];}}
       if(attack)avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
       avatar.direction = facing(
         avatar.heading.dx,
@@ -952,8 +955,9 @@ export async function createSkyScene(canvas, map = "anterose") {
       enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
       dialogues.receive((result.enemies??[]).filter(e=>e.utterance&&e.hp>0).map(e=>({id:e.utterance.id,author:e.id,character:e.name,text:e.utterance.text})));
       const boss=(result.enemies??[]).find(e=>e.boss);bossPanel.hidden=!boss; if(boss){bossPanel.textContent=boss.name+' · '+boss.hp+' / '+boss.maxHp+' PV';}
+      renneCombat?.receive(result.combat?.attacks??[],result.health?.serverTime??Date.now());
       const dash=result.health?.combatDash;
-      if(dash&&dash!==lastCombatDash){lastCombatDash=dash;const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];localJump=null;craftTarget=false;}
+      if(dash&&dash!==lastCombatDash){lastCombatDash=dash;const me=avatars.get(localId);if(me&&!renneCombat?.dash(localId))Object.assign(me.position,result.position);path=[];movementTrace=[];localJump=null;craftTarget=false;}
       dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();
       if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
@@ -969,7 +973,6 @@ export async function createSkyScene(canvas, map = "anterose") {
         poms: result.poms ?? (result.pom ? [{...result.pom,id:result.pom.id ?? "world:pom"}] : []),
         receivedAt: performance.now(),
       };
-      renneCombat?.receive(result.combat?.attacks??[],result.health?.serverTime??Date.now());
       if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);if(renneMechanics.combatSpec(event.character,event.kind)?.dash){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];}}}
       combatControls.update({arena:map==="arena"||inTower,character:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
       for (const ball of environment.poms) {
@@ -1017,7 +1020,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     },
     correct(position, submitted) {
       const me = avatars.get(localId);
-      if(localJump||inTower&&health.jump||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&renneMechanics.combatSpec(e.character,e.kind)?.dash))return;
+      if(localJump||inTower&&health.jump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&renneMechanics.combatSpec(e.character,e.kind)?.dash))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
         Object.assign(me.position, position);
         path = [];

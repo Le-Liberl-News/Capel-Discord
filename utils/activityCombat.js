@@ -1,3 +1,4 @@
+const {dashPosition}=require('../activity/black-fang.cjs');
 const {applyDamage}=require('./activityDamage');
 const { combatSpec, attackPoint } = require("../activity/native-combat.cjs");
 function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {}, onDefeat = () => {}, canDamage = () => true, dungeon=null, platforms=null }) {
@@ -43,10 +44,10 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       }
       endpoint.y=previous;
     }
-    const travel = !spec.projectile ? 0 : Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/14*1000;
+    const travel = spec.dash ? spec.dashDuration : !spec.projectile ? 0 : Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/14*1000;
     const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,technique:spec.name,target:supportTarget?.id,effect:spec.effect,origin,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
     attacks.set(attack.id,attack);players=room;
-    if(spec.dash){Object.assign(player,endpoint,{combatDash:attack.id,acceptedAt:time,jump:null,jumpTickAt:null,jumpLandedAt:time,platformId:null,platformOffset:null});}
+    if(spec.dash){Object.assign(player,{combatDash:attack.id,combatLockedUntil:time+spec.windup+spec.dashDuration,acceptedAt:time,jump:null,jumpTickAt:null,jumpLandedAt:time,platformId:null,platformOffset:null});}
     const cooldown=cooldowns.get(player.id)??{};cooldown[command.kind]=time+spec.cooldown;cooldowns.set(player.id,cooldown);
     player.attackBusyUntil=time+spec.duration;
     if(command.kind==="craft")onCraft({...attack});
@@ -56,7 +57,13 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     players=room;const time=now();
     for(const [id,attack]of attacks) {
       if(time>attack.endsAt+5000){attacks.delete(id);continue;}
-      const hitOffsets=combatSpec(attack.character,attack.kind)?.hitOffsets??[0];
+      const dashSpec=combatSpec(attack.character,attack.kind);
+      if(dashSpec?.dash&&!attack.dashFinished&&!attack.cancelled){
+        const actor=room.get(attack.actor);
+        if(!actor||actor.hp<=0||actor.character!==attack.character||actor.spectator){attack.cancelled=true;attack.resolved=true;if(actor)actor.combatLockedUntil=0;}
+        else {const motion=dashPosition(attack,time-attack.started,dashSpec);Object.assign(actor,motion.position);if(!motion.active){attack.dashFinished=true;actor.acceptedAt=time;}}
+      }
+      const hitOffsets=dashSpec?.hitOffsets??[0];
       if(attack.resolved||time<attack.impactAt+hitOffsets[attack.nextHit])continue;
       while(attack.nextHit<hitOffsets.length&&time>=attack.impactAt+hitOffsets[attack.nextHit]){
       const hitIndex=attack.nextHit++;attack.resolved=attack.nextHit===hitOffsets.length;
