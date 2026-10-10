@@ -32,7 +32,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
 
   if(!peak)throw Error(`Invisible native effect: ${name}`);
   await fs.writeFile(path.join(root,`../${name}-frames.png`),atlas.toBuffer('image/png'));
-  metadata[id.toLowerCase()]={name,frames,duration:name.includes('-')?Math.max(...Object.values(heroes).flatMap(h=>Object.values(h).filter(a=>a?.nativeEffect===id).map(a=>a.effectDuration))):undefined,size:id.toLowerCase().includes('sc003_10')?9:4};
+  metadata[id.toLowerCase()]={name,frames,duration:name.includes('-')?Math.max(...Object.values(heroes).flatMap(h=>Object.values(h).filter(a=>a?.nativeEffect===id).map(a=>a.effectDuration))):undefined,blend:/cr210_00|cr04080/.test(id)?'normal':undefined,size:id.toLowerCase().includes('sc003_10')?9:4};
   console.log(name,{extent:player.extent,peak,frames});
  }
  await fs.writeFile(path.join(root,'../hero-frames.json'),JSON.stringify(metadata,null,2)+'\n');

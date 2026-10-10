@@ -75,6 +75,7 @@ export class NativeEffectPlayer{
     const duration=part.duration||this.duration;
     const item={part,start,duration,offset,parent,ordinal,seed,texture:effect.textures[part.textureIndex],
       position:vectorKeys(part.position,'position',seed,ordinal),
+      angular:vectorKeys(part.angular??[],'rotation',seed+53,ordinal),
       rotation:vectorKeys(part.rotation,'rotation',seed+31,ordinal),
       scale:vectorKeys(part.scale,'scale',seed+79,ordinal),color:colorKeys(part.color)};
     this.instances.push(item);
@@ -101,8 +102,12 @@ export class NativeEffectPlayer{
   state(item,time){
     const age=time-item.start;if(age<0||age>item.duration)return null;
     let position=add(sampleKeys(item.position,age,[0,0,0]),item.offset);
+    const angular=sampleKeys(item.angular??[],age,[0,0,0]);
+    // EF angular curves orbit the emitter, including the positions inherited by its particles.
+    position=rotate(position,[angular[1],angular[0],angular[2]]);
     if(item.parent){
-      const atBirth=this.state(item.parent,item.start);
+      // A delayed emission inherits the emitter's final position even after it has stopped.
+      const atBirth=this.state(item.parent,Math.min(item.start,item.parent.start+item.parent.duration));
       if(atBirth)position=add(position,atBirth.position);
     }
     return {position,rotation:sampleKeys(item.rotation,age,[0,0,0]),
@@ -162,9 +167,11 @@ export class NativeEffectPlayer{
       const points=raw.map(point=>this.project(add(rotate(point.map((val,j)=>val*s.scale[j]),rotation),s.position),w,h,factor));
       const [p0,p1,p2]=points;if(points.flat().some(n=>!Number.isFinite(n)))continue;
       const additive=!!(part.renderFlags&4),multiply=!additive&&!!(part.renderFlags&0x40);
-      const tint=this.tint(im,Math.min(u,u2),Math.min(v,v2),fw,fh,multiply?[255,255,255,255]:s.color,!additive&&!multiply&&item.texture.blackKey);
-      ctx.save();ctx.globalCompositeOperation=additive?'lighter':multiply?'multiply':'source-over';
-      ctx.globalAlpha=additive||multiply?1:s.color[3]/255;
+      const tint=this.tint(im,Math.min(u,u2),Math.min(v,v2),fw,fh,multiply?[255,255,255,255]:s.color,(additive||!multiply&&item.texture.blackKey),multiply);
+      // Multiplication needs a scene colour beneath it. On a transparent export, encode
+      // its white-neutral texture as dark particles instead of baking an opaque white rectangle.
+      ctx.save();ctx.globalCompositeOperation=additive?'lighter':'source-over';
+      ctx.globalAlpha=additive?1:s.color[3]/255;
       ctx.transform((p1[0]-p0[0])/fw,(p1[1]-p0[1])/fw,(p2[0]-p0[0])/fh,(p2[1]-p0[1])/fh,p0[0],p0[1]);
       if(flipU||flipV){ctx.translate(flipU?fw:0,flipV?fh:0);ctx.scale(flipU?-1:1,flipV?-1:1);}ctx.drawImage(tint,0,0,fw,fh);ctx.restore();count++;
     }
@@ -202,10 +209,11 @@ export class NativeEffectPlayer{
     }
     return triangles.length?1:0;
   }
-  tint(image,u,v,w,h,color,blackKey=false){
+  tint(image,u,v,w,h,color,blackKey=false,whiteNeutral=false){
     const canvas=this.tintCanvas??=document.createElement('canvas');
     canvas.width=Math.max(1,Math.ceil(w));canvas.height=Math.max(1,Math.ceil(h));const ctx=canvas.getContext('2d');
     ctx.drawImage(image,u*image.width,v*image.height,w,h,0,0,w,h);
+    if(whiteNeutral){const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<pixels.data.length;i+=4){const darkness=255-Math.min(pixels.data[i],pixels.data[i+1],pixels.data[i+2]);pixels.data[i+3]=Math.round(pixels.data[i+3]*darkness/255);pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=35;}ctx.putImageData(pixels,0,0);}
     if(blackKey){const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<pixels.data.length;i+=4)if(pixels.data[i]===0&&pixels.data[i+1]===0&&pixels.data[i+2]===0)pixels.data[i+3]=0;ctx.putImageData(pixels,0,0);}
     const mask=this.maskCanvas??=document.createElement('canvas');mask.width=canvas.width;mask.height=canvas.height;mask.getContext('2d').drawImage(canvas,0,0);
     ctx.globalCompositeOperation='multiply';ctx.fillStyle=`rgb(${color.slice(0,3).map(v=>Math.round(v)).join(',')})`;ctx.fillRect(0,0,w,h);

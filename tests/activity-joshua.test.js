@@ -32,7 +32,7 @@ test('all damage sources retain separately numbered impacts after shield absorpt
  assert.deepEqual([4,12,25,40,70].map(damageEffectIndex),[5,3,2,1,0]);
 });
 test('Olivier has his own verified banks and Joshua uses AS 19 and the bank dynamically loaded by Black Fang',()=>{
- assert.equal(COMBAT.Olivier.source.as,'as04260._dt');assert.ok(Object.values(COMBAT.Olivier.banks).every(b=>b.texture.includes('as04260')));
+ assert.equal(COMBAT.Olivier.source.as,'as04030._dt');assert.ok(Object.values(COMBAT.Olivier.banks).every(b=>b.texture.includes('as04030')));
  assert.deepEqual(COMBAT.Joshua.sequences.art.map(f=>f.pose),[0,1,2]);assert.ok(COMBAT.Joshua.sequences.craft.some(f=>f.bank===12));assert.equal(combatSpec('Joshua','art').element,'time');
 });
 

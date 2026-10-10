@@ -61,8 +61,8 @@ test('all native combatants have valid local banks and server-owned actions, civ
  const fs=require('node:fs'),path=require('node:path'),{COMBAT,combatSpec}=require('../activity/native-combat.cjs');assert.equal(Object.keys(COMBAT).length,36);assert.equal(Object.values(COMBAT).filter(c=>c.actions.art).length,31);
  for(const [character,meta]of Object.entries(COMBAT)){
   for(const info of Object.values(meta.banks)){assert.ok(fs.existsSync(path.join(__dirname,'../activity/assets/sky',info.texture)),info.texture);assert.ok(info.frames>0);}
-  for(const frames of Object.values(meta.sequences))for(const frame of frames){assert.ok(frame.pose*8+7<meta.banks[frame.bank].frames,character);assert.ok(frame.ms>0);}
-  for(const [kind,spec]of Object.entries(meta.actions)){const f=fixture();f.players.get('renne').character=character;const spec=combatSpec(character,kind),target=spec.effect?'renne':'victim';assert.ok(f.combat.action(f.players.get('renne'),{id:'all-'+kind,kind,aim:{x:2,y:0,z:0},target},f.players).combatId,character+' '+kind);f.tick(3000);assert.equal(f.players.get('victim').hp,100-combatSpec(character,kind).damage,character+' '+kind);}
+  for(const frames of Object.values(meta.sequences))for(const frame of frames){assert.ok(frame.pose*(meta.banks[frame.bank].directions??8)+(meta.banks[frame.bank].directions??8)-1<meta.banks[frame.bank].frames,character);assert.ok(frame.ms>0);}
+  for(const [kind,spec]of Object.entries(meta.actions)){const f=fixture();f.players.get('renne').character=character;const spec=combatSpec(character,kind),target=spec.effect?'renne':'victim';assert.ok(f.combat.action(f.players.get('renne'),{id:'all-'+kind,kind,aim:{x:2,y:0,z:0},target},f.players).combatId,character+' '+kind);f.tick(Math.max(3000,spec.windup+(spec.hitOffsets?.at(-1)??0)+1000));assert.equal(f.players.get('victim').hp,100-combatSpec(character,kind).damage,character+' '+kind);}
  }
  assert.equal(combatSpec('Sieg','basic'),null);assert.equal(combatSpec('Grant','art'),null);assert.equal(combatSpec('__proto__','basic'),null);
 });

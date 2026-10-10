@@ -6,15 +6,18 @@ p=argparse.ArgumentParser();p.add_argument('--character');p.add_argument('--audi
 sys.path.insert(0,str(a.decoder_directory));import third_as as decoder
 heroes=json.loads((Path(__file__).resolve().parents[1]/'assets/sky/combat/hero-actions.json').read_text(encoding='utf8'))
 rows=json.loads(a.audit.read_text(encoding='utf8'))['characters'];catalogue=json.loads((a.output/'catalogue.json').read_text(encoding='utf8')) if a.character else {};omitted=[]
-def sequence(data,entries,end,slot,available):
- pc=entries[slot];bank=0;result=[];stack=[];visited={}
+def sequence(data,entries,end,slot,available,native_timing=False):
+ pc=entries[slot];bank=0;result=[];stack=[];visited={};heading=0
  for _ in range(1600):
   if not end<=pc<len(data):break
   visited[pc]=visited.get(pc,0)+1
-  if visited[pc]>2:break
+  if visited[pc]>(32 if native_timing else 2):break
   it=decoder._decode_one(data,pc);values=[int.from_bytes(data[pc+o.offset:pc+o.offset+o.size],'little') for o in it.operands if o.kind!='string']
   if it.opcode==0x1b and values[0]==255:bank=values[1]
-  if it.opcode==2 and values[0]==255 and bank in available:result.append({'bank':bank,'pose':values[1],'ms':0})
+  if it.opcode==3 and values[0]==255 and native_timing:
+   heading=values[1]
+   if result:result.append({**result[-1],'ms':0,'heading':heading})
+  if it.opcode==2 and values[0]==255 and bank in available:result.append({'bank':bank,'pose':values[1],'ms':0,**({'heading':heading} if native_timing else {})})
   if it.opcode==6 and result:result[-1]['ms']+=values[0]
   if it.opcode==1:pc=values[0];continue
   if it.opcode==0x50:stack.append(it.end);pc=values[0];continue
@@ -23,14 +26,14 @@ def sequence(data,entries,end,slot,available):
    pc=stack.pop();continue
   if it.opcode==0:break
   pc=it.end
- for item in result:item['ms']=max(30,min(300,item['ms'] or 80))
+ for item in result:item['ms']=max(16,item['ms']) if native_timing else max(30,min(300,item['ms'] or 80))
  return result
 for row in rows:
  if row['category'] not in ['trio','attack-craft','attack'] or row['character']=='Renne':continue
  if a.character and row['character']!=a.character:continue
  source=dict(row['source'])
  if row['character']=='Olivier':
-  source['file']='as04260._dt';source['banks']=[{**b,'ch':b['ch'].replace('0425','0426'),'cp':b['cp'].replace('0425','0426')} for b in source['banks']]
+  source={'game':'SC','file':'as04030._dt','banks':[{'ch':f'CH0013{n}._CH','cp':f'CH0013{n}P._CP','archive':'ED6_DT07'} for n in range(7)]}
  if row['character']=='Joshua':
   source['banks']=[{'ch':f'CH0420{n:x}._CH','cp':f'CH0420{n:x}P._CP','archive':'ED6_DT27'} for n in range(13)]
   # AS 27 opcode 0x6A explicitly loads CH0420A/CP0420AP into bank 12.
@@ -41,8 +44,8 @@ for row in rows:
   folder=a.extracted/(game+'-'+b['archive'][-2:].lower())/b['archive'];ch=folder/b['ch'].lower();cp=folder/b['cp'].lower()
   if ch.exists() and cp.exists():files[i]=(ch,cp)
  if row['character']=='Olivier':
-  for bank,ch in [(12,'ch0426a'),(13,'ch0426c')]:
-   folder=a.extracted/'third-27/ED6_DT27';files[bank]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
+  for bank,ch in [(12,'ch0403a'),(13,'ch0403c')]:
+   folder=a.extracted/'sc-27/ED6_DT27';files[bank]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
  try:
   sequences={'basic':sequence(data,entries,end,5,files)}
   if row['art']:sequences.update(spell=sequence(data,entries,end,6,files),cast=sequence(data,entries,end,7,files))
@@ -53,7 +56,7 @@ for row in rows:
     if seq:craftSlot=slot;sequences['craft']=seq;break
   if not sequences['basic']:raise ValueError('No playable self frames')
   if heroes.get(row['character'],{}).get('slot') is not None:
-   craftSlot=heroes[row['character']]['slot'];sequences['craft']=sequence(data,entries,end,craftSlot,files)
+   craftSlot=heroes[row['character']]['slot'];sequences['craft']=sequence(data,entries,end,craftSlot,files,native_timing=row['character']=='Olivier')
   if row['character']=='Estelle':
    sequences['craft']=sequence(data,entries,end,17,files);craftSlot=17
   if row['character']=='Joshua':
@@ -67,7 +70,7 @@ for row in rows:
    for f in seq:
     if len(frames[f['bank']])==8 and f['pose']<8:f['pose']=0
   for key,seq in list(sequences.items()):
-   seq[:]=[f for f in seq if f['pose']*8+7<len(frames[f['bank']])]
+   seq[:]=[f for f in seq if (f['pose'] if row['character']=='Olivier' and f['bank']==12 else f['pose']*8+7)<len(frames[f['bank']])]
    if not seq:sequences.pop(key)
   if not sequences.get('basic'):raise ValueError('No valid attack poses')
   boxes=[f.getbbox() for poses in frames.values() for f in poses if f.getbbox()];box=(min(b[0] for b in boxes),min(b[1] for b in boxes),max(b[2] for b in boxes),max(b[3] for b in boxes));w,h=box[2]-box[0],box[3]-box[1]
@@ -75,7 +78,7 @@ for row in rows:
   for bank,poses in frames.items():
    image=Image.new('RGBA',(w*8,h*((len(poses)+7)//8)))
    for i,f in enumerate(poses):image.paste(f.crop(box),((i%8)*w,(i//8)*h))
-   image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
+   image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':1 if row['character']=='Olivier' and bank==12 else 8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
   actions={'basic':{'name':'Attaque','key':'f','damage':12,'cooldown':700,'windup':300,'duration':max(650,min(1800,sum(f['ms'] for f in sequences['basic']))),'range':2.5,'radius':1.05}}
   # Gun/bow attacks keep a ranged hit instead of a melee cone.
   if row['character'] in ['Olivier','Tita','Kevin','Josette','Kanone','Gilbert','Dorothy']:actions['basic'].update(range=8,radius=.7,projectile=True,windup=350)

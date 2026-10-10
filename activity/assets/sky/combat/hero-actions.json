@@ -47,9 +47,9 @@
     "craft": {
       "name": "Requiem",
       "nativeEffect": "Third/sc003_10._ef",
-      "effectDuration": 1400,
-      "windup": 800,
-      "duration": 3600,
+      "effectDuration": 5500,
+      "windup": 3950,
+      "duration": 14986,
       "projectile": false,
       "selfTarget": true,
       "range": 6,
@@ -57,12 +57,15 @@
       "damage": 48,
       "hitOffsets": [
         0,
-        200,
-        400,
-        600,
-        800,
-        1000
-      ]
+        2120,
+        2620,
+        3120,
+        3620,
+        6350
+      ],
+      "cooldown": 8500,
+      "nativeTiming": true,
+      "radialShots": true
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -75,6 +78,10 @@
       "effectDuration": 1800,
       "element": "mirage",
       "damage": 24
+    },
+    "basic": {
+      "range": 12,
+      "shotVisual": "bullet"
     }
   },
   "Kloe": {
@@ -87,7 +94,7 @@
       "duration": 2800,
       "projectile": false,
       "targetRequired": true,
-      "range": 3,
+      "range": 8,
       "radius": 0.8,
       "status": "stun",
       "statusDuration": 1100,
@@ -96,7 +103,8 @@
         350,
         700
       ],
-      "damage": 30
+      "damage": 30,
+      "trackTarget": true
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -128,7 +136,8 @@
       "range": 7,
       "radius": 2,
       "damage": 35,
-      "leapDuration": 900
+      "leapDuration": 900,
+      "landingOffset": 0.8
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -143,7 +152,8 @@
       "damage": 0,
       "buffAttack": 0.25,
       "buffDuration": 10000,
-      "selfTarget": true
+      "selfTarget": true,
+      "persistentBuff": true
     }
   },
   "Tita": {
@@ -154,12 +164,14 @@
       "effectDuration": 1400,
       "windup": 800,
       "duration": 2800,
-      "projectile": false,
+      "projectile": true,
       "groundTarget": true,
       "range": 8,
       "radius": 1.7,
       "status": "blind",
-      "statusDuration": 5000
+      "statusDuration": 5000,
+      "shotVisual": "cannon",
+      "lobHeight": 2.4
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -172,6 +184,13 @@
       "effectDuration": 1800,
       "element": "space",
       "damage": 24
+    },
+    "basic": {
+      "projectile": true,
+      "shotVisual": "cannon",
+      "lobHeight": 2.4,
+      "radius": 1.7,
+      "groundTarget": true
     }
   },
   "Zin": {
@@ -189,7 +208,8 @@
       "buffDefense": 0.6,
       "buffDuration": 10000,
       "selfTarget": true,
-      "lockMovement": true
+      "lockMovement": true,
+      "persistentBuff": true
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -204,7 +224,8 @@
       "damage": 0,
       "buffDefense": 0.25,
       "buffDuration": 10000,
-      "selfTarget": true
+      "selfTarget": true,
+      "persistentBuff": true
     }
   },
   "Kevin": {
@@ -220,7 +241,8 @@
       "range": 9,
       "radius": 0.8,
       "status": "stone",
-      "statusDuration": 3000
+      "statusDuration": 3000,
+      "shotVisual": "arrow"
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",

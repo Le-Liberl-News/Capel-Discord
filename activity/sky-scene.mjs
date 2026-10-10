@@ -180,7 +180,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const spec=renneMechanics.combatSpec(me.character,kind);let target;
     if((spec.groundTarget||spec.targetRequired)&&!confirmed){craftTarget=kind;combatControls.targeting(kind);marker.visible=true;return true;}
     if(spec.targetRequired){target=pickCombatTarget(event,spec);if(!target)return false;}
-    const aim=spec.effect?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
+    const aim=target?{...avatars.get(target).position}:spec.effect?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
     const action=queueAction("attack",undefined,aim,undefined,{kind,target});if(!action)return false;
     const predicted=renneCombat.predict(action.id,me.position,aim,kind,localId,me.character);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
@@ -769,7 +769,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
-      const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*8+(avatar.direction%(info.directions??8));
+      const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*(info.directions??8)+(avatar.direction%(info.directions??8));
       avatar.renderFrame={pose,info};
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;

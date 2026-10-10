@@ -50,7 +50,7 @@
   "third/sc003_10._ef": {
     "name": "third-sc003_10",
     "frames": 90,
-    "duration": 1400,
+    "duration": 5500,
     "size": 9
   },
   "sc/mg103_0._ef": {
@@ -81,6 +81,7 @@
     "name": "third-cr210_00",
     "frames": 90,
     "duration": 1400,
+    "blend": "normal",
     "size": 4
   },
   "sc/mg070_0._ef": {
@@ -105,6 +106,7 @@
     "name": "third-cr04080",
     "frames": 90,
     "duration": 1400,
+    "blend": "normal",
     "size": 4
   },
   "sc/mg075_0._ef": {
