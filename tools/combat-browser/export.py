@@ -58,7 +58,9 @@ for row in rows:
    image.save(file,optimize=True)
    banks[str(i)]={'texture':'/cache/'+file.relative_to(out).as_posix(),'columns':8,'rows':(len(frames)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(frames),'directions':8,'source':b['ch'],'sha256':digest}
   dynamic={}
-  for address,it in decoder.decode(data).items():
+  try:instructions=decoder.decode(data)
+  except Exception as e:warnings.append(name+': branches AS : '+str(e));instructions={}
+  for address,it in instructions.items():
    if it.opcode!=0x6a:continue
    values=[int.from_bytes(data[address+o.offset:address+o.offset+o.size],'little') for o in it.operands]
    logical,chid,cpid=values
@@ -67,9 +69,11 @@ for row in rows:
    paths=[]
    for resource in (chid,cpid):
     archive=f'ED6_DT{resource>>16:02X}';base=a.extracted/(game+'-'+archive[-2:].lower())
+    if not (base/(archive+'.json')).exists():break
     lookup=json.loads((base/(archive+'.json')).read_text(encoding='utf-8'))
     entry=lookup[f'0x{resource:08X}'];filename=entry.get('path') or entry.get('name')
     paths.append(base/archive/filename.replace('\\','/').split('/')[-1].lower())
+   if len(paths)!=2 or not all(path.exists() for path in paths):warnings.append(name+': banque dynamique absente : '+key);continue
    ch,cp=paths
    frames=decode_sprite(ch.read_bytes(),cp.read_bytes());w,h=frames[0].size
    image=Image.new('RGBA',(w*8,h*((len(frames)+7)//8)))
@@ -79,7 +83,8 @@ for row in rows:
    dynamic[(chid,cpid)]=key
   routines={}
   for slot in [5,6,7]+list(range(16,len(entries))):
-   frames=sequence(data,entries,end,slot,banks,dynamic)
+   try:frames=sequence(data,entries,end,slot,banks,dynamic)
+   except Exception as e:warnings.append(name+': AS '+str(slot)+' : '+str(e));continue
    for f in frames:
     info=banks[f['bank']]
     if f['bank'].startswith('dynamic-') and info['frames']//8<=f['pose']<info['frames']:info['directions']=1
