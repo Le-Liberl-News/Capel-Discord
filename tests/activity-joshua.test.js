@@ -41,7 +41,7 @@ test('the runtime resolves every selected EF and texture relative to the public 
  const originalFetch=global.fetch,originalImage=global.Image;
  global.fetch=async url=>{const parsed=new URL(url),relative=parsed.pathname.replace('/assets/sky/effects/native/','');assert.ok(parsed.pathname.startsWith('/assets/sky/effects/native/'),parsed.pathname);requests.push(relative);const json=JSON.parse(await fs.readFile(path.join(root,relative),'utf8'));return {ok:true,json:async()=>json};};
  global.Image=class {width=128;height=128;set src(url){const parsed=new URL(url);assert.ok(parsed.pathname.startsWith('/assets/sky/effects/native/effects/'),parsed.pathname);fs.access(path.join(root,parsed.pathname.replace('/assets/sky/effects/native/',''))).then(()=>this.onload(),()=>this.onerror());}};
- try{const {createDamageEffects}=await import('../activity/damage-effects.mjs'),THREE={TextureLoader:class {async loadAsync(){return {dispose(){}};}}};const effects=await createDamageEffects(THREE,{}, {},new URL('https://fixture.invalid/assets/sky/effects/fire-frames.png'));effects.dispose();assert.ok(requests.includes('animations/SC/damage0.json'));assert.ok(requests.includes('animations/SC/mg050_1.json'));}
+ try{const {loadNativeEffects}=await import('../activity/native-effects.mjs');const effects=await loadNativeEffects(new URL('https://fixture.invalid/assets/sky/'));assert.ok(effects.has('sc/damage0._ef'));assert.ok(requests.includes('animations/SC/damage0.json'));assert.ok(requests.includes('animations/SC/mg050_1.json'));}
  finally{global.fetch=originalFetch;global.Image=originalImage;}
 });
 

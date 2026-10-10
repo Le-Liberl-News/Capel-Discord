@@ -1,3 +1,4 @@
+import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {createEarthWave,prepareEarthWave} from './earth-wave.mjs';
 import {createBlackFangTrail} from './black-fang-effects.mjs';
 import dashMechanics from './black-fang.cjs';
@@ -9,6 +10,7 @@ export async function createRenneCombat(THREE,scene,assets) {
   const loader=new THREE.TextureLoader();
   const native=await loadNativeEffects(assets);
   const earthBank=await prepareEarthWave(THREE,assets);
+  const earthArt=await loadBakedEffect(THREE,assets,'mg011_0',54);
   const [metadata,ringTexture,vortexTexture,fireTexture]=await Promise.all([
     Promise.resolve(COMBAT.Renne),
     loader.loadAsync(new URL('combat/blood-circle.png',assets).href),loader.loadAsync(new URL('combat/blood-vortex.png',assets).href),loader.loadAsync(new URL('effects/fire-frames.png',assets).href),
@@ -36,7 +38,7 @@ export async function createRenneCombat(THREE,scene,assets) {
     const vortex=new THREE.Sprite(new THREE.SpriteMaterial({map:vortexTexture,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:support==='heal'?0x64ffa2:support==='shield'?0x72caff:event.kind==='art'?0xffb04c:0xffb0d9}));vortex.scale.set(3.2,3.2,1);vortex.position.y=.7;group.add(vortex);
     const boltMap=fireTexture.clone();boltMap.repeat.set(.25,1);const bolt=new THREE.Sprite(new THREE.SpriteMaterial({map:boltMap,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffffff:0xf78bd5}));bolt.scale.setScalar(1.3);scene.add(bolt);
     const spec=combatSpec(event.character??'Renne',event.kind),player=spec.nativeEffect&&native.get(spec.nativeEffect.toLowerCase());
-    const assembly=player&&!spec.wave?nativeEffectSprite(THREE,player,spec.shape==='line'||spec.element==='earth'?4:3,spec.element==='earth'?4:2):null;
+    const assembly=spec.nativeEffect==='SC/mg011_0._ef'&&!spec.wave?bakedEffectSprite(THREE,earthArt,4):player&&!spec.wave?nativeEffectSprite(THREE,player,spec.shape==='line'||spec.element==='earth'?4:3,spec.element==='earth'?4:2):null;
     if(assembly)scene.add(assembly.sprite);
     const haloPlayer=spec.castEffect&&native.get(spec.castEffect.toLowerCase()),halo=haloPlayer?nativeCastingHalo(THREE,haloPlayer):null;if(halo)scene.add(halo.group);
     const trail=spec.dash&&assembly?createBlackFangTrail(THREE,scene,event,spec,assembly,player):null;
@@ -56,5 +58,5 @@ export async function createRenneCombat(THREE,scene,assets) {
     if(spec.element==='wind'){e.ring.material.color.set(0x72ffb4);e.vortex.material.color.set(0xa1ffe4);}
     if(event.kind==='craft'&&event.actor===localId&&event.accepted&&!event.captureStarted&&time>=impact-350){event.captureStarted=true;capture?.start(id,event.aim,camera);}
   }}
-  return {metadata,textures,metadataFor,load,actions,predict,receive,current,dash,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});earthBank?.dispose();ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();}};
+  return {metadata,textures,metadataFor,load,actions,predict,receive,current,dash,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});earthBank?.dispose();earthArt.dispose();ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();}};
 }
