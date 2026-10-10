@@ -86,16 +86,17 @@ export async function createSkyScene(canvas, map = "anterose") {
 
   scene.add(model);
   let lynxObject=null;
-  if(map==='hangar'){
+  if(map==='hangar'||map==='anterose'){
+   const deck=new THREE.Group();if(map==='anterose')deck.position.set(airshipConfig.door.x,airshipConfig.door.y,airshipConfig.door.z+12);model.add(deck);
    const paving=document.createElement('canvas');paving.width=paving.height=128;const ctx=paving.getContext('2d');ctx.fillStyle='#807765';ctx.fillRect(0,0,128,128);ctx.strokeStyle='#625c50';ctx.lineWidth=3;ctx.strokeRect(0,0,128,128);ctx.beginPath();ctx.moveTo(0,64);ctx.lineTo(128,64);ctx.moveTo(64,0);ctx.lineTo(64,64);ctx.moveTo(32,64);ctx.lineTo(32,128);ctx.stroke();const stone=new THREE.CanvasTexture(paving);stone.colorSpace=THREE.SRGBColorSpace;stone.wrapS=stone.wrapT=THREE.RepeatWrapping;stone.repeat.set(10,12);
-   const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,24),new THREE.MeshBasicMaterial({map:stone,side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;model.add(floor);
-   lynxObject=await loadLynx(THREE,ASSETS,10,loading);model.add(lynxObject);
+   const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,24),new THREE.MeshBasicMaterial({map:stone,side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;deck.add(floor);
+   const lynx=await loadLynx(THREE,ASSETS,10,loading);deck.add(lynx);if(map==='hangar')lynxObject=lynx;
 
   }
-  let hangarDoor=null;
+  let hangarDoor=null,wasNearHangarDoor=null;
   if(map==='anterose'){
    hangarDoor=new THREE.Group();hangarDoor.position.set(airshipConfig.door.x,airshipConfig.door.y,airshipConfig.door.z);
-   const door=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.3,.16),new THREE.MeshBasicMaterial({color:0x564333}));door.position.y=1.15;hangarDoor.add(door);model.add(hangarDoor);
+   const door=new THREE.Mesh(new THREE.BoxGeometry(2.8,3,.5),new THREE.MeshBasicMaterial({color:0x564333,transparent:true,opacity:0,depthWrite:false}));door.position.y=1.15;hangarDoor.add(door);model.add(hangarDoor);
   }
   model.updateMatrixWorld(true);
   const collision = collisionModule.createSurfaceCollision(THREE, model);
@@ -319,6 +320,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door)&&raycaster.intersectObject(hangarDoor,true).length){queueAction('hangar_enter');return;}
     if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)&&raycaster.intersectObject(lynxObject,true).length){queueAction('flight_board');return;}
     const options = [];
+    if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door))options.push(['Accéder au Lynx','hangar_enter',undefined]);
     if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6))options.push(['Piloter le Lynx','flight_board',undefined]);
     if(towerLayout){if(Number(map.slice(5))<4&&nearby(towerLayout.exit))options.push(["Monter","tower_step","up"]);if(Number(map.slice(5))>1&&nearby(towerLayout.start))options.push(["Descendre","tower_step","down"]);}
 
@@ -641,6 +643,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(isFlying!==wasFlying){wasFlying=isFlying;camera=isFlying?flightCamera:walkingCamera;pitch=isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
+    if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
     if(towerLayout?.physicalExit&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<.7&&Math.abs(me.position.y-towerLayout.exit.y)<.15)queueAction('tower_step','up');
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
     const distance=isFlying?3.4782608696:cameraDistance(map);
