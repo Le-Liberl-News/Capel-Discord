@@ -62,19 +62,19 @@ test('all native combatants have valid local banks and server-owned actions, civ
  for(const [character,meta]of Object.entries(COMBAT)){
   for(const info of Object.values(meta.banks)){assert.ok(fs.existsSync(path.join(__dirname,'../activity/assets/sky',info.texture)),info.texture);assert.ok(info.frames>0);}
   for(const frames of Object.values(meta.sequences))for(const frame of frames){assert.ok(frame.pose*(meta.banks[frame.bank].directions??8)+(meta.banks[frame.bank].directions??8)-1<meta.banks[frame.bank].frames,character);assert.ok(frame.ms>0);}
-  for(const [kind,spec]of Object.entries(meta.actions)){const f=fixture();f.players.get('renne').character=character;const spec=combatSpec(character,kind),target=spec.effect?'renne':'victim';assert.ok(f.combat.action(f.players.get('renne'),{id:'all-'+kind,kind,aim:{x:2,y:0,z:0},target},f.players).combatId,character+' '+kind);f.tick(Math.max(3000,spec.windup+(spec.hitOffsets?.at(-1)??0)+1000));assert.equal(f.players.get('victim').hp,100-combatSpec(character,kind).damage,character+' '+kind);}
+  for(const [kind,spec]of Object.entries(meta.actions)){const f=fixture();f.players.get('renne').character=character;const spec=combatSpec(character,kind),target=spec.effect?'renne':'victim';assert.ok(f.combat.action(f.players.get('renne'),{id:'all-'+kind,kind,aim:{x:2,y:0,z:0},target,...(spec.fps?{ray:{origin:{x:0,y:1.45,z:0},direction:{x:Math.sqrt(1-.225*.225),y:-.225,z:0}}}:{})},f.players).combatId,character+' '+kind);f.tick(Math.max(3000,spec.windup+(spec.hitOffsets?.at(-1)??0)+1000));assert.equal(f.players.get('victim').hp,100-combatSpec(character,kind).damage,character+' '+kind);}
  }
  assert.equal(combatSpec('Sieg','basic'),null);assert.equal(combatSpec('Grant','art'),null);assert.equal(combatSpec('__proto__','basic'),null);
 });
 
  test('arena speech keeps its map destination through chunking and after relocation',async()=>{const posts=[],relay=createActivityRoleplay({send:async p=>posts.push(p)});const event={id:'arena-chat',character:'Renne',text:'x'.repeat(2000),map:'arena',match:'match'};const pending=relay.speech(event);event.map='anterose';await pending;assert.equal(posts.length,2);assert.ok(posts.every(p=>p.map==='arena'));const spoken=[];const lobby=createActivityLobby({grid,resolveCharacter:async()=> 'Renne',onSay:e=>spoken.push(e),arena:{grid}});lobby.createDuel({id:'map-chat',players:['a','b'],channel:'origin'});lobby.joinDuel('map-chat','a');const session=await lobby.join({id:'a',channel:'dm'});await lobby.state(session.activity_token,{x:session.player.x,z:session.player.z,action:{id:'arena-say',type:'say',text:'Bonjour'}});await new Promise(resolve=>setImmediate(resolve));assert.equal(spoken[0].map,'arena');});
 
-test('smooth cinematic GIFs accept 93 frames only for a confirmed duel result',async()=>{
- const bytes=animatedGif(93,448,336);assert.throws(()=>gifInfo(bytes));assert.equal(gifInfo(bytes,{maxFrames:96,maxBytes:8000000}).frames,93);
+test('smooth cinematic GIFs accept 185 frames only for a confirmed duel result',async()=>{
+ const bytes=animatedGif(185,448,336);assert.throws(()=>gifInfo(bytes));assert.equal(gifInfo(bytes,{maxFrames:192,maxBytes:8000000}).frames,185);
  const posts=[],relay=createActivityRoleplay({send:async p=>posts.push(p),setTimer:()=>null});relay.craft({id:'craft',actor:'one',character:'Renne',technique:'Craft'});
  await assert.rejects(()=>relay.capture('one',{id:'craft',gif:bytes.toString('base64')}),{status:400});
  relay.finish({id:'match',captureId:'duel-result:smooth',actors:['one','two'],winnerName:'Renne'});
  await assert.rejects(()=>relay.capture('outsider',{id:'duel-result:smooth',gif:bytes.toString('base64')}),{status:403});
  await relay.capture('two',{id:'duel-result:smooth',gif:bytes.toString('base64')});assert.equal(posts.length,1);assert.equal(posts[0].fileName,'last-action.gif');assert.equal(posts[0].match,'match');
- assert.throws(()=>gifInfo(animatedGif(97),{maxFrames:96,maxBytes:8000000}));assert.throws(()=>gifInfo(Buffer.alloc(8000001),{maxFrames:96,maxBytes:8000000}));
+ assert.throws(()=>gifInfo(animatedGif(193),{maxFrames:192,maxBytes:8000000}));assert.throws(()=>gifInfo(Buffer.alloc(8000001),{maxFrames:192,maxBytes:8000000}));
 });

@@ -94,7 +94,7 @@
       "duration": 2800,
       "projectile": false,
       "targetRequired": true,
-      "range": 8,
+      "range": 2.1,
       "radius": 0.8,
       "status": "stun",
       "statusDuration": 1100,
@@ -104,7 +104,8 @@
         700
       ],
       "damage": 30,
-      "trackTarget": true
+      "trackTarget": true,
+      "melee": true
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -258,6 +259,20 @@
       "selfTarget": true,
       "shieldDuration": 30000,
       "cooldown": 10000
+    }
+  },
+  "Josette": {
+    "basic": {
+      "fps": true,
+      "range": 30,
+      "shotVisual": "bullet",
+      "damage": 14,
+      "headshotMultiplier": 2,
+      "windup": 0,
+      "duration": 400,
+      "cooldown": 300,
+      "projectile": true,
+      "projectileSpeed": 45
     }
   }
 }

@@ -1,6 +1,7 @@
 ﻿import test from 'node:test';import assert from 'node:assert/strict';
 import {skyTime,DAY_DURATION,createDayNight,MAP_LIGHTS} from '../activity/day-night.mjs';
 import * as THREE from 'three';
+test('arena lighting remains noon at every time of day',()=>{const cycle=createDayNight(THREE,new THREE.Group(),'arena');for(const t of [0,30000,60000,90000])assert.equal(cycle.update(t).daylight,1);cycle.dispose();});
 test('cycle lasts two minutes, repeats across clients and preserves readable night',()=>{
   assert.equal(DAY_DURATION,120000);const noon=skyTime(60000),night=skyTime(0);
   assert.equal(noon.hour,12);assert.equal(noon.daylight,1);assert.equal(night.lamps,1);

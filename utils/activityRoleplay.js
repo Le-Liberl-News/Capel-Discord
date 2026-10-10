@@ -29,7 +29,7 @@ function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTi
     const fail=(message,status=400)=>{const e=new Error(message);e.status=status;throw e;};
     if(!record||(record.actors?!record.actors.includes(user):record.actor!==user)||record.expires<now())fail('Capture expirée ou inaccessible.',403);
     if(record.published)return {posted:true};
-    const limits=record.actors?{maxBytes:8000000,maxFrames:96}:{maxBytes:3000000,maxFrames:24};
+    const limits=record.actors?{maxBytes:8000000,maxFrames:192}:{maxBytes:3000000,maxFrames:24};
     if(typeof body.gif!=='string'||body.gif.length>Math.ceil(limits.maxBytes/3)*4||(body.gif.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(body.gif)))fail('GIF invalide.');
     const bytes=Buffer.from(body.gif,'base64');try{gifInfo(bytes,limits);}catch(e){fail(e.message);}
     if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,match:record.match,text:record.text??record.character+' lance '+record.technique+'.',gif:bytes,fileName:record.actors?"last-action.gif":undefined}).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}

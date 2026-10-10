@@ -15,16 +15,16 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
  const hits=[];
  return {
   heal(id,amount){this.hit(id,amount,true);},
-  hit(id,amount,heal=false,delay=0) {
+  hit(id,amount,heal=false,delay=0,impact=null) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
-   const effect=heal?null:bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),[3.6,3.2,2.8,2.4,2.2,2][damageEffectIndex(amount)]);
+   const effect=heal?null:bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
    const sprite=effect?.sprite??new THREE.Sprite(new THREE.SpriteMaterial({map,color:heal?0x70ff9a:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
    if(effect)map.dispose();
    sprite.renderOrder=5;scene.add(sprite);
    const number=document.createElement("div");number.className="sky-damage";number.textContent=(heal?"+":"\u2212")+amount;
    number.style.cssText="position:absolute;pointer-events:none;transform:translate(-50%,-100%);color:#ffdc91;font:bold 25px AveriaSky,sans-serif;text-shadow:2px 2px 0 #51150f,-1px -1px 0 #51150f,0 0 5px #000;z-index:18";if(heal)number.style.color="#7cffad";container.append(number);
-   hits.push({id,sprite,effect,number,time:-delay,lane:hits.filter(h=>h.id===id).length%3});
+   hits.push({id,sprite,effect,number,impact,time:-delay,lane:hits.filter(h=>h.id===id).length%3});
   },
   update(dt,camera,avatars,width,height) {
    for(let i=hits.length-1;i>=0;i--) {
@@ -32,7 +32,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     if(!avatar||hit.time>=1.1){scene.remove(hit.sprite);hit.sprite.material.map.dispose();hit.sprite.material.dispose();hit.number.remove();hits.splice(i,1);continue;}
     if(hit.time<0){hit.sprite.visible=false;hit.number.hidden=true;continue;}
     const p=avatar.position,h=avatar.info.height;
-    hit.sprite.position.set(p.x,p.y+Math.min(h,1.8)*.55,p.z);
+    hit.sprite.position.set(hit.impact?.point?.x??p.x,hit.impact?.point?.y??p.y+Math.min(h,1.8)*.55,hit.impact?.point?.z??p.z);
     // Place the flash just in front of the opaque character plane, keeping scenery occlusion.
     hit.sprite.position.add(new THREE.Vector3().subVectors(camera.position,hit.sprite.position).normalize().multiplyScalar(.18));hit.sprite.visible=hit.time<(hit.effect ? .8 : .35);
     if(hit.effect){hit.effect.draw(hit.time*1000);hit.sprite.material.opacity=1;}else {hit.sprite.scale.setScalar(.65+hit.time*3);hit.sprite.material.opacity=Math.max(0,1-hit.time/.35);hit.sprite.material.map.offset.x=Math.min(3,Math.floor(hit.time*14))*.25;}

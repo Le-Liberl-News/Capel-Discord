@@ -21,7 +21,7 @@ jobs:
       run: npm ci --ignore-scripts --no-audit --no-fund
 
     - name: Test activity movement and sessions
-      run: node --test tests/activity-hero-actions.test.js tests/activity-baked-effects.test.js tests/activity-estelle.test.js tests/activity-joshua.test.js tests/activity.test.mjs tests/activity-service.test.js tests/activity-world.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs tests/activity-projectile.test.mjs tests/activity-duel.test.js tests/application-commands.test.js tests/activity-network.test.mjs tests/activity-combat.test.js tests/activity-day-night.test.mjs tests/activity-flight.test.js tests/activity-airship.test.cjs
+      run: node --test tests/activity-fps.test.js tests/activity-hero-actions.test.js tests/activity-baked-effects.test.js tests/activity-estelle.test.js tests/activity-joshua.test.js tests/activity.test.mjs tests/activity-service.test.js tests/activity-world.test.js tests/activity-dialogue.test.mjs tests/activity-deployment.test.cjs tests/activity-projectile.test.mjs tests/activity-duel.test.js tests/application-commands.test.js tests/activity-network.test.mjs tests/activity-combat.test.js tests/activity-day-night.test.mjs tests/activity-flight.test.js tests/activity-airship.test.cjs
 
     - name: Test native texture transparency
       run: |

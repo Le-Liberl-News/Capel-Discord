@@ -14,7 +14,7 @@ export const MAP_LIGHTS={
 // Local illumination augments baked native colours without replacing transparency
 // or geometry. These lights currently have distance falloff, but no wall occlusion.
 export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
-  const sources=extraSources.length?extraSources:MAP_LIGHTS[map]??[],materials=new Set();
+  const sources=[...(MAP_LIGHTS[map]??[]),...extraSources],materials=new Set();
   const uniforms={skyTint:{value:new THREE.Vector3(1,1,1)},skyLamps:{value:0}};
   sources.forEach((source,i)=>{uniforms['skyLight'+i]={value:new THREE.Vector4(...source.position,source.radius)};uniforms['skyColor'+i]={value:new THREE.Vector3(...source.color).multiplyScalar(source.strength)};});
   let override=null,clockOffset=0,state=skyTime();
@@ -32,6 +32,6 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
     material.customProgramCacheKey=()=>cache+'|sky-cycle-1|'+sources.length;material.needsUpdate=true;
   }});}
   apply(model);
-  return {apply,update(time=Date.now()) {state=skyTime(override??(time+clockOffset));uniforms.skyTint.value.set(...((map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:state.tint));uniforms.skyLamps.value=(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;
+  return {apply,update(time=Date.now()) {state=skyTime(map==='arena'?DAY_DURATION/2:override??(time+clockOffset));uniforms.skyTint.value.set(...((map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:state.tint));uniforms.skyLamps.value=(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;
     if(extraSources.length) sources.forEach((source,i)=>{uniforms['skyLight'+i].value.set(...source.position,source.radius);uniforms["skyColor"+i].value.set(...source.color).multiplyScalar(source.strength*(.88+.09*Math.sin(time*.013+i*2.1)+.06*Math.sin(time*.027+i)));});if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
 }

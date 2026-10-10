@@ -4,7 +4,7 @@ const CINEMATIC_DURATION = 7400;
 function cinematicPhase(elapsed, action, impactAt) {
   const impact = Number.isFinite(action?.impactAt) ? action.impactAt : impactAt;
   const start = Number.isFinite(action?.started) ? Math.min(action.started, impact) : impact - 1200;
-  const release = Number.isFinite(action?.releaseAt) ? clamp(action.releaseAt, start, impact) : mix(start, impact, action?.kind === "basic" ? 0.85 : 0.6);
+  const release = action?.kind==='basic' ? mix(start,impact,.25) : Number.isFinite(action?.releaseAt) ? clamp(action.releaseAt, start, impact) : mix(start, impact, action?.kind === "basic" ? 0.85 : 0.6);
   if (elapsed < 1600) return { kind: "hero", progress: clamp(elapsed / 1600), time: mix(start - 100, release, clamp(elapsed / 1600)) };
   if (elapsed < 3500) return { kind: "follow", progress: clamp((elapsed - 1600) / 1900), time: mix(release, impact, clamp((elapsed - 1600) / 1900)) };
   if (elapsed < 5200) {

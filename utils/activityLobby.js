@@ -185,7 +185,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
         Object.assign(session,{key:target.key,match:target.match,service:target.service,token:joined.activity_token}); changed=true;
       }
       const searching=target.map==="rolent" && point?.action?.type==="hunt_find";
-      if(point?.action?.type==='attack'&&point.action.target){const original=[...aliases].find(([,value])=>value===point.action.target)?.[0];point={...point,action:{...point.action,target:original??'invalid'}};}
+      if(point?.action?.type==='attack'&&point.action.target){const original=String(point.action.target).startsWith('world:enemy:')?point.action.target:[...aliases].find(([,value])=>value===point.action.target)?.[0];point={...point,action:{...point.action,target:original??'invalid'}};}
       const result=await session.service.state(session.token,changed?undefined:(searching||['tower_step','flight_board','hangar_enter'].includes(point?.action?.type))?(Number.isFinite(point?.x)?{...point,action:undefined}:undefined):point,changed?undefined:after);
       if (target.map==="rolent" && huntGame) {
         if(searching&&!changed) {

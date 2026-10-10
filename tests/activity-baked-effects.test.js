@@ -1,4 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
+test('an additive particle fading to black never leaves an opaque rectangle in a mixed atlas',async()=>{
+ const {createCanvas}=require('@napi-rs/canvas'),{NativeEffectPlayer}=await import('../activity/native-effect-player.mjs'),before=global.document;global.document={createElement:()=>createCanvas(2,1)};
+ try{const source=createCanvas(2,1),ctx=source.getContext('2d');ctx.fillStyle='#202020';ctx.fillRect(0,0,2,1);const player=new NativeEffectPlayer([],()=>{}),fade=player.tint(source,0,0,2,1,[0,0,0,0],true,false,true).getContext('2d').getImageData(0,0,2,1).data;assert.equal(fade[3],0);const lit=player.tint(source,0,0,2,1,[255,255,255,255],true,false,true).getContext('2d').getImageData(0,0,2,1).data;assert.ok(lit[3]>0&&lit[3]<40);}finally{global.document=before;}
+});
 test('baked earth and hit animations advance without canvas work or texture uploads',async()=>{
  const THREE=await import('three'),{loadBakedEffect,bakedEffectSprite}=await import('../activity/baked-effects.mjs');
  const api={...THREE,TextureLoader:class{async loadAsync(){return new THREE.Texture();}}};

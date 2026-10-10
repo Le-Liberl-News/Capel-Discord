@@ -1,8 +1,8 @@
 import { facing } from "./movement.mjs";
 import { createArenaCutaway } from "./scene-visibility.mjs";
 import { CINEMATIC_DURATION, cinematicPhase, trajectoryPoint, historyPair } from "./cinematic.mjs";
-const REPLAY_FRAMES = 20, REPLAY_INTERVAL = 100;
-const GIF_INTERVAL=80,GIF_FRAMES=Math.ceil(CINEMATIC_DURATION/GIF_INTERVAL);
+const REPLAY_FRAMES = 20, REPLAY_INTERVAL = 33;
+const GIF_INTERVAL=40,GIF_FRAMES=Math.ceil(CINEMATIC_DURATION/GIF_INTERVAL);
 function replayWindow(frames, frame, limit = REPLAY_FRAMES) {
   frames.push(frame);
   if (frames.length > limit) frames.shift();
@@ -92,11 +92,12 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       snapshot(root, nodes);
     }
     const actors = /* @__PURE__ */ new Map();
-    for (const [id, a] of avatars) actors.set(id, { uuid: a.mesh.uuid, position: a.mesh.position.clone(), heading: { ...a.heading }, frame: a.renderFrame, dead: a.dead, fallbackDeath: a.fallbackDeath });
+    for (const [id, a] of avatars) actors.set(id, { uuid: a.mesh.uuid, position: a.mesh.position.clone(), heading: { ...a.heading }, frame: a.renderFrame, map:a.mesh.material.map, dead: a.dead, fallbackDeath: a.fallbackDeath });
     history.push({ time: time + clockOffset, nodes, actors });
-    while (history.length > 85) history.shift();
+    while (history.length > 400) history.shift();
     const retained = new Set(history.flatMap((h) => [...h.nodes.keys()]));
     for (const [id, item] of registry) if (!retained.has(id)) {
+      item.ghost?.removeFromParent();item.ghost?.material.map?.dispose();
       item.clone.removeFromParent();
       if (item.clone.geometry) {
         item.clone.geometry.dispose();
@@ -128,6 +129,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     worker?.terminate();
     worker = null;
     clearTimeout(workerTimer);
+    for(const item of registry.values())item.ghost?.material.map?.dispose();
     for (const m of ownedMaterials) m.dispose();
     for (const g of ownedGeometry) g.dispose();
     for (const t of textures.values()) t.dispose();
@@ -183,7 +185,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     const actors = /* @__PURE__ */ new Map();
     for (const [id, state] of a.actors) {
       const after = b.actors.get(id) ?? state, selected = p < 0.5 ? state : after;
-      actors.set(id, { ...selected, position: state.position.clone().lerp(after.position, p) });
+      actors.set(id, { ...selected, before:state, after, blend:p, position: state.position.clone().lerp(after.position, p) });
     }
     return actors;
   }
@@ -194,7 +196,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     workerTimer = setTimeout(() => {
       worker?.terminate();
       worker = null;
-    }, 45e3);
+    }, 90e3);
     worker.onmessage = ({ data }) => {
       clearTimeout(workerTimer);
       worker?.terminate();
@@ -208,7 +210,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       worker = null;
     };
     const buffers = frames.map((frame) => frame.buffer);
-    worker.postMessage({ frames: buffers, width, height, delay: Math.round(CINEMATIC_DURATION/frames.length/10)*10, colors: 64 }, buffers);
+    worker.postMessage({ frames: buffers, width, height, delay: Math.round(CINEMATIC_DURATION/frames.length/10)*10, colors: 64,maxBytes:8000000 }, buffers);
     frames = [];
   }
   function read(renderTarget, w, h, output) {
@@ -280,8 +282,8 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       const clone = registry.get(actor.uuid)?.clone;
       if (!clone || !actor.frame) continue;
       const { info, pose } = actor.frame;
-      const dir = facing(actor.heading.dx, actor.heading.dz, right, forward) % (info.directions ?? 8), frame = pose * 8 + dir;
-      clone.quaternion.copy(camera.quaternion);
+      const dir = facing(actor.heading.dx, actor.heading.dz, right, forward) % (info.directions ?? 8), frame = pose * (info.directions ?? 8) + dir;
+      clone.visible=true;clone.quaternion.copy(camera.quaternion);
       if (actor.fallbackDeath) clone.rotateZ(Math.PI / 2);
       if (actor.dead) {
         clone.geometry.computeBoundingBox();
@@ -291,6 +293,18 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       }
       const map = clone.material.map;
       if (map) map.offset.set(frame % info.columns / info.columns, 1 - (Math.floor(frame / info.columns) + 1) / info.rows);
+      // Dissolve between recorded sprite poses, rather than holding one sparse
+      // snapshot throughout a long slow-motion shot. The live atlas stays untouched.
+      const item=registry.get(actor.uuid),after=actor.after,blend=actor.blend;
+      if(after?.frame&&blend>0&&blend<1&&actor.before?.frame!==after.frame){
+        if(!item.ghost){item.ghost=clone.clone(false);item.ghost.material=clone.material.clone();item.ghost.material.map=null;item.ghost.material.depthWrite=false;item.ghost.material.transparent=true;item.ghost.userData={};clone.parent.add(item.ghost);ownedMaterials.add(item.ghost.material);}
+        const ghost=item.ghost,source=after.map;
+        if(ghost.userData.source!==source?.uuid){ghost.material.map?.dispose();ghost.material.map=source?.clone();ghost.userData.source=source?.uuid;ghost.material.needsUpdate=true;}
+        ghost.visible=clone.visible;ghost.position.copy(clone.position);ghost.quaternion.copy(clone.quaternion);ghost.scale.copy(clone.scale);ghost.material.opacity=blend;
+        const next=after.frame.info,d=facing(after.heading.dx,after.heading.dz,right,forward)%(next.directions??8),f=after.frame.pose*(next.directions??8)+d;
+        ghost.material.map?.offset.set(f%next.columns/next.columns,1-(Math.floor(f/next.columns)+1)/next.rows);
+      }else if(item?.ghost)item.ghost.visible=false;
+
     }
     for (const { clone } of registry.values()) if (clone.isSprite && clone.userData.projectileDirection) {
       const d = new THREE.Vector3().copy(clone.userData.projectileDirection);

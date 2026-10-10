@@ -1,0 +1,23 @@
+{
+  "native-bullet.png": {
+    "source": "Third/effadd0",
+    "crop": [
+      16,
+      16,
+      32,
+      32
+    ],
+    "blend": "additive"
+  },
+  "native-arrow.png": {
+    "source": "Third/tx0075",
+    "uv": [
+      0,
+      0,
+      0.25,
+      0.5
+    ],
+    "effect": "cr04080",
+    "part": 12
+  }
+}

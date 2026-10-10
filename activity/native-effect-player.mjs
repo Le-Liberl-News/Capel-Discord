@@ -167,7 +167,7 @@ export class NativeEffectPlayer{
       const points=raw.map(point=>this.project(add(rotate(point.map((val,j)=>val*s.scale[j]),rotation),s.position),w,h,factor));
       const [p0,p1,p2]=points;if(points.flat().some(n=>!Number.isFinite(n)))continue;
       const additive=!!(part.renderFlags&4),multiply=!additive&&!!(part.renderFlags&0x40);
-      const tint=this.tint(im,Math.min(u,u2),Math.min(v,v2),fw,fh,multiply?[255,255,255,255]:s.color,(additive||!multiply&&item.texture.blackKey),multiply);
+      const tint=this.tint(im,Math.min(u,u2),Math.min(v,v2),fw,fh,multiply?[255,255,255,255]:s.color,(additive||!multiply&&item.texture.blackKey),multiply,additive);
       // Multiplication needs a scene colour beneath it. On a transparent export, encode
       // its white-neutral texture as dark particles instead of baking an opaque white rectangle.
       ctx.save();ctx.globalCompositeOperation=additive?'lighter':'source-over';
@@ -209,7 +209,7 @@ export class NativeEffectPlayer{
     }
     return triangles.length?1:0;
   }
-  tint(image,u,v,w,h,color,blackKey=false,whiteNeutral=false){
+  tint(image,u,v,w,h,color,blackKey=false,whiteNeutral=false,additive=false){
     const canvas=this.tintCanvas??=document.createElement('canvas');
     canvas.width=Math.max(1,Math.ceil(w));canvas.height=Math.max(1,Math.ceil(h));const ctx=canvas.getContext('2d');
     ctx.drawImage(image,u*image.width,v*image.height,w,h,0,0,w,h);
@@ -217,6 +217,10 @@ export class NativeEffectPlayer{
     if(blackKey){const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<pixels.data.length;i+=4)if(pixels.data[i]===0&&pixels.data[i+1]===0&&pixels.data[i+2]===0)pixels.data[i+3]=0;ctx.putImageData(pixels,0,0);}
     const mask=this.maskCanvas??=document.createElement('canvas');mask.width=canvas.width;mask.height=canvas.height;mask.getContext('2d').drawImage(canvas,0,0);
     ctx.globalCompositeOperation='multiply';ctx.fillStyle=`rgb(${color.slice(0,3).map(v=>Math.round(v)).join(',')})`;ctx.fillRect(0,0,w,h);
-    ctx.globalCompositeOperation='destination-in';ctx.drawImage(mask,0,0);ctx.globalCompositeOperation='source-over';return canvas;
+    ctx.globalCompositeOperation='destination-in';ctx.drawImage(mask,0,0);ctx.globalCompositeOperation='source-over';
+    // RGB-additive pixels have no opaque background. Encode their brightness in
+    // alpha before composing them with the ordinary smoke into a single atlas.
+    if(additive){const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<pixels.data.length;i+=4){const brightness=Math.max(pixels.data[i],pixels.data[i+1],pixels.data[i+2]);pixels.data[i+3]=Math.round(pixels.data[i+3]*brightness/255);if(brightness)for(let j=0;j<3;j++)pixels.data[i+j]=Math.round(pixels.data[i+j]*255/brightness);}ctx.putImageData(pixels,0,0);}
+    return canvas;
   }
 }
