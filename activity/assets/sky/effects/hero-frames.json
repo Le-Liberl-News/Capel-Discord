@@ -180,5 +180,11 @@
     "frames": 90,
     "duration": null,
     "size": 4
+  },
+  "third/cr04110._ef": {
+    "name": "third-cr04110",
+    "frames": 90,
+    "duration": 850,
+    "size": 4
   }
 }

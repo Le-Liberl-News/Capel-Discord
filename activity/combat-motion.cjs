@@ -1,7 +1,7 @@
 const {dashPosition}=require('./black-fang.cjs');
 function combatMotion(event,time,spec){
  if(spec.special==='dive')return {active:time<spec.windup+spec.leapDuration,position:require('./special-crafts.cjs').divePosition(event,time,spec)};
- if(!spec.leap)return dashPosition(event,time,spec);
+ if(!spec.leap){if(spec.chargeStun){const dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,length=Math.hypot(dx,dz),ratio=Math.max(0,1-.8/(length||1));return dashPosition({...event,aim:{x:event.origin.x+dx*ratio,y:event.aim.y,z:event.origin.z+dz*ratio}},time,spec);}return dashPosition(event,time,spec);}
  const t=Math.max(0,Math.min(1,(time-spec.windup)/spec.leapDuration)),active=time<spec.windup+spec.leapDuration;
  const length=Math.hypot(event.aim.x-event.origin.x,event.aim.z-event.origin.z),offset=Math.min(spec.landingOffset??0,Math.max(0,length-.2)),ratio=length?1-offset/length:1;
  const destination=event.landingPoint??{x:event.origin.x+(event.aim.x-event.origin.x)*ratio,y:event.aim.y,z:event.origin.z+(event.aim.z-event.origin.z)*ratio};
