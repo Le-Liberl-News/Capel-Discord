@@ -176,7 +176,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
       Object.assign(player,projectionPosition(projection,time));player.acceptedAt=time;
 
-      if(time>=projection.started+projection.duration){player.knockback=null;projections.delete(id);if(projection.wall&&spec.wallDamage){const dealt=hurt(attack,attacker,player,spec.wallDamage,time,{point:{x:player.x,y:(player.y??0)+.8,z:player.z}});attack.hits.push({id:player.id,at:time,wall:true,...dealt});if(dealt.damage)applyStatus(player,{status:'stone',statusDuration:spec.wallStun},time);}}
+      if(time>=projection.started+projection.duration){player.knockback=null;projections.delete(id);if(projection.wall&&spec.wallDamage){const dealt=hurt(attack,attacker,player,spec.wallDamage,time,{point:{x:player.x,y:(player.y??0)+.8,z:player.z}});attack.hits.push({id:player.id,at:time,wall:true,...dealt});if(dealt.damage){applyStatus(player,{status:'stun',statusDuration:spec.wallStun},time);player.downUntil=time+spec.wallStun;}}}
 
     }
 
