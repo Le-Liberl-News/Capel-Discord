@@ -25,6 +25,7 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,now=Date.no
    for(const [id,at] of queue)if(now()-at>10*60*1000||lobby.matchFor(id))queue.delete(id);
    const ready=[...queue.keys()].filter(id=>lobby.isConnected(id));
    while(ready.length>=2){const pair=ready.splice(0,2);pair.forEach(id=>queue.delete(id));try{await duels.match(pair,client);}catch(e){console.error('Arena matchmaking:',e.message);}}
+   await duels.cleanupAnnouncements?.(client);
    await refresh();
   }finally{ticking=false;}},
   async handle(i){if((!i.isButton?.()&&!i.isModalSubmit?.())||!i.customId.startsWith('arena:'))return false;

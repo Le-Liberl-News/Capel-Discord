@@ -1,5 +1,5 @@
 function immobilized(player,time){return time<Math.max(player.stunUntil??0,player.stoneUntil??0);}
-function movementFactor(player,time){return immobilized(player,time)?0:time<(player.slowUntil??0)?player.slowFactor??.45:1;}
+function movementFactor(player,time){return immobilized(player,time)?0:(time<(player.slowUntil??0)?player.slowFactor??.45:1)*(player.speedBuff?.until>time?1+player.speedBuff.amount:1);}
 function attackFactor(player,time){return player.attackBuff?.until>time?1+player.attackBuff.amount:1;}
 function defenseFactor(player,time){return player.defenseBuff?.until>time?1-Math.min(.8,player.defenseBuff.amount):1;}
 function applyStatus(player,spec,time){
@@ -11,5 +11,5 @@ function applyStatus(player,spec,time){
   if(player.enemy){player.attack=null;player.charge=null;player.moving=false;}
  }
 }
-function applyBuff(player,spec,time){for(const [field,amount]of [['attackBuff',spec.buffAttack],['defenseBuff',spec.buffDefense]])if(amount){const previous=player[field];if(previous?.until>time&&previous.amount>amount)continue;player[field]={amount,until:time+spec.buffDuration};}}
+function applyBuff(player,spec,time){for(const [field,amount]of [['attackBuff',spec.buffAttack],['defenseBuff',spec.buffDefense],['speedBuff',spec.buffSpeed]])if(amount){const previous=player[field];if(previous?.until>time&&previous.amount>amount)continue;player[field]={amount,until:time+spec.buffDuration};}}
 module.exports={immobilized,movementFactor,attackFactor,defenseFactor,applyStatus,applyBuff};

@@ -186,6 +186,20 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(time>attack.endsAt+5000){attacks.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(dashSpec?.repulsion&&!attack.cancelled&&attack.resolved&&time<attack.impactAt+dashSpec.buffDuration){
+        const actor=room.get(attack.actor);if(!actor||actor.hp<=0||actor.character!==attack.character){attack.cancelled=true;attack.endsAt=time;continue;}
+        if(time>=(attack.nextPulseAt??attack.impactAt)){
+          attack.nextPulseAt=time+dashSpec.pulseInterval;
+          for(const target of room.values()){
+            if(target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||target.enemy||!canDamage(actor,target)||require('../rpg/data/persos.json')[target.character]?.sexe!=='F'||Math.abs((target.y??0)-(actor.y??0))>1.5||Math.hypot(target.x-actor.x,target.z-actor.z)>dashSpec.radius)continue;
+            if(target.knockback)continue;
+            if(geometry?.sweep({x:actor.x,y:(actor.y??0)+.8,z:actor.z},{x:target.x,y:(target.y??0)+.8,z:target.z},.05))continue;
+            project(attack,actor,target,dashSpec,{x:target.x-actor.x||.01,z:target.z-actor.z},time);
+            attack.hits.push({id:target.id,at:time,repelled:true,point:{x:target.x,y:(target.y??0)+.8,z:target.z}});
+          }
+        }
+        continue;
+      }
 
       if(special.tickAttack(attack,dashSpec,room,time))continue;
 

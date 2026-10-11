@@ -91,3 +91,15 @@ test('capture publisher retries final replay through a long temporary outage and
  const one=publish({id:'duel-result:retry',bytes:new Uint8Array(1)}),two=publish({id:'duel-result:retry',bytes:new Uint8Array(1)});assert.equal(one,two);assert.equal(await one,true);assert.equal(attempts,10);assert.equal(events.at(-1)[0],'capture-posted');
  let sent=0;const invalid=createCapturePublisher({send:async()=>{sent++;throw {status:400};}});assert.equal(await invalid({id:'duel-result:invalid',bytes:new Uint8Array(1)}),false);assert.equal(sent,1);
 });
+
+test('Anton repels nearby women smoothly without damage and gains speed for only five seconds',()=>{
+ const f=fixture(),actor=f.players.get('renne');actor.character='Anton';
+ f.players.get('victim').character='Estelle';
+ f.players.set('male',{id:'male',character:'Joshua',x:0,y:0,z:2,hp:100});
+ f.players.set('far',{id:'far',character:'Kloe',x:9,y:0,z:0,hp:100});
+ assert.ok(f.start('craft').combatId);f.tick(40);
+ const {movementFactor}=require('../activity/combat-status.cjs');assert.equal(movementFactor(actor,1040),1.2);
+ f.tick(600);assert.ok(f.players.get('victim').x>6.8);assert.equal(f.players.get('victim').hp,100);assert.equal(f.players.get('male').z,2);assert.equal(f.players.get('far').x,9);
+ assert.ok(f.combat.snapshot(actor).attacks[0].hits.some(h=>h.repelled));
+ f.tick(5000);assert.equal(movementFactor(actor,6640),1);
+});

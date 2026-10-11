@@ -184,7 +184,7 @@ test("world saves survive restart and empty maps without copying connected avata
 test("duel announces once after both accept and spectators use the upper grid",async()=>{
  const sent=[],{lobby}=fixture();
  const manager=createActivityDuels({lobby,characterNames:["Estelle","Joshua"],resolveCharacter:async id=>id==="real-alice"?"Estelle":"Joshua",resolveOpponent:async()=>"real-bob"});
- const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"1558125759682576475");return {threads:{create:async()=>({id:"match-thread",send:async data=>{sent.push({announcement:data});return {id:"broadcast"};}})}}}}};
+ const client={users:{fetch:async()=>({send:async data=>sent.push(data)})},channels:{fetch:async channel=>{assert.equal(channel,"1558125759682576475");return {send:async data=>{sent.push({announcement:data});return{id:"broadcast"};},threads:{create:async()=>({id:"match-thread",send:async data=>{assert.equal(data.components,undefined);return {id:"opening"};}})}}}}};
  await manager.handle({isChatInputCommand:()=>true,commandName:"duel",channelId:"guild",options:{getString:()=>"Joshua"},user:{id:"real-alice",send:async data=>sent.push(data)},client,channel:{send:async()=>{}},deferReply:async()=>{},editReply:async()=>{}});
  const customId=sent[0].components[0].components[0].custom_id;
  const click=id=>({isButton:()=>true,customId,user:{id},channel:{isDMBased:()=>true},client,launchActivity:async()=>{}});
@@ -314,7 +314,7 @@ test('accepted matches create distinct persistent threads, with one spectator bu
  const store={load:()=>saved,save:data=>{saved=structuredClone(data);}};
  const options={lobby,store,now:()=>0,characterNames:['Estelle','Joshua'],resolveCharacter:async id=>id==='real-alice'?'Estelle':'Joshua',resolveOpponent:async()=> 'real-bob'};
  const manager=createActivityDuels(options);
- const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='1558125759682576475'?{threads:{create:async data=>{creates++;assert.equal(data.type,11);assert.equal(data.name,'Estelle contre Joshua');assert.doesNotMatch(JSON.stringify(data),/real-/);const thread={id:'thread-'+creates,send:async payload=>{sends++;assert.match(payload.components[0].components[0].custom_id,/^activity:watch:duel:/);assert.deepEqual(payload.allowedMentions.parse,[]);return{id:'message'};}};threads.set(thread.id,thread);return thread;}}}:threads.get(id)}};
+ const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='1558125759682576475'?{send:async payload=>{sends++;assert.match(payload.components[0].components[0].custom_id,/^activity:watch:duel:/);return{id:'watch'};},threads:{create:async data=>{creates++;assert.equal(data.type,11);assert.equal(data.name,'Estelle contre Joshua');assert.doesNotMatch(JSON.stringify(data),/real-/);const thread={id:'thread-'+creates,send:async payload=>{assert.equal(payload.components,undefined);assert.deepEqual(payload.allowedMentions.parse,[]);return{id:'message'};}};threads.set(thread.id,thread);return thread;}}}:threads.get(id)}};
  const result=await manager.challenge({id:'real-alice'},'Joshua',client);
  assert.equal(creates,0);await Promise.all([manager.accept(result.id,'real-bob',client),manager.accept(result.id,'real-bob',client)]);
  assert.equal(creates,1);assert.equal(sends,1);assert.equal(await manager.publicationThread(result.id,client),'thread-1');
@@ -325,7 +325,7 @@ test('accepted matches create distinct persistent threads, with one spectator bu
 });
 test('failed opening post retries inside the saved thread instead of creating another',async()=>{
  const {lobby}=fixture();let creates=0,posts=0;const thread={id:'retry-thread',send:async()=>{if(++posts===1)throw Error('temporary failure');return{id:'opening'};}};
- const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='retry-thread'?thread:{threads:{create:async()=>{creates++;return thread;}}}}};
+ const client={users:{fetch:async()=>({send:async()=>{}})},channels:{fetch:async id=>id==='retry-thread'?thread:{send:async()=>({id:'watch'}),threads:{create:async()=>{creates++;return thread;}}}}};
  const manager=createActivityDuels({lobby,characterNames:['Estelle','Joshua'],resolveCharacter:async id=>id==='real-alice'?'Estelle':'Joshua',resolveOpponent:async()=> 'real-bob'});
  const result=await manager.challenge({id:'real-alice'},'Joshua',client);await manager.accept(result.id,'real-bob',client);
  assert.equal(await manager.publicationThread(result.id,client),'retry-thread');assert.equal(creates,1);assert.equal(posts,2);
@@ -454,4 +454,19 @@ test('completed replay can be recovered after returning home and restarting the 
  assert.equal(lobby.duelCaptureFor('a',result.captureId).captureId,result.captureId);assert.equal(lobby.duelCaptureFor('stranger',result.captureId),null);
  lobby.cancelDuel('saved');assert.equal(lobby.duelCaptureFor('a',result.captureId).captureId,result.captureId);const restarted=createActivityLobby({grid,now:()=>time,store:{load:()=>({...saved,duels:[],completedCaptures:[[result.captureId,{id:'saved',...result,actors:['a','b']}]]}),save:()=>{}},resolveCharacter:async()=> 'Ray',arena:{grid}});assert.equal(restarted.duelCaptureFor('b',result.captureId).captureId,result.captureId);assert.equal(restarted.duelCaptureFor('stranger',result.captureId),null);
  time=602000;assert.equal(lobby.duelCaptureFor('a',result.captureId),null);
+});
+
+test('spectator announcements are removed after cancellation and victory, without deleting the match thread',async()=>{
+ for(const finish of [false,true]){
+  const {lobby}=fixture(),removed=[],posts=[];
+  const thread={id:'result-thread',send:async p=>{posts.push(p);return{id:'opening'};}};
+  const parent={threads:{create:async()=>thread},send:async p=>{assert.match(p.components[0].components[0].custom_id,/activity:watch:/);return{id:'watch-message'};},messages:{delete:async id=>removed.push(id)}};
+  const client={channels:{fetch:async id=>id==='result-thread'?thread:parent}};
+  const manager=createActivityDuels({lobby,resolveCharacter:async id=>id==='a'?'Estelle':'Joshua'});
+  const id=await manager.match(['a','b'],client);
+  if(finish)await manager.publishResult({id,winnerName:'Estelle',captureId:'result'},client);
+  else {lobby.cancelDuel(id);await manager.cleanupAnnouncements(client);}
+  assert.deepEqual(removed,['watch-message']);await manager.cleanupAnnouncements(client);assert.equal(removed.length,1);
+  assert.equal(await manager.publicationThread(id,client),'result-thread');assert.ok(posts.every(p=>!p.components));
+ }
 });

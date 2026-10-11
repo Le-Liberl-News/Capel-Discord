@@ -558,5 +558,11 @@
         0
       ]
     }
+  },
+  "Anton": {
+    "craft": {
+      "nativeEffect": "SC/sc002_23._ef",
+      "effectDuration": 5000
+    }
   }
 }

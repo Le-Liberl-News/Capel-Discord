@@ -50,10 +50,10 @@ test("swept collision hits once, loses HP and stops the Pom", () => {
   f.world.action(a, { type: "pickup" }, f.players);
   f.world.action(a, { type: "throw", target: "b" }, f.players);
   f.tick(0.5);
-  assert.equal(f.players.get("b").hp, 475);
+  assert.equal(f.players.get("b").hp, 400);
   assert.equal(f.world.snapshot().pom.mode, "rest");
   f.tick(0.5);
-  assert.equal(f.players.get("b").hp, 475);
+  assert.equal(f.players.get("b").hp, 400);
 });
 test("moving sideways before arrival dodges; target does not home", () => {
   const f = fixture(),
@@ -233,7 +233,7 @@ test("service refuses dead movement and ignores the corpse snapshot on respawn",
   await service.state(a.activity_token);
   await service.state(b.activity_token, { x: 0.6, z: 0 });
   let hit;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 5; i++) {
     time += 100;
     await service.state(a.activity_token, {
       x: 0,
@@ -247,7 +247,7 @@ test("service refuses dead movement and ignores the corpse snapshot on respawn",
     });
     time += 100;
     hit = await service.state(b.activity_token);
-    assert.equal(hit.health.hp, 500 - (i + 1) * 25);
+    assert.equal(hit.health.hp, 500 - (i + 1) * 100);
   }
   const frozen = await service.state(b.activity_token, { x: 1, z: 0 });
   assert.equal(frozen.position.x, 0.6);
@@ -295,7 +295,7 @@ test("free aim needs no player target; a descending and a vertical shot can hit 
     assert.ok(world.snapshot().pom.vy < 0);
     time = 400;
     world.tick(players);
-    assert.equal(players.get("b").hp, 475);
+    assert.equal(players.get("b").hp, 400);
   }
 });
 test("invalid free aim does not consume the held Pom", () => {
@@ -363,7 +363,7 @@ test("a free shot across the real restaurant stairs hits a player below", () => 
   world.action(a, { type: "throw", aim: { x: b.x, y: 0.9, z: b.z } }, players);
   time = 300;
   world.tick(players);
-  assert.equal(b.hp, 475);
+  assert.equal(b.hp, 400);
 });
 
 test("snapshots preserve ordered ricochet corners and unique launch identity", () => {
@@ -391,7 +391,7 @@ test('a Pom cannot damage a participant during the duel presentation',()=>{
   const f=fixture();f.players.get('b').duelProtected=protectedNow;
   assert.deepEqual(f.world.action(f.players.get('a'),{type:'pickup'},f.players),{});
   assert.deepEqual(f.world.action(f.players.get('a'),{type:'throw',aim:{x:8,y:.9,z:1}},f.players),{});
-  f.tick(.5);assert.equal(f.players.get('b').hp,protectedNow?500:475);
+  f.tick(.5);assert.equal(f.players.get('b').hp,protectedNow?500:400);
  }
 });
 

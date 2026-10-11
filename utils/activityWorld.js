@@ -1,7 +1,7 @@
 const {applyDamage}=require('./activityDamage');
 // Authoritative room simulation. Coordinates and HP are never supplied by clients.
 const MAX_HP = require('../activity/player-health.cjs').PLAYER_MAX_HP,
-  DAMAGE = 25,
+  DAMAGE = 100,
   RESPAWN_MS = 10000;
 function createSingleActivityWorld({
   grid,
