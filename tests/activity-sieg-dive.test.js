@@ -1,0 +1,21 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const {divePath,divePosition,SIEG_DIVE}=require('../activity/sieg-dive.cjs');
+const {createActivityWorld}=require('../utils/activityWorld');
+const {createActivityService}=require('../utils/activityService');
+const grid={origin:{x:-20,z:-20},step:1,width:41,height:41,cells:Array(1681).fill(0),spawn:{x:0,y:0,z:0}};
+test('Sieg dives along a camera direction, drops then climbs, without crossing walls or the ground',()=>{
+ const origin={x:0,y:4,z:0},points=divePath(origin,{x:0,y:0,z:1},grid,{floor:()=>0}),dive={points,started:0,duration:1100};
+ assert.equal(points.length,41);assert.ok(divePosition(dive,550).y<origin.y);assert.equal(points.at(-1).z,8);assert.ok(points.at(-1).y>origin.y);
+ const downward=divePath(origin,{x:.6,y:-.8,z:0},grid,{floor:()=>0});assert.ok(downward.every(p=>p.y>=.08));assert.ok(downward.at(-1).y>4);
+ const wall={floor:()=>0,sweep:(a,b)=>b.z>=3?{distance:0,point:a}:null};const clipped=divePath(origin,{x:0,y:0,z:1},grid,wall);assert.ok(clipped.at(-1).z<3);
+ assert.equal(divePath(origin,{x:0,y:NaN,z:1},grid),null);
+});
+test('Craft works outside combat maps, rejects other characters, prevents repeated dives and leaves HP intact',()=>{let time=0;const world=createActivityWorld({grid,now:()=>time}),p={id:'s',character:'Sieg',x:0,y:4,z:0,hp:100},room=new Map([['s',p]]);
+ const command={id:'dive',type:'sieg_dive',direction:{x:0,y:0,z:1}};assert.ok(world.action({...p,character:'Estelle'},command,room).error);assert.deepEqual(world.action(p,command,room),{});assert.ok(world.action(p,command,room).error);
+ time=550;world.tick(room);assert.ok(p.y<4&&p.z>0);time=1100;world.tick(room);assert.equal(p.z,8);assert.ok(p.y>4);assert.equal(p.siegDive,null);assert.equal(p.hp,100);assert.ok(world.action(p,command,room).error);time=SIEG_DIVE.cooldown;assert.deepEqual(world.action(p,{...command,id:'next'},room),{});
+});
+test('Service replicates the dive and cooldown; retries cannot restart it or teleport Sieg',async()=>{let time=0;const service=createActivityService({grid,now:()=>time,resolveCharacter:async()=> 'Sieg'}),session=await service.join({id:'s',channel:'room'}),command={id:'dive',type:'sieg_dive',direction:{x:0,y:0,z:1}};
+ const first=await service.state(session.activity_token,{...session.player,action:command});assert.ok(first.health.siegDive);assert.equal(first.health.canMove,false);const started=first.health.siegDive.started;
+ time=400;const next=await service.state(session.activity_token,{x:100,y:100,z:100,action:command});assert.equal(next.health.siegDive.started,started);assert.ok(next.position.z<8);assert.ok(next.position.x<1);assert.equal(next.health.cooldowns.craft,2500);
+ time=1500;const end=await service.state(session.activity_token);assert.equal(end.health.siegDive,null);assert.equal(end.health.canMove,true);assert.equal(end.position.z,8);
+});

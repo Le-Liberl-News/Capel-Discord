@@ -450,7 +450,8 @@ function createActivityWorldBase(options) {
   };
 }
 function createActivityWorld(options) {
-  const world=createActivityWorldBase(options);
+  const base=createActivityWorldBase(options),dive=require('./activitySiegDive').createSiegDive(options);
+  const world={...base,tick(players){base.tick(players);dive.tick(players);},action(player,command,players){return command?.type==='sieg_dive'?dive.action(player,command):base.action(player,command,players);}};
   if(!options.combatEnabled)return world;
   const combat=require("./activityCombat").createActivityCombat(options);
   const jumps=options.dungeon?require('./activityDungeonJumps').createDungeonJumps(options):null;
