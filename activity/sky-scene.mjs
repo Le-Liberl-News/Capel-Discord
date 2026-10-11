@@ -1,3 +1,4 @@
+import {recordCorrection,recordDiagnostic} from './diagnostics.mjs';
 import playerHealth from './player-health.cjs';
 import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
 import projectionMechanics from './combat-projection.cjs';
@@ -693,6 +694,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       requestAnimationFrame(render);
       return;
     }
+    if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
@@ -1086,6 +1088,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const me = avatars.get(localId);
       if(localJump||inTower&&health.jump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
+        recordCorrection(me.position,position,submitted,map);
         Object.assign(me.position, position);
         path = [];
         movementTrace = [];

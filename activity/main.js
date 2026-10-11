@@ -1,3 +1,4 @@
+import {downloadDiagnostics,recordDiagnostic} from './diagnostics.mjs';
 import {createTerminalUI} from "./terminal-ui.mjs";
 import {keyboardLayout} from "./controls.mjs";
 import { fetchJson, retryConnection } from "./network.mjs";
@@ -95,7 +96,7 @@ const settings=document.createElement("details");settings.id="sky-settings";
 const gear=document.createElement("summary");gear.textContent="\u2699";gear.setAttribute("aria-label","R\u00e9glages");gear.title="R\u00e9glages";
 const layoutLabel=document.createElement("label");layoutLabel.textContent="Clavier ";const layoutSelect=document.createElement("select");for(const name of ["AZERTY","QWERTY"]){const option=document.createElement("option");option.value=name;option.textContent=name;layoutSelect.append(option);}layoutSelect.value=keyboardLayout();layoutSelect.addEventListener("change",()=>{try{localStorage.setItem("sky-keyboard",layoutSelect.value);}catch{}dispatchEvent(new Event("blur"));});layoutLabel.append(layoutSelect);
 const rpLabel=document.createElement("label");rpLabel.style.display="block";const rpCheckbox=document.createElement("input");rpCheckbox.type="checkbox";try{rpCheckbox.checked=localStorage.getItem("sky-rp")==="true";}catch{}rpCheckbox.addEventListener("change",()=>{try{localStorage.setItem("sky-rp",String(rpCheckbox.checked));}catch{}});rpLabel.append(rpCheckbox," RP");
-settings.append(gear,layoutLabel,rpLabel);document.body.append(settings);
+const diagnosticButton=document.createElement('button');diagnosticButton.type='button';diagnosticButton.textContent='Télécharger le diagnostic';diagnosticButton.style.cssText='display:block;margin-top:8px';diagnosticButton.onclick=downloadDiagnostics;settings.append(gear,layoutLabel,rpLabel,diagnosticButton);document.body.append(settings);
 const compactStyle=document.createElement("style");compactStyle.textContent=`body[data-sky-editing] #sky-chat{bottom:calc(12px + var(--sky-keyboard-inset,0px))!important}#sky-settings{position:fixed;left:16px;bottom:82px;z-index:31;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;padding:8px;max-width:280px;font:14px system-ui}#sky-settings summary{cursor:pointer;font-size:22px;list-style:none}#sky-settings select{font:inherit;padding:6px}body[data-sky-touch] #hud{display:none}body[data-sky-touch] #sky-settings{left:8px;bottom:190px}body[data-sky-touch] #sky-settings>label:first-of-type{display:none}body[data-sky-touch] #sky-leave{top:auto!important;right:auto!important;left:8px;bottom:125px;max-width:155px}body[data-sky-touch] #sky-chat{bottom:calc(190px + var(--sky-keyboard-inset,0px))!important}@media(any-pointer:coarse),(max-width:600px){body[data-sky-ready] #hud{display:none}#sky-settings{left:8px;bottom:190px}#sky-settings>label:first-of-type{display:none}#sky-leave{top:auto!important;right:auto!important;left:8px;bottom:125px;max-width:155px;min-height:44px}#sky-chat{bottom:calc(190px + var(--sky-keyboard-inset,0px))!important}#sky-prophunt{top:60px!important;left:8px;right:auto!important;max-width:220px!important}}`;
 document.head.append(compactStyle);
 
@@ -307,10 +308,10 @@ async function start() {
     if (inFlight || stopped) return;
     inFlight = true; requested = false;
     try {
-      await publier(); failures = 0;connectionNotice.hidden=true;
+      await publier();if(failures)recordDiagnostic('connection-restored',{failures},true); failures = 0;connectionNotice.hidden=true;
       bandeau.textContent = "Votre personnage du jour : " + etat.character;
     } catch (error) {
-      scene.setConnected(false); failures++;connectionNotice.textContent=error.message;connectionNotice.hidden=false;
+      recordDiagnostic('connection-error',{status:error.status??0},true);scene.setConnected(false); failures++;connectionNotice.textContent=error.message;connectionNotice.hidden=false;
       bandeau.textContent = error.message;
       if (error.status === 409) { inFlight = false; stopped = true; return; } // Do not steal control back from another window.
       if (error.status === 401) {
