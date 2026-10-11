@@ -29,7 +29,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    const extra=impact?.point?{sprite:new THREE.Sprite(new THREE.SpriteMaterial({map:glowMap,color:0xff2020,transparent:true,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending})),draw(ms){this.sprite.material.opacity=Math.max(0,1-ms/700);},dispose(){this.sprite.material.dispose();}}:null;if(extra){extra.sprite.renderOrder=8;scene.add(extra.sprite);}
    const number=document.createElement("div");number.className="sky-damage";
    number.style.cssText="position:absolute;pointer-events:none;display:flex;transform-origin:50% 100%;z-index:18";
-   for(const digit of String(Math.round(amount))){const cell=document.createElement('span');cell.style.cssText=`display:block;width:20px;height:40px;background-size:200px 40px;background-image:url('${new URL('damage-digits.png',url).href}');background-position:${-Number(digit)*20}px 0;background-repeat:no-repeat`;number.append(cell);}
+   for(const digit of String(Math.round(amount))){const cell=document.createElement('span');cell.style.cssText=`display:block;width:60px;height:120px;image-rendering:auto;background-size:600px 120px;background-image:url('${new URL('damage-digits.png',url).href}');background-position:${-Number(digit)*60}px 0;background-repeat:no-repeat`;number.append(cell);}
    if(heal)number.style.filter='hue-rotate(115deg)';container.append(number);
    hits.push({id,sprite,effect,extra,number,impact,time:-delay,lane:hits.filter(h=>h.id===id).length%3});
   },
@@ -50,7 +50,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     hit.number.style.left=((screen.x+1)*width/2+hit.lane*16)+"px";
     hit.number.style.top=((1-screen.y)*height/2-40*hit.time)+"px";
     hit.number.style.opacity=String(Math.min(1,(1.5-hit.time)/.65));
-    const scale=hit.time<.5?3-hit.time*3:1.5+(hit.time-.5)*.4;hit.number.style.transform=`translate(-50%,-100%) scale(${scale}) skewX(-7deg)`;
+    const scale=hit.time<.5?1-hit.time:.5+(hit.time-.5)*.133333;hit.number.style.transform=`translate(-50%,-100%) scale(${scale}) skewX(-7deg)`;
    }
   },
   dispose(){for(const hit of hits){scene.remove(hit.sprite);hit.sprite.material.map.dispose();hit.sprite.material.dispose();if(hit.extra){scene.remove(hit.extra.sprite);hit.extra.dispose();}hit.number.remove();}hits.length=0;texture.dispose();glowMap.dispose();zinBank.dispose();for(const bank of banks.values())bank.dispose();}
