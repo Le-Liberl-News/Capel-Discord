@@ -405,7 +405,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     let avatar = avatars.get(player.id);
     const dead = player.hp === 0;
     const prop = propCatalogue[player.prop] ? player.prop : null;
-    const character = (catalogue[player.character]||renneMechanics.COMBAT[player.character])
+    const character = (catalogue[player.character]||renneMechanics.COMBAT[player.character]||player.character==='Anton')
       ? player.character
       : "Estelle";
     if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
@@ -434,7 +434,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar = {mesh,prop,character,dead,hp:player.hp??100,info:{height:1},position:{x:player.x??spawn.x,y:player.y??spawn.y,z:player.z??spawn.z},target:null,heading:{dx:0,dz:-1},time:0};
       attachShadow(avatar,player.id);avatars.set(player.id,avatar); return avatar;
     }
-    const baseInfo = (catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]);
+    const baseInfo = (catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]??catalogue.Estelle);
     const battle=renneCombat&&renneCombat.metadataFor(character);
     const combatAssets=battle?await renneCombat.load(character):null;
     const info = battle ? (combatAssets.metadata.banks[dead?"4":"0"]??combatAssets.metadata.banks["0"]) :
