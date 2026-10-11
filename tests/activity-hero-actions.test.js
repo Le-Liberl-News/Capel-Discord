@@ -9,6 +9,9 @@ test('Arc Fencer uses its native bank and strikes twice along the aimed line onl
  assert.equal(COMBAT.Ries.source.craftSlot,16);
  assert.ok(COMBAT.Ries.sequences.craft.every(f=>f.bank===12));
  assert.equal(COMBAT.Ries.banks[12].directions,8);
+ assert.deepEqual(COMBAT.Ries.banks[2].anchors,[[197,176],[177,200],[128,210],[79,200],[60,176],[80,152],[128,179],[176,152]]);
+ assert.deepEqual(COMBAT.Ries.banks[12].anchors[6],[128,140]);
+ assert.ok(Math.abs(COMBAT.Ries.banks[0].pixelScale*86-1.7)<1e-9);
  for(const [x,z]of [[5,0],[0,5],[-3,-4]]){
   const f=fixture('Ries',{dungeon:{},canDamage:(_a,b)=>b.enemy});
   Object.assign(f.enemy,{x:x*.6,z:z*.6});
@@ -34,9 +37,11 @@ test('Arc Fencer renders original indexed UV geometry, extends toward aim and fa
    const fx=bank.create({origin:{x:0,y:0,z:0},aim:{x,y:0,z}},combatSpec('Ries','craft'));
    fx.draw(949);assert.equal(fx.group.visible,false);
    fx.draw(1060);fx.group.updateMatrixWorld(true);
-   const box=new THREE.Box3().setFromObject(fx.group),tip=new THREE.Vector3(0,0,-9.979848861694336).applyMatrix4(fx.group.matrixWorld);
-   assert.ok(box.max.y>box.min.y);assert.ok(tip.distanceTo(new THREE.Vector3(x,.95,z))<.001);
+   const box=new THREE.Box3().setFromObject(fx.group),tip=new THREE.Vector3(0,0,9.98).applyMatrix4(fx.group.matrixWorld);
+   assert.ok(box.max.y>box.min.y);assert.ok(tip.distanceTo(new THREE.Vector3(x,0,z))<.001);
    assert.ok(fx.group.children[0].geometry.index.count>100);
+   const geometry=fx.group.children[0].geometry,pose=Array.from(geometry.attributes.position.array);fx.draw(1070);assert.notDeepEqual(Array.from(geometry.attributes.position.array),pose);
+   assert.equal(model.meshes[0].skin.bones.length,18);assert.equal(model.skeleton.find(n=>n.name==='Frame21_XYZ').native.rotation.length,45);
    fx.draw(1690);assert.ok(fx.group.children[0].material.opacity<.1);
    fx.draw(1700);assert.equal(fx.group.visible,false);fx.dispose();
   }

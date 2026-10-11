@@ -2355,13 +2355,13 @@
     "texture": "combat/as04150/0.png",
     "columns": 8,
     "rows": 8,
-    "frameWidth": 252,
-    "frameHeight": 217,
+    "frameWidth": 256,
+    "frameHeight": 228,
     "frames": 64,
     "directions": 8,
-    "height": 2.8596899224806203,
+    "height": 4.506976744186047,
     "centerX": 0.0,
-    "centerY": 0.6127906976744186,
+    "centerY": 1.008139534883721,
     "idle": [
       0
     ],
@@ -2376,17 +2376,56 @@
       7
     ],
     "fps": 8,
+    "pixelScale": 0.019767441860465116,
+    "cropOrigin": [
+      0,
+      11
+    ],
+    "anchors": [
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ],
+      [
+        128,
+        176
+      ]
+    ],
     "walk": {
       "texture": "combat/as04150/1.png",
       "columns": 8,
       "rows": 8,
-      "frameWidth": 252,
-      "frameHeight": 217,
+      "frameWidth": 256,
+      "frameHeight": 228,
       "frames": 64,
       "directions": 8,
-      "height": 2.8596899224806203,
+      "height": 4.506976744186047,
       "centerX": 0.0,
-      "centerY": 0.6127906976744186,
+      "centerY": 1.008139534883721,
       "idle": [
         0
       ],
@@ -2400,19 +2439,58 @@
         6,
         7
       ],
-      "fps": 8
+      "fps": 8,
+      "pixelScale": 0.019767441860465116,
+      "cropOrigin": [
+        0,
+        11
+      ],
+      "anchors": [
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ]
+      ]
     },
     "death": {
       "texture": "combat/as04150/4.png",
       "columns": 8,
       "rows": 4,
-      "frameWidth": 252,
-      "frameHeight": 217,
+      "frameWidth": 256,
+      "frameHeight": 228,
       "frames": 32,
       "directions": 8,
-      "height": 2.8596899224806203,
+      "height": 4.506976744186047,
       "centerX": 0.0,
-      "centerY": 0.6127906976744186,
+      "centerY": 1.008139534883721,
       "idle": [
         0
       ],
@@ -2422,7 +2500,46 @@
         2,
         3
       ],
-      "fps": 8
+      "fps": 8,
+      "pixelScale": 0.019767441860465116,
+      "cropOrigin": [
+        0,
+        11
+      ],
+      "anchors": [
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ],
+        [
+          128,
+          176
+        ]
+      ]
     },
     "portrait": "portraits/063.png"
   },

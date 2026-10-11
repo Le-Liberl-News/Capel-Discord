@@ -83,11 +83,24 @@ for row in rows:
    if not seq:sequences.pop(key)
   if not sequences.get('basic'):raise ValueError('No valid attack poses')
   boxes=[f.getbbox() for poses in frames.values() for f in poses if f.getbbox()];box=(min(b[0] for b in boxes),min(b[1] for b in boxes),max(b[2] for b in boxes),max(b[3] for b in boxes));w,h=box[2]-box[0],box[3]-box[1]
-  body=[f.getbbox() for f in frames[0] if f.getbbox()];foot=max(b[3] for b in body);scale=1.7/(foot-min(b[1] for b in body));slug=source['file'].split('.')[0];folder=a.output/slug;folder.mkdir(parents=True,exist_ok=True);banks={}
+  body=[f.getbbox() for f in frames[0] if f.getbbox()];foot=max(b[3] for b in body);scale=1.7/(foot-min(b[1] for b in body));
+  if row['character']=='Ries':
+   # Native body is 86 pixels high; do not include the raised sword in its size.
+   foot=176;scale=1.7/86
+  slug=source['file'].split('.')[0];folder=a.output/slug;folder.mkdir(parents=True,exist_ok=True);banks={}
   for bank,poses in frames.items():
    image=Image.new('RGBA',(w*8,h*((len(poses)+7)//8)))
    for i,f in enumerate(poses):image.paste(f.crop(box),((i%8)*w,(i//8)*h))
    image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':1 if row['character']=='Olivier' and bank==12 else 8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
+  if row['character']=='Ries':
+   for bank,slot,address in [(2,5,None),(12,16,0xd38)]:
+    pc=address if address is not None else entries[slot]+1;anchors=[[128,176] for _ in range(8)]
+    while True:
+     it=decoder._decode_one(data,pc)
+     if it.opcode not in (0x32,0x33):break
+     values=[int.from_bytes(data[pc+o.offset:pc+o.offset+o.size],'little') for o in it.operands];anchors[values[0]][it.opcode-0x32]=values[1];pc=it.end
+    banks[str(bank)]['anchors']=anchors
+   for bank in banks.values():bank['pixelScale']=scale;bank['cropOrigin']=[box[0],box[1]];bank.setdefault('anchors',[[128,176] for _ in range(8)])
   actions={'basic':{'name':'Attaque','key':'f','damage':12,'cooldown':700,'windup':300,'duration':max(650,min(1800,sum(f['ms'] for f in sequences['basic']))),'range':2.5,'radius':1.05}}
   # Gun/bow attacks keep a ranged hit instead of a melee cone.
   if row['character'] in ['Olivier','Tita','Kevin','Josette','Kanone','Gilbert','Dorothy']:actions['basic'].update(range=8,radius=.7,projectile=True,windup=350)
@@ -105,6 +118,10 @@ for row in rows:
 # Retain the existing hand-tuned Renne implementation.
 renne=json.loads((a.output/'renne.json').read_text(encoding='utf8'));renne['actions']={'basic':{'name':'Coup de faux','key':'f','damage':12,'cooldown':700,'windup':300,'duration':650,'range':2.5,'radius':1.05},'art':{'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1650,'range':9,'radius':1.4,'projectile':True},'craft':{'name':'Cercle sanglant','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':1650,'range':8,'radius':1.9,'projectile':True}};catalogue['Renne']=renne
 (a.output/'catalogue.json').write_text(json.dumps(catalogue,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf8')
+if a.character=='Ries':
+ path=a.output.parent/'characters.json';characters=json.loads(path.read_text(encoding='utf8'));old=characters['Ries'];banks=catalogue['Ries']['banks']
+ characters['Ries']={**banks['0'],'walk':banks['1'],'death':banks['4'],'portrait':old['portrait']}
+ path.write_text(json.dumps(characters,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 if a.character and (a.output/'export-report.json').exists():
  omitted=[e for e in json.loads((a.output/'export-report.json').read_text(encoding='utf8'))['omitted'] if e['character']!=a.character]+omitted
 (a.output/'export-report.json').write_text(json.dumps({'characters':len(catalogue),'omitted':omitted},ensure_ascii=False,indent=2)+'\n',encoding='utf8')
