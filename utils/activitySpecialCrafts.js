@@ -8,11 +8,11 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks}){
   for(const target of room.values()){
    if(target.hp<=0||target.spectator||target.duelProtected||target.id===actor.id||!canDamage(actor,target)||Math.hypot(target.x-point.x,target.z-point.z)>radius+(target.boss?1:0)||Math.abs((target.y??0)-point.y)>2)continue;
    const wall=geometry?.sweep({...point,y:point.y+.8},{x:target.x,y:(target.y??0)+.8,z:target.z},.08);if(wall)continue;
-   if(freeze){applyStatus(target,{status:'stone',statusDuration:5000},time);a.hits.push({id:target.id,at:time,frozen:true});}
+   if(freeze){applyStatus(target,{status:'stone',statusDuration:5000},time);target.stoneSource=a.id;a.hits.push({id:target.id,at:time,frozen:true});}
    else {const dealt=hurt(a,actor,target,damage,time,{point:{x:target.x,y:(target.y??0)+.8,z:target.z}});a.hits.push({id:target.id,at:time,...dealt});}
   }
  }
- function detonate(actor,room){const a=activeSpire(actor.id);if(!a)return false;a.explodedAt=now();a.endsAt=now()+700;damageArea(a,actor,room,a.aim,2.8,36,now());return true;}
+ function detonate(actor,room){const a=activeSpire(actor.id);if(!a)return false;a.explodedAt=now();a.endsAt=now()+700;for(const target of room.values())if(target.stoneSource===a.id){target.stoneUntil=0;delete target.stoneSource;}damageArea(a,actor,room,a.aim,2.8,36,now());return true;}
  function setup(a,s,command,room){
   a.special=s.special;
   if(s.special==='spire'){a.impactAt=a.started+s.windup;a.objectExpiresAt=a.impactAt+12000;a.endsAt=a.objectExpiresAt+700;}
