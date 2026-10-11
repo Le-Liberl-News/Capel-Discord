@@ -260,7 +260,7 @@ async function start() {
   await entrer();
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
   bindScene();
-  music = createMapMusic(musicUrl(etat.map));
+  music = createMapMusic(musicUrl(etat.map),settings);
   leave.hidden = etat.map === "anterose";
   document.querySelector("#hud h1").textContent = mapTitle(etat.map);
   await scene.me({ ...etat.moi, character: etat.character });

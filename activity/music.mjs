@@ -1,4 +1,4 @@
-export function createMapMusic(url) {
+export function createMapMusic(url, container = document.body) {
   const audio = new Audio(url.href);
   audio.loop = true;
   audio.volume = 0.1;
@@ -49,7 +49,8 @@ export function createMapMusic(url) {
     try { localStorage.setItem("sky-music-volume", String(audio.volume)); } catch {}
     void play();
   });
-  panel.append(button, slider); document.body.append(panel);
+  if(container !== document.body) panel.style.cssText="display:flex;align-items:center;gap:8px;margin-top:10px;color:inherit;font:inherit";
+  panel.append(button, slider); container.append(panel);
   document.addEventListener("pointerdown", gesture);
   document.addEventListener("keydown", gesture);
   update();
