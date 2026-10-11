@@ -17,15 +17,19 @@ test("private duel unites different DM channels, isolates other players and hide
  assert.throws(()=>lobby.joinDuel("match","intruder"));
  const left=await lobby.state(a.activity_token,{action:{id:"leave",type:"leave_duel"},x:99,z:99});assert.equal(left.map,"anterose");
 });
-test("different duels share one arena and its Poms; invitations still expire",async()=>{
+test("different duels isolate their arena and Poms; invitations still expire",async()=>{
  const {lobby,tick}=fixture();
  lobby.createDuel({id:"one",channel:"guild",players:["a","b"]});lobby.createDuel({id:"two",channel:"guild",players:["c","d"]});
  lobby.joinDuel("one","a");lobby.joinDuel("two","c");
  const a=await lobby.join({id:"a",channel:"dm-a"}),c=await lobby.join({id:"c",channel:"dm-c"});
- await lobby.state(a.activity_token);const shared=await lobby.state(c.activity_token);assert.equal(shared.joueurs.length,2);assert.equal(shared.sceneKey,"arena");
+ await lobby.state(a.activity_token);const shared=await lobby.state(c.activity_token);assert.equal(shared.joueurs.length,1);assert.equal(shared.sceneKey,"arena:two");
  const picked=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"shared-pickup",type:"pickup",target:"world:pom:0"}});
- assert.equal((await lobby.state(c.activity_token)).poms[0].owner,picked.ownId);
- tick(30*60*1000+1);assert.throws(()=>lobby.joinDuel("one","b"));assert.equal((await lobby.state(a.activity_token)).map,"arena");
+ assert.notEqual((await lobby.state(c.activity_token)).poms[0].owner,picked.ownId);
+ lobby.acceptDuel("two","c");lobby.acceptDuel("two","d");assert.equal((await lobby.state(a.activity_token)).poms[0].owner,picked.ownId);
+ await lobby.state(a.activity_token,{x:1,z:1,action:{id:"private-chat",type:"say",text:"Only match one"}});
+ assert.equal((await lobby.state(c.activity_token)).messages.length,0);
+
+ tick(30*60*1000+1);assert.throws(()=>lobby.joinDuel("one","b"));assert.equal((await lobby.state(a.activity_token)).map,"anterose");
 });
 test("separate Poms are atomic and a player cannot carry two",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"match",channel:"guild",players:["a","b"]});lobby.joinDuel("match","a");lobby.joinDuel("match","b");
@@ -66,7 +70,7 @@ test("duel assignment survives restart and both opponents can resume the same ar
  await assert.rejects(()=>lobby.state(old.activity_token),{status:401});
  const a=await lobby.join({id:"a",channel:"dm-a"}),b=await lobby.join({id:"b",channel:"dm-b"});
  const picked=await lobby.state(a.activity_token,{x:1,z:1,action:{id:"pickup",type:"pickup",target:"world:pom:0"}});
- const peer=await lobby.state(b.activity_token);assert.equal(peer.joueurs.length,2);assert.equal(peer.sceneKey,"arena");assert.equal(peer.poms[0].owner,picked.ownId);
+ const peer=await lobby.state(b.activity_token);assert.equal(peer.joueurs.length,2);assert.equal(peer.sceneKey,"arena:persisted");assert.equal(peer.poms[0].owner,picked.ownId);
 });
 test("a second window cannot alternate movement with the current controller",async()=>{
  const {lobby}=fixture();const first=await lobby.join({id:"a",channel:"guild"});await lobby.state(first.activity_token);
@@ -83,7 +87,7 @@ test("retrying the same duel resends both invitations and preserves the already 
  lobby.joinDuel(id,"real-alice");const player=await lobby.join({id:"real-alice",channel:"dm-a"});const before=await lobby.state(player.activity_token);
  time=30001;await manager.handle(command);const sent=calls.filter(c=>c[0]==="b");assert.equal(sent.length,2);assert.equal(sent[1][1].components[0].components[0].custom_id,"activity:"+id);
  assert.equal((await lobby.state(player.activity_token)).sceneKey,before.sceneKey);assert.equal(calls.filter(c=>c[0]==="public").length,1);
- time=60002;fail=true;await manager.handle(command);assert.equal((await lobby.state(player.activity_token)).sceneKey,"arena");assert.match(calls.at(-1)[1].content,/messages/);assert.doesNotMatch(calls.at(-1)[1].content,/private detail/);
+ time=60002;fail=true;await manager.handle(command);assert.equal((await lobby.state(player.activity_token)).sceneKey,"arena:"+id);assert.match(calls.at(-1)[1].content,/messages/);assert.doesNotMatch(calls.at(-1)[1].content,/private detail/);
 });
 test("a new challenge releases the initiating player's old assignment",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"occupied",channel:"guild",players:["real-alice","other"]});lobby.joinDuel("occupied","real-alice");
@@ -96,11 +100,11 @@ test("closed activity releases stale assignments while a connected opponent rema
  const b=await lobby.join({id:"b",channel:"dm-b"});await lobby.state(b.activity_token);
  tick(60000);await lobby.state(b.activity_token);tick(60001);await lobby.state(b.activity_token);assert.throws(()=>lobby.prepareDuel("c","b"),/actif/);
  lobby.prepareDuel("c","a");lobby.createDuel({id:"new",channel:"guild",players:["c","a"]});lobby.joinDuel("new","a");
- assert.equal((await lobby.join({id:"a",channel:"dm-a"})).map,"arena");assert.equal((await lobby.state(b.activity_token)).sceneKey,"arena");
+ assert.equal((await lobby.join({id:"a",channel:"dm-a"})).map,"arena");assert.equal((await lobby.state(b.activity_token)).sceneKey,"arena:old");
 });
 test("accepting a new private invitation leaves the previous match",async()=>{
  const {lobby}=fixture();lobby.createDuel({id:"old",channel:"guild",players:["a","b"]});lobby.createDuel({id:"new",channel:"guild",players:["a","c"]});lobby.joinDuel("old","a");
- const a=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(a.activity_token);lobby.joinDuel("new","a");const transfer=await lobby.state(a.activity_token);assert.equal(transfer.sceneKey,"arena");assert.equal(transfer.relocated,true);
+ const a=await lobby.join({id:"a",channel:"dm-a"});await lobby.state(a.activity_token);lobby.joinDuel("new","a");const transfer=await lobby.state(a.activity_token);assert.equal(transfer.sceneKey,"arena:new");assert.equal(transfer.relocated,true);
 });
 test("the same pair resumes its duel even when the new command comes from another channel",()=>{
  const {lobby}=fixture();lobby.createDuel({id:"old",channel:"first",players:["a","b"]});lobby.joinDuel("old","a");assert.equal(lobby.findDuel(["b","a"],"second").id,"old");
@@ -418,4 +422,28 @@ test('Accepting a new duel resets every arena ball exactly once',async()=>{
  const a=await lobby.join({id:'a',channel:'dm'});let state=await lobby.state(a.activity_token,{x:1,z:1,action:{id:'pick',type:'pickup',target:'world:pom:0'}});assert.equal(state.poms[0].mode,'held');
  lobby.acceptDuel('new','a');lobby.acceptDuel('new','b');state=await lobby.state(a.activity_token);assert.equal(state.poms[0].mode,'rest');assert.equal(state.poms[0].owner,null);assert.equal(state.poms[0].x,1);assert.equal(state.poms[1].x,8);
  state=await lobby.state(a.activity_token,{x:1,z:1,action:{id:'again',type:'pickup',target:'world:pom:0'}});lobby.acceptDuel('new','b');assert.equal((await lobby.state(a.activity_token)).poms[0].mode,'held');
+});
+
+
+test("leaving before the opponent enters closes the invitation and cannot enter a later match",async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:"first",players:["a","b"],channel:"guild"});
+ lobby.joinDuel("first","a");lobby.acceptDuel("first","a");
+ const a=await lobby.join({id:"a",channel:"dm"});await lobby.state(a.activity_token);
+ const left=await lobby.state(a.activity_token,{action:{id:"leave",type:"leave_duel"}});
+ assert.equal(left.map,"anterose");assert.equal(lobby.duelStatus("first","b"),null);
+ lobby.createDuel({id:"second",players:["a","c"],channel:"guild"});lobby.joinDuel("second","a");
+ assert.throws(()=>lobby.joinDuel("first","b"),{status:403});assert.throws(()=>lobby.acceptDuel("first","b"),{status:403});
+ const second=await lobby.state(a.activity_token);assert.equal(second.sceneKey,"arena:second");assert.equal(second.joueurs.length,1);
+});
+
+test("leaving a duel returns its opponent and spectators home without affecting another match",async()=>{
+ const {lobby}=fixture();for(const [id,players] of [["first",["a","b"]],["second",["c","d"]]]){
+  lobby.createDuel({id,players,channel:"guild"});for(const p of players){lobby.joinDuel(id,p);lobby.acceptDuel(id,p);}
+ }
+ lobby.spectateDuel("first","watcher");
+ const tokens={};for(const id of ["a","b","c","d","watcher"]){tokens[id]=(await lobby.join({id,channel:"dm"})).activity_token;await lobby.state(tokens[id]);}
+ lobby.leaveDuel("a");
+ for(const id of ["a","b","watcher"])assert.equal((await lobby.state(tokens[id])).map,"anterose");
+ const other=await lobby.state(tokens.c);assert.equal(other.sceneKey,"arena:second");assert.equal(other.joueurs.length,2);
+ assert.throws(()=>lobby.validateSpectate("first"),{status:403});
 });

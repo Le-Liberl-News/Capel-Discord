@@ -92,11 +92,12 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
       if (interaction.isButton?.() && interaction.customId.startsWith("activity:duel:")) {
         prune(); const id=interaction.customId.slice(9), invitation=invitations.get(id);
         if (!invitation?.players.includes(interaction.user.id)) { await interaction.reply({content:"Invitation expirée ou inaccessible.",flags:64}); return true; }
+        let joined=false;
         try {
           if (await resolveCharacter(interaction.user.id) !== invitation.names[invitation.players.indexOf(interaction.user.id)]) throw new DuelError("Votre personnage du jour a changé.");
           // Launch only inside the participant's private conversation with the bot.
           if (!interaction.channel?.isDMBased?.()) throw new DuelError("Ouvrez votre invitation privée.");
-          lobby.joinDuel(id,interaction.user.id);
+          lobby.joinDuel(id,interaction.user.id);joined=true;
           await interaction.launchActivity();
           const ready=lobby.acceptDuel(id,interaction.user.id);
           if(ready && interaction.client?.channels) {
@@ -104,8 +105,8 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
             catch(error) { console.error('Activity match thread failed:',error.code??'unavailable'); }
           }
         } catch(error) {
-          lobby.leaveDuel(interaction.user.id);
-          if (!interaction.replied) await interaction.reply({content:"Lancement impossible. Ouvrez votre invitation privée puis réessayez.",flags:64});
+          if(joined && lobby.duelStatus(id,interaction.user.id))lobby.leaveDuel(interaction.user.id,false);
+          if (!interaction.replied) await interaction.reply({content:error instanceof ActivityError ? error.message : "Lancement impossible. Ouvrez votre invitation privée puis réessayez.",flags:64});
         }
         return true;
       }

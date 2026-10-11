@@ -127,7 +127,8 @@ function createActivityService({
       if (!keepPlayer) { worlds.get(session.channel)?.depart(session.id,player); room?.delete(session.id); if (room) worlds.get(session.channel)?.tick(room); }
       sessions.delete(token); save(true);
     },
-    resetBalls(){for(const world of worlds.values())world.resetBall?.();for(const state of Object.values(worldStates)){if(state.pom)delete state.pom;if(state.poms)delete state.poms;}save(true);},
+    resetBalls(channel){for(const [key,world] of worlds)if(channel===undefined||key===channel)world.resetBall?.();for(const [key,state] of Object.entries(worldStates)){if(channel!==undefined&&key!==channel)continue;if(state.pom)delete state.pom;if(state.poms)delete state.poms;}save(true);},
+    closeRoom(channel) { for(const [token,session] of sessions)if(session.channel===channel)sessions.delete(token);rooms.delete(channel);worlds.delete(channel);delete worldStates[channel];messageStreams.delete(channel);save(true); },
     resetPlayer(id) { remembered.delete(id); for (const [key,room] of rooms) { worlds.get(key)?.depart(id,room.get(id)); room.delete(id); } save(true); },
     async join({ id, channel }) {
       prune();

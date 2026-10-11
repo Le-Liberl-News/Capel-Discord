@@ -49,16 +49,28 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     if (!aliases.has(id)) aliases.set(id, "avatar:" + randomBytes(12).toString("hex"));
     return aliases.get(id);
   };
-  function release(user, returnHome = true) {
+  function detach(user, returnHome = true) {
     if (returnHome) locations.set(user,"anterose");
     assignments.delete(user); lastSeen.delete(user);
     if (returnHome) for (const session of sessions.values()) if (session.id === user && session.key !== "tavern") session.service.leave(session.token);
   }
+  function closeDuel(id) {
+    if (!duels.has(id)) return;
+    for (const [user, match] of assignments) if (match === id) detach(user);
+    for (const [user, match] of spectators) if (match === id) { spectators.delete(user); detach(user); }
+    stadium?.closeRoom("map:arena:"+id);
+    duels.delete(id); resultAttempts.delete(id);
+  }
+  function release(user, returnHome = true, cancel = true) {
+    const id=assignments.get(user);
+    if(cancel && id)closeDuel(id);
+    detach(user,returnHome);
+  }
   function prune() {
     let changed = false;
-    for (const [user] of assignments) if (now() - (lastSeen.get(user) ?? 0) > presenceGrace) { release(user,false); changed = true; }
+    for (const [user] of assignments) if (now() - (lastSeen.get(user) ?? 0) > presenceGrace) { release(user,false,false); changed = true; }
     for (const [id, duel] of duels) if (duel.expires < now()) {
-      for (const [user, match] of assignments) if (match === id) release(user,false); duels.delete(id);resultAttempts.delete(id); changed = true;
+      closeDuel(id); changed = true;
     }
     for (const [token, s] of sessions) if (s.expires < now()) sessions.delete(token);
     if (changed) persist();
@@ -69,7 +81,8 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     if(skies&&locations.get(user)==='liberl')return {key:'liberl',service:skies,map:'liberl',channel:'map:liberl',match:null};
     const floor=/^tower([1-4])$/.exec(locations.get(user)??"");if(floor&&towers[Number(floor[1])-1]){const map="tower"+floor[1];return {key:map,service:towers[Number(floor[1])-1],map,channel:"map:"+map,match:null};}
     if (city && locations.get(user) === "rolent") return {key:"rolent",service:city,map:"rolent",channel:"map:rolent",match:huntGame?.summary()?.id??null};
-    return stadium && locations.get(user) === "arena" ? { key:"arena", service:stadium, map:"arena", channel:"map:arena", match:spectators.has(user) ? "watch:"+spectators.get(user) : duel ? id : null } : { key:"tavern", service:tavern, map:"anterose", channel:"map:anterose", match:null };
+    const arenaId=spectators.get(user) ?? (duel ? id : null);
+    return stadium && locations.get(user) === "arena" && duels.has(arenaId) ? { key:"arena:"+arenaId, service:stadium, map:"arena", channel:"map:arena:"+arenaId, match:spectators.has(user) ? "watch:"+arenaId : arenaId } : { key:"tavern", service:tavern, map:"anterose", channel:"map:anterose", match:null };
   }
   function sanitize(result) {
     const pom = p => p && ({ ...p, owner: alias(p.owner), thrownBy: alias(p.thrownBy) });
@@ -118,7 +131,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       huntGame?.leave(user); spectators.delete(user);
       assignments.set(user,id); locations.set(user,"arena"); lastSeen.set(user,now()); persist();
     },
-    acceptDuel(id,user) { const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){stadium.resetBalls();duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(arena.introDuration??0);}persist(); return ready; },
+    acceptDuel(id,user) { prune();const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){stadium.resetBalls("map:arena:"+id);duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(arena.introDuration??0);}persist(); return ready; },
     validateSpectate(id) { prune();const duel=duels.get(id);if(!duel||!duel.players.every(p=>duel.accepted?.includes(p)))throw new ActivityError("Ce duel n'est pas disponible.",403); },
     spectateDuel(id,user) { prune(); const duel=duels.get(id); if (!duel||!duel.players.every(p=>duel.accepted?.includes(p))) throw new ActivityError("Ce duel n'est pas disponible.",403);
       if (duel.players.includes(user)) return;
@@ -130,8 +143,8 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     huntSummary() { return huntGame?.summary(); },
     startHunt(id,user) { return huntGame.start(id,user); },
     joinHunt(id,user,character) { const existing=locations.get(user)==="rolent"&&sessions.get(active.get(user))?.match===id; huntGame.join(id,user,character); if(!existing){ release(user); spectators.delete(user); city.resetPlayer(user); locations.set(user,"rolent");persist(); } },
-    cancelDuel(id) { for (const [user, match] of assignments) if (match===id) release(user); duels.delete(id);resultAttempts.delete(id); persist(); },
-    leaveDuel(user) { huntGame?.leave(user); spectators.delete(user); release(user); persist(); },
+    cancelDuel(id) { closeDuel(id); persist(); },
+    leaveDuel(user,cancel=true) { huntGame?.leave(user); spectators.delete(user); release(user,true,cancel); persist(); },
     captureMessage(message) {
       const target = destination(message.author), session = sessions.get(active.get(message.author));
       if (!session || session.key !== target.key) return false;
