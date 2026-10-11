@@ -46,6 +46,8 @@ for row in rows:
  if row['character']=='Olivier':
   for bank,ch in [(12,'ch0403a'),(13,'ch0403c')]:
    folder=a.extracted/'sc-27/ED6_DT27';files[bank]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
+ if row['character']=='Ries':
+  folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04158._ch',folder/'ch04158p._cp')
  try:
   sequences={'basic':sequence(data,entries,end,5,files)}
   if row['art']:sequences.update(spell=sequence(data,entries,end,6,files),cast=sequence(data,entries,end,7,files))
@@ -60,6 +62,10 @@ for row in rows:
   if row['character']=='Olivier':
    # Requiem's luth bank contains individual poses; skip the rose prelude.
    sequences['craft']=[{'bank':12,'pose':i,'ms':80,'heading':0} for i in range(4,12)]+[{'bank':12,'pose':12,'ms':500,'heading':i*45,'firing':True} for i in range(8)]
+  if row['character']=='Ries':
+   # AS 16 loops poses 0..3 on thread 1 until 1100 ms; bank 12 is loaded by 0x6A.
+   sequences['craft']=[{'bank':12,'pose':i%4,'ms':100} for i in range(11)]+[{'bank':12,'pose':i,'ms':ms} for i,ms in [(4,800),(5,120),(6,50),(7,450),(8,100),(9,100),(10,100),(11,200),(12,300),(13,200),(14,40)]]
+   craftSlot=16
   if row['character']=='Estelle':
    sequences['craft']=sequence(data,entries,end,17,files);craftSlot=17
   if row['character']=='Joshua':

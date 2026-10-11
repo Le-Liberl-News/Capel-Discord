@@ -1,3 +1,4 @@
+import {prepareArcFencer} from './arc-fencer.mjs';
 import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {createEarthWave,prepareEarthWave} from './earth-wave.mjs';
 import {createBlackFangTrail} from './black-fang-effects.mjs';
@@ -9,6 +10,7 @@ const {COMBAT,combatSpec,attackPoint}=mechanics;
 export async function createRenneCombat(THREE,scene,assets) {
   const loader=new THREE.TextureLoader();
   const native=await loadNativeEffects(assets);
+  const arcBank=await prepareArcFencer(THREE,assets);
   const earthBank=await prepareEarthWave(THREE,assets);
   const earthArt=await loadBakedEffect(THREE,assets,'mg011_0',54);
   const heroDefinitions=await fetch(new URL('effects/hero-frames.json',assets)).then(r=>{if(!r.ok)throw Error('Effets des techniques introuvables');return r.json();});
@@ -51,9 +53,10 @@ export async function createRenneCombat(THREE,scene,assets) {
     const wave=spec.wave&&earthBank?createEarthWave(THREE,scene,event,spec,earthBank):null;
     let shot=null;if(spec.shotVisual){shot=nativeShot(spec.shotVisual);scene.add(shot);}
     const volleys=spec.sweepShots?new THREE.Group():null;if(volleys){for(let n=0;n<3;n++)volleys.add(nativeShot('bullet'));scene.add(volleys);}
-    const effect={group,ring,vortex,bolt,shot,volleys,assembly,worldAssembly,halo,trail,wave};effects.set(event.id,effect);return effect;
+    const arc=spec.arcFencer?arcBank.create(event,spec):null;if(arc)scene.add(arc.group);
+    const effect={arc,group,ring,vortex,bolt,shot,volleys,assembly,worldAssembly,halo,trail,wave};effects.set(event.id,effect);return effect;
   }
-  function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);if(e.shot){scene.remove(e.shot);e.shot.material.dispose();}if(e.volleys){scene.remove(e.volleys);for(const b of e.volleys.children){b.material.dispose();}}if(e.worldAssembly){scene.remove(e.worldAssembly.group);e.worldAssembly.dispose();}e.trail?.dispose();e.wave?.dispose();if(e.halo){scene.remove(e.halo.group);e.halo.dispose();}if(e.assembly){scene.remove(e.assembly.sprite);e.assembly.dispose();}for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
+  function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);if(e.arc){scene.remove(e.arc.group);e.arc.dispose();}if(e.shot){scene.remove(e.shot);e.shot.material.dispose();}if(e.volleys){scene.remove(e.volleys);for(const b of e.volleys.children){b.material.dispose();}}if(e.worldAssembly){scene.remove(e.worldAssembly.group);e.worldAssembly.dispose();}e.trail?.dispose();e.wave?.dispose();if(e.halo){scene.remove(e.halo.group);e.halo.dispose();}if(e.assembly){scene.remove(e.assembly.sprite);e.assembly.dispose();}for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
   function update(localId,capture,camera,avatars){for(const [id,event]of actions){const time=elapsed(event),spec=combatSpec(event.character??'Renne',event.kind),impact=event.impactAt-event.started;if(event.cancelled||time>event.endsAt-event.started+1100){capture?.cancel(id);remove(id);continue;}if(event.kind==='basic'&&!spec.shotVisual)continue;const e=effects.get(id)??makeEffect(event);
     if(e.halo){e.halo.group.visible=time>=0&&time<spec.castDuration;const position=avatars?.get(event.actor)?.position??event.origin;e.halo.group.position.set(position.x,position.y,position.z);if(e.halo.group.visible)e.halo.draw(time);}
     const travelling=spec.projectile&&time>=spec.windup&&time<impact;const progress=Math.max(0,Math.min(1,(time-spec.windup)/(impact-spec.windup||1)));
@@ -63,11 +66,12 @@ export async function createRenneCombat(THREE,scene,assets) {
     const age=(time-impact)/1000,visible=age>=0&&age<.85;e.group.visible=visible&&event.kind!=='basic';e.group.position.set(event.aim.x,event.aim.y+.04,event.aim.z);e.ring.rotation.z=age*3;e.ring.scale.setScalar(.6+Math.max(0,age)*.7);e.ring.material.opacity=e.vortex.material.opacity=visible?Math.max(0,1-age/.85):0;e.vortex.material.rotation=age*5;
     if(event.kind==='art'&&time<spec.windup){e.group.visible=true;e.group.position.set(event.origin.x,event.origin.y+.04,event.origin.z);e.ring.scale.setScalar(.35);e.ring.material.opacity=.55;e.vortex.material.opacity=0;}
     if(e.worldAssembly){e.group.visible=false;e.worldAssembly.group.visible=age>=0&&age<(spec.persistentBuff?spec.buffDuration:spec.effectDuration??1800)/1000;const position=avatars?.get(event.target??event.actor)?.position??event.aim;e.worldAssembly.group.position.set(position.x,position.y,position.z);if(e.worldAssembly.group.visible)e.worldAssembly.draw(spec.persistentBuff?800+(age*1000%600):age*1000*(spec.effect==='guard'?5000:3000)/(spec.effectDuration??1800));}
+    if(e.arc){e.group.visible=false;e.bolt.visible=false;e.arc.draw(time);}
     if(e.wave){e.group.visible=false;e.bolt.visible=false;e.wave.draw(time);}
     else if(e.trail){e.group.visible=false;e.bolt.visible=false;e.assembly.sprite.visible=false;e.trail.draw(time,avatars?.get(event.actor),camera);}
     else if(e.assembly){e.group.visible=false;const position=spec.sweepShots?(avatars?.get(event.actor)?.position??event.origin):spec.persistentBuff?(avatars?.get(event.actor)?.position??event.aim):event.aim;e.assembly.sprite.visible=age>=0&&age<(spec.persistentBuff?spec.buffDuration:spec.effectDuration??1200)/1000;e.assembly.sprite.position.set(position.x,position.y+.9,position.z);if(spec.persistentBuff&&(avatars?.get(event.actor)?.dead||[...actions.values()].some(other=>other.actor===event.actor&&other.effect===event.effect&&other.localStart>event.localStart&&elapsed(other)>=other.impactAt-other.started)))e.assembly.sprite.visible=false;if(spec.sweepShots){const sector=spec.hitOffsets.findLastIndex(t=>time>=impact+t);e.assembly.sprite.visible=sector>=0&&time-impact-spec.hitOffsets[sector]<220;e.assembly.sprite.scale.setScalar(1.1);}if(e.assembly.sprite.visible)e.assembly.draw(spec.sweepShots?(time-impact-spec.hitOffsets[spec.hitOffsets.findLastIndex(t=>time>=impact+t)])*3:spec.persistentBuff?Math.min(1100,spec.effectDuration*.7)+Math.sin(age*4)*150:age*1000);}
     if(spec.element==='wind'){e.ring.material.color.set(0x72ffb4);e.vortex.material.color.set(0xa1ffe4);}
     if(event.kind==='craft'&&event.actor===localId&&event.accepted&&!event.captureStarted&&time>=impact-350){event.captureStarted=true;capture?.start(id,event.aim,camera);}
   }}
-  return {metadata,textures,metadataFor,load,actions,predict,receive,current,dash,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});earthBank?.dispose();earthArt.dispose();for(const bank of heroBanks.values())bank.dispose();ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();for(const map of projectileMaps.values())map.dispose();}};
+  return {metadata,textures,metadataFor,load,actions,predict,receive,current,dash,pose,update,reject(id){const event=actions.get(id);if(event)event.cancelled=true;},accept(id){const event=actions.get(id);if(event)event.accepted=true;},dispose(){for(const id of [...actions.keys()])remove(id);for(const job of loaded.values())job.then(({textures})=>{for(const texture of textures.values())texture.dispose();});arcBank.dispose();earthBank?.dispose();earthArt.dispose();for(const bank of heroBanks.values())bank.dispose();ringTexture.dispose();vortexTexture.dispose();fireTexture.dispose();for(const map of projectileMaps.values())map.dispose();}};
 }

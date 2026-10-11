@@ -4,6 +4,45 @@ const {applyDamage}=require('../utils/activityDamage');
 const {combatSpec}=require('../activity/native-combat.cjs');
 const {immobilized,movementFactor}=require('../activity/combat-status.cjs');
 const grid={origin:{x:-10,z:-10},step:1,width:25,height:25,cells:Array(625).fill(0),spawn:{x:0,y:0,z:0}};
+test('Arc Fencer uses its native bank and strikes twice along the aimed line only',()=>{
+ const {COMBAT}=require('../activity/native-combat.cjs');
+ assert.equal(COMBAT.Ries.source.craftSlot,16);
+ assert.ok(COMBAT.Ries.sequences.craft.every(f=>f.bank===12));
+ assert.equal(COMBAT.Ries.banks[12].directions,8);
+ for(const [x,z]of [[5,0],[0,5],[-3,-4]]){
+  const f=fixture('Ries',{dungeon:{},canDamage:(_a,b)=>b.enemy});
+  Object.assign(f.enemy,{x:x*.6,z:z*.6});
+  f.room.set('outside',{id:'outside',enemy:true,x:-z,y:0,z:x,hp:100});
+  f.room.set('ally',{id:'ally',x:x*.4,y:0,z:z*.4,hp:100});
+  assert.ok(f.combat.action(f.actor,{id:'arc',kind:'craft',aim:{x,y:0,z}},f.room).combatId);
+  f.tick(1059);assert.equal(f.enemy.hp,100);
+  f.tick(1060);assert.equal(f.enemy.hp,82);
+  f.tick(1110);assert.equal(f.enemy.hp,64);
+  assert.equal(f.room.get('outside').hp,100);assert.equal(f.room.get('ally').hp,100);
+ }
+ assert.equal(combatSpec('Ries','art').element,'mirage');
+ assert.equal(combatSpec('Ries','art').nativeEffect,'SC/mg103_0._ef');
+});
+test('Arc Fencer renders original indexed UV geometry, extends toward aim and fades',async()=>{
+ const THREE=await import('three'),fs=require('node:fs');
+ const model=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'../activity/assets/sky/combat/arc-fencer/model.json')));
+ const saved=global.fetch;global.fetch=async()=>({ok:true,json:async()=>model});
+ try{
+  const {prepareArcFencer}=await import('../activity/arc-fencer.mjs');
+  const bank=await prepareArcFencer({...THREE,TextureLoader:class{async loadAsync(){return new THREE.Texture();}}},new URL('http://localhost/assets/sky/'));
+  for(const [x,z]of [[6,0],[0,-6],[-4,3]]){
+   const fx=bank.create({origin:{x:0,y:0,z:0},aim:{x,y:0,z}},combatSpec('Ries','craft'));
+   fx.draw(949);assert.equal(fx.group.visible,false);
+   fx.draw(1060);fx.group.updateMatrixWorld(true);
+   const box=new THREE.Box3().setFromObject(fx.group),tip=new THREE.Vector3(0,0,-9.979848861694336).applyMatrix4(fx.group.matrixWorld);
+   assert.ok(box.max.y>box.min.y);assert.ok(tip.distanceTo(new THREE.Vector3(x,.95,z))<.001);
+   assert.ok(fx.group.children[0].geometry.index.count>100);
+   fx.draw(1690);assert.ok(fx.group.children[0].material.opacity<.1);
+   fx.draw(1700);assert.equal(fx.group.visible,false);fx.dispose();
+  }
+  bank.dispose();
+ }finally{global.fetch=saved;}
+});
 function fixture(character,extra={}){let time=0;const actor={id:'a',character,x:0,y:0,z:0,hp:100},enemy={id:'e',enemy:true,x:3,y:0,z:0,hp:100};const room=new Map([['a',actor],['e',enemy]]),combat=createActivityCombat({grid,now:()=>time,...extra});return {actor,enemy,room,combat,cast(kind='craft',target){return combat.action(actor,{id:kind+time,kind,target,aim:{x:3,y:0,z:0}},room);},tick(t){time=t;combat.tick(room);},get time(){return time;}};}
 test('Bind Whip slows only targets struck on its chosen segment, then expires',()=>{const f=fixture('Scherazard');f.room.set('side',{id:'side',enemy:true,x:2,y:0,z:3,hp:100});assert.ok(f.cast().combatId);f.tick(400);assert.equal(f.enemy.hp,70);assert.equal(movementFactor(f.enemy,400),.45);assert.equal(movementFactor(f.enemy,4400),1);assert.equal(f.room.get('side').hp,100);});
 test('Requiem sweeps successive directions: a target is only hit when its sector is fired',()=>{const f=fixture('Olivier');for(const [id,x,z]of [['behind',-3,0],['side',0,4],['far',9,0]])f.room.set(id,{id,x,y:0,z,hp:100});assert.ok(f.cast().combatId);f.tick(320);assert.equal(f.enemy.hp,100);assert.equal(f.room.get('side').hp,100);f.tick(820);assert.equal(f.enemy.hp,52);assert.equal(f.enemy.damageEvents.length,1);assert.equal(f.room.get('behind').hp,100);f.tick(1320);assert.equal(f.room.get('side').hp,52);f.tick(1820);assert.equal(f.room.get('behind').hp,52);f.tick(5200);assert.equal(f.enemy.hp,52);assert.equal(f.room.get('far').hp,100);});
