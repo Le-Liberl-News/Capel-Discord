@@ -81,7 +81,7 @@ for row in rows:
    sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([120,80,80,80,240,60,60,100,60,160])];craftSlot=16
    # Keep every pose from AS 5, including the actual fan strike and recovery.
   if row['character']=='Bleublanc':
-   sequences['craft']=[{'bank':12,'pose':i,'ms':120} for i in range(16)];craftSlot=26
+   sequences['craft']=[{'bank':12,'pose':i,'ms':120} for i in range(8,31)];craftSlot=26
   if row['character']=='Walter':
    sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([80,80,80,120,80,80,100,100,100,100,100,100,100,120])];craftSlot=16
   if row['character']=='Estelle':
@@ -97,7 +97,7 @@ for row in rows:
    for f in seq:
     if len(frames[f['bank']])==8 and f['pose']<8:f['pose']=0
   for key,seq in list(sequences.items()):
-   seq[:]=[f for f in seq if (f['pose'] if row['character']=='Olivier' and f['bank']==12 else f['pose']*8+7)<len(frames[f['bank']])]
+   seq[:]=[f for f in seq if (f['pose'] if row['character'] in ['Olivier','Bleublanc'] and f['bank']==12 else f['pose']*8+7)<len(frames[f['bank']])]
    if not seq:sequences.pop(key)
   if not sequences.get('basic'):raise ValueError('No valid attack poses')
   boxes=[f.getbbox() for poses in frames.values() for f in poses if f.getbbox()];box=(min(b[0] for b in boxes),min(b[1] for b in boxes),max(b[2] for b in boxes),max(b[3] for b in boxes));w,h=box[2]-box[0],box[3]-box[1]
@@ -109,7 +109,7 @@ for row in rows:
   for bank,poses in frames.items():
    image=Image.new('RGBA',(w*8,h*((len(poses)+7)//8)))
    for i,f in enumerate(poses):image.paste(f.crop(box),((i%8)*w,(i//8)*h))
-   image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':1 if row['character']=='Olivier' and bank==12 else 8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
+   image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':1 if row['character'] in ['Olivier','Bleublanc'] and bank==12 else 8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
   if row['character']=='Ries':
    for bank,slot,address in [(2,5,None),(12,16,0xd38)]:
     pc=address if address is not None else entries[slot]+1;anchors=[[128,176] for _ in range(8)]

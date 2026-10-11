@@ -815,7 +815,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*(info.directions??8)+(avatar.direction%(info.directions??8));
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
       if(avatar.summoned){const scale=Math.max(0,Math.min(1,(Date.now()+jumpClockOffset-avatar.spawnedAt)/700));avatar.mesh.scale.setScalar(avatar.deathAt?0:scale);}
-      avatar.mesh.material.color.set(attack?.character==='Bleublanc'&&attack.kind==='craft'&&Date.now()+jumpClockOffset-attack.started>=1900&&Date.now()+jumpClockOffset<attack.impactAt?0x000000:avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:0xffffff);
+      avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:0xffffff);
       avatar.renderFrame={pose,info};avatar.mesh.visible=!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
