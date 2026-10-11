@@ -23,9 +23,10 @@ export async function createJosetteView(THREE,assets){
   if(craft&&(age>=craft.duration||craft.event.cancelled))craft=null;
   if(blend){
    eye.copy(camera.position);first.copy(camera.quaternion);
-   const dx=-Math.sin(yaw),dz=Math.cos(yaw);
-   // Back and slightly to the side; retain a perspective camera throughout.
-   end.set(position.x-dx*3.1+dz*.75,position.y+1.85,position.z-dz*3.1-dx*.75);
+   const direction=craft.event.ray?.direction??{x:craft.event.aim.x-craft.event.origin.x,z:craft.event.aim.z-craft.event.origin.z},length=Math.hypot(direction.x,direction.z);
+   const dx=length>1e-6?direction.x/length:-Math.sin(yaw),dz=length>1e-6?direction.z/length:Math.cos(yaw);
+   // Keep the travelling directly behind the original aiming axis.
+   end.set(position.x-dx*3.1,position.y+1.85,position.z-dz*3.1);
    look.set(position.x,position.y+.95,position.z);matrix.lookAt(end,look,camera.up);third.setFromRotationMatrix(matrix);
    camera.position.lerpVectors(eye,end,blend);camera.quaternion.copy(first).slerp(third,blend);
   }

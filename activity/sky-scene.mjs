@@ -612,8 +612,17 @@ export async function createSkyScene(canvas, map = "anterose") {
     canvas.setPointerCapture(event.pointerId);
   }
   function pointermove(event) {
+    const previousCursor=cursor;
     cursor={clientX:event.clientX,clientY:event.clientY};
     if(touches.has(event.pointerId)){event.preventDefault();touches.move(event);return;}
+    if(fpsActive()&&event.pointerType!=="touch"){
+      if(document.querySelector("#sky-terminal[open]")||document.activeElement?.closest?.("input,textarea,select,[contenteditable]"))return;
+      const dx=Number.isFinite(event.movementX)?event.movementX:event.clientX-previousCursor.clientX;
+      const dy=Number.isFinite(event.movementY)?event.movementY:event.clientY-previousCursor.clientY;
+      yaw-=dx*.006;pitch=Math.max(-1.48,Math.min(1.48,pitch+dy*.006));
+      if(drag){drag.moved=true;drag.x=event.clientX;drag.y=event.clientY;}
+      return;
+    }
     if (!drag || event.pointerId !== drag.id) return;
     if (
       Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5
