@@ -103,3 +103,9 @@ test('Anton repels nearby women smoothly without damage and gains speed for only
  assert.ok(f.combat.snapshot(actor).attacks[0].hits.some(h=>h.repelled));
  f.tick(5000);assert.equal(movementFactor(actor,6640),1);
 });
+
+test('Anton craft produces one of the requested bubble phrases only when accepted',()=>{
+ const f=fixture();f.players.get('renne').character='Anton';const result=f.start('craft');
+ assert.ok(result.combatId);assert.ok(["Aidios, je vous en prie...","Monde crueeeeel-- !!","V-Voudriez-vous bien... sortir avec moi ?!!"].includes(result.text));
+ assert.equal(result.character,'Anton');assert.equal(result.speaker,'renne');assert.equal(f.start('craft',undefined,'too-soon').text,undefined);
+});

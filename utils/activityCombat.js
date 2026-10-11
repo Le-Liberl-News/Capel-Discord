@@ -139,6 +139,10 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if(command.kind==="craft")onCraft({...attack});
 
+    if(player.character==='Anton'&&command.kind==='craft'){
+      const phrases=["Aidios, je vous en prie...","Monde crueeeeel-- !!","V-Voudriez-vous bien... sortir avec moi ?!!"];
+      return {combatId:attack.id,text:phrases[Math.floor(Math.random()*phrases.length)],speaker:player.id,character:player.character};
+    }
     return { combatId:attack.id };
 
   }
