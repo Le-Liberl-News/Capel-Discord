@@ -1,4 +1,5 @@
 export function combatKeyAction(code,character){return character==='Josette'&&code==='KeyF'?null:({KeyF:'basic',KeyG:'craft',KeyC:'art'}[code]??null);}
+export function fpsMouseLook(yaw,pitch,dx,dy){return {yaw:yaw+dx*.006,pitch:Math.max(-1.48,Math.min(1.48,pitch+dy*.006))};}
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
 export function craftViewBlend(elapsed,duration){
  if(elapsed<0||elapsed>=duration)return 0;

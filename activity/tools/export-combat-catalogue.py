@@ -48,6 +48,9 @@ for row in rows:
    folder=a.extracted/'sc-27/ED6_DT27';files[bank]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
  if row['character']=='Josette':
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04108._ch',folder/'ch04108p._cp')
+ if row['character'] in ('Luciola','Walter'):
+  ch='ch04528' if row['character']=='Luciola' else 'ch04508'
+  folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
  if row['character']=='Ries':
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04158._ch',folder/'ch04158p._cp')
  try:
@@ -72,6 +75,11 @@ for row in rows:
    # AS 16 loops poses 0..3 on thread 1 until 1100 ms; bank 12 is loaded by 0x6A.
    sequences['craft']=[{'bank':12,'pose':i%4,'ms':100} for i in range(11)]+[{'bank':12,'pose':i,'ms':ms} for i,ms in [(4,800),(5,120),(6,50),(7,450),(8,100),(9,100),(10,100),(11,200),(12,300),(13,200),(14,40)]]
    craftSlot=16
+  if row['character']=='Luciola':
+   sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([120,80,80,80,240,60,60,100,60,160])];craftSlot=16
+   sequences['basic']=[f for f in sequences['basic'] if f['pose']<=4]
+  if row['character']=='Walter':
+   sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([80,80,80,120,80,80,100,100,100,100,100,100,100,120])];craftSlot=16
   if row['character']=='Estelle':
    sequences['craft']=sequence(data,entries,end,17,files);craftSlot=17
   if row['character']=='Joshua':
@@ -124,7 +132,7 @@ for row in rows:
 # Retain the existing hand-tuned Renne implementation.
 renne=json.loads((a.output/'renne.json').read_text(encoding='utf8'));renne['actions']={'basic':{'name':'Coup de faux','key':'f','damage':12,'cooldown':700,'windup':300,'duration':650,'range':2.5,'radius':1.05},'art':{'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1650,'range':9,'radius':1.4,'projectile':True},'craft':{'name':'Cercle sanglant','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':1650,'range':8,'radius':1.9,'projectile':True}};catalogue['Renne']=renne
 (a.output/'catalogue.json').write_text(json.dumps(catalogue,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf8')
-if a.character in ('Ries','Josette'):
+if a.character in ('Ries','Josette','Luciola','Walter'):
  path=a.output.parent/'characters.json';characters=json.loads(path.read_text(encoding='utf8'));old=characters[a.character];banks=catalogue[a.character]['banks']
  characters[a.character]={**banks['0'],'walk':banks['1'],'death':banks['4'],'portrait':old['portrait']}
  path.write_text(json.dumps(characters,ensure_ascii=False,indent=2)+'\n',encoding='utf8')

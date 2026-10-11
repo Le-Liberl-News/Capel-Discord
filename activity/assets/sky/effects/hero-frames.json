@@ -150,5 +150,11 @@
     "frames": 90,
     "duration": null,
     "size": 4
+  },
+  "sc/sc020_02._ef": {
+    "name": "sc-sc020_02",
+    "frames": 90,
+    "duration": 2000,
+    "size": 4
   }
 }

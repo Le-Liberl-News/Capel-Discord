@@ -355,5 +355,65 @@
       "element": "mirage",
       "damage": 24
     }
+  },
+  "Luciola": {
+    "slot": 16,
+    "basic": {
+      "name": "Coup d’éventail",
+      "damage": 12,
+      "range": 2,
+      "radius": 0.8,
+      "windup": 360,
+      "duration": 490
+    },
+    "craft": {
+      "name": "Tourbillon",
+      "nativeTiming": true,
+      "tornado": true,
+      "groundTarget": true,
+      "damage": 30,
+      "range": 12,
+      "radius": 1.15,
+      "windup": 1040,
+      "duration": 1040,
+      "cooldown": 6000,
+      "projectileSpeed": 6,
+      "effectDuration": 2000,
+      "knockback": 3,
+      "nativeEffect": "SC/sc020_02._ef"
+    }
+  },
+  "Walter": {
+    "slot": 16,
+    "basic": {
+      "name": "Quatre coups",
+      "damage": 24,
+      "windup": 180,
+      "duration": 1100,
+      "hitOffsets": [
+        0,
+        200,
+        440,
+        680
+      ],
+      "range": 2.1,
+      "radius": 0.8
+    },
+    "craft": {
+      "name": "Coup de pied",
+      "nativeTiming": true,
+      "kick": true,
+      "melee": true,
+      "damage": 24,
+      "wallDamage": 16,
+      "wallStun": 1000,
+      "knockback": 10,
+      "knockbackDuration": 900,
+      "range": 2.4,
+      "radius": 0.8,
+      "windup": 480,
+      "duration": 1440,
+      "cooldown": 4500
+    }
   }
 }

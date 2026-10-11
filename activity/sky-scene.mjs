@@ -1,4 +1,5 @@
-import {createJosetteView,combatKeyAction} from './josette-view.mjs';
+import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
+import projectionMechanics from './combat-projection.cjs';
 import {createTavernTables} from './tavern-tables.mjs';
 import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
 import {createAirshipScene} from './airship-scene.mjs';
@@ -395,7 +396,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
       avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;avatar.guard=player.guard??null;
-      avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;
+      avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
       avatar.speed = player.speed ?? 0.8;
@@ -473,7 +474,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       displayName: player.nom ?? player.name ?? player.character,
       dead,
       hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
-      platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,
+      platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,
       npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -619,7 +620,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(document.querySelector("#sky-terminal[open]")||document.activeElement?.closest?.("input,textarea,select,[contenteditable]"))return;
       const dx=Number.isFinite(event.movementX)?event.movementX:event.clientX-previousCursor.clientX;
       const dy=Number.isFinite(event.movementY)?event.movementY:event.clientY-previousCursor.clientY;
-      yaw-=dx*.006;pitch=Math.max(-1.48,Math.min(1.48,pitch+dy*.006));
+      ({yaw,pitch}=fpsMouseLook(yaw,pitch,dx,dy));
       if(drag){drag.moved=true;drag.x=event.clientX;drag.y=event.clientY;}
       return;
     }
@@ -753,6 +754,8 @@ export async function createSkyScene(canvas, map = "anterose") {
             dx: ballState?.vx ?? 0,
             dz: ballState?.vz ?? 0,
           }
+        : avatar.knockback&&!avatar.dead
+          ? {moving:false,dx:0,dz:0}
         : avatar.dead
           ? { moving: false, dx: 0, dz: 0 }
           : dash
@@ -769,6 +772,7 @@ export async function createSkyScene(canvas, map = "anterose") {
                 seconds,
                 (avatar.npc||avatar.enemy) && id !== "world:pom" ? avatar.speed + 0.1 : 6,
               );
+      if(avatar.knockback&&!avatar.dead)Object.assign(avatar.position,projectionMechanics.projectionPosition(avatar.knockback,Date.now()+jumpClockOffset));
       if (motion.moving || avatar.walking || (avatar.character==="Sieg"&&!avatar.dead)) {
         if (motion.moving) avatar.heading = { dx: motion.dx, dz: motion.dz };
         avatar.time += seconds;
@@ -993,6 +997,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const dash=result.health?.combatDash;
       if(dash&&dash!==lastCombatDash){lastCombatDash=dash;const me=avatars.get(localId);if(me&&!renneCombat?.dash(localId))Object.assign(me.position,result.position);path=[];movementTrace=[];localJump=null;craftTarget=false;}
       dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();
+      const pushed=avatars.get(localId);if(pushed){const previous=pushed.knockback;pushed.knockback=result.health?.knockback??null;if(pushed.knockback||previous){path=[];movementTrace=[];localJump=null;if(!pushed.knockback)Object.assign(pushed.position,result.position);}}
       if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
         else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}

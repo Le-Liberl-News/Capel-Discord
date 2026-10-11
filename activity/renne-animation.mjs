@@ -1,4 +1,5 @@
 import {createArcCharge} from './arc-fencer-charge.mjs';
+import projectionMechanics from './combat-projection.cjs';
 import {prepareArcFencer} from './arc-fencer.mjs';
 import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {createEarthWave,prepareEarthWave} from './earth-wave.mjs';
@@ -76,6 +77,8 @@ export async function createRenneCombat(THREE,scene,assets) {
     if(e.wave){e.group.visible=false;e.bolt.visible=false;e.wave.draw(time);}
     else if(e.trail){e.group.visible=false;e.bolt.visible=false;e.assembly.sprite.visible=false;e.trail.draw(time,avatars?.get(event.actor),camera);}
     else if(e.assembly){e.group.visible=false;const position=spec.sweepShots?(avatars?.get(event.actor)?.position??event.origin):spec.persistentBuff?(avatars?.get(event.actor)?.position??event.aim):event.aim;e.assembly.sprite.visible=age>=0&&age<(spec.persistentBuff?spec.buffDuration:spec.effectDuration??1200)/1000;e.assembly.sprite.position.set(position.x,position.y+.9,position.z);if(spec.persistentBuff&&(avatars?.get(event.actor)?.dead||[...actions.values()].some(other=>other.actor===event.actor&&other.effect===event.effect&&other.localStart>event.localStart&&elapsed(other)>=other.impactAt-other.started)))e.assembly.sprite.visible=false;if(spec.sweepShots){const sector=spec.hitOffsets.findLastIndex(t=>time>=impact+t);e.assembly.sprite.visible=sector>=0&&time-impact-spec.hitOffsets[sector]<220;e.assembly.sprite.scale.setScalar(1.1);}if(e.assembly.sprite.visible)e.assembly.draw(spec.sweepShots?(time-impact-spec.hitOffsets[spec.hitOffsets.findLastIndex(t=>time>=impact+t)])*3:spec.persistentBuff?Math.min(1100,spec.effectDuration*.7)+Math.sin(age*4)*150:age*1000);}
+    if(spec.tornado){e.bolt.visible=false;e.group.visible=false;if(e.assembly){const duration=Math.hypot(event.aim.x-event.origin.x,event.aim.z-event.origin.z)/spec.projectileSpeed*1000,p=projectionMechanics.tornadoPosition({...event,started:0},spec,time);e.assembly.sprite.visible=time>=spec.windup&&time<spec.windup+duration;e.assembly.sprite.position.set(p.x,p.y+1.2,p.z);if(e.assembly.sprite.visible)e.assembly.draw(300+(time-spec.windup)%1500);}}
+    if(spec.kick){e.bolt.visible=false;e.group.visible=false;}
     if(spec.element==='wind'){e.ring.material.color.set(0x72ffb4);e.vortex.material.color.set(0xa1ffe4);}
     if(event.kind==='craft'&&event.actor===localId&&event.accepted&&!event.captureStarted&&time>=impact-350){event.captureStarted=true;capture?.start(id,event.aim,camera);}
   }}

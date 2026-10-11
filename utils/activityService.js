@@ -332,6 +332,7 @@ function createActivityService({
           : undefined,
         health: {
           combatDash:player.combatDash??null,
+          knockback:player.knockback??null,
           jump: player.jump??null,
           jumpReadyAt:player.jumpReadyAt??0,
           hp: player.hp,

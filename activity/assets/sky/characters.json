@@ -451,12 +451,16 @@
     "portrait": "portraits/008.png"
   },
   "Luciola": {
-    "texture": "ch03520.png",
+    "texture": "combat/as04520/0.png",
     "columns": 8,
     "rows": 8,
-    "frameWidth": 52,
-    "frameHeight": 98,
+    "frameWidth": 148,
+    "frameHeight": 125,
     "frames": 64,
+    "directions": 8,
+    "height": 2.0047169811320753,
+    "centerX": 0.03207547169811321,
+    "centerY": 0.9863207547169811,
     "idle": [
       0
     ],
@@ -470,19 +474,55 @@
       6,
       7
     ],
-    "directions": 8,
-    "fps": 12,
-    "height": 1.7,
-    "footOffsets": [
-      0.03469387755102041,
-      0.06938775510204082,
-      0.06938775510204082,
-      0.05204081632653061,
-      0.017346938775510204,
-      0.05204081632653061,
-      0.017346938775510204,
-      0.03469387755102041
-    ],
+    "fps": 8,
+    "walk": {
+      "texture": "combat/as04520/1.png",
+      "columns": 8,
+      "rows": 8,
+      "frameWidth": 148,
+      "frameHeight": 125,
+      "frames": 64,
+      "directions": 8,
+      "height": 2.0047169811320753,
+      "centerX": 0.03207547169811321,
+      "centerY": 0.9863207547169811,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 8
+    },
+    "death": {
+      "texture": "combat/as04520/4.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 148,
+      "frameHeight": 125,
+      "frames": 32,
+      "directions": 8,
+      "height": 2.0047169811320753,
+      "centerX": 0.03207547169811321,
+      "centerY": 0.9863207547169811,
+      "idle": [
+        0
+      ],
+      "run": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 8
+    },
     "portrait": "portraits/009.png"
   },
   "Bleublanc": {
@@ -2666,13 +2706,13 @@
     "texture": "combat/as04500/0.png",
     "columns": 8,
     "rows": 8,
-    "frameWidth": 136,
-    "frameHeight": 126,
+    "frameWidth": 162,
+    "frameHeight": 131,
     "frames": 64,
     "directions": 8,
-    "height": 2.04,
-    "centerX": 0.0,
-    "centerY": 0.9876190476190475,
+    "height": 2.1209523809523807,
+    "centerX": 0.01619047619047619,
+    "centerY": 1.028095238095238,
     "idle": [
       0
     ],
@@ -2691,13 +2731,13 @@
       "texture": "combat/as04500/1.png",
       "columns": 8,
       "rows": 8,
-      "frameWidth": 136,
-      "frameHeight": 126,
+      "frameWidth": 162,
+      "frameHeight": 131,
       "frames": 64,
       "directions": 8,
-      "height": 2.04,
-      "centerX": 0.0,
-      "centerY": 0.9876190476190475,
+      "height": 2.1209523809523807,
+      "centerX": 0.01619047619047619,
+      "centerY": 1.028095238095238,
       "idle": [
         0
       ],
@@ -2717,13 +2757,13 @@
       "texture": "combat/as04500/4.png",
       "columns": 8,
       "rows": 4,
-      "frameWidth": 136,
-      "frameHeight": 126,
+      "frameWidth": 162,
+      "frameHeight": 131,
       "frames": 32,
       "directions": 8,
-      "height": 2.04,
-      "centerX": 0.0,
-      "centerY": 0.9876190476190475,
+      "height": 2.1209523809523807,
+      "centerX": 0.01619047619047619,
+      "centerY": 1.028095238095238,
       "idle": [
         0
       ],
