@@ -8,7 +8,7 @@ args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]/'assets/sky'
 image=Image.new('RGBA',(256,256))
 image.putdata([((w>>10&31)*255//31,(w>>5&31)*255//31,(w&31)*255//31,255 if w&32768 else 0) for (w,) in struct.iter_unpack('<H',args.battle3.read_bytes())])
-strip=image.crop((0,192,160,224))
+strip=image.crop((0,64,160,96))
 strip.putdata([(max(g,b),r,r,a) for r,g,b,a in strip.getdata()])
 strip.save(root/'effects/damage-digits.png')
 p=root/'combat/catalogue.json'

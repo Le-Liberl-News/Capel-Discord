@@ -1,3 +1,4 @@
+export function muzzleFrame(elapsed){return elapsed==null||elapsed<0||elapsed>=220?null:Math.min(89,Math.floor(elapsed/220*90));}
 export function combatKeyAction(code,character){return character==='Josette'&&code==='KeyF'?null:({KeyF:'basic',KeyG:'craft',KeyC:'art'}[code]??null);}
 export function fpsMouseLook(yaw,pitch,dx,dy){return {yaw:yaw+dx*.006,pitch:Math.max(-1.48,Math.min(1.48,pitch+dy*.006))};}
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
@@ -12,6 +13,7 @@ export function gunPose(elapsed){
 }
 export async function createJosetteView(THREE,assets){
  const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=new URL('combat/josette-gun.png',assets).href;});
+ const spark=new Image();await new Promise((resolve,reject)=>{spark.onload=resolve;spark.onerror=reject;spark.src=new URL('effects/sc-msc0548-frames.png',assets).href;});
  const canvas=document.createElement('canvas');canvas.width=176;canvas.height=164;canvas.style.cssText='position:fixed;right:26%;bottom:4%;width:clamp(130px,23vw,290px);height:auto;image-rendering:pixelated;pointer-events:none;z-index:16';canvas.hidden=true;document.body.append(canvas);
  const context=canvas.getContext('2d');context.imageSmoothingEnabled=false;
  const eye=new THREE.Vector3(),end=new THREE.Vector3(),look=new THREE.Vector3(),matrix=new THREE.Matrix4(),first=new THREE.Quaternion(),third=new THREE.Quaternion();
@@ -34,7 +36,7 @@ export async function createJosetteView(THREE,assets){
   canvas.hidden=!active||blend>.95;canvas.style.opacity=String(1-blend);
   if(!canvas.hidden){
    const pose=gunPose(attack?.kind==='basic'?time-attack.localStart:null),bob=moving?Math.sin(time*.012)*3:Math.sin(time*.002)*.7;
-   context.clearRect(0,0,176,164);context.save();context.translate(168+pose.recoil*8,42+bob+pose.recoil*15);context.rotate(.28-pose.recoil*.1);context.scale(-3.6,3.6);context.drawImage(image,pose.frame*40,0,40,30,0,0,40,30);context.restore();
+   context.clearRect(0,0,176,164);context.save();context.translate(168+pose.recoil*8,42+bob+pose.recoil*15);context.rotate(.28-pose.recoil*.1);context.scale(-3.6,3.6);context.drawImage(image,pose.frame*40,0,40,30,0,0,40,30);const flash=muzzleFrame(attack?.kind==='basic'?time-attack.localStart:null);if(flash!==null){context.globalCompositeOperation='lighter';context.drawImage(spark,flash%8*128,Math.floor(flash/8)*128,128,128,27,-5,26,26);}context.restore();
   }
   return blend;
  },dispose(){canvas.remove();}};

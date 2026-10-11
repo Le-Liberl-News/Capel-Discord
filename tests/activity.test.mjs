@@ -317,3 +317,10 @@ test('cinematic materials keep native day/night shaders without changing live co
  const source=new THREE.MeshBasicMaterial({color:0xffccaa});source.onBeforeCompile=shader=>{shader.uniforms.testLight={value:.3};};source.customProgramCacheKey=()=> 'night';
  const clone=cloneReplayMaterial(source),shader={uniforms:{}};clone.onBeforeCompile(shader);assert.equal(shader.uniforms.testLight.value,.3);assert.equal(clone.customProgramCacheKey(),'night');clone.color.set(0x000000);assert.equal(source.color.getHex(),0xffccaa);assert.notEqual(clone,source);clone.dispose();source.dispose();
 });
+
+test('arena introduction makes both fighters face their opponent during camera changes',async()=>{
+ const {createDuelIntro}=await import('../activity/duel-intro.mjs');const saved=global.document;global.document={body:{append(){}},createElement:()=>({style:{},append(){},remove(){}})};
+ try{const intro=createDuelIntro(),a={position:{x:-4,y:0,z:2},heading:{dx:0,dz:-1}},b={position:{x:4,y:0,z:-2},heading:{dx:0,dz:-1}},avatars=new Map([['a',a],['b',b]]),camera={position:{set(){}},lookAt(){},zoom:1,right:10,left:-10,updateProjectionMatrix(){}};const start=performance.now();intro.receive({players:['a','b'],startsAt:1000,readyAt:10000},1000);
+ for(const elapsed of [200,2200,4500,7200]){intro.update(start+elapsed,avatars,camera,{x:0,y:0,z:0});assert.deepEqual(a.heading,{dx:8,dz:-4});assert.deepEqual(b.heading,{dx:-8,dz:4});}intro.dispose();
+ }finally{global.document=saved;}
+});

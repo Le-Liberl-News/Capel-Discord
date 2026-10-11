@@ -62,3 +62,7 @@ test('FPS obstacle contact carries an impact, but a nearer body replaces it',()=
  const stopped=shoot(.8,{geometry:wall});const a=stopped.combat.snapshot().attacks[0];assert.equal(a.obstacleImpact,true);assert.equal(a.aim.z,2);
  const behind={sweep:from=>({point:{x:0,y:from.y,z:8}})};assert.equal(shoot(1.45,{geometry:behind}).combat.snapshot().attacks[0].obstacleImpact,false);
 });
+
+test('native gun spark advances through its complete assembly and disappears after the shot',async()=>{
+ const {muzzleFrame}=await import('../activity/josette-view.mjs');assert.equal(muzzleFrame(null),null);assert.equal(muzzleFrame(-1),null);assert.equal(muzzleFrame(0),0);assert.equal(muzzleFrame(219),89);assert.equal(muzzleFrame(220),null);
+});

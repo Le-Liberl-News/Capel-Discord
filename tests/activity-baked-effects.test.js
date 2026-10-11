@@ -68,3 +68,11 @@ test('all native corpse frames place the bottom visible pixel above the floor',a
  for(let n=0;n<info.frames;n++){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,n%info.columns*canvas.width,Math.floor(n/info.columns)*canvas.height,canvas.width,canvas.height,0,0,canvas.width,canvas.height);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;let bottom=0;for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++)if(pixels[(y*canvas.width+x)*4+3]>=39)bottom=y+1;if(!bottom)continue;const anchor=info.anchors?(info.anchors[n%8][1]-176)*info.pixelScale:0;const height=info.centerY-info.height/2+(canvas.height-bottom)*info.height/canvas.height+anchor+info.groundOffsets[n];assert.ok(Math.abs(height-.025)<.000002,hero.character+' frame '+n);}
  }
 });
+
+test('four native fist hits render cr160_00 without an overlapping old damage flash',async()=>{
+ const THREE=await import('three'),{createDamageEffects}=await import('../activity/damage-effects.mjs');const previous=global.document;global.document={createElement:()=>({style:{},append(){},remove(){}})};
+ try{const api={...THREE,TextureLoader:class{async loadAsync(url){const map=new THREE.Texture();map.name=url;return map;}}},scene=new THREE.Scene(),fx=await createDamageEffects(api,scene,{append(){}},new URL('https://fixture.invalid/effects/fire-frames.png'));
+ for(let n=0;n<4;n++)fx.hit('target',6,false,n*.1,{nativeEffect:'SC/cr160_00._ef',hitIndex:n});assert.equal(scene.children.length,4);assert.ok(scene.children.every(s=>s.material.map.name.includes('sc-cr160_00-frames.png')));
+ const camera=new THREE.PerspectiveCamera();camera.position.set(0,3,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();fx.update(.4,camera,new Map([['target',{position:{x:0,y:0,z:0},info:{height:1.7}}]]),800,600);assert.equal(new Set(scene.children.map(s=>s.position.x)).size,4);fx.dispose();
+ }finally{global.document=previous;}
+});

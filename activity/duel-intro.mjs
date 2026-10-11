@@ -1,3 +1,4 @@
+export function duelHeading(from,to){return {dx:to.x-from.x,dz:to.z-from.z};}
 // Short adaptation of FC t4104: arena overview, each side, centre, Begin.
 export function duelPhase(duel,time){
  if(!duel||!Number.isFinite(duel.startsAt)||!Number.isFinite(duel.readyAt)||time>=duel.readyAt)return null;
@@ -18,6 +19,7 @@ export function createDuelIntro(){
    const phase=duelPhase(duel,time+offset);overlay.style.display=phase?"block":"none";
    if(!phase){if(camera.zoom!==1){camera.zoom=1;camera.updateProjectionMatrix();}return;}
    const players=duel.players.map(id=>avatars.get(id)),positions=players.map(p=>p?.position??fallback);
+   for(let i=0;i<players.length;i++)if(players[i]&&players[1-i])players[i].heading=duelHeading(positions[i],positions[1-i]);
    const center={x:(positions[0].x+positions[1].x)/2,y:(positions[0].y+positions[1].y)/2,z:(positions[0].z+positions[1].z)/2};
    const fighter=phase.kind==="fighter",target=fighter?positions[phase.side]:center;
    const smooth=phase.progress*phase.progress*(3-2*phase.progress);
