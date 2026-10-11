@@ -138,5 +138,17 @@
     "frames": 90,
     "duration": 1200,
     "size": 4
+  },
+  "third/cr04150._ef": {
+    "name": "third-cr04150",
+    "frames": 90,
+    "duration": null,
+    "size": 4
+  },
+  "third/cr04150a._ef": {
+    "name": "third-cr04150a",
+    "frames": 90,
+    "duration": null,
+    "size": 4
   }
 }

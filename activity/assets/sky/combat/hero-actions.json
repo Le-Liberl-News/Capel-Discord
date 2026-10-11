@@ -302,7 +302,25 @@
         0,
         100
       ],
-      "effectDuration": 900
+      "effectDuration": 900,
+      "chargeEffects": [
+        {
+          "id": "Third/cr04150._ef",
+          "start": 100,
+          "end": 1100,
+          "size": 2.5,
+          "height": 0.65,
+          "forward": 0
+        },
+        {
+          "id": "Third/cr04150a._ef",
+          "start": 1100,
+          "end": 1900,
+          "size": 1.7,
+          "height": 0.95,
+          "forward": 0.45
+        }
+      ]
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",

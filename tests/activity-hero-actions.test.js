@@ -4,6 +4,17 @@ const {applyDamage}=require('../utils/activityDamage');
 const {combatSpec}=require('../activity/native-combat.cjs');
 const {immobilized,movementFactor}=require('../activity/combat-status.cjs');
 const grid={origin:{x:-10,z:-10},step:1,width:25,height:25,cells:Array(625).fill(0),spawn:{x:0,y:0,z:0}};
+test('Arc Fencer plays the two original golden charge effects before its whip',async()=>{
+ const {chargePose}=await import('../activity/arc-fencer-charge.mjs');
+ const [a,b]=combatSpec('Ries','craft').chargeEffects;
+ assert.equal(a.id,'Third/cr04150._ef');assert.equal(b.id,'Third/cr04150a._ef');
+ assert.equal(chargePose(a,49).visible,false);assert.equal(chargePose(a,50).visible,true);
+ assert.equal(chargePose(a,549).visible,true);assert.equal(chargePose(a,550).visible,false);
+ assert.equal(chargePose(b,550).visible,true);assert.equal(chargePose(b,949).visible,true);
+ assert.equal(chargePose(b,950).visible,false);
+ const frames=require('../activity/assets/sky/effects/hero-frames.json');
+ for(const e of[a,b])assert.ok(frames[e.id.toLowerCase()]?.frames>0);
+});
 test('Arc Fencer uses its native bank and strikes twice along the aimed line only',()=>{
  const {COMBAT}=require('../activity/native-combat.cjs');
  assert.equal(COMBAT.Ries.source.craftSlot,16);

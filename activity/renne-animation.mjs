@@ -1,3 +1,4 @@
+import {createArcCharge} from './arc-fencer-charge.mjs';
 import {prepareArcFencer} from './arc-fencer.mjs';
 import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {createEarthWave,prepareEarthWave} from './earth-wave.mjs';
@@ -54,10 +55,12 @@ export async function createRenneCombat(THREE,scene,assets) {
     let shot=null;if(spec.shotVisual){shot=nativeShot(spec.shotVisual);scene.add(shot);}
     const volleys=spec.sweepShots?new THREE.Group():null;if(volleys){for(let n=0;n<3;n++)volleys.add(nativeShot('bullet'));scene.add(volleys);}
     const arc=spec.arcFencer?arcBank.create(event,spec):null;if(arc)scene.add(arc.group);
-    const effect={arc,group,ring,vortex,bolt,shot,volleys,assembly,worldAssembly,halo,trail,wave};effects.set(event.id,effect);return effect;
+    const charge=spec.chargeEffects?createArcCharge(THREE,scene,heroBanks,event,spec):null;
+    const effect={charge,arc,group,ring,vortex,bolt,shot,volleys,assembly,worldAssembly,halo,trail,wave};effects.set(event.id,effect);return effect;
   }
-  function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);if(e.arc){scene.remove(e.arc.group);e.arc.dispose();}if(e.shot){scene.remove(e.shot);e.shot.material.dispose();}if(e.volleys){scene.remove(e.volleys);for(const b of e.volleys.children){b.material.dispose();}}if(e.worldAssembly){scene.remove(e.worldAssembly.group);e.worldAssembly.dispose();}e.trail?.dispose();e.wave?.dispose();if(e.halo){scene.remove(e.halo.group);e.halo.dispose();}if(e.assembly){scene.remove(e.assembly.sprite);e.assembly.dispose();}for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
+  function remove(id){const e=effects.get(id);if(e){scene.remove(e.group,e.bolt);e.charge?.dispose();if(e.arc){scene.remove(e.arc.group);e.arc.dispose();}if(e.shot){scene.remove(e.shot);e.shot.material.dispose();}if(e.volleys){scene.remove(e.volleys);for(const b of e.volleys.children){b.material.dispose();}}if(e.worldAssembly){scene.remove(e.worldAssembly.group);e.worldAssembly.dispose();}e.trail?.dispose();e.wave?.dispose();if(e.halo){scene.remove(e.halo.group);e.halo.dispose();}if(e.assembly){scene.remove(e.assembly.sprite);e.assembly.dispose();}for(const mesh of [e.ring,e.vortex,e.bolt]){if(mesh===e.ring)mesh.geometry.dispose();if(mesh===e.bolt)mesh.material.map.dispose();mesh.material.dispose();}effects.delete(id);}actions.delete(id);}
   function update(localId,capture,camera,avatars){for(const [id,event]of actions){const time=elapsed(event),spec=combatSpec(event.character??'Renne',event.kind),impact=event.impactAt-event.started;if(event.cancelled||time>event.endsAt-event.started+1100){capture?.cancel(id);remove(id);continue;}if(event.kind==='basic'&&!spec.shotVisual)continue;const e=effects.get(id)??makeEffect(event);
+    e.charge?.draw(time,avatars?.get(event.actor)?.position??event.origin);
     if(e.halo){e.halo.group.visible=time>=0&&time<spec.castDuration;const position=avatars?.get(event.actor)?.position??event.origin;e.halo.group.position.set(position.x,position.y,position.z);if(e.halo.group.visible)e.halo.draw(time);}
     const travelling=spec.projectile&&time>=spec.windup&&time<impact;const progress=Math.max(0,Math.min(1,(time-spec.windup)/(impact-spec.windup||1)));
     e.bolt.visible=travelling;e.bolt.position.set(event.origin.x+(event.aim.x-event.origin.x)*progress,event.origin.y+(spec.fps?0:.9)+(event.aim.y-event.origin.y-(spec.shotVisual==='cannon'?.9:0))*progress+(spec.lobHeight??0)*Math.sin(progress*Math.PI),event.origin.z+(event.aim.z-event.origin.z)*progress);e.bolt.material.map.offset.x=(Math.floor(time/65)%4)/4;
