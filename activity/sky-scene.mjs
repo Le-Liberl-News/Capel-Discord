@@ -1,3 +1,4 @@
+import playerHealth from './player-health.cjs';
 import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
 import projectionMechanics from './combat-projection.cjs';
 import diveMechanics from './sieg-dive.cjs';
@@ -236,7 +237,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const predictedShots = new Map();
   let notifyAction = () => {},notifyTerminal=()=>{};
   let environment = { npcs: [], poms: [], pom: null, receivedAt: 0 },
-    health = { hp: 100 },
+    health = { hp: playerHealth.PLAYER_MAX_HP,maxHp:playerHealth.PLAYER_MAX_HP },
     respawn = 0;
   const menu = document.createElement("div"),
     status = document.createElement("div"),
@@ -408,7 +409,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
       avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;avatar.guard=player.guard??null;
-      avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.siegDive=player.siegDive??null;
+      avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.siegDive=player.siegDive??null;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
       avatar.frozenUntil=player.stoneUntil;avatar.speed = player.speed ?? 0.8;avatar.spawnedAt=player.spawnedAt;avatar.summoned=player.summoned;avatar.deathAt=player.deathAt;
@@ -486,7 +487,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       displayName: player.nom ?? player.name ?? player.character,
       dead,
       hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
-      platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,siegDive:player.siegDive??null,
+      platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??playerHealth.PLAYER_MAX_HP,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,siegDive:player.siegDive??null,
       frozenUntil:player.stoneUntil,spawnedAt:player.spawnedAt,summoned:player.summoned,deathAt:player.deathAt,npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -866,7 +867,7 @@ export async function createSkyScene(canvas, map = "anterose") {
             (performance.now() - health.received) / 1000,
         ),
       );
-      status.textContent = "0 / 100 PV · Réapparition dans " + remaining + " s";
+      status.textContent = "0 / "+(health.maxHp??playerHealth.PLAYER_MAX_HP)+" PV · Réapparition dans " + remaining + " s";
     }
     for (const [id, a] of avatars) {
       if (id.startsWith("world:pom") || a.prop) { if(nameplates.has(id)) nameplates.get(id).hidden=true; continue; }
@@ -895,7 +896,7 @@ export async function createSkyScene(canvas, map = "anterose") {
           const bar = document.createElement("div"),
             fill = document.createElement("i");
           bar.className = "sky-hp";
-          fill.style.width = 100*a.hp/(a.maxHp??100) + "%";
+          fill.style.width = 100*a.hp/(a.maxHp??playerHealth.PLAYER_MAX_HP) + "%";
           if(a.enemy)fill.style.background="#e76552";
           bar.append(fill);
           label.append(bar);
@@ -1070,7 +1071,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         if (me) Object.assign(me.position, result.position);
       }
       respawn = health.respawn ?? 0;
-      if (health.hp > 0) status.textContent = health.hp + " / 100 PV";
+      if (health.hp > 0) status.textContent = health.hp + " / "+(health.maxHp??playerHealth.PLAYER_MAX_HP)+" PV";
       if (health.spectator && map === "arena") status.textContent = "Tribunes : spectateur";
       if (environment.game) status.textContent = result.notice ?? "";
       if (result.actionResult?.error)

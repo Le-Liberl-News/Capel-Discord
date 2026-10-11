@@ -31,6 +31,7 @@ function createActivityService({
   const platforms=dungeon?require("../activity/moving-platforms.cjs").createMovingPlatforms({grid,definitions:dungeon.movingPlatforms??[],now}):null;
   const saved = store?.load() ?? {};
   const remembered = new Map(saved.players ?? []);
+  for(const p of remembered.values()){const previous=p.maxHp??100;if(previous!==MAX_HP&&p.hp!=null)p.hp=Math.min(MAX_HP,Math.max(0,Math.round(p.hp*MAX_HP/previous)));p.maxHp=MAX_HP;}
   const worldStates = saved.worlds ?? {};
   let lastSave = -Infinity;
   let messageSequence = 0;
@@ -150,6 +151,7 @@ function createActivityService({
           nom: session.character,
           character: session.character,
           ...(rooms.get(channel)?.get(id) ?? remembered.get(id) ?? spawnFor(id)),
+          maxHp: MAX_HP,
           hp: (rooms.get(channel)?.get(id) ?? remembered.get(id))?.hp ?? MAX_HP,
           deadUntil: (rooms.get(channel)?.get(id) ?? remembered.get(id))?.deadUntil ?? 0,
           ...playerPolicy(id),

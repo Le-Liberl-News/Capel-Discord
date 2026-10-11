@@ -309,3 +309,5 @@ test("durable world retains a moved Pom after everyone leaves and the server res
  service=createActivityService(options);const b=await service.join({id:"b",channel:"map"});const restored=await service.state(b.activity_token);
  assert.equal(restored.pom.x,4);assert.equal(restored.pom.y,.375);assert.equal(restored.pom.mode,"rest");assert.equal(restored.joueurs.length,1);
 });
+
+test('players start with 500 HP and saved health migrates once without healing injuries',async()=>{const grid={origin:{x:0,z:0},step:1,width:3,height:3,cells:Array(9).fill(0),spawn:{x:1,y:0,z:1}},saved={players:[['injured',{id:'injured',x:1,y:0,z:1,hp:80}]]},service=createActivityService({grid,resolveCharacter:async()=> 'Estelle',store:{load:()=>saved,save:()=>{}}});const fresh=await service.join({id:'fresh',channel:'one'}),injured=await service.join({id:'injured',channel:'one'});assert.equal(fresh.player.hp,500);assert.equal(fresh.player.maxHp,500);assert.equal(injured.player.hp,400);assert.equal(injured.player.maxHp,500);const state=await service.state(injured.activity_token);assert.equal(state.health.hp,400);assert.equal(state.health.maxHp,500);});

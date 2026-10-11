@@ -202,7 +202,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       }
       let team;
       if(target.map.startsWith('tower')){
-       const own=result.joueurs.find(p=>p.id===session.id);if(own)towerTeam.set(session.id,{id:alias(session.id),character:own.character,hp:own.hp,maxHp:100,floor:Number(target.map.slice(5)),seen:now()});
+       const own=result.joueurs.find(p=>p.id===session.id);if(own)towerTeam.set(session.id,{id:alias(session.id),character:own.character,hp:own.hp,maxHp:own.maxHp??500,floor:Number(target.map.slice(5)),seen:now()});
        team=[...towerTeam].filter(([id,p])=>locations.get(id)?.startsWith('tower')&&now()-p.seen<20000).map(([,p])=>{const {seen,...member}=p;return member;});
       }
       const duelId=target.match?.replace(/^watch:/,""),duel=duels.get(duelId);

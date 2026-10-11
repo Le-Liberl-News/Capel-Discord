@@ -50,10 +50,10 @@ test("swept collision hits once, loses HP and stops the Pom", () => {
   f.world.action(a, { type: "pickup" }, f.players);
   f.world.action(a, { type: "throw", target: "b" }, f.players);
   f.tick(0.5);
-  assert.equal(f.players.get("b").hp, 75);
+  assert.equal(f.players.get("b").hp, 475);
   assert.equal(f.world.snapshot().pom.mode, "rest");
   f.tick(0.5);
-  assert.equal(f.players.get("b").hp, 75);
+  assert.equal(f.players.get("b").hp, 475);
 });
 test("moving sideways before arrival dodges; target does not home", () => {
   const f = fixture(),
@@ -62,7 +62,7 @@ test("moving sideways before arrival dodges; target does not home", () => {
   f.world.action(a, { type: "throw", target: "b" }, f.players);
   f.players.get("b").z = 3;
   f.tick(0.5);
-  assert.equal(f.players.get("b").hp, 100);
+  assert.equal(f.players.get("b").hp, 500);
 });
 test("two obstacle ricochets stop the Pom, including corners and high polling latency", () => {
   const f = fixture(),
@@ -90,7 +90,7 @@ test("death blocks interactions and revives after ten seconds at spawn", () => {
   f.tick(9.999);
   assert.equal(b.hp, 0);
   f.tick(0.001);
-  assert.equal(b.hp, 100);
+  assert.equal(b.hp, 500);
   assert.equal(b.respawn, 1);
   assert.deepEqual([b.x, b.y, b.z], [1, 0, 1]);
 });
@@ -199,7 +199,7 @@ test("furniture blocks projectiles and players on another floor cannot be hit", 
   f.world.action(a, { type: "pickup" }, f.players);
   f.world.action(a, { type: "throw", target: "b" }, f.players);
   f.tick(0.7);
-  assert.equal(f.players.get("b").hp, 100);
+  assert.equal(f.players.get("b").hp, 500);
   assert.equal(f.world.snapshot().pom.ricochets, 2);
   const g = fixture();
   g.players.get("b").y = 3;
@@ -233,7 +233,7 @@ test("service refuses dead movement and ignores the corpse snapshot on respawn",
   await service.state(a.activity_token);
   await service.state(b.activity_token, { x: 0.6, z: 0 });
   let hit;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 20; i++) {
     time += 100;
     await service.state(a.activity_token, {
       x: 0,
@@ -247,7 +247,7 @@ test("service refuses dead movement and ignores the corpse snapshot on respawn",
     });
     time += 100;
     hit = await service.state(b.activity_token);
-    assert.equal(hit.health.hp, 100 - (i + 1) * 25);
+    assert.equal(hit.health.hp, 500 - (i + 1) * 25);
   }
   const frozen = await service.state(b.activity_token, { x: 1, z: 0 });
   assert.equal(frozen.position.x, 0.6);
@@ -256,7 +256,7 @@ test("service refuses dead movement and ignores the corpse snapshot on respawn",
   assert.equal((await service.state(b.activity_token)).health.hp, 0);
   time++;
   const revived = await service.state(b.activity_token, { x: 0.6, z: 0 });
-  assert.equal(revived.health.hp, 100);
+  assert.equal(revived.health.hp, 500);
   assert.equal(revived.position.x, 0);
   assert.equal(revived.health.respawn, 1);
 });
@@ -295,7 +295,7 @@ test("free aim needs no player target; a descending and a vertical shot can hit 
     assert.ok(world.snapshot().pom.vy < 0);
     time = 400;
     world.tick(players);
-    assert.equal(players.get("b").hp, 75);
+    assert.equal(players.get("b").hp, 475);
   }
 });
 test("invalid free aim does not consume the held Pom", () => {
@@ -363,7 +363,7 @@ test("a free shot across the real restaurant stairs hits a player below", () => 
   world.action(a, { type: "throw", aim: { x: b.x, y: 0.9, z: b.z } }, players);
   time = 300;
   world.tick(players);
-  assert.equal(b.hp, 75);
+  assert.equal(b.hp, 475);
 });
 
 test("snapshots preserve ordered ricochet corners and unique launch identity", () => {
@@ -382,7 +382,7 @@ test("snapshots preserve ordered ricochet corners and unique launch identity", (
 test("spectators are immune even at projectile height and cannot pick up the Pom",()=>{
  const f=fixture(),a=f.players.get('a'),b=f.players.get('b');b.spectator=true;
  f.world.action(a,{type:'pickup'},f.players);f.world.action(a,{type:'throw',aim:{x:7,y:.9,z:1}},f.players);f.tick(.5);
- assert.equal(b.hp,100);assert.ok(f.world.action(b,{type:'pickup'},f.players).error);
+ assert.equal(b.hp,500);assert.ok(f.world.action(b,{type:'pickup'},f.players).error);
 });
 
 
@@ -391,7 +391,7 @@ test('a Pom cannot damage a participant during the duel presentation',()=>{
   const f=fixture();f.players.get('b').duelProtected=protectedNow;
   assert.deepEqual(f.world.action(f.players.get('a'),{type:'pickup'},f.players),{});
   assert.deepEqual(f.world.action(f.players.get('a'),{type:'throw',aim:{x:8,y:.9,z:1}},f.players),{});
-  f.tick(.5);assert.equal(f.players.get('b').hp,protectedNow?100:75);
+  f.tick(.5);assert.equal(f.players.get('b').hp,protectedNow?500:475);
  }
 });
 

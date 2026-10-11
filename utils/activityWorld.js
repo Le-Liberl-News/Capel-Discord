@@ -1,6 +1,6 @@
 const {applyDamage}=require('./activityDamage');
 // Authoritative room simulation. Coordinates and HP are never supplied by clients.
-const MAX_HP = 100,
+const MAX_HP = require('../activity/player-health.cjs').PLAYER_MAX_HP,
   DAMAGE = 25,
   RESPAWN_MS = 10000;
 function createSingleActivityWorld({
@@ -153,7 +153,7 @@ function createSingleActivityWorld({
       elapsed = Math.max(0, (time - last) / 1000);
     last = time;
     for (const p of players.values()) {
-      p.hp ??= MAX_HP;
+      p.hp ??= MAX_HP;p.maxHp=MAX_HP;
       if(p.shield?.until<=time)p.shield=null;
       p.deadUntil ??= 0;
       if (p.hp === 0 && !p.noRespawn && time >= p.deadUntil) {

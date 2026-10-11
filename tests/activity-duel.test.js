@@ -383,7 +383,7 @@ test('a lethal authoritative attack ends the duel once, freezes both players and
  const config={grid,store,now:()=>time,resolveCharacter:async id=>id==='a'?'Renne':'Joshua',onDuelEnd:async e=>endings.push(e),arena:{grid,combatEnabled:true,spawns:[{x:1,y:0,z:1},{x:2,y:0,z:1}],residents:{npcs:[],disablePoms:true}}};
  const lobby=createActivityLobby(config);lobby.createDuel({id:'match',players:['a','b'],names:['Renne','Joshua']});for(const id of ['a','b']){lobby.joinDuel('match',id);lobby.acceptDuel('match',id);}
  const a=await lobby.join({id:'a',channel:'dm-a'}),b=await lobby.join({id:'b',channel:'dm-b'});await lobby.state(a.activity_token);await lobby.state(b.activity_token);
- let state;for(let i=0;i<9;i++){await lobby.state(a.activity_token,{x:1,z:1,action:{id:'hit-'+i,type:'attack',kind:'basic',aim:{x:2,y:0,z:1}}});time+=700;state=await lobby.state(b.activity_token);}
+ let state;for(let i=0;i<42;i++){await lobby.state(a.activity_token,{x:1,z:1,action:{id:'hit-'+i,type:'attack',kind:'basic',aim:{x:2,y:0,z:1}}});time+=700;state=await lobby.state(b.activity_token);}
  await new Promise(r=>setImmediate(r));assert.equal(state.health.hp,0);assert.equal(state.duel.result.winnerName,'Renne');assert.equal(state.duel.result.loserName,'Joshua');assert.equal(endings.length,1);
  assert.equal(JSON.stringify(state.duel.result).includes('"a"'),false);assert.equal(state.health.canMove,false);
  time+=11000;assert.equal((await lobby.state(b.activity_token)).health.hp,0);const ended=await lobby.state(a.activity_token,{x:4,z:1,action:{id:'after-end',type:'attack',kind:'basic',aim:{x:2,y:0,z:1}}});assert.equal(ended.position.x,1);assert.match(ended.actionResult.error,/commencer|termine/);
@@ -397,7 +397,7 @@ test('a lethal Pom throw ends the match and its thread receives only the charact
  let time=2000;const results=[],lobby=createActivityLobby({grid,now:()=>time,resolveCharacter:async id=>id==='a'?'Estelle':'Joshua',onDuelEnd:async e=>results.push(e),arena:{grid,spawns:[{x:1,y:0,z:1},{x:2,y:0,z:1}],residents:{npcs:[],ballSpawns:[{x:1,y:.375,z:1}]}}});
  lobby.createDuel({id:'pom-match',players:['a','b'],names:['Estelle','Joshua']});for(const id of ['a','b']){lobby.joinDuel('pom-match',id);lobby.acceptDuel('pom-match',id);}time+=600;
  const a=await lobby.join({id:'a',channel:'dm-a'}),b=await lobby.join({id:'b',channel:'dm-b'});await lobby.state(a.activity_token);await lobby.state(b.activity_token);
- for(let i=0;i<4;i++){await lobby.state(a.activity_token,{x:1,z:1,action:{id:'pick-'+i,type:'pickup',target:'world:pom:0'}});await lobby.state(a.activity_token,{x:1,z:1,action:{id:'throw-'+i,type:'throw',aim:{x:2,y:.9,z:1}}});time+=300;await lobby.state(b.activity_token);}
+ for(let i=0;i<20;i++){await lobby.state(a.activity_token,{x:1,z:1,action:{id:'pick-'+i,type:'pickup',target:'world:pom:0'}});await lobby.state(a.activity_token,{x:1,z:1,action:{id:'throw-'+i,type:'throw',aim:{x:2,y:.9,z:1}}});time+=300;await lobby.state(b.activity_token);}
  await new Promise(r=>setImmediate(r));assert.equal(results.length,1);assert.equal(results[0].winnerName,'Estelle');assert.equal(results[0].action.kind,'pom');
  const posts=[],manager=createActivityDuels({lobby,store:{load:()=>[['pom-match',{players:['a','b'],names:['Estelle','Joshua'],thread:'thread-match',announced:true,expires:Date.now()+60000}]],save:()=>{}},resolveCharacter:async()=> 'Estelle'});
  const client={channels:{fetch:async id=>{assert.equal(id,'thread-match');return {send:async p=>posts.push(p)};}}};
