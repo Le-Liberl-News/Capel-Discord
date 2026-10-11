@@ -34,7 +34,7 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,now=Date.no
     else if(action==='open'){if(lobby.isConnected(user))await i.reply({content:'Activite ouverte.',flags:64});else await i.launchActivity();}
     else if(action==='requests'){const requests=duels.pending(user).slice(0,5);await i.reply({content:requests.length?'Défis reçus :':'Aucun défi en attente.',flags:64,components:requests.length?[{type:1,components:requests.map(r=>button('accept:'+r.id,r.opponent,1))}]:[]});}
     else if(action.startsWith('accept:')){if(lobby.isConnected(user))await i.reply({content:'Duel rejoint.',flags:64});else await i.launchActivity();await duels.accept(action.slice(7),user,client);}
-    else if(action.startsWith('challenge:')){await i.deferReply({flags:64});await duels.boardChallenge(user,decodeURIComponent(action.slice(10)),client);await i.editReply({components:[{type:1,components:[button('open','Jouer',1)]}],content:'Défi envoyé. Rejoignez l’activité ; votre adversaire peut accepter dans « Mes défis ».'});}
+    else if(action.startsWith('challenge:')){await i.deferReply({flags:64});const id=await duels.boardChallenge(user,decodeURIComponent(action.slice(10)),client);await i.editReply({components:[{type:1,components:[button('accept:'+id,'Jouer',1)]}],content:'Défi envoyé. Rejoignez l’activité ; votre adversaire peut accepter dans « Mes défis ».'});}
    }catch(e){const payload={content:e.message||'Action impossible.',flags:64};if(i.deferred)await i.editReply(payload);else if(!i.replied)await i.reply(payload);}
    return true;
   }
