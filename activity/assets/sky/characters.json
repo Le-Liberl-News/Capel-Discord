@@ -2851,5 +2851,29 @@
       "fps": 8
     },
     "portrait": "portraits/066.png"
+  },
+  "Anton": {
+    "texture": "ch02900.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 12,
+    "height": 1.7
   }
 }
