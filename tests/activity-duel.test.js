@@ -411,3 +411,11 @@ test('production duel starts lie at the centres of opposite arena halves',()=>{
  assert.equal(a.x,-1);assert.equal(b.x,-1);assert.ok(a.z>mid&&b.z<mid);assert.ok(Math.abs((a.z+b.z)/2-mid)<.1);
  for(const p of [a,b]){const x=Math.round((p.x-g.origin.x)/g.step),z=Math.round((p.z-g.origin.z)/g.step);assert.ok(Math.abs(g.cells[z*g.width+x])<.01);}
 });
+
+
+test('Accepting a new duel resets every arena ball exactly once',async()=>{
+ const {lobby}=fixture();lobby.createDuel({id:'new',channel:'guild',players:['a','b']});lobby.joinDuel('new','a');
+ const a=await lobby.join({id:'a',channel:'dm'});let state=await lobby.state(a.activity_token,{x:1,z:1,action:{id:'pick',type:'pickup',target:'world:pom:0'}});assert.equal(state.poms[0].mode,'held');
+ lobby.acceptDuel('new','a');lobby.acceptDuel('new','b');state=await lobby.state(a.activity_token);assert.equal(state.poms[0].mode,'rest');assert.equal(state.poms[0].owner,null);assert.equal(state.poms[0].x,1);assert.equal(state.poms[1].x,8);
+ state=await lobby.state(a.activity_token,{x:1,z:1,action:{id:'again',type:'pickup',target:'world:pom:0'}});lobby.acceptDuel('new','b');assert.equal((await lobby.state(a.activity_token)).poms[0].mode,'held');
+});

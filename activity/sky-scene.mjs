@@ -176,7 +176,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const ground=collision.floor(point.x,point.z,point.y+.6);if(ground!==null)point.y=ground;return point;
   }
   const crosshair=document.createElement('div');crosshair.textContent='+';crosshair.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:28px monospace;color:#fff;text-shadow:0 0 3px #000;pointer-events:none;z-index:20';crosshair.hidden=true;document.body.append(crosshair);
-  const fpsActive=()=>!!renneCombat&&avatars.get(localId)?.character==='Josette'&&!avatars.get(localId)?.dead&&!health.spectator;
+  const fpsActive=()=>!!renneCombat&&avatars.get(localId)?.character==='Josette'&&!avatars.get(localId)?.dead&&!health.spectator&&!duelIntro?.active(performance.now());
   let craftTarget=false,lastCombatDash=null;
   function pickCombatTarget(event,spec){
     if(!event)return null;
@@ -602,8 +602,13 @@ export async function createSkyScene(canvas, map = "anterose") {
       break;
     }
   }
+  function releaseMouse(){if(document.pointerLockElement===canvas)document.exitPointerLock();}
+  function lockedMouseMove(event){if(document.pointerLockElement===canvas&&fpsActive())pointermove({...event,clientX:viewport.width/2,clientY:viewport.height/2,movementX:event.movementX,movementY:event.movementY,pointerType:"locked"});}
+  function focusUI(event){if(event.target?.closest?.("input,textarea,select,dialog,[contenteditable]"))releaseMouse();}
+  document.addEventListener("mousemove",lockedMouseMove);document.addEventListener("focusin",focusUI);
   function pointerdown(event) {
     if (!connected) return;
+    if(fpsActive()&&event.pointerType!=="touch"&&document.pointerLockElement!==canvas){try{const request=canvas.requestPointerLock?.();request?.catch?.(()=>{});}catch{}}
     if (event.pointerType==="touch") {
       event.preventDefault();document.body.dataset.skyTouch="true";menu.hidden=true;touches.down(event);canvas.setPointerCapture(event.pointerId);return;
     }
@@ -623,6 +628,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     canvas.setPointerCapture(event.pointerId);
   }
   function pointermove(event) {
+    if(document.pointerLockElement===canvas&&event.pointerType!=="locked")return;
     const previousCursor=cursor;
     cursor={clientX:event.clientX,clientY:event.clientY};
     if(touches.has(event.pointerId)){event.preventDefault();touches.move(event);return;}
@@ -687,7 +693,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
-    const isFPS=fpsActive();crosshair.hidden=!isFPS;
+    const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
     if(towerLayout?.physicalExit&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<.7&&Math.abs(me.position.y-towerLayout.exit.y)<.15)queueAction('tower_step','up');
@@ -833,7 +839,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         1 - Math.exp(-seconds * 7),
       );
     aimLine.visible=false;
-    if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,(target.y+me.position.y)/2+.07,(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
+    if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){if(aimLine.visible)marker.visible=false;marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,(target.y+me.position.y)/2+.07,(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
       if (!pomAvatar) continue;
@@ -1108,6 +1114,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     dispose() {
       disposed = true;
       endDrag();
+      releaseMouse();document.removeEventListener("mousemove",lockedMouseMove);document.removeEventListener("focusin",focusUI);
       canvas.removeEventListener("pointerdown", pointerdown);
       canvas.removeEventListener("pointermove", pointermove);
       canvas.removeEventListener("pointerup", endDrag);

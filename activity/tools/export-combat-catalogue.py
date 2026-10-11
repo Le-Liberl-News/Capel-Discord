@@ -77,7 +77,7 @@ for row in rows:
    craftSlot=16
   if row['character']=='Luciola':
    sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([120,80,80,80,240,60,60,100,60,160])];craftSlot=16
-   sequences['basic']=[f for f in sequences['basic'] if f['pose']<=4]
+   # Keep every pose from AS 5, including the actual fan strike and recovery.
   if row['character']=='Walter':
    sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([80,80,80,120,80,80,100,100,100,100,100,100,100,120])];craftSlot=16
   if row['character']=='Estelle':

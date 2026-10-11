@@ -26,3 +26,12 @@ test('Open-ground kick decelerates naturally without wall damage; protection blo
  const guard=fixture('Walter');guard.target.guard={until:9999};guard.start('craft');guard.tick(1000);assert.equal(guard.target.hp,100);assert.equal(guard.target.knockback,undefined);
 });
 test('Lethal wall impact reports the defeat and cannot hit twice',()=>{const f=fixture('Walter',{wall:6});f.target.hp=30;f.start('craft',{x:0,y:0,z:2});f.tick(240);f.tick(1140);assert.equal(f.target.hp,0);assert.equal(f.events.length,1);f.tick(3000);assert.equal(f.events.length,1);});
+
+
+test('Arc Fencer follows the caster during both its hits rather than leaving damage at the initial origin',()=>{
+ const f=fixture('Ries'),s=combatSpec('Ries','craft');f.target.x=3;f.target.z=4;f.start('craft',{x:0,y:0,z:9});f.actor.x=3;f.tick(s.windup);assert.equal(f.target.hp,82);assert.equal(f.combat.snapshot().attacks[0].origin.x,3);f.tick(s.windup+s.hitOffsets[1]);assert.equal(f.target.hp,64);
+});
+
+test('Luciola fan attack retains every AS5 pose and each bank has eight directions',()=>{
+ const c=COMBAT.Luciola;assert.ok(c.sequences.basic.some(f=>f.pose===15));assert.ok(c.sequences.basic.every(f=>c.banks[f.bank].directions===8));assert.equal(combatSpec('Luciola','craft').shape,'line');
+});

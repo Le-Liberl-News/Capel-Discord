@@ -45,3 +45,14 @@ test('Sturm passes an actual tower enemy through anonymous lobby targeting and i
  state=await lobby.state(session.activity_token,{...state.position,action:{id:'sturm',type:'attack',kind:'craft',target:enemy.id,aim:{x:enemy.x,y:enemy.y,z:enemy.z}}});assert.equal(state.actionResult.error,undefined);
  time+=400;state=await lobby.state(session.activity_token);assert.equal(state.enemies[0].hp,65);assert.equal(state.enemies[0].attack,null);assert.ok(state.enemies[0].stunUntil>time);
 });
+
+
+test('Double tir locks the aimed enemy and recalculates each release after movement, without shooting through walls',()=>{
+ let time=0,wall=false;const actor={id:'a',character:'Josette',x:0,y:0,z:0,hp:100},enemy={id:'b',character:'Joshua',x:0,y:0,z:4,hp:100};const room=new Map([['a',actor],['b',enemy]]);
+ const combat=createActivityCombat({grid,now:()=>time,geometry:{floor:()=>0,sweep:(from,to)=>wall?{point:{x:(from.x+to.x)/2,y:1,z:2}}:null}});
+ combat.action(actor,{id:'locked',kind:'craft',ray:{origin:{x:0,y:1.45,z:0},direction:{x:0,y:-.15,z:Math.sqrt(1-.15**2)}}},room);
+ const attack=combat.snapshot().attacks[0];assert.equal(attack.target,'b');
+ enemy.x=2;time=630;combat.tick(room);const first=combat.snapshot().attacks[0].shots[0];assert.ok(first.aim.x>1.5);
+ time=first.impactAt+1;combat.tick(room);assert.equal(enemy.hp,82);assert.ok(enemy.damageEvents[0].point.x>1.5);
+ enemy.x=-2;wall=true;time=780;combat.tick(room);const second=combat.snapshot().attacks[0].shots[1];assert.equal(second.blocked,true);time=second.impactAt+1;combat.tick(room);assert.equal(enemy.hp,82);
+});

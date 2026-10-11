@@ -301,7 +301,8 @@
       ],
       "cooldown": 5000,
       "projectile": true,
-      "projectileSpeed": 45
+      "projectileSpeed": 45,
+      "lockOn": true
     }
   },
   "Ries": {
@@ -363,8 +364,9 @@
       "damage": 12,
       "range": 2,
       "radius": 0.8,
-      "windup": 360,
-      "duration": 490
+      "windup": 570,
+      "duration": 1510,
+      "nativeTiming": true
     },
     "craft": {
       "name": "Tourbillon",
@@ -380,7 +382,8 @@
       "projectileSpeed": 6,
       "effectDuration": 2000,
       "knockback": 3,
-      "nativeEffect": "SC/sc020_02._ef"
+      "nativeEffect": "SC/sc020_02._ef",
+      "shape": "line"
     }
   },
   "Walter": {

@@ -117,7 +117,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       huntGame?.leave(user); spectators.delete(user);
       assignments.set(user,id); locations.set(user,"arena"); lastSeen.set(user,now()); persist();
     },
-    acceptDuel(id,user) { const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(arena.introDuration??0);}persist(); return ready; },
+    acceptDuel(id,user) { const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){stadium.resetBalls();duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(arena.introDuration??0);}persist(); return ready; },
     validateSpectate(id) { prune();const duel=duels.get(id);if(!duel||!duel.players.every(p=>duel.accepted?.includes(p)))throw new ActivityError("Ce duel n'est pas disponible.",403); },
     spectateDuel(id,user) { prune(); const duel=duels.get(id); if (!duel||!duel.players.every(p=>duel.accepted?.includes(p))) throw new ActivityError("Ce duel n'est pas disponible.",403);
       if (duel.players.includes(user)) return;

@@ -20,7 +20,8 @@ export async function prepareArcFencer(THREE,assets){
     const dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,length=Math.hypot(dx,dz);
     group.rotation.y=Math.atan2(dx,dz);
     group.position.set(event.origin.x,event.origin.y,event.origin.z);
-    return {group,draw(time){
+    return {group,draw(time,position=event.origin){
+      group.position.set(position.x,position.y,position.z);
       // AS emits the sword at 1900 ms, extends it for 220 ms, then recovers.
       const age=time-950;
       group.visible=age>=0&&age<750;

@@ -12,6 +12,7 @@ export function createDuelIntro(){
  const title=document.createElement("div");title.style.cssText="position:absolute;bottom:32%;left:0;right:0;text-align:center;color:#ffe5a5;text-shadow:0 2px 3px #000,0 0 16px #000;font:clamp(24px,5vw,48px) 'Averia Sans Libre',sans-serif;letter-spacing:.04em";overlay.append(title);document.body.append(overlay);
  let duel=null,offset=0;
  return {
+  active(time){return !!duelPhase(duel,time+offset);},
   receive(value,serverTime){duel=value;offset=(serverTime??Date.now())-performance.now();},
   update(time,avatars,camera,fallback){
    const phase=duelPhase(duel,time+offset);overlay.style.display=phase?"block":"none";
