@@ -1,15 +1,23 @@
 """Export the original SC damage digits and ground each death-animation frame."""
 import argparse, json, struct
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageFilter
 parser=argparse.ArgumentParser()
-parser.add_argument('--battle3',type=Path,default=Path('E:/dev/PatchSC/src/archives/ED6_DT2F/battle3._ch'))
+parser.add_argument('--battle3',type=Path,default=Path('E:/dev/PatchSC/src/archives/ED6_DT2F/hbattle3._ch'))
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]/'assets/sky'
-image=Image.new('RGBA',(256,256))
-image.putdata([((w>>10&31)*255//31,(w>>5&31)*255//31,(w&31)*255//31,255 if w&32768 else 0) for (w,) in struct.iter_unpack('<H',args.battle3.read_bytes())])
-strip=image.crop((0,64,160,96))
-strip.putdata([(max(g,b),r,r,a) for r,g,b,a in strip.getdata()])
+# HD menu textures are ARGB4444; their antialiased alpha must be preserved.
+image=Image.new('RGBA',(512,512))
+image.putdata([((w>>8&15)*17,(w>>4&15)*17,(w&15)*17,(w>>12&15)*17) for (w,) in struct.iter_unpack('<H',args.battle3.read_bytes())])
+strip=Image.new('RGBA',(1280,256))
+for digit in range(10):
+ core=image.crop((digit*32,128,(digit+1)*32,192)).getchannel('A').resize((128,256),Image.Resampling.LANCZOS)
+ border=core.filter(ImageFilter.MaxFilter(13))
+ glow=border.filter(ImageFilter.GaussianBlur(6)).point(lambda a:round(a*.35))
+ cell=Image.new('RGBA',(128,256))
+ for color,mask in [((255,30,30),glow),((235,20,20),border),((255,255,255),core)]:
+  layer=Image.new('RGBA',cell.size,(*color,0));layer.putalpha(mask);cell.alpha_composite(layer)
+ strip.alpha_composite(cell,(digit*128,0))
 strip.save(root/'effects/damage-digits.png')
 p=root/'combat/catalogue.json'
 catalogue=json.loads(p.read_text(encoding='utf8'))
