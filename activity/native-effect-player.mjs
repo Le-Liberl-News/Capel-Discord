@@ -61,6 +61,7 @@ export class NativeEffectPlayer{
   async definition(entry){
     if(this.definitions.has(entry.id))return this.definitions.get(entry.id);
     const response=await fetch(entry.animation);if(!response.ok)throw Error('Définition EF introuvable');const definition=await response.json();
+    if(/^https?:/.test(entry.animation))for(const p of definition.parts)if(p.model&&!/^https?:/.test(p.model))p.model=new URL(p.model,new URL('../../',entry.animation)).href;
     this.definitions.set(entry.id,definition);
     for(const name of definition.children.filter(Boolean)){
       const id=entry.game+'/'+name.replace(/\.eff$/i,'._ef').toLowerCase();

@@ -426,9 +426,9 @@
       "groundTarget": true,
       "optionalTarget": true,
       "leap": true,
-      "leapDuration": 2200,
-      "windup": 200,
-      "duration": 2600,
+      "leapDuration": 5000,
+      "windup": 0,
+      "duration": 5600,
       "range": 12,
       "radius": 1.5,
       "damage": 30,
@@ -455,9 +455,16 @@
       "range": 12,
       "radius": 2.5,
       "damage": 36,
-      "windup": 900,
-      "duration": 1400,
-      "cooldown": 6500
+      "windup": 2000,
+      "duration": 2600,
+      "cooldown": 6500,
+      "launchDelay": 400,
+      "nativeEffect": "SC/mg023_0._ef",
+      "chargeEffects": [
+        {
+          "id": "SC/mg022_0._ef"
+        }
+      ]
     }
   },
   "Renne": {
@@ -479,7 +486,7 @@
     }
   },
   "Anelace": {
-    "slot": 19,
+    "slot": 26,
     "craft": {
       "name": "Piercing Wave",
       "special": "crescent",
@@ -489,10 +496,17 @@
       "range": 12,
       "radius": 2,
       "damage": 30,
-      "windup": 600,
-      "duration": 1200,
+      "windup": 1000,
+      "duration": 1800,
       "cooldown": 6000,
-      "nativeEffect": "Third/cr222_01._ef"
+      "nativeEffect": "Third/sc009_05._ef",
+      "poseSequence": "basic",
+      "explosionEffect": "Third/sc009_06._ef",
+      "chargeEffects": [
+        {
+          "id": "Third/sc009_06._ef"
+        }
+      ]
     }
   },
   "Ray": {

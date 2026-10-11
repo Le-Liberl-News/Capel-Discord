@@ -1,6 +1,8 @@
 import motion from './special-crafts.cjs';
 import {bakedEffectSprite} from './baked-effects.mjs';
-export async function createSpecialCraftView(THREE,scene,assets,banks,fireTexture){
+import {nativeWorldEffect} from './native-effects.mjs';
+export async function createSpecialCraftView(THREE,scene,assets,banks,fireTexture,native=new Map()){
+ const ice=await new THREE.TextureLoader().loadAsync(new URL('effects/frozen-crystal.png',assets).href);ice.colorSpace=THREE.SRGBColorSpace;const frozen=new Map();
  const loader=new THREE.TextureLoader(),[scythe,salt,model]=await Promise.all([loader.loadAsync(new URL('effects/renne-scythe.png',assets).href),loader.loadAsync(new URL('combat/campanella-spire/salt.png',assets).href),fetch(new URL('combat/campanella-spire/model.json',assets)).then(r=>{if(!r.ok)throw Error('Pilier introuvable');return r.json();})]);
  for(const map of [scythe,salt])map.colorSpace=THREE.SRGBColorSpace;
  const geometries=model.meshes.map(m=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(m.positions.flat(),3));g.setAttribute('uv',new THREE.Float32BufferAttribute(m.uv.flat(),2));g.setIndex(m.indices);g.computeVertexNormals();return g;});
@@ -9,20 +11,23 @@ export async function createSpecialCraftView(THREE,scene,assets,banks,fireTextur
   if(s.special==='spire'){projectile=new THREE.Group();for(const g of geometries)projectile.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:salt,side:THREE.DoubleSide})));group.add(projectile);}
   if(s.special==='boomerang'){projectile=new THREE.Sprite(new THREE.SpriteMaterial({map:scythe,transparent:true,depthWrite:false}));projectile.scale.set(1.8,1.2,1);group.add(projectile);}
   if(s.special==='fireball'){const map=fireTexture.clone();map.repeat.set(.25,1);projectile=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));projectile.scale.setScalar(.8);group.add(projectile);}
-  if(s.special==='crescent'){const bank=banks.get('third/cr222_01._ef');if(bank){assembly=bakedEffectSprite(THREE,bank,2.4);assembly.sprite.material.color.set(0xff8d42);projectile=assembly.sprite;group.add(projectile);}}
-  const bomb=banks.get('third/btbomb00._ef'),explosion=bomb?bakedEffectSprite(THREE,bomb,3):null;if(explosion)group.add(explosion.sprite);
-  const v={group,projectile,assembly,explosion};views.set(a.id,v);return v;
+  if(s.special==='crescent'){const player=native.get('third/sc009_05._ef');if(player){assembly=nativeWorldEffect(THREE,player);projectile=new THREE.Group();projectile.add(assembly.group);projectile.scale.setScalar(.5);group.add(projectile);}}
+  const bomb=banks.get(s.special==='spire'?'sc/mg023_0._ef':s.special==='crescent'?'third/sc009_06._ef':'third/btbomb00._ef'),explosion=bomb?bakedEffectSprite(THREE,bomb,s.special==='spire'?5:4):null;if(explosion)group.add(explosion.sprite);
+  const frost=banks.get('sc/mg022_0._ef'),fog=s.special==='spire'&&frost?bakedEffectSprite(THREE,frost,5):null;if(fog)group.add(fog.sprite);
+  const trailBank=banks.get('sc/cr153_00._ef'),trails=s.special==='boomerang'&&trailBank?Array.from({length:7},()=>{const fx=bakedEffectSprite(THREE,trailBank,1.6);group.add(fx.sprite);return fx;}):[];
+  const v={group,projectile,assembly,explosion,fog,trails};views.set(a.id,v);return v;
  }
  return {draw(a,s,time,avatars){
   const v=views.get(a.id)??create(a,s),owner=avatars?.get(a.actor)?.position??a.origin,impact=a.impactAt-a.started;
   if(v.projectile){v.projectile.visible=!a.cancelled;
-   if(s.special==='spire'){const planted=time>=impact,expired=time>=a.objectExpiresAt-a.started;v.projectile.visible=!a.explodedAt&&!expired&&!a.cancelled;v.projectile.position.set(a.aim.x,a.aim.y+(planted?0:7*(1-Math.min(1,time/(impact||1)))),a.aim.z);}
+   if(s.special==='spire'){const expired=time>=a.objectExpiresAt-a.started;v.projectile.visible=!a.explodedAt&&!expired&&!a.cancelled;const pose=motion.spirePose(a,time,s),direction=new THREE.Vector3(pose.direction.x,pose.direction.y,pose.direction.z).normalize();v.projectile.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);v.projectile.position.set(pose.tip.x-direction.x*3,pose.tip.y-direction.y*3,pose.tip.z-direction.z*3);if(v.fog){v.fog.sprite.visible=time>=impact&&!expired&&!a.explodedAt;v.fog.sprite.position.set(a.aim.x,a.aim.y+.2,a.aim.z);v.fog.draw(500+(time-impact)%1000);}}
    else {const end=a.flightEndsAt?a.flightEndsAt-a.started:s.windup+(s.special==='boomerang'?2200:Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z)/(s.projectileSpeed??10)*1000),p=motion.projectilePosition({...a,started:0},s,time,owner);v.projectile.visible=time>=s.windup&&time<end&&!a.explodedAt&&!a.resolved&&!a.cancelled;v.projectile.position.set(p.x,p.y,p.z);
     if(s.special==='boomerang')v.projectile.material.rotation=time*.022;
     if(s.special==='fireball')v.projectile.material.map.offset.x=(Math.floor(time/60)%4)/4;
-    if(v.assembly){v.assembly.draw(250+(time-s.windup)%700);v.projectile.material.rotation=0;}
+    if(v.assembly){const phase=200+(time-s.windup)%600;v.assembly.draw(phase);v.assembly.group.position.z=-phase*.02;v.projectile.rotation.y=Math.atan2(a.aim.x-a.origin.x,a.aim.z-a.origin.z);}
+    for(const [i,trail]of v.trails.entries()){const age=time-(i+1)*35,p=motion.projectilePosition({...a,started:0},s,age,owner);trail.sprite.visible=v.projectile.visible&&age>=s.windup;trail.sprite.position.set(p.x,p.y,p.z);trail.sprite.material.opacity=1-i/8;trail.draw(200+(time%500));}
    }
   }
-  if(v.explosion){const release=a.explodedAt??(s.special==='dive'&&a.resolved?a.impactAt:null),age=release==null?-1:time-(release-a.started);v.explosion.sprite.visible=age>=0&&age<700;const p=a.explosionPoint??a.aim;v.explosion.sprite.position.set(p.x,p.y+.6,p.z);if(v.explosion.sprite.visible)v.explosion.draw(age);}
- },remove(id){const v=views.get(id);if(!v)return;scene.remove(v.group);v.assembly?.dispose();v.explosion?.dispose();if(v.projectile?.isSprite&&!v.assembly){if(v.projectile.material.map!==scythe)v.projectile.material.map.dispose();v.projectile.material.dispose();}if(v.projectile?.isGroup)for(const mesh of v.projectile.children)mesh.material.dispose();views.delete(id);},dispose(){for(const id of [...views.keys()])this.remove(id);for(const g of geometries)g.dispose();scythe.dispose();salt.dispose();}};
+  if(v.explosion){const release=a.explodedAt??(s.special==='dive'&&a.resolved?a.impactAt:null),age=release==null?-1:time-(release-a.started);v.explosion.sprite.visible=age>=0&&age<1000;const p=a.explosionPoint??a.aim;v.explosion.sprite.position.set(p.x,p.y+.6,p.z);if(v.explosion.sprite.visible)v.explosion.draw(s.special==='spire'?age*2:age);}
+ },frozen(avatars,time){for(const [id,a]of avatars??[]){if(a.frozenUntil>time){let sprite=frozen.get(id);if(!sprite){sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:ice,transparent:true,depthWrite:false,opacity:.85}));sprite.scale.set(1.6,2,1);scene.add(sprite);frozen.set(id,sprite);}sprite.position.set(a.position.x,a.position.y+.8,a.position.z);}else if(frozen.has(id)){const sprite=frozen.get(id);scene.remove(sprite);sprite.material.dispose();frozen.delete(id);}}for(const [id,sprite]of frozen)if(!avatars?.has(id)){scene.remove(sprite);sprite.material.dispose();frozen.delete(id);}},remove(id){const v=views.get(id);if(!v)return;scene.remove(v.group);v.assembly?.dispose();v.explosion?.dispose();v.fog?.dispose();for(const t of v.trails)t.dispose();if(v.projectile?.isSprite&&!v.assembly){if(v.projectile.material.map!==scythe)v.projectile.material.map.dispose();v.projectile.material.dispose();}if(v.projectile?.isGroup&&!v.assembly)for(const mesh of v.projectile.children)mesh.material.dispose();views.delete(id);},dispose(){for(const id of [...views.keys()])this.remove(id);for(const s of frozen.values()){scene.remove(s);s.material.dispose();}ice.dispose();for(const g of geometries)g.dispose();scythe.dispose();salt.dispose();}};
 }

@@ -26,7 +26,14 @@ def effect(identifier):
             for key in ['texture', 'additiveTexture']:
                 if texture.get(key): texture[key] = resource(texture[key])
     for part in definition['parts']:
-        if part.get('model'): raise ValueError('This runtime selection requires a model exporter')
+        if part.get('model'):
+            original=cache/part['model'].removeprefix('/cache/')
+            model=json.loads(original.read_text(encoding='utf8'))
+            for mesh in model['meshes']:
+                for key in ['texture','additiveTexture']:
+                    if mesh.get('texture',{}).get(key):mesh['texture'][key]=resource(mesh['texture'][key])
+            relative=part['model'].removeprefix('/cache/');target=output/relative;target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_text(json.dumps(model,separators=(',',':')),encoding='utf8');part['model']=relative
     for name in definition['children']:
         if name: effect(entry['game'] + '/' + name.replace('.eff', '._ef'))
     target = output / selected[identifier]['animation']

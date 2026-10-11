@@ -44,8 +44,9 @@ const pRing=p=>p.primitive===8||p.primitive===9;
 export function nativeWorldEffect(THREE,player){
  const group=new THREE.Group(),parts=[],maps=new Map();
  for(const item of player.instances){
-  const p=item.part;if(player.entry.id.toLowerCase()==='sc/sc020_02._ef'&&item.start>2000)continue;if(player.entry.id.toLowerCase()==='sc/mg075_0._ef'&&p.primitive!==0)continue;if(!p.enabled||(p.renderFlags&1)||!item.texture||item.scale.every(k=>k.value.every(v=>v===0)))continue;
+  const p=item.part;if(player.entry.id.toLowerCase()==='third/sc009_05._ef'&&item.start>180)continue;if(player.entry.id.toLowerCase()==='sc/sc020_02._ef'&&item.start>2000)continue;if(player.entry.id.toLowerCase()==='sc/mg075_0._ef'&&p.primitive!==0)continue;if(!p.enabled||(p.renderFlags&1)||!item.texture||item.scale.every(k=>k.value.every(v=>v===0)))continue;
   const additive=!!(p.renderFlags&4),geometryPart=p.primitive===1||p.primitive===9||p.primitive===8,key=item.texture.texture+':'+p.uv.join(':')+':'+additive+':'+geometryPart;
+  if(p.primitive===10){const model=player.models.get(p.model);if(!model)continue;const object=new THREE.Group();for(const mesh of model.meshes){const image=player.textureImages.get(mesh.texture?.additiveTexture??mesh.texture?.texture??item.texture.additiveTexture??item.texture.texture);if(!image)continue;const map=new THREE.Texture(image);map.needsUpdate=true;map.colorSpace=THREE.SRGBColorSpace;map.wrapS=map.wrapT=THREE.RepeatWrapping;maps.set(p.model+':'+parts.length+':'+object.children.length,map);const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(mesh.positions.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(mesh.uv.flat(),2));geometry.setIndex(mesh.indices);object.add(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending})));}group.add(object);parts.push({item,object,width:1,height:1,center:[0,0]});continue;}
   let map=maps.get(key);
   if(!map){
    const image=player.textureImages.get(additive?item.texture.additiveTexture??item.texture.texture:item.texture.texture);if(!image)continue;
@@ -65,7 +66,8 @@ export function nativeWorldEffect(THREE,player){
  return{group,draw(ms){for(const{item,object,width,height,center}of parts){const state=player.state(item,ms);object.visible=!!state;if(!state)continue;
   object.position.set(state.position[0]+(object.isSprite?center[0]*state.scale[0]:0),state.position[1]+(pRing(item.part)?item.part.vertices[0][1]*state.scale[2]:0)+(object.isSprite?center[1]*state.scale[1]:item.part.primitive===1?height*state.scale[1]/2:0),state.position[2]);
   object.scale.set(object.isSprite?width*state.scale[0]:state.scale[0],object.isSprite?height*state.scale[1]:pRing(item.part)?state.scale[2]:state.scale[1],object.isSprite?1:pRing(item.part)?1:state.scale[2]);
-  if(object.isMesh&&!pRing(item.part))object.rotation.set(...state.rotation.map(v=>v*Math.PI/180));
+  if((object.isMesh||object.isGroup)&&!pRing(item.part))object.rotation.set(...state.rotation.map(v=>v*Math.PI/180));
+  if(object.isGroup){for(const mesh of object.children){mesh.material.color.setRGB(...state.color.slice(0,3).map(v=>v/255));mesh.material.opacity=state.color[3]/255;const uv=item.part.uvAnimation;mesh.material.map.offset.set((uv.speed[0]*ms/30)%1,(uv.speed[1]*ms/30)%1);}continue;}
   const heal=player.entry.id.toLowerCase()==='sc/mg110_0._ef';object.material.color.setRGB(...(heal?[.25,.7,1]:state.color.slice(0,3).map(v=>v/255)));object.material.opacity=item.part.renderFlags&4?1:state.color[3]/255;if(object.isSprite)object.material.rotation=state.rotation[2]*Math.PI/180;
- }},dispose(){for(const{object}of parts){object.geometry?.dispose();object.material.dispose();}for(const map of maps.values())map.dispose();}};
+ }},dispose(){for(const{object}of parts){if(object.isGroup){for(const mesh of object.children){mesh.geometry.dispose();mesh.material.dispose();}}else{object.geometry?.dispose();object.material.dispose();}}for(const map of maps.values())map.dispose();}};
 }
