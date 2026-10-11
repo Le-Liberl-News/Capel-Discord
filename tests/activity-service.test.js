@@ -311,3 +311,18 @@ test("durable world retains a moved Pom after everyone leaves and the server res
 });
 
 test('players start with 500 HP and saved health migrates once without healing injuries',async()=>{const grid={origin:{x:0,z:0},step:1,width:3,height:3,cells:Array(9).fill(0),spawn:{x:1,y:0,z:1}},saved={players:[['injured',{id:'injured',x:1,y:0,z:1,hp:80}]]},service=createActivityService({grid,resolveCharacter:async()=> 'Estelle',store:{load:()=>saved,save:()=>{}}});const fresh=await service.join({id:'fresh',channel:'one'}),injured=await service.join({id:'injured',channel:'one'});assert.equal(fresh.player.hp,500);assert.equal(fresh.player.maxHp,500);assert.equal(injured.player.hp,400);assert.equal(injured.player.maxHp,500);const state=await service.state(injured.activity_token);assert.equal(state.health.hp,400);assert.equal(state.health.maxHp,500);});
+
+
+test("delayed responses preserve movement credit for the next batched trace",async()=>{
+ const f=fixture(),session=await f.service.join({id:"alice",channel:"room"});
+ await f.service.state(session.activity_token);
+ f.tick(475);
+ const first=await f.service.state(session.activity_token,{x:.817,z:0,trace:[{x:.817,z:0,sequence:7}]});
+ assert.equal(first.movementSequence,7);
+ f.tick(200);
+ const second=await f.service.state(session.activity_token,{x:2.45,z:0,trace:[{x:1.634,z:0,sequence:14},{x:2.45,z:0,sequence:21}]});
+ assert.equal(second.movementSequence,21);assert.equal(second.position.x,2.45);
+ // Spending the remaining credit does not grant unlimited speed through rapid polls.
+ const rejected=await f.service.state(session.activity_token,{x:4,z:0,trace:[{x:4,z:0,sequence:22}]});
+ assert.equal(rejected.movementSequence,21);assert.equal(rejected.position.x,2.45);
+});

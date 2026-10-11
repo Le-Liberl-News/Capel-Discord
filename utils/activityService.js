@@ -185,7 +185,7 @@ function createActivityService({
       Object.assign(player,{spectator:false,canMove:true,duelProtected:false,duelFinished:false,noRespawn:false,prop:null},playerPolicy(session.id));
       const characterChanged=player.character!==session.character;
       if(characterChanged&&player.character==="Sieg")Object.assign(player,flight.landingPoint(walkingGrid,player));
-      if(characterChanged)player.acceptedAt=now();
+      if(characterChanged){player.acceptedAt=now();player.movementCredit=0.15;}
       if(session.character==="Sieg"&&!player.prop&&(characterChanged||player.y<flight.flightBounds(walkingGrid).minY))player.y=Math.max(player.y+.4,flight.flightBounds(walkingGrid).minY);
       player.character=session.character;
       let world = worlds.get(session.channel);
@@ -212,8 +212,10 @@ function createActivityService({
         if (!Number.isFinite(x) || !Number.isFinite(z))
           throw new ActivityError("Position invalide.");
         const allowance =
-          Math.min(5, Math.max(0.15, (now() - (player.acceptedAt ?? player.seen)) / 1000)) * 4.5 * movementFactor(player,now()) +
-          0.15;
+          Math.min(22.65, (player.movementCredit ?? 0.15) +
+            Math.max(player.movementCredit === undefined ? 0.15 : 0, (now() - player.acceptedAt) / 1000) * 4.5 * movementFactor(player,now()));
+        // Keep unused travel credit across polls: delayed responses batch movement
+        // into the next request without increasing the player's sustained speed.
         // Validate each travelled segment rather than the chord between polls.
         // Sequence numbers let a retry replay an already acknowledged prefix.
         let samples = [{ x, y, z }],
@@ -240,12 +242,13 @@ function createActivityService({
           samples = [...samples, { x, y, z }];
           lastSequence = Math.max(lastSequence, sequence);
         }
+        const staleTrace = submitted.trace?.length > 0 && submitted.trace.every(sample => sample.sequence <= (session.movementSequence ?? 0));
         if(flying){
-          const bounds=flight.flightBounds(walkingGrid);let valid=flight.insideFlight({x,y,z},bounds),travelled=0,from=player;
+          const bounds=flight.flightBounds(walkingGrid);let valid=!staleTrace && flight.insideFlight({x,y,z},bounds),travelled=0,from=player;
           for(const to of samples){travelled+=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);if(!valid||travelled>allowance||!flight.insideFlight(to,bounds)||!flight.clearFlight(from,to,geometry)){valid=false;break;}from=to;}
-          if(valid){session.movementSequence=lastSequence;player.acceptedAt=now();Object.assign(player,{x,y,z});}
+          if(valid){session.movementSequence=lastSequence;player.acceptedAt=now();player.movementCredit=allowance-travelled;Object.assign(player,{x,y,z});}
         }else {
-        let valid = canWalk(x, z),
+        let valid = !staleTrace && canWalk(x, z),
           travelled = 0,
           from = player;
         for (const to of samples) {
@@ -273,6 +276,7 @@ function createActivityService({
         if (valid) {
           session.movementSequence = lastSequence;
           player.acceptedAt = now();
+          player.movementCredit = allowance-travelled;
           player.x = x;
           player.z = z;
           player.y = walkingGrid.cells[index(x, z)];
@@ -371,7 +375,7 @@ function createActivityService({
         character: session.character,
         characterChanged,
         position: { x: player.x, y: player.y, z: player.z },
-        joueurs: [...room.values()].map(({ seen, lastTalk, acceptedAt, ...rest }) => rest),
+        joueurs: [...room.values()].map(({ seen, lastTalk, acceptedAt, movementCredit, ...rest }) => rest),
       };
     },
   };
