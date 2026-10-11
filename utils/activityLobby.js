@@ -3,7 +3,7 @@ const { createActivityService, ActivityError } = require("./activityService");
 // Real Discord IDs stay inside the server. Every scene exposes random avatar IDs.
 function createActivityLobby({ arena, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
-  const active = new Map(), lastSeen = new Map();
+  const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
   const presenceGrace = 2 * 60 * 1000;
   const sources = new Map(), locations = new Map(), spectators = new Map();
   const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
@@ -22,12 +22,13 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
   const towers=tower.map((floor,i)=>createActivityService({...options,...floor,dungeon:floor.layout,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:(_actor,target)=>target.enemy===true,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
   const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(arena?.introDuration??0);}return data;};
   const saved=store?.load();
+  for(const [id,replay]of saved?.completedCaptures??[])if(now()-replay.at<600000)completedCaptures.set(id,replay);
   for (const [id,data] of saved?.duels ?? []) if (data.expires>now()) duels.set(id,makeDuel(data));
   for (const [user,id] of saved?.assignments ?? []) if (duels.has(id)) { assignments.set(user,id); lastSeen.set(user,now()); }
   for (const [user,map] of saved?.locations ?? []) if (["arena","anterose","rolent","hangar","liberl",...towers.map((_,i)=>"tower"+(i+1))].includes(map)) locations.set(user,map);
   for (const [user] of assignments) if (!locations.has(user)) locations.set(user,"arena");
   for (const [user,id] of saved?.spectators ?? []) spectators.set(user,id);
-  const persist=()=>store?.save({spectators:[...spectators],locations:[...locations],duels:[...duels].map(([id,{service,...data}])=>[id,data]),assignments:[...assignments]});
+  const persist=()=>store?.save({completedCaptures:[...completedCaptures],spectators:[...spectators],locations:[...locations],duels:[...duels].map(([id,{service,...data}])=>[id,data]),assignments:[...assignments]});
   const publishingResults=new Set(),resultAttempts=new Map();
   function publishResult(id,duel){
    if(!duel.result||duel.result.published||publishingResults.has(id)||now()-(resultAttempts.get(id)??-Infinity)<5000)return;
@@ -58,6 +59,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     if (!duels.has(id)) return;
     for (const [user, match] of assignments) if (match === id) detach(user);
     for (const [user, match] of spectators) if (match === id) { spectators.delete(user); detach(user); }
+    const completed=duels.get(id);if(completed?.result)completedCaptures.set(completed.result.captureId,{id,...completed.result,actors:completed.players});
     stadium?.closeRoom("map:arena:"+id);
     duels.delete(id); resultAttempts.delete(id);
   }
@@ -68,6 +70,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
   }
   function prune() {
     let changed = false;
+    for(const [id,replay]of completedCaptures)if(now()-replay.at>=600000){completedCaptures.delete(id);changed=true;}
     for (const [user] of assignments) if (now() - (lastSeen.get(user) ?? 0) > presenceGrace) { release(user,false,false); changed = true; }
     for (const [id, duel] of duels) if (duel.expires < now()) {
       closeDuel(id); changed = true;
@@ -98,7 +101,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
     refreshCharacter(user) { for(const service of [tavern,hangar,stadium,city,skies,...towers])service?.refreshCharacter(user); },
-    duelCaptureFor(user,captureId){const id=captureId?[...duels].find(([,d])=>d.result?.captureId===captureId&&d.players.includes(user))?.[0]:assignments.get(user),duel=duels.get(id);return duel?.players.includes(user)&&duel.result&&now()-duel.result.at<600000?{id,...duel.result,actors:duel.players}:null;},
+    duelCaptureFor(user,captureId){const completed=captureId&&completedCaptures.get(captureId);if(completed?.actors.includes(user)&&now()-completed.at<600000)return completed;const id=captureId?[...duels].find(([,d])=>d.result?.captureId===captureId&&d.players.includes(user))?.[0]:assignments.get(user),duel=duels.get(id);return duel?.players.includes(user)&&duel.result&&now()-duel.result.at<600000?{id,...duel.result,actors:duel.players}:null;},
     matchFor(user) { const target=destination(user),id=target.match?.replace(/^watch:/,'');const d=duels.get(id);return target.map==='arena'&&d?.players.every(p=>d.accepted?.includes(p))?id:null; },
     setDuelThread(id,thread) { const d=duels.get(id);if(d){d.thread=thread;persist();} },
     duelStatus(id,user) {const d=duels.get(id);return d?.players.includes(user)?{accepted:d.accepted?.includes(user)??false}:null;},

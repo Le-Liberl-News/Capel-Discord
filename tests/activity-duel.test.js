@@ -452,5 +452,6 @@ test('completed replay can be recovered after returning home and restarting the 
  const saved={duels:[['saved',{players:['a','b'],accepted:['a','b'],expires:900000,result}]],assignments:[],locations:[['a','anterose']]};
  const lobby=createActivityLobby({grid,now:()=>time,store:{load:()=>saved,save:()=>{}},resolveCharacter:async()=> 'Ray',arena:{grid}});
  assert.equal(lobby.duelCaptureFor('a',result.captureId).captureId,result.captureId);assert.equal(lobby.duelCaptureFor('stranger',result.captureId),null);
+ lobby.cancelDuel('saved');assert.equal(lobby.duelCaptureFor('a',result.captureId).captureId,result.captureId);const restarted=createActivityLobby({grid,now:()=>time,store:{load:()=>({...saved,duels:[],completedCaptures:[[result.captureId,{id:'saved',...result,actors:['a','b']}]]}),save:()=>{}},resolveCharacter:async()=> 'Ray',arena:{grid}});assert.equal(restarted.duelCaptureFor('b',result.captureId).captureId,result.captureId);assert.equal(restarted.duelCaptureFor('stranger',result.captureId),null);
  time=602000;assert.equal(lobby.duelCaptureFor('a',result.captureId),null);
 });
