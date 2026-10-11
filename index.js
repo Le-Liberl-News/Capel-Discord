@@ -129,6 +129,7 @@ client.once('clientReady', async () => {
 
 client.on('interactionCreate', async interaction => {
     if (await require('./utils/activityEntry').handleActivityEntry(interaction)) return;
+    if (await arenaBoard.handle(interaction)) return;
     if (await activiteDuels.handle(interaction)) return;
     if (await activitePropHunt.handle(interaction)) return;
     if (interaction.isButton()) {
@@ -228,7 +229,7 @@ const capelModel=require("./activity/assets/sky/capel.json");
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
 const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
-  send:async payload=>payload.map==="arena"?activityArenaSender(payload):activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
+  send:async payload=>payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
@@ -239,7 +240,7 @@ const activiteService = createActivityLobby({
       return {grid,layout,enemySpawns:layout.enemySpawns??layout.rooms.slice(1,-1).filter(p=>Math.hypot(p.x-grid.spawn.x,p.z-grid.spawn.z)>8).slice(0,4).map((p,i)=>({...p,ranged:i%2===1})),
         geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};
     }),
-    onDuelEnd:async event=>{activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
+    onDuelEnd:async event=>{arenaRanking.record(event);await arenaBoard.refresh();activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
     onDrink:event=>activityTavern.drink(event),
     onSay:require("./utils/activitySpeech").createActivitySpeech({relay:activityRoleplay,players:()=>state.players,matchFor:actor=>activiteService.matchFor(actor)}),
     onCraft:event=>activityRoleplay.craft({...event,match:activiteService.matchFor(event.actor)}),
@@ -273,6 +274,11 @@ const activiteService = createActivityLobby({
     resolveCharacter: userId => testCharacters.resolve(userId,require('./commands/anonyme.js').getPseudoAnonyme)
 });
 const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
+const arenaRanking=require('./utils/activityArenaRanking').createArenaRanking({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-arena-ranking.json')),credit:require('./utils/activityArenaRanking').createArenaCredit(db)});
+const arenaBoard=require('./utils/activityArenaBoard').createArenaBoard({client,lobby:activiteService,duels:activiteDuels,ranking:arenaRanking,store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-arena-board.json')),assigned:async()=>{const [rows]=await db.query('SELECT user_id,pseudo_index FROM pseudos_anonymes');return rows.map(r=>({user:r.user_id,name:require('./commands/anonyme').characterNames[r.pseudo_index]})).filter(r=>r.name);}});
+client.once('clientReady',()=>arenaBoard.refresh().catch(e=>console.error('Arena board:',e.message)));
+setInterval(()=>{if(client.isReady())arenaBoard.tick().catch(e=>console.error('Arena board:',e.message));},10000).unref();
+client.on('messageCreate',message=>{if(message.channelId==='1558125759682576475'&&message.type===18)setTimeout(()=>{if(activiteDuels.ownsThread(message.reference?.channelId??message.id))message.delete().catch(e=>console.error('Arena thread notice:',e.code));},1500).unref();});
 const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({client,lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
 const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
@@ -452,6 +458,7 @@ app.listen(3000, () => {
 
 
 cron.schedule('0 0 * * *', async () => {
+    await arenaRanking.settle();
     await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);

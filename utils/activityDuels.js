@@ -59,7 +59,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
             content = "L'invitation de "+name+" reste valide, mais je n'ai pas pu t'envoyer la tienne. "+(deliveries[1].reason?.code === 50007 ? "Ouvre tes messages privés au bot. " : "Discord a refusé l'envoi. ")+"Relance /duel dans 30 secondes pour la recevoir.";
           } else {
             content = "Défi envoyé à "+name+". Ouvre le bouton reçu en message privé.";
-            if (created && !inGame) {
+            if (created && !inGame && channelId !== spectatorChannel) {
               try { await channel.send({content:own+" défie "+name+" dans l'arène de Grancel ! Les invitations sont privées.",allowedMentions:{parse:[]}}); }
               catch { content += " L'annonce dans le salon n'a pas pu être publiée ; les invitations privées restent valides."; }
             }
@@ -71,7 +71,19 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
           return {id,content:delivered?"Les invitations envoyées restent valides. La confirmation Discord a échoué.":error.code===50007?"Les messages privés doivent être ouverts pour les deux joueurs.":error instanceof DuelError || error instanceof ActivityError ? error.message : "Impossible d'envoyer les invitations Discord. Réessayez dans un instant."};
         }
   }
+  async function boardInvite(players,client,automatic=false) {
+    prune();if(players.some(user=>lobby.matchFor(user)))throw new DuelError("Un personnage est d\u00e9j\u00e0 en duel.");if(players[0]===players[1])throw new DuelError("Choisissez un autre personnage.");
+    const names=await Promise.all(players.map(resolveCharacter));
+    lobby.prepareDuel(players[0],players[1]);const id="duel:"+randomBytes(16).toString("hex");
+    lobby.createDuel({id,channel:spectatorChannel,players,names});
+    const invitation={players,names,expires:now()+30*60*1000};invitations.set(id,invitation);persist();
+    if(automatic){for(const user of players){lobby.joinDuel(id,user);lobby.acceptDuel(id,user);}await announce(id,invitation,client).catch(e=>console.error('Match thread:',e.code));}
+    return id;
+  }
   return {
+    ownsThread(id){return [...invitations.values()].some(i=>i.thread===id);},
+    match(players,client){return boardInvite(players,client,true);},
+    async boardChallenge(user,name,client){const target=await resolveOpponent(name);if(!target)throw new DuelError("Personnage indisponible.");return boardInvite([user,target],client);},
     async publishResult(event,client){const thread=await client.channels.fetch(await this.publicationThread(event.id,client));return thread.send({content:"Victoire de **"+event.winnerName+"** !",allowedMentions:{parse:[]},nonce:BigInt('0x'+require('node:crypto').createHash('sha256').update(event.captureId).digest('hex').slice(0,16)).toString(),enforceNonce:true});},
     async publicationThread(id,client) {const invitation=invitations.get(id);if(!invitation)throw new ActivityError('Match introuvable.',404);if(invitation.thread&&invitation.announced)return invitation.thread;lobby.validateSpectate(id);return announce(id,invitation,client);},
     pending(user) { prune();return [...invitations].filter(([id,i])=>i.players.includes(user)&&lobby.duelStatus(id,user)?.accepted===false).map(([id,i])=>({id,opponent:i.names[i.players[0]===user?1:0]})); },
