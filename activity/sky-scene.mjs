@@ -543,7 +543,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if (document.querySelector("#sky-terminal[open]") || event.target.closest?.("input,textarea,select,button,[contenteditable]"))
       return;
     if(event.code==="Escape"){craftTarget=false;combatControls.targeting(null);marker.visible=false;return;}
-    if(inTower&&event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
+    if(event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
     if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();const kind=combatKeyAction(event.code,avatars.get(localId)?.character);if(kind)startAttack(kind);return;}
     if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"||health.spectator){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
     if (
@@ -736,7 +736,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     forward.normalize();
     combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
-    if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left)),v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down)),lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
+    if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
     flightMotion={moving:false,dx:0,dz:0};
     if (!freeSpectator && me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
       const horizontal =
