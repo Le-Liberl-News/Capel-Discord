@@ -55,7 +55,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks}){
   return true;
  }
  function tickEntities(room){const time=now(),dt=Math.max(0,Math.min(.1,(time-last)/1000));last=time;
-  for(const[id,e]of entities){const owner=room.get(e.owner);if(!owner||owner.hp<=0||owner.character!=='Ray'||e.hp<=0||time>=e.expiresAt){entities.delete(id);room.delete(id);continue;}if(time<e.spawnedAt+700||immobilized(e,time))continue;
+  for(const[id,e]of entities){const owner=room.get(e.owner);if(!owner||owner.hp<=0||owner.character!=='Ray'||time>=e.expiresAt){entities.delete(id);room.delete(id);continue;}if(e.hp<=0){e.deathAt??=time;e.deadUntil=e.deathAt+30000;e.moving=false;if(time-e.deathAt>=1500){entities.delete(id);room.delete(id);}continue;}if(time<e.spawnedAt+700||immobilized(e,time))continue;
    const target=[...room.values()].filter(t=>t.hp>0&&!t.spectator&&!t.duelProtected&&canDamage(owner,t)).sort((a,b)=>Math.hypot(a.x-e.x,a.z-e.z)-Math.hypot(b.x-e.x,b.z-e.z))[0];const goal=target??owner,dx=goal.x-e.x,dz=goal.z-e.z,d=Math.hypot(dx,dz);e.heading={dx,dz};e.moving=d>1.1;
    if(e.moving){const move=Math.min(d-1,dt*2.8),q={x:e.x+dx/d*move,y:e.y,z:e.z+dz/d*move},y=floor(q);if(Number.isFinite(y)&&Math.abs(y-e.y)<.4&&!geometry?.sweep({...e,y:e.y+.5},{...q,y:y+.5},.15))Object.assign(e,{...q,y});}
    if(target&&d<1.5&&time>=e.nextHit){e.nextHit=time+900;hurt({actor:owner.id,character:'Ray',kind:'craft',technique:'Tomate amère',started:time,endsAt:time+500,origin:{x:e.x,y:e.y,z:e.z},aim:{x:target.x,y:target.y??0,z:target.z}},owner,target,8,time,{point:{x:target.x,y:(target.y??0)+.7,z:target.z}});}

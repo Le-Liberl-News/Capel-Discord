@@ -458,7 +458,7 @@ function createActivityWorld(options) {
   const fire=options.dungeon?require('./activityDungeonFire').createDungeonFire({...options,traps:options.dungeon.traps??[]}):null;
   const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[],fire});
   return {...world,
-    tick(players){world.tick(players);options.platforms?.tick(players);jumps?.tick(players);enemies.tick(new Map([...players,...combat.entities]));fire?.tick(players);combat.tick(new Map([...players,...enemies.entities,...combat.entities]));},
+    tick(players){world.tick(players);options.platforms?.tick(players);jumps?.tick(players);enemies.tick(new Map([...players,...combat.entities]));fire?.tick(new Map([...players,...combat.entities]));combat.tick(new Map([...players,...enemies.entities,...combat.entities]));},
     action(player,command,players){return command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,new Map([...players,...enemies.entities,...combat.entities])) : world.action(player,command,players);},
     snapshot(){return {...world.snapshot(),combat:combat.snapshot(),enemies:[...enemies.snapshot(),...combat.entities.values()],fire:fire?.snapshot()??[]};},
     cooldownsFor:combat.cooldownsFor,canDetonate:combat.canDetonate,
