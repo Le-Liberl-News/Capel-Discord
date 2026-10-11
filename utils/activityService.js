@@ -332,6 +332,7 @@ function createActivityService({
           ? { id: point.action.id, error: actionResult?.error }
           : undefined,
         health: {
+          canDetonate:world.canDetonate?.(player.id)??false, frozenUntil:player.stoneUntil??0,
           combatDash:player.combatDash??null,
           knockback:player.knockback??null,
           siegDive:player.siegDive??null,

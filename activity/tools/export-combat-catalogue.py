@@ -51,6 +51,8 @@ for row in rows:
  if row['character'] in ('Luciola','Walter'):
   ch='ch04528' if row['character']=='Luciola' else 'ch04508'
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
+ if row['character']=='Bleublanc':
+  folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04539._ch',folder/'ch04539p._cp')
  if row['character']=='Ries':
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04158._ch',folder/'ch04158p._cp')
  try:
@@ -78,6 +80,8 @@ for row in rows:
   if row['character']=='Luciola':
    sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([120,80,80,80,240,60,60,100,60,160])];craftSlot=16
    # Keep every pose from AS 5, including the actual fan strike and recovery.
+  if row['character']=='Bleublanc':
+   sequences['craft']=[{'bank':12,'pose':i,'ms':120} for i in range(16)];craftSlot=26
   if row['character']=='Walter':
    sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in enumerate([80,80,80,120,80,80,100,100,100,100,100,100,100,120])];craftSlot=16
   if row['character']=='Estelle':

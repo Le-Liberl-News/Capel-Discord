@@ -76,6 +76,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     return { ...result, player:result.player && {...result.player,id:alias(result.player.id)},
       joueurs:result.joueurs?.map(p=>({...p,id:alias(p.id)})),
       messages:result.messages?.map(m=>({...m,id:alias(m.id),author:alias(m.author)})),
+      enemies:result.enemies?.map(p=>({...p,owner:alias(p.owner)})),
       pom:pom(result.pom), poms:result.poms?.map(pom),
       combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }

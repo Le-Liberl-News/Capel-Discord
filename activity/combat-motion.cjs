@@ -1,5 +1,6 @@
 const {dashPosition}=require('./black-fang.cjs');
 function combatMotion(event,time,spec){
+ if(spec.special==='dive')return {active:time<spec.windup+spec.leapDuration,position:require('./special-crafts.cjs').divePosition(event,time,spec)};
  if(!spec.leap)return dashPosition(event,time,spec);
  const t=Math.max(0,Math.min(1,(time-spec.windup)/spec.leapDuration)),active=time<spec.windup+spec.leapDuration;
  const length=Math.hypot(event.aim.x-event.origin.x,event.aim.z-event.origin.z),offset=Math.min(spec.landingOffset??0,Math.max(0,length-.2)),ratio=length?1-offset/length:1;

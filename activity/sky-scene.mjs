@@ -66,7 +66,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     catalogue = await fetch(new URL("characters.json", ASSETS),{cache:"no-store"}).then((r) =>
       r.json(),
     );
-  if(inTower)Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  if(inTower||map==="arena")Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
   const supportEffects=createSupportEffects(THREE,scene);
   const blindness=document.createElement('div');blindness.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;background:radial-gradient(ellipse at center,transparent 5%,rgba(0,0,0,.85) 48%,#000 80%);transition:opacity .15s;opacity:0';document.body.append(blindness);
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
@@ -187,6 +187,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   }
   function startAttack(kind,event=cursor,confirmed=false) {
     const bird=avatars.get(localId);
+    if(kind==='craft'&&bird?.character==='Campanella'&&health.canDetonate&&connected){return !!queueAction('attack',undefined,bird.position,undefined,{kind});}
     if(bird?.character==='Sieg'){
       if(kind!=='craft'||!connected||bird.dead||health.hp<=0||health.spectator||!movementAllowed||bird.siegDive||divePending||!combatControls.ready(kind))return false;
       const v=new THREE.Vector3();camera.getWorldDirection(v);const direction={x:v.x,y:v.y,z:v.z},points=diveMechanics.divePath(bird.position,direction,grid,collision);if(!points)return false;
@@ -197,6 +198,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const spec=renneMechanics.combatSpec(me.character,kind);let target;
     if((spec.groundTarget||spec.targetRequired)&&!confirmed){craftTarget=kind;combatControls.targeting(kind);marker.visible=true;return true;}
     if(spec.targetRequired){target=pickCombatTarget(event,spec);if(!target)return false;}
+    if(spec.optionalTarget)target=pickCombatTarget(event,spec);
     let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
     const aim=ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
@@ -409,7 +411,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       avatar.maxHp=player.maxHp??100;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.siegDive=player.siegDive??null;
       avatar.npc = !!player.npc;
       avatar.walking = !!player.moving;
-      avatar.speed = player.speed ?? 0.8;
+      avatar.frozenUntil=player.stoneUntil;avatar.speed = player.speed ?? 0.8;avatar.spawnedAt=player.spawnedAt;avatar.summoned=player.summoned;
       if (player.heading) avatar.heading = player.heading;
       avatar.target = { x: player.x, y: player.y ?? 0, z: player.z };
       return avatar;
@@ -485,7 +487,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       dead,
       hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
       platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??100,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,siegDive:player.siegDive??null,
-      npc: !!player.npc,
+      frozenUntil:player.stoneUntil,spawnedAt:player.spawnedAt,summoned:player.summoned,npc: !!player.npc,
       walking: !!player.moving,
       speed: player.speed ?? 0.8,
       initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,
@@ -812,6 +814,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*(info.directions??8)+(avatar.direction%(info.directions??8));
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
+      if(avatar.summoned){const scale=Math.max(0,Math.min(1,(Date.now()+jumpClockOffset-avatar.spawnedAt)/700));avatar.mesh.scale.setScalar(scale);}
+      avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:0xffffff);
       avatar.renderFrame={pose,info};avatar.mesh.visible=!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
@@ -1015,7 +1019,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       const dash=result.health?.combatDash;
       if(dash&&dash!==lastCombatDash){lastCombatDash=dash;const me=avatars.get(localId);if(me&&!renneCombat?.dash(localId))Object.assign(me.position,result.position);path=[];movementTrace=[];localJump=null;craftTarget=false;}
       dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();
-      const bird=avatars.get(localId);if(bird){const previous=bird.siegDive,confirmed=result.health?.siegDive;if(confirmed){bird.siegDive=confirmed;divePending=null;}else if(!divePending||result.actionResult?.id===divePending){bird.siegDive=null;if(result.actionResult?.error&&result.actionResult.id===divePending)combatControls.rejected('craft');divePending=null;if(previous)Object.assign(bird.position,result.position);}if(previous||bird.siegDive){path=[];movementTrace=[];}}
+      const bird=avatars.get(localId);
+    if(bird){bird.frozenUntil=result.health?.frozenUntil;const previous=bird.siegDive,confirmed=result.health?.siegDive;if(confirmed){bird.siegDive=confirmed;divePending=null;}else if(!divePending||result.actionResult?.id===divePending){bird.siegDive=null;if(result.actionResult?.error&&result.actionResult.id===divePending)combatControls.rejected('craft');divePending=null;if(previous)Object.assign(bird.position,result.position);}if(previous||bird.siegDive){path=[];movementTrace=[];}}
       const pushed=avatars.get(localId);if(pushed){const previous=pushed.knockback;pushed.knockback=result.health?.knockback??null;if(pushed.knockback||previous){path=[];movementTrace=[];localJump=null;if(!pushed.knockback)Object.assign(pushed.position,result.position);}}
       if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}

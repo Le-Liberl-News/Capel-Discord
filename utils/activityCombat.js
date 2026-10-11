@@ -6,20 +6,24 @@ const {applyDamage}=require('./activityDamage');
 const { combatSpec, attackPoint } = require("../activity/native-combat.cjs");
 function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {}, onDefeat = () => {}, canDamage = () => true, dungeon=null, platforms=null }) {
   const attacks = new Map(), cooldowns = new Map(), projections=new Map();
-  let players;
+  let players;const damagePolicy=canDamage;canDamage=(a,b)=>{const owner=a.owner?players?.get(a.owner)??a:a,target=b.owner?players?.get(b.owner)??b:b;return owner.id!==target.id&&damagePolicy(owner,target);};
   const floor = point => {
     const moving=platforms?.floor(point);if(moving!==null&&moving!==undefined)return moving;
     if (geometry) return geometry.floor(point.x, point.z, point.y + .5);
     const x=Math.round((point.x-grid.origin.x)/grid.step), z=Math.round((point.z-grid.origin.z)/grid.step);
     return x<0||z<0||x>=grid.width||z>=grid.height ? null : grid.cells[z*grid.width+x];
   };
+  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks});
   function action(player, command, room) {
+    players=room;
+    if(player.character==='Campanella'&&command.kind==='craft'&&player.hp>0&&!player.spectator&&!player.duelProtected&&!immobilized(player,now())&&special.detonate(player,room))return {combatId:command.id};
     const spec = combatSpec(player.character,command.kind), time = now();
     if (!spec || player.hp <= 0 || player.spectator || player.canMove === false || immobilized(player,time) || time<(player.combatLockedUntil??0))
       return { error: "Attaque indisponible." };
     if (time < (player.attackBusyUntil ?? 0) || time < (cooldowns.get(player.id)?.[command.kind] ?? 0))
       return { error: "Technique en récupération." };
     if (attacks.has(command.id)) return { error: "Attaque déjà reçue." };
+    if(spec.special==='summon'&&[...special.entities.values()].filter(e=>e.owner===player.id&&e.hp>0).length>=3)return {error:'Trois tomates sont d�j� actives.'};
     const fps=spec.fps?validateRay(player,command.ray):null;if(spec.fps&&!fps)return {error:'Visée invalide.'};
     const origin = {x:player.x,y:player.y??0,z:player.z}, endpoint = fps?{...fps.origin}:attackPoint(origin, command.aim, command.kind,player.character);
     if(fps)Object.assign(endpoint,{x:fps.origin.x+fps.direction.x*spec.range,y:fps.origin.y+fps.direction.y*spec.range,z:fps.origin.z+fps.direction.z*spec.range});
@@ -57,6 +61,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(spec.lockOn){attack.target=lockedTarget;attack.lockedOffset=lockedOffset;attack.shots=[];}
     if(spec.tornado){attack.impactAt=time+spec.windup;attack.flightEndsAt=attack.impactAt+Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/spec.projectileSpeed*1000;attack.endsAt=attack.flightEndsAt+300;}
     if(spec.leap&&spec.landingOffset){const length=Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z),ratio=length?1-Math.min(spec.landingOffset,Math.max(0,length-.2))/length:1,p={x:origin.x+(endpoint.x-origin.x)*ratio,y:endpoint.y,z:origin.z+(endpoint.z-origin.z)*ratio},height=floor(p);attack.landingPoint=height!==null&&Number.isFinite(height)&&Math.abs(height-p.y)<1.2?{...p,y:height}:{...endpoint};}
+    special.setup(attack,spec,command,room);
     attacks.set(attack.id,attack);players=room;
     if(spec.dash||spec.leap){Object.assign(player,{combatDash:attack.id,combatLockedUntil:time+spec.windup+(spec.leapDuration??spec.dashDuration),acceptedAt:time,jump:null,jumpTickAt:null,jumpLandedAt:time,platformId:null,platformOffset:null});}
     if(spec.lockMovement)player.combatLockedUntil=time+spec.duration;
@@ -78,7 +83,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     projections.set(player.id,{projection,attack,attacker,spec});
   }
   function tick(room) {
-    players=room;const time=now();
+    players=room;const time=now();special.tickEntities(room);
     for(const player of room.values())if(player.knockback&&!projections.has(player.id)){player.knockback=null;}
     for(const [id,push]of projections){const player=room.get(id),{projection,attack,attacker,spec}=push;if(!player||player.hp<=0||player.knockback?.id!==projection.id){projections.delete(id);if(player)player.knockback=null;continue;}
       Object.assign(player,projectionPosition(projection,time));player.acceptedAt=time;
@@ -87,6 +92,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     for(const [id,attack]of attacks) {
       if(time>attack.endsAt+5000){attacks.delete(id);continue;}
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(special.tickAttack(attack,dashSpec,room,time))continue;
       if(dashSpec?.lockOn&&!attack.resolved&&!attack.cancelled){
         const actor=room.get(attack.actor);if(!actor||actor.hp<=0||actor.character!==attack.character||actor.spectator||immobilized(actor,time)){attack.cancelled=true;attack.resolved=true;continue;}
         const offsets=dashSpec.hitOffsets??[0];
@@ -180,6 +186,6 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     for(const id of cooldowns.keys())if(!room.has(id))cooldowns.delete(id);
   }
   function snapshot(){return {attacks:[...attacks.values()].filter(a=>now()<=a.endsAt+1800).map(a=>({...a,hits:a.hits.map(h=>({...h}))})),cooldowns:{}};}
-  return {action,tick,snapshot,cooldownsFor:id=>({...cooldowns.get(id)})};
+  return {action,tick,snapshot,entities:special.entities,canDetonate:id=>!!special.activeSpire(id),cooldownsFor:id=>({...cooldowns.get(id)})};
 }
 module.exports={createActivityCombat};
