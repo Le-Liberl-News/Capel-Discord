@@ -83,7 +83,15 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
   return {
     ownsThread(id){return [...invitations.values()].some(i=>i.thread===id);},
     match(players,client){return boardInvite(players,client,true);},
-    async boardChallenge(user,name,client){const target=await resolveOpponent(name);if(!target)throw new DuelError("Personnage indisponible.");return boardInvite([user,target],client);},
+    async boardChallenge(user,name,client){
+      const target=await resolveOpponent(name);if(!target)throw new DuelError("Personnage indisponible.");
+      const id=await boardInvite([user,target],client),invitation=invitations.get(id);
+      try {
+        const opponent=await client.users.fetch(target);
+        await opponent.send({content:invitation.names[0]+" te d\u00e9fie dans l'ar\u00e8ne de Grancel.",components:[{type:1,components:[{type:2,custom_id:"activity:"+id,label:"Accepter et rejoindre",style:1}]}],allowedMentions:{parse:[]}});
+      }catch(error){invitations.delete(id);lobby.cancelDuel(id);persist();throw new DuelError(error.code===50007?"Impossible d'envoyer le MP : ce personnage doit autoriser les messages priv\u00e9s du bot.":"Impossible d'envoyer l'invitation priv\u00e9e. R\u00e9essayez dans un instant.");}
+      return id;
+    },
     async publishResult(event,client){const thread=await client.channels.fetch(await this.publicationThread(event.id,client));return thread.send({content:"Victoire de **"+event.winnerName+"** !",allowedMentions:{parse:[]},nonce:BigInt('0x'+require('node:crypto').createHash('sha256').update(event.captureId).digest('hex').slice(0,16)).toString(),enforceNonce:true});},
     async publicationThread(id,client) {const invitation=invitations.get(id);if(!invitation)throw new ActivityError('Match introuvable.',404);if(invitation.thread&&invitation.announced)return invitation.thread;lobby.validateSpectate(id);return announce(id,invitation,client);},
     pending(user) { prune();return [...invitations].filter(([id,i])=>i.players.includes(user)&&lobby.duelStatus(id,user)?.accepted===false).map(([id,i])=>({id,opponent:i.names[i.players[0]===user?1:0]})); },
@@ -110,7 +118,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
           // Launch only inside the participant's private conversation with the bot.
           if (!interaction.channel?.isDMBased?.()) throw new DuelError("Ouvrez votre invitation privée.");
           lobby.joinDuel(id,interaction.user.id);joined=true;
-          await interaction.launchActivity();
+          if(lobby.isConnected(interaction.user.id))await interaction.reply({content:"Duel rejoint dans votre activit\u00e9.",flags:64});else await interaction.launchActivity();
           const ready=lobby.acceptDuel(id,interaction.user.id);
           if(ready && interaction.client?.channels) {
             try { await announce(id,invitation,interaction.client); }

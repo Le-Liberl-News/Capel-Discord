@@ -21,3 +21,13 @@ test('board is anonymous, paginated, persistent and queue matches only connected
  const interaction=id=>({isButton:()=>true,customId:'arena:queue',user:{id},launchActivity:async()=>{},reply:async()=>{}});
  await board.handle(interaction('one'));await board.handle(interaction('two'));await board.tick();assert.equal(pairs.length,0);connected.add('one');connected.add('two');await Promise.all([board.tick(),board.tick()]);assert.deepEqual(pairs,[['one','two']]);
 });
+const {createActivityDuels}=require('../utils/activityDuels');
+test('dashboard challenge sends only opponent an anonymous DM; blocked DMs cancel invitation',async()=>{
+ const sent=[],cancelled=[];let fail=false,joined=0,launched=0;
+ const lobby={matchFor:()=>null,prepareDuel(){},createDuel(){},cancelDuel:id=>cancelled.push(id),duelStatus:()=>({accepted:false}),isConnected:()=>true,joinDuel(){joined++;},acceptDuel:()=>false};
+ const client={users:{fetch:async id=>({send:async payload=>{if(fail)throw {code:50007};sent.push({id,payload});}})}};
+ const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==='private-a'?'Estelle':'Joshua',resolveOpponent:async()=> 'private-b',characterNames:['Estelle','Joshua']});
+ const id=await duels.boardChallenge('private-a','Joshua',client);assert.equal(sent.length,1);assert.equal(sent[0].id,'private-b');assert.equal(sent[0].payload.content,"Estelle te d\u00e9fie dans l'ar\u00e8ne de Grancel.");assert.equal(JSON.stringify(sent[0].payload).includes('private-'),false);
+ await duels.handle({isButton:()=>true,customId:'activity:'+id,user:{id:'private-b'},channel:{isDMBased:()=>true},client,reply:async()=>{},launchActivity:async()=>launched++});assert.equal(joined,1);assert.equal(launched,0);
+ fail=true;await assert.rejects(duels.boardChallenge('private-a','Joshua',client),/MP/);assert.equal(cancelled.length,1);assert.equal(duels.pending('private-a').length,1);
+});
