@@ -547,6 +547,15 @@
       "nativeEffect": "Third/cr04110._ef",
       "effectDuration": 850,
       "slashVolley": true
+    },
+    "basic": {
+      "nativeEffect": "Third/cr04110._ef",
+      "effectDuration": 400,
+      "slashVolley": true,
+      "normalSlash": true,
+      "hitOffsets": [
+        0
+      ]
     }
   }
 }
