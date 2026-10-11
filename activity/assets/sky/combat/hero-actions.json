@@ -281,6 +281,27 @@
       "cooldown": 300,
       "projectile": true,
       "projectileSpeed": 45
+    },
+    "slot": 16,
+    "craft": {
+      "name": "Double tir",
+      "nativeTiming": true,
+      "fps": true,
+      "thirdPersonCraft": true,
+      "range": 30,
+      "shotVisual": "bullet",
+      "burstShots": true,
+      "damage": 36,
+      "headshotMultiplier": 1.5,
+      "windup": 1260,
+      "duration": 2080,
+      "hitOffsets": [
+        0,
+        300
+      ],
+      "cooldown": 5000,
+      "projectile": true,
+      "projectileSpeed": 45
     }
   },
   "Ries": {

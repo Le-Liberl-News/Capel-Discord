@@ -46,6 +46,8 @@ for row in rows:
  if row['character']=='Olivier':
   for bank,ch in [(12,'ch0403a'),(13,'ch0403c')]:
    folder=a.extracted/'sc-27/ED6_DT27';files[bank]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
+ if row['character']=='Josette':
+  folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04108._ch',folder/'ch04108p._cp')
  if row['character']=='Ries':
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04158._ch',folder/'ch04158p._cp')
  try:
@@ -62,6 +64,10 @@ for row in rows:
   if row['character']=='Olivier':
    # Requiem's luth bank contains individual poses; skip the rose prelude.
    sequences['craft']=[{'bank':12,'pose':i,'ms':80,'heading':0} for i in range(4,12)]+[{'bank':12,'pose':12,'ms':500,'heading':i*45,'firing':True} for i in range(8)]
+  if row['character']=='Josette':
+   # AS 16's native gun bank. Keep its preparation and two firing passes.
+   sequences['craft']=[{'bank':12,'pose':i,'ms':ms} for i,ms in [(0,80),(1,80),(2,80),(3,400),(4,100),(5,60),(6,60),(7,60),(8,60),(9,80),(10,160),(13,40),(14,40),(15,220),(13,40),(14,40),(15,160),(10,100),(11,220)]]
+   craftSlot=16
   if row['character']=='Ries':
    # AS 16 loops poses 0..3 on thread 1 until 1100 ms; bank 12 is loaded by 0x6A.
    sequences['craft']=[{'bank':12,'pose':i%4,'ms':100} for i in range(11)]+[{'bank':12,'pose':i,'ms':ms} for i,ms in [(4,800),(5,120),(6,50),(7,450),(8,100),(9,100),(10,100),(11,200),(12,300),(13,200),(14,40)]]
@@ -118,9 +124,9 @@ for row in rows:
 # Retain the existing hand-tuned Renne implementation.
 renne=json.loads((a.output/'renne.json').read_text(encoding='utf8'));renne['actions']={'basic':{'name':'Coup de faux','key':'f','damage':12,'cooldown':700,'windup':300,'duration':650,'range':2.5,'radius':1.05},'art':{'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1650,'range':9,'radius':1.4,'projectile':True},'craft':{'name':'Cercle sanglant','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':1650,'range':8,'radius':1.9,'projectile':True}};catalogue['Renne']=renne
 (a.output/'catalogue.json').write_text(json.dumps(catalogue,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf8')
-if a.character=='Ries':
- path=a.output.parent/'characters.json';characters=json.loads(path.read_text(encoding='utf8'));old=characters['Ries'];banks=catalogue['Ries']['banks']
- characters['Ries']={**banks['0'],'walk':banks['1'],'death':banks['4'],'portrait':old['portrait']}
+if a.character in ('Ries','Josette'):
+ path=a.output.parent/'characters.json';characters=json.loads(path.read_text(encoding='utf8'));old=characters[a.character];banks=catalogue[a.character]['banks']
+ characters[a.character]={**banks['0'],'walk':banks['1'],'death':banks['4'],'portrait':old['portrait']}
  path.write_text(json.dumps(characters,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 if a.character and (a.output/'export-report.json').exists():
  omitted=[e for e in json.loads((a.output/'export-report.json').read_text(encoding='utf8'))['omitted'] if e['character']!=a.character]+omitted

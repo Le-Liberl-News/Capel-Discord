@@ -1,3 +1,4 @@
+import {createJosetteView,combatKeyAction} from './josette-view.mjs';
 import {createTavernTables} from './tavern-tables.mjs';
 import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
 import {createAirshipScene} from './airship-scene.mjs';
@@ -161,6 +162,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   let notifyCapture=()=>{};
   const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model):null;
   const craftCapture=(renneCombat&&!inTower)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
+  const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event));
   function aimForAttack(event,groundOnly=false) {
     const me=avatars.get(localId);if(!me)return null;
@@ -524,7 +526,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       return;
     if(event.code==="Escape"){craftTarget=false;combatControls.targeting(null);marker.visible=false;return;}
     if(inTower&&event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
-    if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();startAttack({KeyF:"basic",KeyG:"craft",KeyC:"art"}[event.code]);return;}
+    if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();const kind=combatKeyAction(event.code,avatars.get(localId)?.character);if(kind)startAttack(kind);return;}
     if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
     if (
       [
@@ -684,6 +686,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     }
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
+    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec('Josette',localAttack.kind):null,active:isFPS,time,moving:me?.walking||keys.size>0,yaw})??0;crosshair.hidden=!isFPS||josetteBlend>.05;
     duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
     cutaway?.update(camera, follow);
@@ -779,7 +782,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??poses[Math.floor(avatar.time*info.fps)%poses.length],frame=pose*(info.directions??8)+(avatar.direction%(info.directions??8));
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
-      avatar.renderFrame={pose,info};avatar.mesh.visible=!(id===localId&&isFPS);
+      avatar.renderFrame={pose,info};avatar.mesh.visible=!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
@@ -1090,7 +1093,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
-      rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       tavernTables?.dispose();crosshair.remove();blindness.remove();teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();

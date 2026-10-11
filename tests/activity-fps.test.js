@@ -3,6 +3,29 @@ const {createActivityCombat}=require('../utils/activityCombat');
 const {createActivityLobby}=require('../utils/activityLobby');
 const {rayBody}=require('../activity/fps-combat.cjs');
 const grid={origin:{x:-5,z:-5},step:.5,width:30,height:30,cells:Array(900).fill(0),spawn:{x:0,y:0,z:0}};
+test('Josette craft uses AS 16 and resolves exactly two distinct shots, respecting dungeon allies',()=>{
+ const {combatSpec,COMBAT}=require('../activity/native-combat.cjs');
+ assert.equal(COMBAT.Josette.source.craftSlot,16);assert.ok(COMBAT.Josette.sequences.craft.every(f=>f.bank===12));
+ assert.deepEqual(combatSpec('Josette','craft').hitOffsets,[0,150]);
+ let time=0;const actor={id:'a',character:'Josette',x:0,y:0,z:0,hp:100},enemy={id:'e',enemy:true,character:'Joshua',x:0,y:0,z:4,hp:100},ally={id:'ally',character:'Ries',x:0,y:0,z:2,hp:100},room=new Map([['a',actor],['e',enemy],['ally',ally]]);
+ const combat=createActivityCombat({grid,now:()=>time,dungeon:{},canDamage:(_a,b)=>!!b.enemy});
+ assert.ok(combat.action(actor,{id:'dual',kind:'craft',ray:{origin:{x:0,y:.85,z:0},direction:{x:0,y:0,z:1}},aim:{x:0,y:.85,z:30}},room).error);
+ assert.ok(combat.action(actor,{id:'dual',kind:'craft',ray:{origin:{x:0,y:1.45,z:0},direction:{x:0,y:-.15,z:Math.sqrt(1-.15**2)}},aim:{x:0,y:-3.05,z:29.66}},room).combatId);
+ const impact=combat.snapshot().attacks[0].impactAt;
+ time=impact-1;combat.tick(room);assert.equal(enemy.hp,100);
+ time=impact;combat.tick(room);assert.equal(enemy.hp,82);
+ time=impact+149;combat.tick(room);assert.equal(enemy.hp,82);
+ time=impact+150;combat.tick(room);assert.equal(enemy.hp,64);assert.equal(enemy.damageEvents.length,2);assert.equal(ally.hp,100);
+ time=impact+1000;combat.tick(room);assert.equal(enemy.hp,64);
+});
+test('Josette camera travels smoothly out and back; click replaces F but G remains craft',async()=>{
+ const {craftViewBlend,gunPose,combatKeyAction}=await import('../activity/josette-view.mjs');
+ assert.equal(craftViewBlend(0,1040),0);assert.equal(craftViewBlend(220,1040),1);assert.equal(craftViewBlend(1040,1040),0);
+ assert.ok(craftViewBlend(110,1040)>.4&&craftViewBlend(110,1040)<.6);
+ assert.ok(craftViewBlend(930,1040)>.4&&craftViewBlend(930,1040)<.6);
+ assert.equal(combatKeyAction('KeyF','Josette'),null);assert.equal(combatKeyAction('KeyG','Josette'),'craft');assert.equal(combatKeyAction('KeyF','Ries'),'basic');
+ assert.deepEqual(gunPose(null),{frame:0,recoil:0});assert.equal(gunPose(30).frame,1);assert.equal(gunPose(90).frame,2);assert.equal(gunPose(200).recoil,0);
+});
 function shoot(height,{geometry,miss=false,guard=false}={}){
  let time=0;const actor={id:'a',character:'Josette',x:0,y:0,z:0,hp:100},target={id:'b',character:'Joshua',x:0,y:0,z:4,hp:100,...(guard?{guard:{until:1000}}:{})},room=new Map([['a',actor],['b',target]]);
  const combat=createActivityCombat({grid,geometry,now:()=>time}),origin={x:0,y:1.45,z:0},dz=miss?4:0,dy=height-1.45,len=Math.hypot(dz,dy,4),direction={x:dz/len,y:dy/len,z:4/len};
