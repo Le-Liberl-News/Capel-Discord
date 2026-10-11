@@ -63,8 +63,9 @@ export function nativeWorldEffect(THREE,player,options={}){
   else object=new THREE.Sprite(new THREE.SpriteMaterial(material));
   object.renderOrder=4;group.add(object);parts.push({item,object,width,height,center:[(a[0]+b[0])/2,(a[1]+b[1])/2]});
  }
- return{group,draw(ms){for(const{item,object,width,height,center}of parts){const state=player.state(item,ms);object.visible=!!state;if(!state)continue;
+ return{group,draw(ms){const anchor=options.anchorPart==null?null:parts.find(p=>p.item.part.index===options.anchorPart),offset=anchor?player.state(anchor.item,ms)?.position:null;for(const{item,object,width,height,center}of parts){const state=player.state(item,ms);object.visible=!!state;if(!state)continue;
   object.position.set(state.position[0]+(object.isSprite?center[0]*state.scale[0]:0),state.position[1]+(pRing(item.part)?item.part.vertices[0][1]*state.scale[2]:0)+(object.isSprite?center[1]*state.scale[1]:item.part.primitive===1?height*state.scale[1]/2:0),state.position[2]);
+  if(offset)object.position.sub(new THREE.Vector3(...offset));
   object.scale.set(object.isSprite?width*state.scale[0]:state.scale[0],object.isSprite?height*state.scale[1]:pRing(item.part)?state.scale[2]:state.scale[1],object.isSprite?1:pRing(item.part)?1:state.scale[2]);
   if((object.isMesh||object.isGroup)&&!pRing(item.part))object.rotation.set(...state.rotation.map(v=>v*Math.PI/180));
   if(object.isGroup){for(const mesh of object.children){mesh.material.color.setRGB(...state.color.slice(0,3).map(v=>v/255));mesh.material.opacity=state.color[3]/255;const uv=item.part.uvAnimation;mesh.material.map.offset.set((uv.speed[0]*ms/30)%1,(uv.speed[1]*ms/30)%1);}continue;}
