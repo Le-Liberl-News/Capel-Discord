@@ -403,3 +403,5 @@ test('a lethal Pom retains its launch and ricochet trajectory without account ID
  world.tick(players);world.action(players.get('secret-a'),{type:'pickup'},players);world.action(players.get('secret-a'),{type:'throw',target:'secret-b'},players);clock+=500;world.tick(players);
  assert.equal(events.length,1);const a=events[0].action;assert.equal(a.started,1000);assert.equal(a.releaseAt,1000);assert.equal(a.trajectory[0].t,0);assert.ok(a.trajectory.at(-1).t>0);assert.ok(a.impactAt>a.started);assert.ok(!JSON.stringify(a).includes('secret-'));
 });
+
+test('tower deaths respawn after two seconds with full player HP',()=>{let time=0;const grid={origin:{x:0,z:0},step:1,width:3,height:3,cells:Array(9).fill(0),spawn:{x:1,y:0,z:1}},world=createActivityWorld({grid,now:()=>time,combatEnabled:true,dungeon:{traps:[]},npcs:[]}),p={id:'tower-player',character:'Walter',x:1,y:0,z:1,hp:0,deadUntil:10000},players=new Map([[p.id,p]]);world.tick(players);assert.equal(p.deadUntil,2000);time=1999;world.tick(players);assert.equal(p.hp,0);time=2000;world.tick(players);assert.equal(p.hp,500);});
