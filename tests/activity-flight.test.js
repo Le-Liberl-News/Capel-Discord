@@ -5,7 +5,7 @@ const {createActivityLobby}=require('../utils/activityLobby');
 const {createActivityTerminal}=require('../utils/activityTerminal');
 const {createTestCharacters,TEST_CHARACTER_EXPIRY}=require('../utils/activityTestCharacters');
 const grid={origin:{x:0,z:0},step:1,width:10,height:10,cells:Array(100).fill(0),spawn:{x:2,y:0,z:2}};
-test('test character choice expires at midnight Paris, affects only its owner and keeps daily assignment intact',async()=>{
+test('test character choice expires at its configured deadline, affects only its owner and keeps daily assignment intact',async()=>{
  let time=TEST_CHARACTER_EXPIRY-1,originalCalls=0;const choices=createTestCharacters({characters:{Sieg:{},Renne:{}},now:()=>time});const original=async()=>{originalCalls++;return 'Estelle';};
  choices.set('one','Sieg');assert.equal(await choices.resolve('one',original),'Sieg');assert.equal(await choices.resolve('two',original),'Estelle');assert.equal(originalCalls,1);
  assert.throws(()=>choices.set('one','Not a character'),{status:400});assert.equal(choices.menu('one').selected,'Sieg');

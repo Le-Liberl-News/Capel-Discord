@@ -1,4 +1,4 @@
-﻿const TEST_CHARACTER_EXPIRY=Date.parse('2026-10-10T22:00:00Z'); // midnight in Paris, today only
+﻿const TEST_CHARACTER_EXPIRY=Date.parse('2026-10-18T07:30:00Z'); // temporary tests until 18 October, 09:30 Paris
 function createTestCharacters({characters,now=Date.now,expires=TEST_CHARACTER_EXPIRY}) {
  const choices=new Map(),names=Object.keys(characters);
  const enabled=()=>now()<expires;
