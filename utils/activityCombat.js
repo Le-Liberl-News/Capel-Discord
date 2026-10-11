@@ -28,7 +28,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   };
 
-  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks});
+  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft});
 
   function action(player, command, room) {
 
@@ -147,7 +147,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const dealt=applyDamage(player,amount*attackFactor(attacker,time),time,impact);
 
-    if(player.hp===0&&dealt.damage){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:players,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:'projectile',started:attack.started,releaseAt:attack.started+combatSpec(attack.character,attack.kind).windup,impactAt:time,endsAt:Math.max(time+300,attack.endsAt),origin:{...attack.origin},aim:{x:player.x,y:player.y??0,z:player.z}},at:time});}
+    if(player.hp===0&&dealt.damage){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:players,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:'projectile',started:attack.started,releaseAt:attack.highlight?attack.started:attack.started+combatSpec(attack.character,attack.kind).windup,impactAt:time,endsAt:Math.max(time+300,attack.endsAt),origin:{...attack.origin},aim:{x:player.x,y:player.y??0,z:player.z}},at:time});}
 
     return dealt;
 

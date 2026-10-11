@@ -1,3 +1,4 @@
+import {createCapturePublisher} from "./capture-publisher.mjs";
 import {downloadDiagnostics,recordDiagnostic} from './diagnostics.mjs';
 import {createTerminalUI} from "./terminal-ui.mjs";
 import {keyboardLayout} from "./controls.mjs";
@@ -31,18 +32,18 @@ const terminal=createTerminalUI({
 });
 function bindScene(){scene.onAction(()=>{if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onCraftCapture(event=>void publishCraftCapture(event));}
 async function previewTravel(map){if(!__ACTIVITY_PREVIEW__)return;const previous=scene;scene=null;previous.dispose();etat.map=map;scene=await createSkyScene(toile,map);bindScene();await scene.me({...etat.moi,...scene.spawn,character:etat.character});scene.setConnected(true);leave.hidden=map==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map);if(window.__activityPreview)window.__activityPreview=scene;music?.setTrack(musicUrl(map));}
-async function publishCraftCapture({id,bytes}) {
+const uploadCraftCapture=createCapturePublisher({send:async({id,bytes,final})=>{
+ let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+ await fetchJson(apiUrl("craft-capture"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify({id,gif:btoa(binary)}),signal:AbortSignal.timeout(final?45000:10000)});
+},onEvent:(type,data)=>{recordDiagnostic(type,data,type.endsWith('failed')||type.includes('error'));if(type==='capture-failed'||type==='capture-encoding-error')scene?.captureNotice("Capture non publi\u00e9e.");}});
+async function publishCraftCapture({id,bytes,error}) {
+  if(error){await uploadCraftCapture({id,error});return;}
   if(__ACTIVITY_PREVIEW__ && !new URLSearchParams(location.search).has("frame_id")) {
     if(window.__activityPreview)window.__activityPreview.lastCraftGif=new Blob([bytes],{type:"image/gif"});
     return;
   }
   if(bytes.length>(id.startsWith('duel-result:')?8000000:3000000)){scene.captureNotice("Capture trop volumineuse.");return;}
-  let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
-  const body=JSON.stringify({id,gif:btoa(binary)});
-  for(let attempt=0;attempt<3;attempt++){
-    try{await fetchJson(apiUrl("craft-capture"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body});return;}
-    catch(error){if(attempt===2 || [400,401,403].includes(error.status)){scene.captureNotice("Capture non publiée.");return;}await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));}
-  }
+  await uploadCraftCapture({id,bytes});
 }
 
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);

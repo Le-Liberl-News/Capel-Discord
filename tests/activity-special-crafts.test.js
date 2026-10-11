@@ -28,3 +28,8 @@ test('Campanella pillar and frozen targets shatter with sc480_03 at their exact 
  const avatars=new Map([['victim',{position:{x:2,y:0,z:1},frozenUntil:3000}]]);view.frozen(avatars,2000);avatars.get('victim').frozenUntil=0;view.frozen(avatars,2100);const targetBurst=scene.children.find(s=>s.isSprite&&s.material.map.name==='SC/sc480_03._ef');assert.ok(targetBurst);assert.equal(targetBurst.position.x,2);assert.equal(targetBurst.position.z,1);view.frozen(avatars,3000);assert.ok(!scene.children.includes(targetBurst));view.dispose();map.dispose();
  }finally{global.fetch=saved;}
 });
+test('tomato highlights require damage, group repeated hits, and cap at three per match',()=>{
+ const events=[],f=fixture('Ray',{onCraft:e=>events.push(e)});f.cast();f.tick(1000);f.enemy.hp=100000;f.tick(61000);
+ const highlights=events.filter(e=>e.highlight);assert.equal(highlights.length,3);assert.ok(highlights.every(e=>e.hits[0].damage>0&&e.resolved));assert.ok(highlights[1].started-highlights[0].started>=20000);assert.ok(highlights[2].started-highlights[1].started>=20000);
+ const blocked=[],other=fixture('Ray',{canDamage:()=>false,onCraft:e=>blocked.push(e)});other.cast();other.tick(10000);assert.equal(blocked.filter(e=>e.highlight).length,0);
+});

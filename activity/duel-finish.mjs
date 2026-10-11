@@ -45,7 +45,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
   flash.style.cssText = "position:absolute;inset:0;background:#fff1bf;pointer-events:none;opacity:0";
   panel.append(view, top, bottom, flash, title, leave);
   document.body.append(panel);
-  let duel = null, history = [], frames = [], next = 0, finishingAt = null, replayAt = null, encoded = false, worker = null, workerTimer = null, disposed = false, localId = null, clockOffset = 0, displayTarget = null, displayPixels = null, lastCapture = -1;
+  let duel = null, history = [], frames = [], next = 0, finishingAt = null, replayAt = null, encoded = false, worker = null, localId = null, clockOffset = 0, displayTarget = null, displayPixels = null, lastCapture = -1;
   const origin = new THREE.Vector3(), victim = new THREE.Vector3(), direction = new THREE.Vector3(), side = new THREE.Vector3(), focus = new THREE.Vector3(), position = new THREE.Vector3();
   function texture(source) {
     if (!source) return null;
@@ -118,6 +118,7 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     }
   }
   function reset() {
+    if(!encoded&&duel?.result&&frames.length>0)encode();
     history = [];
     frames = [];
     finishingAt = replayAt = null;
@@ -126,9 +127,8 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     lastCapture = -1;
     panel.hidden = true;
     title.style.opacity = "0";
-    worker?.terminate();
+    // Encoding owns its frame buffers and continues after leaving the map.
     worker = null;
-    clearTimeout(workerTimer);
     for(const item of registry.values())item.ghost?.material.map?.dispose();
     for (const m of ownedMaterials) m.dispose();
     for (const g of ownedGeometry) g.dispose();
@@ -191,26 +191,15 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
   }
   function encode() {
     encoded = true;
-    if (frames.length < 4) return;
-    worker = new Worker(new URL("combat/gif-worker.js?v=cinematic-20261009-1", assets));
-    workerTimer = setTimeout(() => {
-      worker?.terminate();
-      worker = null;
-    }, 90e3);
-    worker.onmessage = ({ data }) => {
-      clearTimeout(workerTimer);
-      worker?.terminate();
-      worker = null;
-      if (disposed || data.error) return;
-      if (duel?.players.includes(localId)) onCapture({ id: duel.result.captureId, bytes: data.bytes });
-    };
-    worker.onerror = () => {
-      clearTimeout(workerTimer);
-      worker?.terminate();
-      worker = null;
-    };
+    if(frames.length<24&&history.length){frames=[];lastCapture=-1;for(let index=0;index<24;index++)draw(CINEMATIC_DURATION*index/23);}
+    if(frames.length<4){if(duel?.players.includes(localId))onCapture({id:duel.result.captureId,error:'insufficient-replay-frames'});return;}
+    const captureId=duel.result.captureId,isParticipant=duel.players.includes(localId);
+    const job=new Worker(new URL("combat/gif-worker.js?v=cinematic-20261009-1",assets));worker=job;
+    const timer=setTimeout(()=>{job.terminate();if(worker===job)worker=null;if(isParticipant)onCapture({id:captureId,error:'encoding-timeout'});},90000);
+    job.onmessage=({data})=>{clearTimeout(timer);job.terminate();if(worker===job)worker=null;if(isParticipant)onCapture(data.error?{id:captureId,error:data.error}:{id:captureId,bytes:data.bytes});};
+    job.onerror=()=>{clearTimeout(timer);job.terminate();if(worker===job)worker=null;if(isParticipant)onCapture({id:captureId,error:'encoding-error'});};
     const buffers = frames.map((frame) => frame.buffer);
-    worker.postMessage({ frames: buffers, width, height, delay: Math.round(CINEMATIC_DURATION/frames.length/10)*10, colors: 64,maxBytes:8000000 }, buffers);
+    job.postMessage({ frames: buffers, width, height, delay: Math.round(CINEMATIC_DURATION/frames.length/10)*10, colors: 64,maxBytes:8000000 }, buffers);
     frames = [];
   }
   function read(renderTarget, w, h, output) {
@@ -376,7 +365,6 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
       if (elapsed >= CINEMATIC_DURATION) encode();
     },
     dispose() {
-      disposed = true;
       reset();
       target.dispose();
       displayTarget?.dispose();

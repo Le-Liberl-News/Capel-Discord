@@ -78,3 +78,16 @@ test('smooth cinematic GIFs accept 185 frames only for a confirmed duel result',
  await relay.capture('two',{id:'duel-result:smooth',gif:bytes.toString('base64')});assert.equal(posts.length,1);assert.equal(posts[0].fileName,'last-action.gif');assert.equal(posts[0].match,'match');
  assert.throws(()=>gifInfo(animatedGif(193),{maxFrames:192,maxBytes:8000000}));assert.throws(()=>gifInfo(Buffer.alloc(8000001),{maxFrames:192,maxBytes:8000000}));
 });
+test('Ray spawns do not create posts; confirmed tomato highlights can be captured',async()=>{const posts=[],relay=createActivityRoleplay({send:async p=>posts.push(p),setTimer:()=>null});relay.craft({id:'spawn',actor:'ray',character:'Ray',technique:'Tomate amere'});await assert.rejects(()=>relay.capture('ray',{id:'spawn',gif:animatedGif().toString('base64')}),{status:403});relay.craft({id:'hit',actor:'ray',character:'Ray',highlight:true,text:'Les tomates attaquent !'});await relay.capture('ray',{id:'hit',gif:animatedGif().toString('base64')});assert.equal(posts.length,1);assert.equal(posts[0].text,'Les tomates attaquent !');});
+test('final replay posts ahead of queued craft GIFs and remains available after slow encoding',async()=>{
+ let time=1000,release;const posts=[],relay=createActivityRoleplay({now:()=>time,setTimer:()=>null,send:async p=>{posts.push(p);if(posts.length===1)await new Promise(resolve=>release=resolve);}});
+ const speech=relay.speech({id:'chat',character:'Ray',text:'Hello'});await new Promise(resolve=>setImmediate(resolve));
+ relay.craft({id:'craft',actor:'one',character:'Renne',technique:'Craft'});const craft=relay.capture('one',{id:'craft',gif:animatedGif().toString('base64')});
+ relay.finish({id:'match',captureId:'duel-result:priority',actors:['one','two'],winnerName:'Ray',at:1000});time=181000;
+ const final=relay.capture('one',{id:'duel-result:priority',gif:animatedGif().toString('base64')});release();await Promise.all([speech,craft,final]);assert.equal(posts[1].fileName,'last-action.gif');assert.equal(posts[2].fileName,undefined);
+});
+test('capture publisher retries final replay through a long temporary outage and deduplicates jobs',async()=>{
+ const {createCapturePublisher}=await import('../activity/capture-publisher.mjs');let time=0,attempts=0;const events=[];const publish=createCapturePublisher({now:()=>time,wait:async ms=>{time+=ms;},onEvent:(...e)=>events.push(e),send:async()=>{if(++attempts<10)throw {status:502};}});
+ const one=publish({id:'duel-result:retry',bytes:new Uint8Array(1)}),two=publish({id:'duel-result:retry',bytes:new Uint8Array(1)});assert.equal(one,two);assert.equal(await one,true);assert.equal(attempts,10);assert.equal(events.at(-1)[0],'capture-posted');
+ let sent=0;const invalid=createCapturePublisher({send:async()=>{sent++;throw {status:400};}});assert.equal(await invalid({id:'duel-result:invalid',bytes:new Uint8Array(1)}),false);assert.equal(sent,1);
+});

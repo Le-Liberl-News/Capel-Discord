@@ -1,8 +1,8 @@
 const {projectilePosition,divePosition}=require('../activity/special-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {immobilized,applyStatus}=require('../activity/combat-status.cjs');
-function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks}){
- const entities=new Map();let last=now();
+function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=()=>{}}){
+ const entities=new Map(),highlights=new Map();let last=now();
  const activeSpire=id=>[...attacks.values()].find(a=>a.actor===id&&a.special==='spire'&&!a.explodedAt&&!a.cancelled&&now()>=a.impactAt&&now()<a.objectExpiresAt);
  function damageArea(a,actor,room,point,radius,damage,time,freeze=false){
   for(const target of room.values()){
@@ -58,7 +58,9 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks}){
   for(const[id,e]of entities){const owner=room.get(e.owner);if(!owner||owner.hp<=0||owner.character!=='Ray'||time>=e.expiresAt){entities.delete(id);room.delete(id);continue;}if(e.hp<=0){e.deathAt??=time;e.deadUntil=e.deathAt+30000;e.moving=false;if(time-e.deathAt>=1500){entities.delete(id);room.delete(id);}continue;}if(time<e.spawnedAt+700||immobilized(e,time))continue;
    const target=[...room.values()].filter(t=>t.hp>0&&!t.spectator&&!t.duelProtected&&canDamage(owner,t)).sort((a,b)=>Math.hypot(a.x-e.x,a.z-e.z)-Math.hypot(b.x-e.x,b.z-e.z))[0];const goal=target??owner,dx=goal.x-e.x,dz=goal.z-e.z,d=Math.hypot(dx,dz);e.heading={dx,dz};e.moving=d>1.1;
    if(e.moving){const move=Math.min(d-1,dt*2.8),q={x:e.x+dx/d*move,y:e.y,z:e.z+dz/d*move},y=floor(q);if(Number.isFinite(y)&&Math.abs(y-e.y)<.4&&!geometry?.sweep({...e,y:e.y+.5},{...q,y:y+.5},.15))Object.assign(e,{...q,y});}
-   if(target&&d<1.5&&time>=e.nextHit){e.nextHit=time+900;hurt({actor:owner.id,character:'Ray',kind:'craft',technique:'Tomate amère',started:time,endsAt:time+500,origin:{x:e.x,y:e.y,z:e.z},aim:{x:target.x,y:target.y??0,z:target.z}},owner,target,8,time,{point:{x:target.x,y:(target.y??0)+.7,z:target.z}});}
+   if(target&&d<1.5&&time>=e.nextHit){e.nextHit=time+900;const attack={id:e.id+':hit:'+time,actor:owner.id,character:'Ray',kind:'craft',technique:'Tomate am\u00e8re',started:time,impactAt:time,endsAt:time+1800,origin:{x:e.x,y:e.y,z:e.z},aim:{x:target.x,y:target.y??0,z:target.z},resolved:true,highlight:true,hits:[]};const dealt=hurt(attack,owner,target,8,time,{point:{x:target.x,y:(target.y??0)+.7,z:target.z}});
+    const previous=highlights.get(owner.id)??{count:0,at:-Infinity};
+    if(dealt.damage&&previous.count<3&&time-previous.at>=20000){highlights.set(owner.id,{count:previous.count+1,at:time});attack.hits.push({id:target.id,at:time,...dealt});attacks.set(attack.id,attack);onCraft({...attack,text:'Les tomates de Ray passent \u00e0 l\u2019attaque !'});}}
   }
  }
  return {entities,setup,tickAttack,tickEntities,detonate,activeSpire};

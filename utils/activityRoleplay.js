@@ -12,16 +12,19 @@ function gifInfo(bytes,{maxBytes=3000000,maxFrames=24}={}) {
   }throw new Error('GIF sans fin.');
 }
 function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTimeout,clearTimer=clearTimeout}) {
-  const crafts=new Map(),speechIds=new Set();let tail=Promise.resolve();
-  const publish=payload=>{const operation=tail.catch(()=>{}).then(()=>send(payload));tail=operation;return operation;};
+  const crafts=new Map(),speechIds=new Set(),pending=[];let running=false,tail=Promise.resolve();
+  const publish=(payload,priority=false)=>{const operation=new Promise((resolve,reject)=>{const job={payload,resolve,reject};if(priority)pending.unshift(job);else pending.push(job);});
+    tail=Promise.allSettled([tail,operation]);
+    if(!running){running=true;queueMicrotask(async()=>{while(pending.length){const job=pending.shift();try{job.resolve(await send(job.payload));}catch(error){job.reject(error);}}running=false;});}return operation;};
   async function speech({id,character,text,match,map}) {
     if(speechIds.has(id))return;speechIds.add(id);if(speechIds.size>10000)speechIds.delete(speechIds.values().next().value);
     const letters=Array.from(text);for(let i=0;i<letters.length;i+=1800)await publish({character,match,map,text:letters.slice(i,i+1800).join('')});
   }
   function craft(event) {
+    if(event.character==='Ray'&&!event.highlight)return;
     if(crafts.has(event.id))return;
     const record={...event,expires:now()+60000,published:false};crafts.set(event.id,record);
-    record.timer=setTimer(()=>{if(!record.published&&!record.sending){record.sending=publish({character:record.character,match:record.match,text:record.character+' lance '+record.technique+'.'}).then(()=>{record.published=true;}).catch(onError).finally(()=>{record.sending=null;});}},30000);record.timer?.unref?.();
+    record.timer=setTimer(()=>{if(!record.published&&!record.sending){record.sending=publish({character:record.character,match:record.match,text:record.text??record.character+' lance '+record.technique+'.'}).then(()=>{record.published=true;}).catch(onError).finally(()=>{record.sending=null;});}},30000);record.timer?.unref?.();
     for(const [id,r]of crafts)if(r.expires<now()){clearTimer(r.timer);crafts.delete(id);}
   }
   async function capture(user,body) {
@@ -32,10 +35,10 @@ function createActivityRoleplay({send,now=Date.now,onError=()=>{},setTimer=setTi
     const limits=record.actors?{maxBytes:8000000,maxFrames:192}:{maxBytes:3000000,maxFrames:24};
     if(typeof body.gif!=='string'||body.gif.length>Math.ceil(limits.maxBytes/3)*4||(body.gif.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(body.gif)))fail('GIF invalide.');
     const bytes=Buffer.from(body.gif,'base64');try{gifInfo(bytes,limits);}catch(e){fail(e.message);}
-    if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,match:record.match,text:record.text??record.character+' lance '+record.technique+'.',gif:bytes,fileName:record.actors?"last-action.gif":undefined}).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}
+    if(!record.sending){clearTimer(record.timer);record.sending=publish({character:record.character,match:record.match,text:record.text??record.character+' lance '+record.technique+'.',gif:bytes,fileName:record.actors?"last-action.gif":undefined},!!record.actors).then(()=>{record.published=true;}).finally(()=>{record.sending=null;});}
     await record.sending;return {posted:true};
   }
-  function finish(event){if(crafts.has(event.captureId))return;crafts.set(event.captureId,{actors:event.actors,character:event.winnerName,match:event.id,text:"Dernière action — ralenti.",expires:(event.at??now())+120000,published:false});for(const [id,r]of crafts)if(r.expires<now()){clearTimer(r.timer);crafts.delete(id);}}
+  function finish(event){if(crafts.has(event.captureId))return;crafts.set(event.captureId,{actors:event.actors,character:event.winnerName,match:event.id,text:"Dernière action — ralenti.",expires:(event.at??now())+600000,published:false});for(const [id,r]of crafts)if(r.expires<now()){clearTimer(r.timer);crafts.delete(id);}}
   return {speech,craft,finish,capture,flush:()=>tail};
 }
 module.exports={createActivityRoleplay,gifInfo};

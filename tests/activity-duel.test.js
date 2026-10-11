@@ -447,3 +447,10 @@ test("leaving a duel returns its opponent and spectators home without affecting 
  const other=await lobby.state(tokens.c);assert.equal(other.sceneKey,"arena:second");assert.equal(other.joueurs.length,2);
  assert.throws(()=>lobby.validateSpectate("first"),{status:403});
 });
+test('completed replay can be recovered after returning home and restarting the lobby',()=>{
+ let time=181000;const result={captureId:'duel-result:saved',winner:'a',loser:'b',winnerName:'Ray',loserName:'Estelle',at:1000};
+ const saved={duels:[['saved',{players:['a','b'],accepted:['a','b'],expires:900000,result}]],assignments:[],locations:[['a','anterose']]};
+ const lobby=createActivityLobby({grid,now:()=>time,store:{load:()=>saved,save:()=>{}},resolveCharacter:async()=> 'Ray',arena:{grid}});
+ assert.equal(lobby.duelCaptureFor('a',result.captureId).captureId,result.captureId);assert.equal(lobby.duelCaptureFor('stranger',result.captureId),null);
+ time=602000;assert.equal(lobby.duelCaptureFor('a',result.captureId),null);
+});
