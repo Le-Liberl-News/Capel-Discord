@@ -2853,11 +2853,11 @@
     "portrait": "portraits/066.png"
   },
   "Anton": {
-    "texture": "ch02900.png",
+    "texture": "anton-sc.png",
     "columns": 8,
     "rows": 8,
-    "frameWidth": 42,
-    "frameHeight": 86,
+    "frameWidth": 37,
+    "frameHeight": 85,
     "frames": 64,
     "idle": [
       0
