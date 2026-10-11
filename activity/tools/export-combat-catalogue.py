@@ -32,6 +32,8 @@ for row in rows:
  if row['category'] not in ['trio','attack-craft','attack'] or row['character']=='Renne':continue
  if a.character and row['character']!=a.character:continue
  source=dict(row['source'])
+ if row['character']=='Scherazard':
+  source={'game':'SC','file':'as04020._dt','banks':[{'ch':f'CH0012{n}._CH','cp':f'CH0012{n}P._CP','archive':'ED6_DT07'} for n in range(7)]}
  if row['character']=='Olivier':
   source={'game':'SC','file':'as04030._dt','banks':[{'ch':f'CH0013{n}._CH','cp':f'CH0013{n}P._CP','archive':'ED6_DT07'} for n in range(7)]}
  if row['character']=='Joshua':
@@ -134,7 +136,8 @@ for row in rows:
   print(row['character'],list(actions),craftSlot)
  except Exception as e:omitted.append({'character':row['character'],'reason':str(e)});print('OMITTED',row['character'],str(e))
 # Retain the existing hand-tuned Renne implementation.
-renne=json.loads((a.output/'renne.json').read_text(encoding='utf8'));renne['actions']={'basic':{'name':'Coup de faux','key':'f','damage':12,'cooldown':700,'windup':300,'duration':650,'range':2.5,'radius':1.05},'art':{'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1650,'range':9,'radius':1.4,'projectile':True},'craft':{'name':'Cercle sanglant','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':1650,'range':8,'radius':1.9,'projectile':True}};catalogue['Renne']=renne
+renne=json.loads((a.output/'renne.json').read_text(encoding='utf8'));renne['actions']={'basic':{'name':'Coup de faux','key':'f','damage':12,'cooldown':700,'windup':300,'duration':650,'range':2.5,'radius':1.05},'art':{'name':'Flèche de feu','key':'c','damage':20,'cooldown':3500,'windup':1000,'duration':1650,'range':9,'radius':1.4,'projectile':True},'craft':{'name':'Cercle sanglant','key':'g','damage':30,'cooldown':6000,'windup':650,'duration':1650,'range':8,'radius':1.9,'projectile':True}}
+if not a.character or 'Renne' not in catalogue:catalogue['Renne']=renne
 (a.output/'catalogue.json').write_text(json.dumps(catalogue,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf8')
 if a.character in ('Ries','Josette','Luciola','Walter'):
  path=a.output.parent/'characters.json';characters=json.loads(path.read_text(encoding='utf8'));old=characters[a.character];banks=catalogue[a.character]['banks']

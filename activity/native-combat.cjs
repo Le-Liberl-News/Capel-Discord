@@ -1,6 +1,6 @@
 const COMBAT=require('./assets/sky/combat/catalogue.json');
 const HEROES=require('./assets/sky/combat/hero-actions.json');
-const ANTON_CRAFT={name:'Force r\u00e9pulsive',key:'g',windup:0,duration:500,cooldown:6000,range:5,radius:5,damage:0,projectile:false,effect:'repulsionBuff',selfTarget:true,persistentBuff:true,buffSpeed:.2,buffDuration:5000,repulsion:true,nativeEffect:'SC/sc002_23._ef',effectDuration:5000,knockback:5,knockbackDuration:550,pulseInterval:1000};
+const ANTON_CRAFT={name:'Force r\u00e9pulsive',key:'g',windup:0,duration:500,cooldown:6000,range:10,radius:10,damage:0,projectile:false,effect:'repulsionBuff',selfTarget:true,persistentBuff:true,buffSpeed:.2,buffDuration:5000,repulsion:true,nativeEffect:'SC/sc002_23._ef',effectDuration:5000,knockback:5,knockbackDuration:550,pulseInterval:1000};
 function combatSpec(character,kind){if(character==='Anton')return kind==='craft'?ANTON_CRAFT:null;if(character==='Sieg')return kind==='craft'?require('./sieg-dive.cjs').SIEG_DIVE:null;const base=Object.hasOwn(COMBAT,character)&&Object.hasOwn(COMBAT[character].actions,kind)?COMBAT[character].actions[kind]:null;const raw=base?{...base,...HEROES[character]?.[kind]}:null;return raw?{...raw,windup:raw.windup/2,duration:raw.duration/2,dashDuration:raw.dashDuration==null?undefined:raw.dashDuration/2,leapDuration:raw.leapDuration==null?undefined:raw.leapDuration/2,hitOffsets:raw.hitOffsets?.map(t=>t/2)}:null;}
 function attackPoint(origin,aim,kind,character='Renne'){
  const spec=combatSpec(character,kind);if(spec?.effect||spec?.selfTarget)return {...origin};

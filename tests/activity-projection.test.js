@@ -35,3 +35,7 @@ test('Arc Fencer follows the caster during both its hits rather than leaving dam
 test('Luciola fan attack retains every AS5 pose and each bank has eight directions',()=>{
  const c=COMBAT.Luciola;assert.ok(c.sequences.basic.some(f=>f.pose===15));assert.ok(c.sequences.basic.every(f=>c.banks[f.bank].directions===8));assert.equal(combatSpec('Luciola','craft').shape,'line');
 });
+
+test('wall projections finish on a walkable navigation cell with clearance',()=>{
+ const f=fixture('Walter',{wall:6}),s=combatSpec('Walter','craft');f.start('craft',{x:0,y:0,z:2});f.tick(s.windup);const p=f.target.knockback;assert.ok(p.end.z<5.8);f.tick(p.started+p.duration);const x=Math.round((f.target.x-grid.origin.x)/grid.step),z=Math.round((f.target.z-grid.origin.z)/grid.step);assert.equal(grid.cells[z*grid.width+x],0);assert.equal(f.target.knockback,null);
+});

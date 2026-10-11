@@ -147,7 +147,7 @@ export async function createDialogues(assets) {
               31.2 +
             "px";
         }
-        let progress = typewriterState(item.characters, time - item.started);
+        let progress = typewriterState(item.characters, time - item.started,item.message.instant?100000:32);
         if (progress.expired) {
           if (++item.page < item.pages.length) {
             item.started = time;

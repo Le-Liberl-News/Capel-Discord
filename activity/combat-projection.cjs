@@ -9,7 +9,11 @@ function projectionPath(player,direction,distance,floor,geometry){
  for(let travel=.15;travel<=distance+.15;travel+=.15){
   const step=Math.min(distance,travel),next={x:origin.x+dx*step,y:end.y,z:origin.z+dz*step};
   const hit=geometry?.sweep({...end,y:end.y+.8},{...next,y:next.y+.8},.25);
-  if(hit){wall=true;break;}
+  if(hit){wall=true;
+    // Stop with enough clearance to start walking away from the wall.
+    const back={x:end.x-dx*.2,y:end.y,z:end.z-dz*.2},height=floor(back);
+    if(Number.isFinite(height)&&Math.abs(height-end.y)<.35&&step>.3)end={...back,y:height};
+    break;}
   const height=floor(next);if(height===null||!Number.isFinite(height)||Math.abs(height-end.y)>.45)break;
   end={...next,y:height};if(step===distance)break;
  }

@@ -316,6 +316,7 @@ function createActivityService({
               author: actionResult.speaker,
               character: actionResult.character,
               text: actionResult.text,
+              instant:actionResult.instant===true,
               sequence: ++messageSequence,
               created: now(),
             });

@@ -31,7 +31,7 @@ import {createCombatControls} from "./combat-controls.mjs";
 import renneMechanics from "./native-combat.cjs";
 import terminalWorld from "./terminal-world.cjs";
 import {createDamageEffects,damageAmount,newDamageEvents} from "./damage-effects.mjs";
-import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize} from "./controls.mjs";
+import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize,remapKey} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
 import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
@@ -269,7 +269,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const touches=createTouchControls({
     tap:event=>{if(!connected)return;if(touchArmed){disarmTouch();interaction(event);}else click(event);},
     action:event=>{disarmTouch();interaction(event);},
-    camera:({dx,dy})=>{menu.hidden=true;yaw+=flight.cameraTurn(dx,avatars.get(localId)?.character==="Sieg");if(avatars.get(localId)?.character==="Sieg"||fpsActive())pitch=Math.max(-1.48,Math.min(1.48,pitch+(dy??0)*.006));},
+    camera:({dx,dy})=>{menu.hidden=true;yaw+=flight.cameraTurn(dx,avatars.get(localId)?.character==="Sieg"||health.spectator);if(avatars.get(localId)?.character==="Sieg"||health.spectator||fpsActive())pitch=Math.max(-1.48,Math.min(1.48,pitch+(dy??0)*.006));},
   });
   const oldHelp = document.getElementById("aide");
   if (oldHelp) oldHelp.hidden = true;
@@ -537,14 +537,15 @@ export async function createSkyScene(canvas, map = "anterose") {
     if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)){queueAction('flight_board');return;}
     if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
-  function keydown(event) {
-    if (!connected || !movementAllowed) return;
+  function keydown(rawEvent) {
+    const mapped=remapKey(rawEvent),event={code:mapped.code,key:mapped.key,repeat:rawEvent.repeat,target:rawEvent.target,preventDefault:()=>rawEvent.preventDefault()};
+    if (!connected || (!movementAllowed&&!health.spectator)) return;
     if (document.querySelector("#sky-terminal[open]") || event.target.closest?.("input,textarea,select,button,[contenteditable]"))
       return;
     if(event.code==="Escape"){craftTarget=false;combatControls.targeting(null);marker.visible=false;return;}
     if(inTower&&event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
     if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();const kind=combatKeyAction(event.code,avatars.get(localId)?.character);if(kind)startAttack(kind);return;}
-    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
+    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"||health.spectator){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
     if (
       [
         "ArrowUp",
@@ -568,7 +569,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     }
   }
   function keyup(event) {
-    keys.delete(event.key.toLowerCase());
+    keys.delete(remapKey(event).key.toLowerCase());
   }
   function blur() {
     keys.clear();craftTarget=false;
@@ -653,8 +654,8 @@ export async function createSkyScene(canvas, map = "anterose") {
       drag.moved = true;
     if (!drag.moved) return;
     menu.hidden = true;
-    yaw += flight.cameraTurn(event.clientX-drag.x,avatars.get(localId)?.character==="Sieg");
-    if(avatars.get(localId)?.character==="Sieg"||fpsActive())pitch=Math.max(-1.48,Math.min(1.48,pitch+(event.clientY-drag.y)*.006));
+    yaw += flight.cameraTurn(event.clientX-drag.x,avatars.get(localId)?.character==="Sieg"||health.spectator);
+    if(avatars.get(localId)?.character==="Sieg"||health.spectator||fpsActive())pitch=Math.max(-1.48,Math.min(1.48,pitch+(event.clientY-drag.y)*.006));
     drag.x = event.clientX;
     drag.y = event.clientY;
   }
@@ -700,12 +701,13 @@ export async function createSkyScene(canvas, map = "anterose") {
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
     const me = avatars.get(localId),isFlying=me?.character==="Sieg"&&!me.prop&&!me.dead;
-    const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
-    if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
+    const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
+    if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
     towerGates?.draw(time);if(towerGates&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')){const direction=towerGates.check(me.position);if(direction)queueAction('tower_step',direction);}
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
-    const distance=isFlying?3.4782608696:cameraDistance(map);
+    if(freeSpectator)camera=flightCamera;
+    const distance=isFlying||freeSpectator?3.4782608696:cameraDistance(map);
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
     camera.position.set(
@@ -720,7 +722,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec('Josette',localAttack.kind):null,active:isFPS,time,moving:me?.walking||keys.size>0,yaw})??0;crosshair.hidden=!isFPS||josetteBlend>.05;
-    duelIntro?.update(time,avatars,camera,follow);
+    if(!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
     cutaway?.update(camera, follow);
     const right = {
@@ -734,8 +736,9 @@ export async function createSkyScene(canvas, map = "anterose") {
     forward.normalize();
     combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
+    if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left)),v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down)),lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
     flightMotion={moving:false,dx:0,dz:0};
-    if (me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
+    if (!freeSpectator && me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
         Number(keys.has("arrowleft") || keys.has(movementKeys(keyboardLayout()).left)) + stick.x;
@@ -846,7 +849,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
-    if (me)
+    if (me&&!freeSpectator)
       follow.lerp(
         new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),
         1 - Math.exp(-seconds * 7),
@@ -1066,9 +1069,9 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
-      if (map === "arena" && wasSpectator !== !!health.spectator) { zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
+      if (map === "arena" && wasSpectator !== !!health.spectator) { camera=health.spectator?flightCamera:walkingCamera;pitch=health.spectator?.25:CAMERA_PITCH;zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
-      movementAllowed = health.canMove !== false;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
+      movementAllowed = health.spectator||health.canMove !== false;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {

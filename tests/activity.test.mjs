@@ -324,3 +324,8 @@ test('arena introduction makes both fighters face their opponent during camera c
  for(const elapsed of [200,2200,4500,7200]){intro.update(start+elapsed,avatars,camera,{x:0,y:0,z:0});assert.deepEqual(a.heading,{dx:8,dz:-4});assert.deepEqual(b.heading,{dx:-8,dz:4});}intro.dispose();
  }finally{global.document=saved;}
 });
+
+test('custom key bindings persist, swap conflicts and disable the previous attack key',async()=>{
+ const previous=global.localStorage,data=new Map();global.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};
+ try{const {bindKey,remapKey,keyBindings}=await import('../activity/controls.mjs');bindKey('craft','KeyP');assert.equal(remapKey({code:'KeyP',key:'p'}).code,'KeyG');assert.equal(remapKey({code:'KeyG',key:'g'}).code,'Unbound');assert.equal(keyBindings().craft,'KeyP');bindKey('basic','KeyP');assert.equal(keyBindings().craft,'KeyF');assert.equal(remapKey({code:'KeyP',key:'p'}).code,'KeyF');}finally{global.localStorage=previous;}
+});

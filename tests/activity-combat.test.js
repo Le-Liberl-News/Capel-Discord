@@ -96,10 +96,10 @@ test('Anton repels nearby women smoothly without damage and gains speed for only
  const f=fixture(),actor=f.players.get('renne');actor.character='Anton';
  f.players.get('victim').character='Estelle';
  f.players.set('male',{id:'male',character:'Joshua',x:0,y:0,z:2,hp:100});
- f.players.set('far',{id:'far',character:'Kloe',x:9,y:0,z:0,hp:100});
+ f.players.set('far',{id:'far',character:'Kloe',x:12,y:0,z:0,hp:100});
  assert.ok(f.start('craft').combatId);f.tick(40);
  const {movementFactor}=require('../activity/combat-status.cjs');assert.equal(movementFactor(actor,1040),1.2);
- f.tick(600);assert.ok(f.players.get('victim').x>6.8);assert.equal(f.players.get('victim').hp,100);assert.equal(f.players.get('male').z,2);assert.equal(f.players.get('far').x,9);
+ f.tick(600);assert.ok(f.players.get('victim').x>6.8);assert.equal(f.players.get('victim').hp,100);assert.equal(f.players.get('male').z,2);assert.equal(f.players.get('far').x,12);
  assert.ok(f.combat.snapshot(actor).attacks[0].hits.some(h=>h.repelled));
  f.tick(5000);assert.equal(movementFactor(actor,6640),1);
 });

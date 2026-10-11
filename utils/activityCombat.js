@@ -137,12 +137,12 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     player.attackBusyUntil=time+spec.duration;
 
-    if(command.kind==="craft")onCraft({...attack});
-
     if(player.character==='Anton'&&command.kind==='craft'){
       const phrases=["Aidios, je vous en prie...","Monde crueeeeel-- !!","V-Voudriez-vous bien... sortir avec moi ?!!"];
-      return {combatId:attack.id,text:phrases[Math.floor(Math.random()*phrases.length)],speaker:player.id,character:player.character};
+      attack.speech=phrases[Math.floor(Math.random()*phrases.length)];
     }
+    if(command.kind==="craft")onCraft({...attack});
+    if(attack.speech)return {combatId:attack.id,text:attack.speech,speaker:player.id,character:player.character,instant:true};
     return { combatId:attack.id };
 
   }
@@ -159,7 +159,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   function project(attack,attacker,player,spec,direction,time){
 
-    const path=projectionPath(player,direction,spec.knockback,floor,geometry);if(!path)return;
+    const safeFloor=point=>{const x=Math.round((point.x-grid.origin.x)/grid.step),z=Math.round((point.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return null;const y=floor(point);return Number.isFinite(y)&&Math.abs(y-grid.cells[z*grid.width+x])<=.35?y:null;};
+    const path=projectionPath(player,direction,spec.knockback,safeFloor,geometry);if(!path)return;
 
     const duration=spec.knockbackDuration??450,projection={...path,id:attack.id+':'+player.id,started:time,duration};
 
