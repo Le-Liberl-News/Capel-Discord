@@ -31,7 +31,7 @@ async function renderArenaBoard({rows,page,pages,queueSize}) {
   c.fillStyle='#e2efda';c.font='30px ArenaAveria';let name=row.name;while(c.measureText(name).width>400)name=name.slice(0,-2)+'…';c.fillText(name,235,y+38);
   c.textAlign='center';c.font='bold 31px ArenaAveria';c.fillStyle='#dcecd8';c.fillText(String(row.wins??0),695,y+38);
   c.fillStyle=row.lastWin===undefined?'#93aaa0':row.lastWin?'#8af4ad':'#ff8d8a';c.fillText(String(row.streak??0),843,y+38);
-  c.fillStyle='#ffe7a4';c.fillText(String(row.pb??0),994,y+31);c.font='20px ArenaAveria';c.fillStyle=(row.delta??0)<0?'#ff9b93':'#8acda2';c.fillText(`${(row.delta??0)>=0?'+':''}${row.delta??0}`,1053,y+34);c.textAlign='left';
+  c.fillStyle='#ffe7a4';c.fillText(String(row.pb??0),994,y+31);c.font='20px ArenaAveria';c.fillStyle=(row.delta??0)<0?'#ff9b93':'#8acda2';c.fillText(`(${(row.delta??0)>=0?'+':''}${row.delta??0})`,1053,y+34);c.textAlign='left';
  });
  if(!rows.length){c.font='28px ArenaAveria';c.fillStyle='#accab6';c.fillText('Aucun combattant attribué.',100,294);}
  c.font='18px ArenaAveria';c.fillStyle='#9db8a6';c.fillText('PB versés à minuit · Paris',90,height-115);c.textAlign='right';c.fillText(`${queueSize} en attente   /   Page ${page+1} sur ${pages}`,width-90,height-115);c.textAlign='left';

@@ -10,7 +10,7 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,now=Date.no
    const scores=new Map(ranking.rows().map(r=>[r.user,r]));
    const rows=(await assigned()).map(({user,name})=>({...scores.get(user),user,name,pb:scores.get(user)?.pb??0})).sort((a,b)=>b.pb-a.pb||a.name.localeCompare(b.name,'fr'));
    const pages=Math.max(1,Math.ceil(rows.length/12));page=Math.min(page,pages-1);const slice=rows.slice(page*12,page*12+12).map(({name,wins,streak,lastWin,delta,pb})=>({name,wins,streak,lastWin,delta,pb}));
-   const components=[{type:1,components:[button('choose','D\u00e9fier',1),button('queue','File d\u2019attente',1),button('leave','Quitter la file'),button('requests','Mes d\u00e9fis')]}];
+   const components=[{type:1,components:[button('choose','D\u00e9fier',1),button('queue',`File d\u2019attente (${queue.size})`,1),button('leave','Quitter la file'),button('requests','Mes d\u00e9fis')]}];
    if(pages>1)components.push({type:1,components:[{...button('previous','\u25c0'),disabled:page===0},{...button('next','\u25b6'),disabled:page===pages-1}]});
    const visual={rows:slice,page,pages,queueSize:queue.size};const signature=JSON.stringify(visual);
    if(signature===lastSignature)return;
