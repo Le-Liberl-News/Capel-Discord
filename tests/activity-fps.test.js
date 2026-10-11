@@ -56,3 +56,9 @@ test('Double tir locks the aimed enemy and recalculates each release after movem
  time=first.impactAt+1;combat.tick(room);assert.equal(enemy.hp,82);assert.ok(enemy.damageEvents[0].point.x>1.5);
  enemy.x=-2;wall=true;time=780;combat.tick(room);const second=combat.snapshot().attacks[0].shots[1];assert.equal(second.blocked,true);time=second.impactAt+1;combat.tick(room);assert.equal(enemy.hp,82);
 });
+
+test('FPS obstacle contact carries an impact, but a nearer body replaces it',()=>{
+ const wall={sweep:from=>({point:{x:0,y:from.y,z:2}})};
+ const stopped=shoot(.8,{geometry:wall});const a=stopped.combat.snapshot().attacks[0];assert.equal(a.obstacleImpact,true);assert.equal(a.aim.z,2);
+ const behind={sweep:from=>({point:{x:0,y:from.y,z:8}})};assert.equal(shoot(1.45,{geometry:behind}).combat.snapshot().attacks[0].obstacleImpact,false);
+});

@@ -1,3 +1,4 @@
+import {createTowerGates} from './tower-gates.mjs';
 import {recordCorrection,recordDiagnostic} from './diagnostics.mjs';
 import playerHealth from './player-health.cjs';
 import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
@@ -133,6 +134,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const tavernTables=map==='anterose'?await createTavernTables(THREE,model,collision,ASSETS):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows,tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.torches??[]);
+  const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,Number(map.slice(5))):null;
   const dungeonEffects=inTower?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
   const duelIntro=map==="arena"?createDuelIntro():null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
@@ -357,7 +359,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const options = [];
     if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door))options.push(['Accéder au Lynx','hangar_enter',undefined]);
     if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6))options.push(['Piloter le Lynx','flight_board',undefined]);
-    if(towerLayout){if(Number(map.slice(5))<4&&nearby(towerLayout.exit))options.push(["Monter","tower_step","up"]);if(Number(map.slice(5))>1&&nearby(towerLayout.start))options.push(["Descendre","tower_step","down"]);}
+
 
     if(tavernBeer&&tavernWorld.beerNearby(me.position))options.push(["Boire une bi\u00e8re","drink",undefined]);
     const residents = environment.npcs
@@ -701,7 +703,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
-    if(towerLayout?.physicalExit&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<.7&&Math.abs(me.position.y-towerLayout.exit.y)<.15)queueAction('tower_step','up');
+    towerGates?.draw(time);if(towerGates&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')){const direction=towerGates.check(me.position);if(direction)queueAction('tower_step',direction);}
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
     const distance=isFlying?3.4782608696:cameraDistance(map);
     if (keys.has("e")) yaw += seconds * 1.5;
@@ -817,9 +819,11 @@ export async function createSkyScene(canvas, map = "anterose") {
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking||!!avatar.siegDive,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
       const pose=selectedPose??(avatar.dead?Math.min(Math.max(0,Math.floor((info.frames??8)/(info.directions??8))-1),Math.floor((time-avatar.deathStarted)/100)):poses[Math.floor(avatar.time*info.fps)%poses.length]),frame=pose*(info.directions??8)+(avatar.direction%(info.directions??8));
+      if(avatar.geometryInfo!==info){avatar.mesh.geometry.dispose();avatar.mesh.geometry=new THREE.PlaneGeometry(info.height*info.frameWidth/info.frameHeight,info.height);avatar.mesh.geometry.translate(info.centerX??0,info.centerY??info.height/2,0);avatar.nativeAnchor=null;avatar.geometryInfo=info;}
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
       if(avatar.summoned){const scale=Math.max(0,Math.min(1,(Date.now()+jumpClockOffset-avatar.spawnedAt)/700));avatar.mesh.scale.setScalar(avatar.deathAt?0:scale);}
       avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:0xffffff);
+      avatar.deathLift=avatar.dead||down?(info.groundOffsets?.[frame]??0):0;
       avatar.renderFrame={pose,info};avatar.mesh.visible=!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
@@ -827,11 +831,12 @@ export async function createSkyScene(canvas, map = "anterose") {
       }
       avatar.mesh.position.set(
         avatar.position.x,
-        avatar.position.y-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),
+        avatar.position.y+(avatar.deathLift??0)-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),
         avatar.position.z,
       );
       if(avatar.shadow&&!avatar.shadow.userData.update)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
+      if(avatar.fallbackDeath||down&&(!avatar.battleTextures?.has(4)))avatar.mesh.position.y+=avatar.info.height/2+Math.abs(avatar.info.centerX??0);
       avatar.mesh.rotation.z = avatar.fallbackDeath||down&&(!avatar.battleTextures?.has(4)) ? Math.PI / 2 : 0;
       if(avatar.character==="Sieg"&&!avatar.dead&&!avatar.perched)avatar.mesh.quaternion.copy(camera.quaternion);
       else if(avatar.character==="Sieg")avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),0);
@@ -994,7 +999,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         const before=avatars.get(player.id);if(before?.hp>0&&player.hp>before.hp)damageEffects.heal(player.id,player.hp-before.hp);
         const lost=damageAmount(before,player);
         const events=newDamageEvents(before,player);
-        if(events.length)for(const event of events)damageEffects.hit(player.id,event.amount,false,Math.min(.3,(event.at-events[0].at)/1000),event);
+        if(events.length)for(const event of events)damageEffects.hit(player.id,event.amount,false,Math.min(.8,(event.at-events[0].at)/1000),event);
         else if(lost&&!player.damageEvents)damageEffects.hit(player.id,lost);
         if (player.id === localId) {
           const current = avatars.get(localId);
@@ -1138,7 +1143,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       removeEventListener("resize", resize);
       touches.reset();touchButton.remove();touchStyle.remove();
       rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
-      tavernTables?.dispose();crosshair.remove();blindness.remove();teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();jumpButton.remove();
+      tavernTables?.dispose();crosshair.remove();blindness.remove();teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();
       labels.remove();

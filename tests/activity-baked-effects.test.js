@@ -17,7 +17,7 @@ test('baked earth and hit animations advance without canvas work or texture uplo
 });
 test('confirmed damage flash is placed in front of the target and keeps scenery depth testing',async()=>{
  const THREE=await import('three'),{createDamageEffects}=await import('../activity/damage-effects.mjs');
- const previous=global.document;global.document={createElement:()=>({style:{},remove(){}})};
+ const previous=global.document;global.document={createElement:()=>({style:{},append(){},remove(){}})};
  try{
   const api={...THREE,TextureLoader:class{async loadAsync(){return new THREE.Texture();}}},scene=new THREE.Scene(),fx=await createDamageEffects(api,scene,{append(){}},new URL('https://fixture.invalid/effects/fire-frames.png'));
   const camera=new THREE.PerspectiveCamera();camera.position.set(0,3,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();
@@ -59,4 +59,12 @@ test('white-neutral smoke is transparent on white pixels, while the dark plume r
  const {createCanvas}=require('@napi-rs/canvas'),{NativeEffectPlayer}=await import('../activity/native-effect-player.mjs'),previous=global.document;
  global.document={createElement:()=>createCanvas(2,1)};
  try{const source=createCanvas(2,1),ctx=source.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,1,1);ctx.fillStyle='black';ctx.fillRect(1,0,1,1);const player=new NativeEffectPlayer([],()=>{}),result=player.tint(source,0,0,2,1,[255,255,255,255],false,true).getContext('2d').getImageData(0,0,2,1).data;assert.equal(result[3],0);assert.equal(result[7],255);assert.ok(result[4]<50);}finally{global.document=previous;}
+});
+
+test('all native corpse frames place the bottom visible pixel above the floor',async()=>{
+ const {createCanvas,loadImage}=require('@napi-rs/canvas'),path=require('node:path'),catalogue=require('../activity/assets/sky/combat/catalogue.json');
+ for(const hero of Object.values(catalogue)){const info=hero.banks?.[4];if(!info)continue;const image=await loadImage(path.join(__dirname,'../activity/assets/sky',info.texture)),canvas=createCanvas(info.frameWidth,info.frameHeight),ctx=canvas.getContext('2d');
+ assert.equal(info.groundOffsets.length,info.frames);
+ for(let n=0;n<info.frames;n++){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,n%info.columns*canvas.width,Math.floor(n/info.columns)*canvas.height,canvas.width,canvas.height,0,0,canvas.width,canvas.height);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;let bottom=0;for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++)if(pixels[(y*canvas.width+x)*4+3]>=39)bottom=y+1;if(!bottom)continue;const anchor=info.anchors?(info.anchors[n%8][1]-176)*info.pixelScale:0;const height=info.centerY-info.height/2+(canvas.height-bottom)*info.height/canvas.height+anchor+info.groundOffsets[n];assert.ok(Math.abs(height-.025)<.000002,hero.character+' frame '+n);}
+ }
 });

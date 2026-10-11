@@ -195,7 +195,7 @@
       "lobHeight": 2.4,
       "radius": 1.7,
       "groundTarget": true,
-      "nativeEffect": "Third/btbomb00._ef",
+      "nativeEffect": "SC/ms30000d._ef",
       "effectDuration": 1200
     }
   },
@@ -234,7 +234,7 @@
       "persistentBuff": true
     },
     "basic": {
-      "hitEffect": "Third/msc0614._ef"
+      "hitEffect": "SC/cr160_00._ef"
     }
   },
   "Kevin": {
@@ -400,7 +400,8 @@
         680
       ],
       "range": 2.1,
-      "radius": 0.8
+      "radius": 0.8,
+      "hitEffect": "SC/cr160_00._ef"
     },
     "craft": {
       "name": "Coup de pied",
@@ -501,7 +502,7 @@
       "cooldown": 6000,
       "nativeEffect": "Third/sc009_05._ef",
       "poseSequence": "basic",
-      "explosionEffect": "Third/sc009_06._ef",
+      "explosionEffect": "SC/mg041_3._ef",
       "chargeEffects": [
         {
           "id": "Third/sc009_06._ef"
@@ -544,7 +545,7 @@
       "status": "stun",
       "lockMovement": true,
       "cooldown": 6500,
-      "nativeEffect": "Third/cr04110._ef",
+      "nativeEffect": "SC/ms00460b._ef",
       "effectDuration": 850,
       "slashVolley": true
     },
