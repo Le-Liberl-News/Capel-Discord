@@ -26,7 +26,7 @@ const etat = {
   character: "Estelle",
   messageCursor: 0,
 };
-let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null;
+let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
  action:body=>body.action==='training'?startTraining():apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
@@ -241,12 +241,14 @@ async function publier() {
     },
     body: JSON.stringify({
       ...submitted,
+      trainingAck:lastTrainingRequest??undefined,
       after: etat.messageCursor,
       action: training||trainingBusy?undefined:scene.action(),
     }),
   });
   const result = response;
   if(trainingBusy)return;
+  const requestedTraining=result.trainingRequest&&result.trainingRequest!==lastTrainingRequest;if(result.trainingRequest)lastTrainingRequest=result.trainingRequest;
   if(training){terminal.setRequests(result.requests);if(result.map!=='arena')return;await stopTraining(result.map);}
   terminal.setRequests(result.requests);
   const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
@@ -278,6 +280,7 @@ async function publier() {
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
+  if(requestedTraining&&result.map!=='arena')await startTraining();
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
     bandeau.textContent = "Votre personnage du jour : " + result.character;

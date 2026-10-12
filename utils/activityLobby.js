@@ -4,6 +4,7 @@ const { createActivityService, ActivityError } = require("./activityService");
 function createActivityLobby({ arena, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
   const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
+  const trainingRequests=new Map();let trainingSequence=0;
   const presenceGrace = 2 * 60 * 1000;
   const sources = new Map(), locations = new Map(), spectators = new Map();
   const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
@@ -97,6 +98,8 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
+    requestTraining(user){trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),expires:now()+120000});},
+    cancelTraining(user){trainingRequests.delete(user);},
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
@@ -171,6 +174,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       prune(); const session=sessions.get(token); if (!session) throw new ActivityError("Reconnectez-vous à l'activité.",401);
       if (active.get(session.id)!==token) throw new ActivityError("Activité ouverte dans une autre fenêtre.",409);
       session.seen=now();
+      const trainingRequest=trainingRequests.get(session.id);if(trainingRequest&&(trainingRequest.expires<=now()||point?.trainingAck===trainingRequest.id))trainingRequests.delete(session.id);
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
       if (["leave_duel","leave_map"].includes(point?.action?.type)) { skies?.resetPlayer(session.id);huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }
       let boardingError;
@@ -224,7 +228,8 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       const duelId=target.match?.replace(/^watch:/,""),duel=duels.get(duelId);
       if(duel?.result)publishResult(duelId,duel);
       const introduction=target.map==="arena"&&duel&&(arena.introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
-      return {...sanitize(result),team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
+      if(target.map==='arena')trainingRequests.delete(session.id);
+      return {...sanitize(result),trainingRequest:trainingRequests.get(session.id)?.id,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
         actionResult:boardingError?{id:point.action.id,error:boardingError}:['flight_board','hangar_enter'].includes(point?.action?.type)?{id:point.action.id}:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },
   };
