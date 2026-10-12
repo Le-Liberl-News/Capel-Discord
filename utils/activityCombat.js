@@ -186,6 +186,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   }
 
+  const driveContacts=new Map();
   function tick(room) {
 
     players=room;const time=now();special.tickEntities(room);
@@ -202,9 +203,19 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     for(const [id,attack]of attacks) {
 
-      if(time>attack.endsAt+5000){attacks.delete(id);continue;}
+      if(time>attack.endsAt+5000){attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(dashSpec?.inertia&&!attack.cancelled&&attack.resolved&&time<attack.impactAt+dashSpec.buffDuration){
+        const actor=room.get(attack.actor);if(!actor||actor.hp<=0||actor.character!==attack.character||immobilized(actor,time)){driveContacts.delete(id);continue;}
+        const state=driveContacts.get(id)??{point:{...attack.origin},at:attack.impactAt,hits:new Map()},from=state.point,end={x:actor.x,y:actor.y??0,z:actor.z},distance=Math.hypot(end.x-from.x,end.z-from.z);
+        if(distance>.02)for(const target of room.values()){
+          if(target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||Math.abs((target.y??0)-end.y)>1.2||segmentDistance(target,from,end)>dashSpec.radius+(target.boss?2:0)||time<(state.hits.get(target.id)??0))continue;
+          if(geometry?.sweep({x:actor.x,y:(actor.y??0)+.8,z:actor.z},{x:target.x,y:(target.y??0)+.8,z:target.z},.05))continue;
+          state.hits.set(target.id,time+700);const dealt=hurt(attack,actor,target,dashSpec.damage,time,{point:{x:target.x,y:(target.y??0)+.8,z:target.z}});attack.hits.push({id:target.id,at:time,...dealt});if(dealt.damage&&target.hp>0)project(attack,actor,target,dashSpec,{x:end.x-from.x,z:end.z-from.z},time);
+        }
+        state.point=end;state.at=time;driveContacts.set(id,state);continue;
+      }else if(dashSpec?.inertia)driveContacts.delete(id);
       if(dashSpec?.repulsion&&!attack.cancelled&&attack.resolved&&time<attack.impactAt+dashSpec.buffDuration){
         const actor=room.get(attack.actor);if(!actor||actor.hp<=0||actor.character!==attack.character){attack.cancelled=true;attack.endsAt=time;continue;}
         if(time>=(attack.nextPulseAt??attack.impactAt)){

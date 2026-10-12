@@ -11,3 +11,5 @@ Scène de référence : Sky the 3rd, `e1001._sn`, fonction 5, sur `U4166`. Trave
 Public : personnages 10 à 49 du script, banques `ch01200`, `ch01210`, `ch01220`, `ch01230`, `ch01180`, `ch01490`, animation de la fonction 2. Sons originaux : `ED6SE174` et `ED6SE175`, archive DT28. La position de la loge du script reçoit le duc Dunan, sans présentateur.
 
 Phrase d’entrée : `entree.defaut`. Les clés de `entree.adversaires` sont les noms exacts des personnages ; leurs phrases prennent priorité sur la phrase par défaut. Exemple : `"entree": {"defaut": "Que le meilleur gagne !", "adversaires": {"Joshua": "À nous deux, Joshua !"}}`.
+
+Tests : `npm run activity:test` exécute les vérifications rapides (connexion, déploiement, intro et Pat). `npm run activity:test:all` conserve les vérifications complètes.

@@ -23,6 +23,7 @@ import {createTowerTeam} from "./tower-team.mjs";
 import {createTavernBeer} from "./tavern-beer.mjs";
 import tavernWorld from "./tavern-world.cjs";
 import {createAvatarShadow} from "./avatar-shadow.mjs";
+import patDriveMechanics from './pat-drive.cjs';
 import {createDuelFinish} from "./duel-finish.mjs";
 import {createDuelIntro} from "./duel-intro.mjs";
 import flight from "./flight.cjs";
@@ -78,7 +79,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
   const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
-  let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
+  let patDrive=null,patDriveId=null;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
@@ -747,6 +748,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
+    const patEvent=renneCombat?.inertia(localId);if(!patEvent||!connected||!movementAllowed||health.hp<=0){patDrive=null;patDriveId=null;}else if(patEvent.id!==patDriveId){patDrive=patDriveMechanics.createPatDrive(me.heading);patDriveId=patEvent.id;}
     flightMotion={moving:false,dx:0,dz:0};
     if (!freeSpectator && me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
       const horizontal =
@@ -759,7 +761,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         const lift=Number(keys.has(" "))-Number(keys.has("control"));
         const direction=airForward.multiplyScalar(vertical).addScaledVector(airRight,horizontal);direction.y+=lift;
         path=[];marker.visible=false;flightMotion=flight.moveFlight(me.position,direction,seconds,airBounds,collision,recordMovement);
-      }else if (horizontal || vertical) {
+      }else if (!patEvent&&(horizontal || vertical)) {
         const length = Math.hypot(horizontal, vertical),
           dx = (right.x * horizontal + forward.x * vertical) / length,
           dz = (right.z * horizontal + forward.z * vertical) / length;
@@ -770,6 +772,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         marker.visible = false;
       }
     }
+    let patMotion=null;
+    if(patDrive&&movementAllowed&&!localJump&&me){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,goal=path[0],input=h||v?{x:right.x*h+forward.x*v,z:right.z*h+forward.z*v}:goal?{x:goal.x-me.position.x,z:goal.z-me.position.z}:{x:0,z:0};if(goal&&Math.hypot(input.x,input.z)<.5)path.shift();const drift=patDrive.step(input,seconds,Math.min(1,(health.movementFactor??6)/6)),next={x:me.position.x+drift.x,y:me.position.y,z:me.position.z+drift.z},cx=Math.round((next.x-walkingGrid.origin.x)/walkingGrid.step),cz=Math.round((next.z-walkingGrid.origin.z)/walkingGrid.step),floor=cx>=0&&cz>=0&&cx<walkingGrid.width&&cz<walkingGrid.height?walkingGrid.cells[cz*walkingGrid.width+cx]:null,hit=collision.sweep({...me.position,y:me.position.y+.7},{...next,y:next.y+.7},.22);if(hit)patDrive.bounce(hit.normal);else if(floor!==null&&Math.abs(floor-next.y)<.65){Object.assign(me.position,{...next,y:floor});recordMovement(me.position);}else patDrive.stop();patMotion={moving:drift.speed>.15,dx:drift.vx,dz:drift.vz};}
     jumpButton.hidden=!canJump||health.spectator||me?.character==="Sieg";
     jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump;
     for (const [id, avatar] of avatars) {
@@ -804,7 +808,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           : introPlaying
             ? {moving:!!avatar.introWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}
           : id === localId
-            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:advance(avatar.position, path, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
+            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??advance(avatar.position, path, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
