@@ -19,16 +19,16 @@ test('wave targeting accepts diagonals, respects walls and protects dungeon alli
  const diagonal=fixture();diagonal.players.get('near').x=2;diagonal.players.get('near').z=2;assert.ok(diagonal.cast('craft',{x:6,y:0,z:6}).combatId);diagonal.tick(1000);assert.equal(diagonal.players.get('near').hp,70);
 });
 test('Estelle casts native Earth Lance after one second of native halo and cast poses',()=>{
- const spec=combatSpec('Estelle','art');assert.equal(spec.nativeEffect,'SC/mg011_0._ef');assert.equal(spec.castDuration,1000);assert.equal(spec.windup,1000);assert.ok(COMBAT.Estelle.sequences.spell.length&&COMBAT.Estelle.sequences.cast.length);
+ const spec=combatSpec('Estelle','art');assert.equal(spec.nativeEffect,'SC/mg017_0._ef');assert.equal(spec.castDuration,1000);assert.equal(spec.windup,1000);assert.ok(COMBAT.Estelle.sequences.spell.length&&COMBAT.Estelle.sequences.cast.length);
  const f=fixture();f.cast('art',{x:2,y:0,z:0});f.tick(999);assert.equal(f.players.get('near').hp,100);f.tick(1000);assert.equal(f.players.get('near').hp,80);
 });
 
 test('earth eruptions use a static shared atlas, follow server timing and release their resources',async()=>{
  const THREE=await import('three'),{createEarthWave,prepareEarthWave}=await import('../activity/earth-wave.mjs');
- let loads=0;const bank=await prepareEarthWave({...THREE,TextureLoader:class{async loadAsync(url){assert.equal(url,'https://fixture.invalid/effects/earth-wave.png');loads++;return new THREE.Texture();}}},new URL('https://fixture.invalid/'));
+ let loads=0;const bank=await prepareEarthWave({...THREE,TextureLoader:class{async loadAsync(url){assert.ok(url.includes('/effects/sc-mg017_0-frames.png'));loads++;return new THREE.Texture();}}},new URL('https://fixture.invalid/'));
  const scene=new THREE.Scene(),spec=combatSpec('Estelle','craft'),wave=createEarthWave(THREE,scene,{origin:{x:0,y:0,z:0},aim:{x:8,y:0,z:0}},spec,bank);
  wave.draw(209);assert.equal(scene.children.filter(x=>x.visible).length,0);
- wave.draw(330);assert.deepEqual(scene.children.filter(x=>x.isSprite&&x.visible).map(x=>x.position.x),[0,1,2]);assert.equal(scene.children.find(x=>x.isMesh).rotation.x,-Math.PI/2);
+ wave.draw(330);assert.deepEqual(scene.children.filter(x=>x.isSprite&&x.visible).map(x=>x.position.x),[0,1,2]);assert.equal(scene.children.filter(x=>x.isMesh).length,0);
  wave.draw(690);assert.equal(scene.children.filter(x=>x.isSprite&&x.visible).length,9);const sprites=scene.children.filter(x=>x.isSprite),versions=sprites.map(x=>x.material.map.version),sourceVersion=bank.map.source.version;
  for(let t=700;t<1400;t+=16)wave.draw(t);
  assert.deepEqual(sprites.map(x=>x.material.map.version),versions);assert.equal(bank.map.source.version,sourceVersion);assert.ok(sprites.every(x=>x.material.map.source===bank.map.source));assert.equal(loads,1);

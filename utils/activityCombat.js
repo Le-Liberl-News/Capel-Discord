@@ -32,6 +32,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
 
+  const cats=require('./activityCatCling').createCatCling({floor,geometry,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
   function action(player, command, room) {
 
     players=room;
@@ -42,7 +43,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     let spec = combatSpec(player.character,command.kind);const time=now(),continuation=spec?.special==='trinity'&&trinity.active(player);if(spec?.special==='trinity')spec=trinity.prepare(player,spec);
 
-    if (!spec || player.hp <= 0 || player.spectator || player.canMove === false || immobilized(player,time) || time<(player.combatLockedUntil??0))
+    if (!spec || player.catCling || player.hp <= 0 || player.spectator || player.canMove === false || immobilized(player,time) || time<(player.combatLockedUntil??0))
 
       return { error: "Attaque indisponible." };
 
@@ -88,7 +89,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if((spec.effect||spec.chargeStun)&&hit&&Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2)return {error:'La cible est derrière un obstacle.'};
 
-    if(spec.special!=='phoenix' && hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
+    if(!spec.catLeap && spec.special!=='phoenix' && hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
 
       obstacleImpact=!!fps;
       const stop=spec.dash?Math.max(0,Math.hypot(hit.point.x-origin.x,hit.point.z-origin.z)-.2):null;
@@ -118,6 +119,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     }
 
+    if(spec.catLeap){const {combatMotion}=require('../activity/combat-motion.cjs');let previous={...origin,y:origin.y+.5};for(let t=40;t<=spec.leapDuration;t+=40){const p=combatMotion({origin,aim:endpoint},t,spec).position,body={...p,y:p.y+.5};if(geometry?.sweep(previous,body,.15))return {error:'Le bond est bloqué.'};previous=body;}}
     if(spec.special==='phoenix'){
       const gx=Math.round((endpoint.x-grid.origin.x)/grid.step),gz=Math.round((endpoint.z-grid.origin.z)/grid.step);
       if(gx<0||gz<0||gx>=grid.width||gz>=grid.height||grid.cells[gz*grid.width+gx]===null)return {error:'Visez un sol accessible.'};
@@ -193,7 +195,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function tick(room) {
     const cooking=require("../activity/phyllis-cooking.cjs");for(const player of room.values())cooking.cookingTick(player,now());
 
-    players=room;const time=now();special.tickEntities(room);
+    players=room;const time=now();cats.tick(room,time);special.tickEntities(room);
 
     for(const player of room.values())if(player.knockback&&!projections.has(player.id)){player.knockback=null;}
 
@@ -331,10 +333,11 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
         if(!actor||actor.hp<=0||actor.character!==attack.character||actor.spectator){attack.cancelled=true;attack.resolved=true;if(actor)actor.combatLockedUntil=0;}
 
-        else {const motion=combatMotion(attack,time-attack.started,dashSpec);Object.assign(actor,motion.position);if(!motion.active){attack.dashFinished=true;actor.acceptedAt=time;}}
+        else {const motion=combatMotion(attack,time-attack.started,dashSpec);Object.assign(actor,motion.position);if(!motion.active){attack.dashFinished=true;actor.acceptedAt=time;if(dashSpec.catLeap)cats.land(actor,attack,room,time);}}
 
       }
 
+      if(dashSpec?.catLeap){if(attack.dashFinished)attack.resolved=true;continue;}
       const hitOffsets=dashSpec?.hitOffsets??[0];
 
       if(attack.resolved||time<attack.impactAt+hitOffsets[attack.nextHit])continue;

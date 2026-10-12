@@ -70,6 +70,7 @@ test("two obstacle ricochets stop the Pom, including corners and high polling la
   f.world.action(a, { type: "pickup" }, f.players);
   f.world.action(a, { type: "throw", target: "b" }, f.players);
   f.players.get("b").z = 4;
+  f.players.get("a").z = 4;
   f.tick(1.5);
   const ball = f.world.snapshot().pom;
   assert.equal(ball.ricochets, 2);
@@ -200,7 +201,8 @@ test("furniture blocks projectiles and players on another floor cannot be hit", 
   f.world.action(a, { type: "throw", target: "b" }, f.players);
   f.tick(0.7);
   assert.equal(f.players.get("b").hp, 500);
-  assert.equal(f.world.snapshot().pom.ricochets, 2);
+  assert.equal(f.world.snapshot().pom.ricochets, 1);
+  assert.equal(a.hp,400); // A ricochet can now hit its thrower.
   const g = fixture();
   g.players.get("b").y = 3;
   g.world.action(g.players.get("a"), { type: "pickup" }, g.players);

@@ -425,7 +425,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
       avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;avatar.guard=player.guard??null;
-      avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.siegDive=player.siegDive??null;
+      avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
       avatar.npc = !!player.npc;
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
       avatar.frozenUntil=player.stoneUntil;avatar.downUntil=player.downUntil;avatar.speed = player.speed ?? 0.8;avatar.spawnedAt=player.spawnedAt;avatar.summoned=player.summoned;avatar.deathAt=player.deathAt;
@@ -503,7 +503,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       displayName: player.nom ?? player.name ?? player.character,
       dead,deathStarted:performance.now(),
       hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
-      platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??playerHealth.PLAYER_MAX_HP,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,siegDive:player.siegDive??null,
+      towerArrival:inTower&&!player.enemy&&!player.npc&&!String(player.id).startsWith("world:")?performance.now():null,platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??playerHealth.PLAYER_MAX_HP,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,siegDive:player.siegDive??null,catCling:player.catCling??null,
       frozenUntil:player.stoneUntil,downUntil:player.downUntil,spawnedAt:player.spawnedAt,summoned:player.summoned,deathAt:player.deathAt,npc: !!player.npc,
       foodStock:player.foodStock??[],cooking:player.cooking??null,walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -820,6 +820,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
                 seconds,
                 (avatar.npc||avatar.enemy) && id !== "world:pom" ? avatar.speed + 0.1 : 6,
               );
+      if(avatar.catCling&&!avatar.dead){const carrier=avatars.get(avatar.catCling.target);if(carrier)Object.assign(avatar.position,{x:carrier.position.x+.18,y:carrier.position.y+.8,z:carrier.position.z+.12});}
       if(avatar.knockback&&!avatar.dead)Object.assign(avatar.position,projectionMechanics.projectionPosition(avatar.knockback,Date.now()+jumpClockOffset));
       if (motion.moving || avatar.walking || (avatar.character==="Sieg"&&!avatar.dead)) {
         if (motion.moving) avatar.heading = { dx: motion.dx, dz: motion.dz };
@@ -1043,7 +1044,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           const current = avatars.get(localId);
           if (current && (current.dead !== (player.hp === 0) || current.prop !== (propCatalogue[player.prop] ? player.prop : null) || current.character !== (catalogue[player.character]?player.character:"Estelle")))
             await setAvatar(avatarAtPosition(player,current.position));
-          else if (current) {current.hp = player.hp ?? 100;current.shield=player.shield??null;current.guard=player.guard??null;current.foodStock=player.foodStock??[];current.cooking=player.cooking??null;}
+          else if (current) {current.catCling=player.catCling??null;current.hp = player.hp ?? 100;current.shield=player.shield??null;current.guard=player.guard??null;current.foodStock=player.foodStock??[];current.cooking=player.cooking??null;}
           const updated=avatars.get(localId);if(updated){updated.damageSequence=player.damageSequence??0;updated.damageEvents=player.damageEvents;}
           continue;
         }
@@ -1106,7 +1107,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       health = { ...result.health, received: performance.now() };
       if (map === "arena" && wasSpectator !== !!health.spectator) { camera=health.spectator?flightCamera:walkingCamera;pitch=health.spectator?.25:CAMERA_PITCH;zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
-      movementAllowed = health.spectator||health.canMove !== false;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
+      movementAllowed = health.spectator||health.canMove !== false;const cat=avatars.get(localId);if(cat)cat.catCling=health.catCling??null;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {
@@ -1130,7 +1131,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     },
     correct(position, submitted) {
       const me = avatars.get(localId);
-      if(localJump||inTower&&health.jump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
+      if(health.catCling||localJump||inTower&&health.jump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
         recordCorrection(me.position,position,submitted,map);
         Object.assign(me.position, position);

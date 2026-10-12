@@ -90,10 +90,11 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
   }
   function sanitize(result) {
     const pom = p => p && ({ ...p, owner: alias(p.owner), thrownBy: alias(p.thrownBy) });
-    return { ...result, player:result.player && {...result.player,id:alias(result.player.id)},
-      joueurs:result.joueurs?.map(p=>({...p,id:alias(p.id)})),
+    const cat=p=>p?{...p,catCling:p.catCling?{target:alias(p.catCling.target),started:p.catCling.started}:null,catCarrier:p.catCarrier?{active:p.catCarrier.active}:null}:p;
+    return { ...result, health:cat(result.health), player:result.player && {...cat(result.player),id:alias(result.player.id)},
+      joueurs:result.joueurs?.map(p=>({...cat(p),id:alias(p.id)})),
       messages:result.messages?.map(m=>({...m,id:alias(m.id),author:alias(m.author)})),
-      enemies:result.enemies?.map(p=>({...p,owner:alias(p.owner)})),
+      enemies:result.enemies?.map(p=>({...cat(p),owner:alias(p.owner)})),
       pom:pom(result.pom), poms:result.poms?.map(pom),
       combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }

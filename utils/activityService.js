@@ -343,7 +343,7 @@ function createActivityService({
           ? { id: point.action.id, error: actionResult?.error }
           : undefined,
         health: {
-          foodStock:player.foodStock??[],cooking:player.cooking??null,
+          catCling:player.catCling?{target:player.catCling.target,started:player.catCling.started}:null,foodStock:player.foodStock??[],cooking:player.cooking??null,
           canDetonate:world.canDetonate?.(player.id)??false, frozenUntil:player.stoneUntil??0,downUntil:player.downUntil??0,
           combatDash:player.combatDash??null,
           knockback:player.knockback??null,

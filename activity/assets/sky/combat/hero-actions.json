@@ -68,7 +68,8 @@
       "cooldown": 8500,
       "nativeTiming": true,
       "sweepShots": true,
-      "sweepArc": 0.4
+      "sweepArc": 0.4,
+      "luthEffect": "Third/sc003_17._ef"
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
@@ -547,7 +548,8 @@
       "cooldown": 6500,
       "nativeEffect": "SC/ms00460b._ef",
       "effectDuration": 850,
-      "slashVolley": true
+      "slashVolley": true,
+      "startEffect": "Third/sc270_12._ef"
     },
     "basic": {
       "nativeEffect": "Third/cr04110._ef",
@@ -632,6 +634,15 @@
       "effectDuration": 1000,
       "lockMovement": true,
       "explosionEffect": "Third/sc006_17._ef"
+    }
+  },
+  "Estelle": {
+    "art": {
+      "nativeEffect": "SC/mg017_0._ef",
+      "effectDuration": 1800
+    },
+    "craft": {
+      "nativeEffect": "SC/mg017_0._ef"
     }
   }
 }
