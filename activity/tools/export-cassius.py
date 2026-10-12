@@ -1,12 +1,13 @@
 """Export Cassius's native Phoenix bank without changing his body anchor."""
 import json,hashlib,sys
 from pathlib import Path
+SPRITE_SCALE = json.loads((Path(__file__).resolve().parents[1] / 'assets/sky/sprite-scale.json').read_text(encoding='utf8'))['worldUnitsPerPixel']
 sys.path.insert(0,str(Path(__file__).parent))
 from export_sky_assets import decode_sprite,Image
 root=Path(__file__).resolve().parents[1]/'assets/sky/combat'
 source=Path('E:/dev/sky-activity-tools/third-27/ED6_DT27')
 frames=decode_sprite((source/'ch04679._ch').read_bytes(),(source/'ch04679p._cp').read_bytes())
-body=decode_sprite((source/'ch04670._ch').read_bytes(),(source/'ch04670p._cp').read_bytes());boxes=[f.getbbox() for f in body if f.getbbox()];foot=max(b[3] for b in boxes);scale=1.7/(foot-min(b[1] for b in boxes))
+body=decode_sprite((source/'ch04670._ch').read_bytes(),(source/'ch04670p._cp').read_bytes());boxes=[f.getbbox() for f in body if f.getbbox()];foot=max(b[3] for b in boxes);scale=SPRITE_SCALE
 atlas=Image.new('RGBA',(256*8,256*((len(frames)+7)//8)))
 for i,f in enumerate(frames):atlas.paste(f,((i%8)*256,(i//8)*256))
 atlas.save(root/'cassius-phoenix.png',optimize=True)

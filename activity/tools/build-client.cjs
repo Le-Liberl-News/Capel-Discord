@@ -1,4 +1,5 @@
 ﻿const path=require('node:path'),esbuild=require('esbuild');const root=path.resolve(__dirname,'..');
+require('./normalize-sprite-scale.cjs').normalize();
 require('node:fs').copyFileSync(path.join(root,'native-sector.mjs'),path.join(root,'../tools/combat-browser/native-sector.js'));
 // Generated from the bot's only character configuration, never edited separately.
 {const fs=require('node:fs'),characters=JSON.parse(fs.readFileSync(path.join(root,'../rpg/data/persos.json'),'utf8'));fs.writeFileSync(path.join(root,'assets/sky/character-titles.json'),JSON.stringify(Object.fromEntries(Object.entries(characters).filter(([name])=>name!=='default').map(([name,data])=>[name,data.titre??''])),null,2)+'\n');}

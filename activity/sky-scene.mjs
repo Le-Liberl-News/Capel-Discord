@@ -1,3 +1,4 @@
+import spriteScale from './assets/sky/sprite-scale.json';
 import {createArenaAudience} from './arena-audience.mjs';
 import arenaIntroDefinition from './assets/sky/arena/intro.json';
 import {createTowerGates} from './tower-gates.mjs';
@@ -448,7 +449,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar = {mesh,prop,character,dead,hp:player.hp??100,info:{height:1},position:{x:player.x??spawn.x,y:player.y??spawn.y,z:player.z??spawn.z},target:null,heading:{dx:0,dz:-1},time:0};
       attachShadow(avatar,player.id);avatars.set(player.id,avatar); return avatar;
     }
-    const baseInfo = (catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]??catalogue.Estelle);
+    let baseInfo = (catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]??catalogue.Estelle);if(player.id.startsWith("world:pom")){const factor=spriteScale.ballSpriteHeight/baseInfo.height;baseInfo={...baseInfo,height:spriteScale.ballSpriteHeight,bodyHeight:baseInfo.bodyHeight*factor,footOffsets:baseInfo.footOffsets?.map(v=>v*factor)};}
     const battle=renneCombat&&renneCombat.metadataFor(character);
     const combatAssets=battle?await renneCombat.load(character):null;
     const info = battle ? (combatAssets.metadata.banks[dead?"4":"0"]??combatAssets.metadata.banks["0"]) :
@@ -924,7 +925,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }
       const p = new THREE.Vector3(
         a.position.x,
-        a.position.y + a.info.height + 0.15,
+        a.position.y + (a.info.bodyHeight??a.info.height) + 0.15,
         a.position.z,
       ).project(camera);
       label.style.left = ((p.x + 1) * viewport.width) / 2 + "px";

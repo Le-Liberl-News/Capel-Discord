@@ -645,7 +645,10 @@
       "nativeEffect": "Third/cr151_00._ef",
       "hitEffect": "Third/cr151_01._ef",
       "nativeLine": true,
-      "effectDuration": 1200
+      "effectDuration": 1200,
+      "effectScale": 3,
+      "range": 24,
+      "radius": 2.25
     }
   }
 }

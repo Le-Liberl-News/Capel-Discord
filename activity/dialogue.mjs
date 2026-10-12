@@ -163,7 +163,7 @@ export async function createDialogues(assets) {
         item.continuation.hidden = !progress.complete;
         const head = new THREE.Vector3(
           avatar.position.x,
-          avatar.position.y + avatar.info.height,
+          avatar.position.y + (avatar.info.bodyHeight??avatar.info.height),
           avatar.position.z,
         ).project(camera);
         const x = ((head.x + 1) * innerWidth) / 2,

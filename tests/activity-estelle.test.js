@@ -5,11 +5,11 @@ function fixture(options={}){let time=0;const players=new Map([
  ['e',{id:'e',character:'Estelle',hp:100,x:0,y:0,z:0}],
  ['near',{id:'near',hp:100,x:2,y:0,z:0}],
  ['far',{id:'far',hp:100,x:7,y:0,z:0}],
- ['side',{id:'side',hp:100,x:4,y:0,z:2}],
+ ['side',{id:'side',hp:100,x:4,y:0,z:3}],
  ['air',{id:'air',hp:100,x:4,y:2,z:0}]
 ]);const combat=createActivityCombat({now:()=>time,geometry:{floor:()=>0,sweep:()=>null},...options});return {players,combat,cast(kind='craft',aim={x:8,y:0,z:0}){return combat.action(players.get('e'),{id:'earth',kind,aim},players);},tick(t){time=t;combat.tick(players);}};}
 test('Estelle uses AS 17; the earth wave starts on the staff-ground pose',()=>{
- const meta=COMBAT.Estelle,spec=combatSpec('Estelle','craft');assert.equal(meta.source.craftSlot,17);assert.equal(meta.sequences.craft[7].pose,7);assert.equal(spec.windup,meta.sequences.craft.slice(0,7).reduce((n,f)=>n+f.ms,0)/2);assert.ok(spec.groundTarget&&spec.wave);assert.equal(spec.dash,undefined);
+ const meta=COMBAT.Estelle,spec=combatSpec('Estelle','craft');assert.equal(meta.source.craftSlot,17);assert.equal(meta.sequences.craft[7].pose,7);assert.equal(spec.windup,meta.sequences.craft.slice(0,7).reduce((n,f)=>n+f.ms,0)/2);assert.ok(spec.groundTarget&&spec.wave);assert.equal(spec.effectScale,3);assert.equal(spec.range,24);assert.equal(spec.radius,2.25);assert.equal(spec.dash,undefined);
 });
 test('the wave damages each enemy once as it advances, without moving Estelle or hitting outside the line',()=>{
  const f=fixture();assert.ok(f.cast().combatId);f.tick(209);assert.equal(f.players.get('near').hp,100);f.tick(330);assert.equal(f.players.get('near').hp,70);assert.equal(f.players.get('far').hp,100);f.tick(630);assert.equal(f.players.get('far').hp,70);f.tick(2000);assert.equal(f.players.get('near').damageEvents.length,1);assert.equal(f.players.get('near').damageEvents[0].nativeEffect,'Third/cr151_01._ef');assert.equal(f.players.get('side').hp,100);assert.equal(f.players.get('air').hp,100);assert.equal(f.players.get('e').x,0);

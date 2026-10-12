@@ -1,6 +1,7 @@
 """Export only the native banks used by the first playable actions of audited characters."""
 import argparse, hashlib, json, struct, sys
 from pathlib import Path
+SPRITE_SCALE = json.loads((Path(__file__).resolve().parents[1] / 'assets/sky/sprite-scale.json').read_text(encoding='utf8'))['worldUnitsPerPixel']
 from export_sky_assets import decode_sprite, Image
 p=argparse.ArgumentParser();p.add_argument('--character');p.add_argument('--audit',type=Path,required=True);p.add_argument('--extracted',type=Path,required=True);p.add_argument('--decoder-directory',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
 sys.path.insert(0,str(a.decoder_directory));import third_as as decoder
@@ -109,10 +110,10 @@ for row in rows:
    if not seq:sequences.pop(key)
   if not sequences.get('basic'):raise ValueError('No valid attack poses')
   boxes=[f.getbbox() for poses in frames.values() for f in poses if f.getbbox()];box=(min(b[0] for b in boxes),min(b[1] for b in boxes),max(b[2] for b in boxes),max(b[3] for b in boxes));w,h=box[2]-box[0],box[3]-box[1]
-  body=[f.getbbox() for f in frames[0] if f.getbbox()];foot=max(b[3] for b in body);scale=1.7/(foot-min(b[1] for b in body));
+  body=[f.getbbox() for f in frames[0] if f.getbbox()];foot=max(b[3] for b in body);scale=SPRITE_SCALE;
   if row['character']=='Ries':
    # Native body is 86 pixels high; do not include the raised sword in its size.
-   foot=176;scale=1.7/86
+   foot=176;scale=SPRITE_SCALE
   slug=source['file'].split('.')[0];folder=a.output/slug;folder.mkdir(parents=True,exist_ok=True);banks={}
   for bank,poses in frames.items():
    image=Image.new('RGBA',(w*8,h*((len(poses)+7)//8)))

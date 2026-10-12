@@ -4,6 +4,7 @@ import base64
 import importlib.util
 import json
 from pathlib import Path
+SPRITE_SCALE = json.loads((Path(__file__).resolve().parents[1] / 'assets/sky/sprite-scale.json').read_text(encoding='utf8'))['worldUnitsPerPixel']
 import struct
 import sys
 
@@ -186,7 +187,7 @@ def main():
         for index, frame in enumerate(frames):
             atlas.paste(frame.crop(bounds), ((index % 8) * width, (index // 8) * height))
         atlas.save(args.output / (chip + '.png'))
-        catalogue[name] = {'texture': chip + '.png', 'columns': 8, 'rows': (len(frames) + 7) // 8, 'frameWidth': width, 'frameHeight': height, 'frames': len(frames), 'idle': [0], 'run': list(range(max(1, min(8, len(frames) // 8)))), 'directions': min(8, len(frames)), 'fps': 12, 'height': 1.7}
+        catalogue[name] = {'texture': chip + '.png', 'columns': 8, 'rows': (len(frames) + 7) // 8, 'frameWidth': width, 'frameHeight': height, 'frames': len(frames), 'idle': [0], 'run': list(range(max(1, min(8, len(frames) // 8)))), 'directions': min(8, len(frames)), 'fps': 12, 'height': height * SPRITE_SCALE}
         if name == 'Sieg': catalogue[name].update(idle=[0], run=[3, 4], fps=6)
         if name == 'Estelle':
             preview = Image.new('RGB', (256 * 8, 280 * ((len(frames) + 7) // 8)), '#556060')

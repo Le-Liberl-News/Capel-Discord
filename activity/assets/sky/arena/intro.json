@@ -63,10 +63,12 @@
       "rows": 8,
       "frameWidth": 60,
       "frameHeight": 91,
-      "height": 1.7,
+      "height": 1.82,
       "directions": 8,
       "poses": 8,
-      "fps": 5.333333333333333
+      "fps": 5.333333333333333,
+      "pixelScale": 0.02,
+      "bodyHeight": 1.82
     },
     "ch01210": {
       "texture": "arena/audience/ch01210.png",
@@ -74,10 +76,12 @@
       "rows": 8,
       "frameWidth": 44,
       "frameHeight": 86,
-      "height": 1.7,
+      "height": 1.72,
       "directions": 8,
       "poses": 8,
-      "fps": 5.333333333333333
+      "fps": 5.333333333333333,
+      "pixelScale": 0.02,
+      "bodyHeight": 1.72
     },
     "ch01220": {
       "texture": "arena/audience/ch01220.png",
@@ -85,10 +89,12 @@
       "rows": 8,
       "frameWidth": 44,
       "frameHeight": 86,
-      "height": 1.7,
+      "height": 1.72,
       "directions": 8,
       "poses": 8,
-      "fps": 5.333333333333333
+      "fps": 5.333333333333333,
+      "pixelScale": 0.02,
+      "bodyHeight": 1.72
     },
     "ch01230": {
       "texture": "arena/audience/ch01230.png",
@@ -96,10 +102,12 @@
       "rows": 8,
       "frameWidth": 46,
       "frameHeight": 93,
-      "height": 1.7,
+      "height": 1.86,
       "directions": 8,
       "poses": 8,
-      "fps": 5.333333333333333
+      "fps": 5.333333333333333,
+      "pixelScale": 0.02,
+      "bodyHeight": 1.86
     },
     "ch01180": {
       "texture": "arena/audience/ch01180.png",
@@ -107,10 +115,12 @@
       "rows": 8,
       "frameWidth": 42,
       "frameHeight": 86,
-      "height": 1.7,
+      "height": 1.72,
       "directions": 8,
       "poses": 8,
-      "fps": 5.333333333333333
+      "fps": 5.333333333333333,
+      "pixelScale": 0.02,
+      "bodyHeight": 1.72
     },
     "ch01490": {
       "texture": "arena/audience/ch01490.png",
@@ -121,7 +131,9 @@
       "height": 1.7,
       "directions": 8,
       "poses": 8,
-      "fps": 5.333333333333333
+      "fps": 5.333333333333333,
+      "pixelScale": 0.02,
+      "bodyHeight": 1.7
     }
   },
   "crowd": [

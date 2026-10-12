@@ -1,6 +1,7 @@
 """Export the native Anterose residents, French lines and Pom (read-only inputs)."""
 import argparse, json, re, hashlib, math
 from pathlib import Path
+SPRITE_SCALE = json.loads((Path(__file__).resolve().parents[1] / 'assets/sky/sprite-scale.json').read_text(encoding='utf8'))['worldUnitsPerPixel']
 from export_sky_assets import decode_sprite, Image
 
 FR_GLYPHS = {"\uff83": "\u00c0", "\uff61": "\u00c2", "\uff64": "\u00c4", "\uff66": "\u00c7", "\uff67": "\u00c8", "\uff68": "\u00c9", "\uff69": "\u00ca", "\uff6a": "\u00cb", "\uff6b": "\u00ce", "\uff6c": "\u00cf", "\uff6d": "\u00d4", "\uff6e": "\u00d9", "\uff82": "\u0178", "\uff70": "\u00dc", "\uff71": "\u00e0", "\uff72": "\u00e2", "\uff73": "\u00e4", "\uff74": "\u00e7", "\uff75": "\u00e8", "\uff76": "\u00e9", "\uff77": "\u00ea", "\uff78": "\u00eb", "\uff79": "\u00ee", "\uff7a": "\u00ef", "\uff7b": "\u00f4", "\uff7c": "\u00f9", "\uff7d": "\u00fb", "\uff7e": "\u00fc", "\uff7f": "\u00ff", "\uff80": "\u0152", "\uff81": "\u0153", "\uff84": "\u00b0", "\uff85": "\u00ab", "\uff86": "\u00bb", "\uff88": "\u202f", "\uff89": "\u00f6", "\uff8a": "\u00d6", "\uff8b": "\u200a"}
@@ -41,7 +42,7 @@ def main():
   info=atlas(a.chips,chip,a.output,1.7,limit=8 if ident=='horrace' else 0)
   if info is None:raise ValueError('Missing resident sprite '+chip)
   if ident=='horrace':
-   frames=decode_sprite((a.chips/'ch01000._ch').read_bytes(),(a.chips/'ch01000p._cp').read_bytes());boxes=[f.getbbox() for f in frames if f.getbbox()];standing=max(b[3] for b in boxes)-min(b[1] for b in boxes);info['height']=1.7*info['frameHeight']/standing;info['run']=[0]
+   frames=decode_sprite((a.chips/'ch01000._ch').read_bytes(),(a.chips/'ch01000p._cp').read_bytes());boxes=[f.getbbox() for f in frames if f.getbbox()];standing=max(b[3] for b in boxes)-min(b[1] for b in boxes);info['height']=info['frameHeight']*SPRITE_SCALE;info['run']=[0]
   if ident=='manager':info['idle']=list(range(8));info['fps']=1/1.45
   catalogue[name]=info;npcs.append(dict(id=ident,name=name,character=name,static=ident!='lenore',speed=2,initialPause=0,heading=heading,waypoints=waypoints,lines=[lines[i] for i in select],source=dict(script='T1131',npc=npc_index,position=[int(v) for v in raw],angle=angle,function=fn,chip=chip)))
  catalogue['Pom']=atlas(a.monsters,'ch10140',a.output,.75)

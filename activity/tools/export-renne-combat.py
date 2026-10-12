@@ -3,6 +3,7 @@ Inputs are read-only. Effects use the already extracted SC DT33 textures.
 """
 import argparse,hashlib,json,struct,sys
 from pathlib import Path
+SPRITE_SCALE = json.loads((Path(__file__).resolve().parents[1] / 'assets/sky/sprite-scale.json').read_text(encoding='utf8'))['worldUnitsPerPixel']
 from export_sky_assets import decode_sprite,decode_model_texture,Image
 p=argparse.ArgumentParser();p.add_argument('--chips',type=Path,required=True);p.add_argument('--as-file',type=Path,required=True);p.add_argument('--decoder-directory',type=Path,required=True);p.add_argument('--effects',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();sys.path.insert(0,str(a.decoder_directory));import third_as as decoder
 a.output.mkdir(parents=True,exist_ok=True)
@@ -10,7 +11,7 @@ frames={};boxes=[]
 for bank in range(7):
  name=f'ch0451{bank}';frames[bank]=decode_sprite((a.chips/(name+'._ch')).read_bytes(),(a.chips/(name+'p._cp')).read_bytes());boxes.extend(f.getbbox() for f in frames[bank] if f.getbbox())
 box=(min(b[0]for b in boxes),min(b[1]for b in boxes),max(b[2]for b in boxes),max(b[3]for b in boxes));w,h=box[2]-box[0],box[3]-box[1]
-body=[f.getbbox()for f in frames[0]if f.getbbox()];foot=max(b[3]for b in body);scale=1.7/(foot-min(b[1]for b in body))
+body=[f.getbbox()for f in frames[0]if f.getbbox()];foot=max(b[3]for b in body);scale=SPRITE_SCALE
 banks={}
 for bank,poses in frames.items():
  image=Image.new('RGBA',(w*8,h*((len(poses)+7)//8)))

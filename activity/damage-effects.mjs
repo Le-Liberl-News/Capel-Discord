@@ -43,7 +43,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     const hit=hits[i],avatar=avatars.get(hit.id);hit.time+=dt;
     if(!avatar||hit.time>=1.5){scene.remove(hit.sprite);hit.sprite.material.map.dispose();hit.sprite.material.dispose();if(hit.extra){scene.remove(hit.extra.sprite);hit.extra.dispose();}hit.number.remove();hits.splice(i,1);continue;}
     if(hit.time<0){hit.sprite.visible=false;if(hit.extra)hit.extra.sprite.visible=false;hit.number.hidden=true;continue;}
-    const p=avatar.position,h=avatar.info.height;
+    const p=avatar.position,h=avatar.info.bodyHeight??avatar.info.height;
     hit.sprite.position.set(hit.impact?.point?.x??p.x,hit.impact?.point?.y??p.y+Math.min(h,1.8)*(hit.impact?.catBite?.75:.55),hit.impact?.point?.z??p.z);
     // Place the flash just in front of the opaque character plane, keeping scenery occlusion.
     if(hit.impact?.nativeEffect==='SC/cr160_00._ef'&&hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.sprite.position.y+=[.18,-.1,.3,.04][n%4];}
