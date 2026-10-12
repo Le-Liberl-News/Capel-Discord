@@ -55,6 +55,8 @@ for row in rows:
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/(ch+'._ch'),folder/(ch+'p._cp'))
  if row['character']=='Bleublanc':
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04539._ch',folder/'ch04539p._cp')
+ if row['character']=='Julia':
+  folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04588._ch',folder/'ch04588p._cp')
  if row['character']=='Ries':
   folder=a.extracted/'third-27/ED6_DT27';files[12]=(folder/'ch04158._ch',folder/'ch04158p._cp')
  try:
@@ -99,7 +101,7 @@ for row in rows:
    for f in seq:
     if len(frames[f['bank']])==8 and f['pose']<8:f['pose']=0
   for key,seq in list(sequences.items()):
-   seq[:]=[f for f in seq if (f['pose'] if row['character'] in ['Olivier','Bleublanc'] and f['bank']==12 else f['pose']*8+7)<len(frames[f['bank']])]
+   seq[:]=[f for f in seq if (f['pose'] if row['character'] in ['Olivier','Bleublanc','Julia'] and f['bank']==12 else f['pose']*8+7)<len(frames[f['bank']])]
    if not seq:sequences.pop(key)
   if not sequences.get('basic'):raise ValueError('No valid attack poses')
   boxes=[f.getbbox() for poses in frames.values() for f in poses if f.getbbox()];box=(min(b[0] for b in boxes),min(b[1] for b in boxes),max(b[2] for b in boxes),max(b[3] for b in boxes));w,h=box[2]-box[0],box[3]-box[1]
@@ -111,7 +113,7 @@ for row in rows:
   for bank,poses in frames.items():
    image=Image.new('RGBA',(w*8,h*((len(poses)+7)//8)))
    for i,f in enumerate(poses):image.paste(f.crop(box),((i%8)*w,(i//8)*h))
-   image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':1 if row['character'] in ['Olivier','Bleublanc'] and bank==12 else 8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
+   image.save(folder/f'{bank}.png',optimize=True);banks[str(bank)]={'texture':f'combat/{slug}/{bank}.png','columns':8,'rows':(len(poses)+7)//8,'frameWidth':w,'frameHeight':h,'frames':len(poses),'directions':1 if row['character'] in ['Olivier','Bleublanc','Julia'] and bank==12 else 8,'height':h*scale,'centerX':((box[0]+box[2])/2-128)*scale,'centerY':(foot-(box[1]+box[3])/2)*scale,'idle':[0],'run':list(range(len(poses)//8)),'fps':8}
   if row['character']=='Ries':
    for bank,slot,address in [(2,5,None),(12,16,0xd38)]:
     pc=address if address is not None else entries[slot]+1;anchors=[[128,176] for _ in range(8)]

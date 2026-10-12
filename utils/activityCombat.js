@@ -30,19 +30,21 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft});
 
+  const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
+
   function action(player, command, room) {
 
     players=room;
 
     if(player.character==='Campanella'&&command.kind==='craft'&&player.hp>0&&!player.spectator&&!player.duelProtected&&!immobilized(player,now())&&special.detonate(player,room))return {combatId:command.id};
 
-    const spec = combatSpec(player.character,command.kind), time = now();
+    let spec = combatSpec(player.character,command.kind);const time=now(),continuation=spec?.special==='trinity'&&trinity.active(player);if(spec?.special==='trinity')spec=trinity.prepare(player,spec);
 
     if (!spec || player.hp <= 0 || player.spectator || player.canMove === false || immobilized(player,time) || time<(player.combatLockedUntil??0))
 
       return { error: "Attaque indisponible." };
 
-    if (time < (player.attackBusyUntil ?? 0) || time < (cooldowns.get(player.id)?.[command.kind] ?? 0))
+    if (time < (player.attackBusyUntil ?? 0) || (!continuation&&time < (cooldowns.get(player.id)?.[command.kind] ?? 0)))
 
       return { error: "Technique en récupération." };
 
@@ -53,6 +55,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     const fps=spec.fps?validateRay(player,command.ray):null;if(spec.fps&&!fps)return {error:'Visée invalide.'};
 
     const origin = {x:player.x,y:player.y??0,z:player.z}, endpoint = fps?{...fps.origin}:attackPoint(origin, command.aim, command.kind,player.character);
+
+    if(continuation?.stage===2&&Math.hypot(endpoint.x-continuation.vertices[0].x,endpoint.z-continuation.vertices[0].z)<=1)Object.assign(endpoint,continuation.vertices[0]);
 
     if(fps)Object.assign(endpoint,{x:fps.origin.x+fps.direction.x*spec.range,y:fps.origin.y+fps.direction.y*spec.range,z:fps.origin.z+fps.direction.z*spec.range});
 
@@ -102,6 +106,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         const t=n/Math.ceil(length/.2),p={x:origin.x+(endpoint.x-origin.x)*t,y:previous,z:origin.z+(endpoint.z-origin.z)*t},height=floor(p);
 
         if(height===null||!Number.isFinite(height)||Math.abs(height-previous)>.35)return {error:'Le trajet doit rester sur un sol accessible.'};
+        if(spec.special==='trinity'){const x=Math.round((p.x-grid.origin.x)/grid.step),z=Math.round((p.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return {error:'Le trajet doit rester sur un sol accessible.'};}
 
         previous=height;
 
@@ -126,6 +131,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(spec.leap&&spec.landingOffset){const length=Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z),ratio=length?1-Math.min(spec.landingOffset,Math.max(0,length-.2))/length:1,p={x:origin.x+(endpoint.x-origin.x)*ratio,y:endpoint.y,z:origin.z+(endpoint.z-origin.z)*ratio},height=floor(p);attack.landingPoint=height!==null&&Number.isFinite(height)&&Math.abs(height-p.y)<1.2?{...p,y:height}:{...endpoint};}
 
     special.setup(attack,spec,command,room);
+    if(spec.special==='trinity')trinity.setup(attack,spec,player);
 
     attacks.set(attack.id,attack);players=room;if(spec.chargeStun){const target=room.get(attack.target);applyStatus(target,{status:'stun',statusDuration:spec.duration},time);}
 
@@ -206,6 +212,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         continue;
       }
 
+      if(trinity.tick(attack,dashSpec,room,time))continue;
       if(special.tickAttack(attack,dashSpec,room,time))continue;
 
       if(dashSpec?.lockOn&&!attack.resolved&&!attack.cancelled){

@@ -45,3 +45,12 @@ test('console image renders portraits and scoreboard to PNG',async()=>{
  const buffer=await require('../utils/activityArenaBoardImage').renderArenaBoard({rows:[{name:'Estelle',wins:4,streak:2,lastWin:false,pb:8,delta:-6}],page:0,pages:1,queueSize:0});
  assert.equal(buffer.subarray(1,4).toString(),'PNG');assert.equal(buffer.readUInt32BE(16),1200);assert.ok(buffer.length>10000);
 });
+
+test('queue notifications show only the character, deduplicate clicks and disappear on leaving or matching',async()=>{
+ const {createArenaBoard}=require('../utils/activityArenaBoard');let saved={},sent=[],removed=[],n=0;const msg={id:'board',edit:async()=>{}};
+ const channel={guild:{roles:{everyone:{}}},permissionOverwrites:{edit:async()=>{}},messages:{fetch:async()=>msg,delete:async id=>removed.push(id)},send:async body=>{if(body.content){sent.push(body);return{id:'notice-'+(++n)};}return msg;}};
+ const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},lobby:{matchFor:()=>null,isConnected:()=>true},duels:{match:async()=>{}},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>[],resolveCharacter:async id=>id==='private-a'?'Julia':'Estelle',store:{load:()=>saved,save:s=>saved=s},render:async()=>Buffer.from('image')});
+ const i=(id,action)=>({isButton:()=>true,customId:'arena:'+action,user:{id},reply:async()=>{}});
+ await board.handle(i('private-a','queue'));await board.handle(i('private-a','queue'));assert.equal(sent.length,1);assert.match(sent[0].content,/Julia/);assert.equal(JSON.stringify(sent).includes('private-'),false);assert.deepEqual(sent[0].allowedMentions.parse,[]);
+ await board.handle(i('private-a','leave'));assert.deepEqual(removed,['notice-1']);await board.handle(i('private-a','queue'));await board.handle(i('private-b','queue'));await board.tick();assert.equal(removed.length,3);
+});
