@@ -1,3 +1,4 @@
+import {catRicochetPlan} from './cat-ricochet-ai.mjs';
 import worldModule from '../utils/activityWorld.js';
 import combat from './native-combat.cjs';
 import status from './combat-status.cjs';
@@ -20,6 +21,12 @@ export function createTraining({grid,geometry,character,opponent,now=Date.now,ra
  function think(time){
   if(ai.hp<=0||player.hp<=0||status.immobilized(ai,time)||time<(ai.combatLockedUntil??0))return;
   const snapshot=world.snapshot(),balls=snapshot.poms??[],held=balls.find(p=>p.owner===ai.id),distance=Math.hypot(ai.x-player.x,ai.z-player.z),busy=ai.attackBusyUntil>time;
+  if(ai.catCarrier?.active){
+   trinity=null;
+   if(held){const plan=catRicochetPlan(ai,grid,geometry);if(plan){if(plan.distance>.25)navigate(plan.stand);else{path=[];send({type:'throw',aim:plan.aim});}}return;}
+   if(balls.some(p=>p.mode==='flight'&&p.thrownBy===ai.id)){path=[];return;}
+   const ball=balls.filter(p=>p.mode==='rest').sort((a,b)=>Math.hypot(ai.x-a.x,ai.z-a.z)-Math.hypot(ai.x-b.x,ai.z-b.z))[0];if(ball){if(Math.hypot(ai.x-ball.x,ai.z-ball.z)<1.8){send({type:'pickup',target:ball.id});path=[];}else navigate(ball);}return;
+  }
   if(held){const aim=aimAt(player,18);aim.y+=.9;send({type:'throw',aim});path=[];return;}
   const spire=snapshot.combat.attacks.find(a=>a.actor===ai.id&&a.special==='spire'&&!a.explodedAt&&time>a.impactAt+600);
   if(spire&&world.canDetonate(ai.id)&&(Math.hypot(player.x-spire.aim.x,player.z-spire.aim.z)<2.8||time>spire.objectExpiresAt-800)){send({type:'attack',kind:'craft',aim:spire.aim});return;}

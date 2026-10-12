@@ -4,7 +4,7 @@ G puis clic sur le sol : bond de 12 mètres maximum, 0,7 mètre de hauteur, 0,35
 
 Accroché : morsure de 8 PV toutes les 650 ms, petites éclaboussures natives Third/msc0601._ef ; vitesse du porteur multipliée par 0,8. Antoine suit le torse du porteur et ne peut plus marcher ni lancer une technique.
 
-Tout impact extérieur, même absorbé par une protection, le décroche. Ses morsures ne le décrochent pas. Les singes-moutons peuvent maintenant toucher leur lanceur après un ricochet. Décès, disparition ou changement de personnage terminent l’accrochage ; la position de retour est recherchée sur le sol voisin accessible.
+Seul un impact de singe-mouton sur le porteur, même absorbé par une protection, le décroche. Le porteur ne peut ni cibler ni toucher Antoine avec ses attaques. Les autres coups et les morsures ne provoquent pas de décrochage. Les singes-moutons peuvent maintenant toucher leur lanceur après un ricochet. En PvE, l’accrochage expire après 10 secondes et le bond a une récupération de 20 secondes depuis son déclenchement. L’IA d’arène cherche un singe-mouton puis un mur et provoque un ricochet sur elle-même en restant sur le trajet de retour. Décès, disparition ou changement de personnage terminent l’accrochage ; la position de retour est recherchée sur le sol voisin accessible.
 
 La spritesheet originale est activity/assets/sky/ch01700.png : 8 × 8 cases de 72 × 53 pixels (576 × 424), transparence PNG. Copie fournie sur le Bureau : Antoine-spritesheet.png. Le sprite accroché utilise provisoirement son sprite existant, placé sur le torse ; aucune nouvelle pose n’a été inventée.
 

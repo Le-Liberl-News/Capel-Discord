@@ -192,7 +192,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function pickCombatTarget(event,spec){
     if(!event)return null;
     pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);
-    const candidates=[...avatars].filter(([id,a])=>!a.npc&&!a.dead&&(spec.effect?(!a.enemy&&(id===localId||inTower)):(id!==localId&&(a.enemy||!inTower))));
+    const candidates=[...avatars].filter(([id,a])=>!a.npc&&!a.dead&&a.catCling?.target!==localId&&(spec.effect?(!a.enemy&&(id===localId||inTower)):(id!==localId&&(a.enemy||!inTower))));
     const hit=raycaster.intersectObjects(candidates.map(([,a])=>a.mesh),true)[0];
     return candidates.find(([,a])=>a.mesh.id===hit?.object.id)?.[0]??null;
   }

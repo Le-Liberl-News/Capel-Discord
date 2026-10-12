@@ -255,7 +255,7 @@ function createSingleActivityWorld({
         continue;
       }
       for (const p of players.values()) {
-        if (p.hp === 0 || p.spectator || p.duelProtected || (p.id === ball.thrownBy && !ball.ricochets)) continue;
+        if (p.hp === 0 || p.spectator || p.duelProtected || p.catCling?.target===ball.thrownBy || (p.id === ball.thrownBy && !ball.ricochets)) continue;
         const dx = x - ball.x,
           dy = y - ball.y,
           dz = z - ball.z,
@@ -283,7 +283,7 @@ function createSingleActivityWorld({
           );
         });
         if (struck) {
-          applyDamage(p,DAMAGE,time);
+          applyDamage(p,DAMAGE,time,{pom:true});
           if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId,follow:"projectile",started:ball.launchedAt,releaseAt:ball.launchedAt,impactAt:ball.launchedAt+ball.flight*1000,trajectory:[...ball.trajectory.map(q=>({...q})),{t:ball.flight,x,y,z}]},at:time});}
           ball.x = x;
           ball.z = z;
@@ -450,6 +450,7 @@ function createActivityWorldBase(options) {
   };
 }
 function createActivityWorld(options) {
+ const damagePolicy=options.canDamage??(()=>true);options={...options,canDamage:(a,b)=>b.catCling?.target!==a.id&&damagePolicy(a,b)};
   const base=createActivityWorldBase(options),dive=require('./activitySiegDive').createSiegDive(options);
   const world={...base,tick(players,diveTargets=players){base.tick(players);dive.tick(diveTargets);},action(player,command,players){return command?.type==='sieg_dive'?dive.action(player,command):base.action(player,command,players);}};
   if(!options.combatEnabled)return world;

@@ -14,7 +14,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   const attacks = new Map(), cooldowns = new Map(), projections=new Map();
 
-  let players;const damagePolicy=canDamage;canDamage=(a,b)=>{const owner=a.owner?players?.get(a.owner)??a:a,target=b.owner?players?.get(b.owner)??b:b;return owner.id!==target.id&&damagePolicy(owner,target);};
+  let players;const damagePolicy=canDamage;canDamage=(a,b)=>{const owner=a.owner?players?.get(a.owner)??a:a,target=b.owner?players?.get(b.owner)??b:b;return owner.id!==target.id&&target.catCling?.target!==owner.id&&damagePolicy(owner,target);};
 
   const floor = point => {
 
@@ -152,7 +152,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if(spec.lockMovement)player.combatLockedUntil=time+spec.duration;
 
-    const cooldown=cooldowns.get(player.id)??{};cooldown[command.kind]=time+spec.cooldown;cooldowns.set(player.id,cooldown);
+    const cooldown=cooldowns.get(player.id)??{};cooldown[command.kind]=time+(spec.catLeap&&dungeon?20000:spec.cooldown);cooldowns.set(player.id,cooldown);
 
     player.attackBusyUntil=time+(food?spec.cooldown:spec.duration);
 
