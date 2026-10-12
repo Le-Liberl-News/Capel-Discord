@@ -611,5 +611,26 @@
       "shockwaveEffect": "Third/ms04671k._ef",
       "trailEffect": "Third/ms04671l._ef"
     }
+  },
+  "Mueller": {
+    "craft": {
+      "name": "Triple taillade",
+      "key": "g",
+      "groundTarget": true,
+      "special": "mueller",
+      "dash": true,
+      "windup": 0,
+      "dashDuration": 5000,
+      "duration": 5800,
+      "cooldown": 7500,
+      "range": 12,
+      "radius": 1.8,
+      "damage": 22,
+      "finalDamage": 36,
+      "projectile": false,
+      "nativeEffect": "SC/cr130_02._ef",
+      "effectDuration": 1000,
+      "lockMovement": true
+    }
   }
 }

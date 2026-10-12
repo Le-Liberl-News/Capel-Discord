@@ -391,6 +391,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const damageEffects=await createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading);
   const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
+  const muellerTarget=new THREE.Mesh(new THREE.RingGeometry(.98,1,64),new THREE.MeshBasicMaterial({color:0xc58aff,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide}));muellerTarget.rotation.x=-Math.PI/2;muellerTarget.visible=false;scene.add(muellerTarget);
   const marker = new THREE.Mesh(
     new THREE.RingGeometry(0.15, 0.22, 24),
     new THREE.MeshBasicMaterial({
@@ -820,19 +821,19 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         right,
         forward,
       );
-      let info=avatar.info,selectedPose,craftHidden=false,craftFlip=false;
+      let info=avatar.info,selectedPose,selectedDirection,craftHidden=false,craftFlip=false;
       if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
-      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
+      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking||!!avatar.siegDive,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
-      const pose=selectedPose??(avatar.dead?Math.min(Math.max(0,Math.floor((info.frames??8)/(info.directions??8))-1),Math.floor((time-avatar.deathStarted)/100)):poses[Math.floor(avatar.time*info.fps)%poses.length]),frame=pose*(info.directions??8)+(avatar.direction%(info.directions??8));
+      const pose=selectedPose??(avatar.dead?Math.min(Math.max(0,Math.floor((info.frames??8)/(info.directions??8))-1),Math.floor((time-avatar.deathStarted)/100)):poses[Math.floor(avatar.time*info.fps)%poses.length]),frame=pose*(info.directions??8)+((selectedDirection??avatar.direction)%(info.directions??8));
       if(avatar.geometryInfo!==info){avatar.mesh.geometry.dispose();avatar.mesh.geometry=new THREE.PlaneGeometry(info.height*info.frameWidth/info.frameHeight,info.height);avatar.mesh.geometry.translate(info.centerX??0,info.centerY??info.height/2,0);avatar.nativeAnchor=null;avatar.geometryInfo=info;}
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
       if(avatar.summoned){const scale=Math.max(0,Math.min(1,(Date.now()+jumpClockOffset-avatar.spawnedAt)/700));avatar.mesh.scale.setScalar(avatar.deathAt?0:scale);}
       avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:0xffffff);
       avatar.deathLift=avatar.dead||down?(info.groundOffsets?.[frame]??0):0;
-      if(avatar.character==="Cassius")avatar.mesh.scale.x=craftFlip?-1:1;
+      if(avatar.character==="Cassius"||avatar.character==="Mueller")avatar.mesh.scale.x=craftFlip?-1:1;
       avatar.renderFrame={pose,info};avatar.mesh.visible=!craftHidden&&!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
@@ -869,6 +870,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(juliaCombo&&(performance.now()>juliaCombo.until||me?.character!=='Julia'||health.hp<=0)){juliaCombo=null;craftTarget=false;combatControls.targeting(null);}
     aimLine.visible=false;
     if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){if(aimLine.visible)marker.visible=false;marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,(target.y+me.position.y)/2+.07,(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
+    muellerTarget.visible=!!craftTarget&&renneMechanics.combatSpec(me?.character,craftTarget)?.special==='mueller'&&marker.visible;if(muellerTarget.visible){muellerTarget.position.copy(marker.position);muellerTarget.scale.setScalar(renneMechanics.combatSpec(me.character,craftTarget).radius);marker.visible=false;}
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
       if (!pomAvatar) continue;
@@ -1159,6 +1161,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       removeEventListener("keyup", keyup);
       removeEventListener("blur", blur);
       removeEventListener("resize", resize);
+      muellerTarget.geometry.dispose();muellerTarget.material.dispose();
       touches.reset();touchButton.remove();touchStyle.remove();
       rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       tavernTables?.dispose();crosshair.remove();blindness.remove();teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();

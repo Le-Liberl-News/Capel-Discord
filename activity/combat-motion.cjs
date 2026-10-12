@@ -1,5 +1,6 @@
 const {dashPosition}=require('./black-fang.cjs');
 function combatMotion(event,time,spec){
+ if(spec.special==='mueller')return require('./mueller-combo.cjs').muellerMotion(event,time);
  if(spec.special==='phoenix')return {active:time<spec.windup+spec.leapDuration,position:require('./cassius-phoenix.cjs').phoenixPosition(event,time,spec)};
  if(spec.special==='dive')return {active:time<spec.windup+spec.leapDuration,position:require('./special-crafts.cjs').divePosition(event,time,spec)};
  if(!spec.leap){if(spec.chargeStun){const dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,length=Math.hypot(dx,dz),ratio=Math.max(0,1-.8/(length||1));return dashPosition({...event,aim:{x:event.origin.x+dx*ratio,y:event.aim.y,z:event.origin.z+dz*ratio}},time,spec);}return dashPosition(event,time,spec);}

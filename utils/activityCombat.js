@@ -123,6 +123,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       for(let t=0;t<=spec.windup+spec.leapDuration;t+=40){const pos=phoenixPosition({origin,aim:endpoint},t,spec),body={...pos,y:pos.y+.8};if(geometry?.sweep(previous,body,.16))return {error:'Le trajet est bloqué par un obstacle.'};previous=body;}
       if(geometry?.sweep(previous,{...endpoint,y:endpoint.y+.8},.16))return {error:'Le trajet est bloqué par un obstacle.'};
     }
+    if(spec.special==='mueller')spec=require('../activity/mueller-combo.cjs').muellerSpec({origin,aim:endpoint},spec);
     let lockedTarget=null,lockedOffset=null;
 
     if(fps){let closest=Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z);for(const target of room.values()){if(target.id===player.id||target.hp<=0||target.spectator||!canDamage(player,target))continue;const body=rayBody(fps.origin,fps.direction,target,closest);if(body&&body.distance<closest){closest=body.distance;obstacleImpact=false;Object.assign(endpoint,body.point);if(spec.lockOn){lockedTarget=target.id;lockedOffset={x:body.point.x-target.x,y:body.point.y-(target.y??0),z:body.point.z-target.z};}}}}

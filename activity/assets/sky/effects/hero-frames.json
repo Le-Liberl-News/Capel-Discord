@@ -288,5 +288,11 @@
     "frames": 90,
     "duration": 1000,
     "size": 4
+  },
+  "sc/cr130_02._ef": {
+    "name": "sc-cr130_02",
+    "frames": 90,
+    "duration": 1000,
+    "size": 4
   }
 }
