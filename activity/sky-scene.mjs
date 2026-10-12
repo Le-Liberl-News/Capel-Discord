@@ -709,7 +709,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
-    const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying)yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
+    const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Sieg"].includes(avatars.get(localId)?.character))yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
