@@ -1,0 +1,24 @@
+{
+  "game": "SC",
+  "scenario": "t0131_2",
+  "assets": {
+    "Schera": {
+      "chip": "ch00023",
+      "pose": 0
+    },
+    "Aina": {
+      "chip": "ch02560",
+      "pose": 0,
+      "placement": "Seated at the table using the lowered standing pose from the native drinking scene"
+    },
+    "Olivier": {
+      "chip": "ch20213",
+      "pose": 0
+    },
+    "redWine": {
+      "chip": "ch20021",
+      "frame": 5
+    },
+    "status": "SC/paralyze._ef"
+  }
+}

@@ -1,3 +1,4 @@
+const {createDrinkingDialogue}=require('../activity/drinking-contest.cjs');
 const {applyDamage}=require('./activityDamage');
 // Authoritative room simulation. Coordinates and HP are never supplied by clients.
 const MAX_HP = require('../activity/player-health.cjs').PLAYER_MAX_HP,
@@ -81,6 +82,7 @@ function createSingleActivityWorld({
     for (let i = end; i !== start; i = parents.get(i)) result.push(point(i));
     return result.reverse();
   }
+  const drinkingDialogue=createDrinkingDialogue({now});
   const residents = npcs.map((n, i) => ({
     ...n,
     ...n.waypoints[0],
@@ -152,6 +154,7 @@ function createSingleActivityWorld({
     const time = now(),
       elapsed = Math.max(0, (time - last) / 1000);
     last = time;
+    drinkingDialogue.tick(residents);
     for (const p of players.values()) {
       p.hp ??= MAX_HP;p.maxHp=MAX_HP;
       if(p.shield?.until<=time)p.shield=null;
@@ -325,7 +328,7 @@ function createSingleActivityWorld({
       return {
         speaker: n.id,
         character: n.name,
-        text: n.lines[Math.floor(Math.random() * n.lines.length)],
+        text: n.lines.length?n.lines[Math.floor(Math.random() * n.lines.length)]:"Eh, hrrrrm...",
       };
     }
     if (command.type === "pickup") {

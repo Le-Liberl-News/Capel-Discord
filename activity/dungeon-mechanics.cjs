@@ -5,3 +5,13 @@ function inSector(p,a){const dx=p.x-a.origin.x,dz=p.z-a.origin.z,d=Math.hypot(dx
 function projectilePoint(p,time){const t=Math.max(0,(time-p.started)/1000);return {x:p.origin.x+p.vx*t,y:p.origin.y+p.vy*t,z:p.origin.z+p.vz*t};}
 function sweptPlayer(from,to,p,radius=.25){const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,l=dx*dx+dy*dy+dz*dz;return [.3,.8,1.35].some(h=>{const py=(p.y??0)+h,t=l?Math.max(0,Math.min(1,((p.x-from.x)*dx+(py-from.y)*dy+(p.z-from.z)*dz)/l)):0;return Math.hypot(p.x-from.x-t*dx,py-from.y-t*dy,p.z-from.z-t*dz)<radius+.27;});}
 module.exports={JUMP_DURATION,JUMP_HEIGHT,JUMP_SPEED,jumpPosition,jumpDisplayPosition,inSector,projectilePoint,sweptPlayer};
+
+// Resume locally at a safe landing instead of waiting for the next state poll.
+function predictedLanding(grid,jump,time,geometry){
+ if(!jump||time<jump.started+1000)return null;
+ const p=jumpDisplayPosition(grid,jump,jump.started+1000),x=Math.round((p.x-grid.origin.x)/grid.step),z=Math.round((p.z-grid.origin.z)/grid.step);
+ if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return null;
+ for(let t=0;t<1000;t+=40){const a=jumpPosition(jump,jump.started+t),b=jumpPosition(jump,jump.started+t+40);if(geometry?.sweep({...a,y:a.y+.45},{...b,y:b.y+.45},.18))return null;}
+ return p;
+}
+module.exports.predictedLanding=predictedLanding;

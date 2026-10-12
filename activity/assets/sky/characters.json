@@ -3205,5 +3205,89 @@
     "bodyRadiusPixels": 11.2,
     "pixelScale": 0.02,
     "bodyHeight": 1.6
+  },
+  "Concours Schera": {
+    "texture": "drinking-ch00023.png",
+    "columns": 8,
+    "rows": 1,
+    "frameWidth": 52,
+    "frameHeight": 88,
+    "frames": 8,
+    "idle": [
+      0
+    ],
+    "run": [
+      0
+    ],
+    "directions": 8,
+    "fps": 1,
+    "height": 1.76,
+    "bodyPixelHeight": 79,
+    "footOffsets": [
+      0.04,
+      0.1,
+      0.22,
+      0.28,
+      0.16,
+      0.04,
+      0,
+      0
+    ],
+    "bodyRadiusPixels": 18,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.58
+  },
+  "Concours Aina": {
+    "texture": "drinking-ch02560.png",
+    "columns": 8,
+    "rows": 1,
+    "frameWidth": 38,
+    "frameHeight": 85,
+    "frames": 8,
+    "idle": [
+      0
+    ],
+    "run": [
+      0
+    ],
+    "directions": 8,
+    "fps": 1,
+    "height": 1.7,
+    "bodyPixelHeight": 80.5,
+    "footOffsets": [
+      0.04,
+      0.04,
+      0.06,
+      0.04,
+      0.04,
+      0,
+      0.04,
+      0.02
+    ],
+    "bodyRadiusPixels": 18,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.61
+  },
+  "Concours Olivier": {
+    "texture": "drinking-ch20213.png",
+    "columns": 8,
+    "rows": 1,
+    "frameWidth": 102,
+    "frameHeight": 92,
+    "frames": 8,
+    "idle": [
+      0
+    ],
+    "run": [
+      0
+    ],
+    "directions": 8,
+    "fps": 1,
+    "height": 1.84,
+    "bodyPixelHeight": 92,
+    "bodyRadiusPixels": 18,
+    "centerY": 0.9450000000000001,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.84
   }
 }

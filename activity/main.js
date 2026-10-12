@@ -320,7 +320,7 @@ async function start() {
       event.preventDefault();
       scene.say(dialogueTest.elements.phrase.value);
     });
-    for (const name of Object.keys(scene.catalogue)) {
+    for (const name of Object.keys(scene.catalogue).filter(n=>!n.startsWith("Concours "))) {
       const option = document.createElement("option");
       option.value = name;
       option.textContent = name;
@@ -331,6 +331,7 @@ async function start() {
     twoDialogues.textContent = "Tester deux bulles";
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
+    if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
     if(etat.map==='arena'){const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),

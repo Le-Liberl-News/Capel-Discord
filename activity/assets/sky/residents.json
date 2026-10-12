@@ -273,6 +273,66 @@
         "function": 12,
         "chip": "ch01003"
       }
+    },
+    {
+      "id": "drinking-schera",
+      "name": "Schéra",
+      "character": "Concours Schera",
+      "static": true,
+      "speed": 0,
+      "heading": {
+        "dx": 1,
+        "dz": 0
+      },
+      "waypoints": [
+        {
+          "x": -11.4,
+          "y": 1.7,
+          "z": -1
+        }
+      ],
+      "lines": [],
+      "drinkingScene": "schera"
+    },
+    {
+      "id": "drinking-aina",
+      "name": "Aina",
+      "character": "Concours Aina",
+      "static": true,
+      "speed": 0,
+      "heading": {
+        "dx": -1,
+        "dz": 0
+      },
+      "waypoints": [
+        {
+          "x": -8.6,
+          "y": 1.35,
+          "z": -1
+        }
+      ],
+      "lines": [],
+      "drinkingScene": "aina"
+    },
+    {
+      "id": "drinking-olivier",
+      "name": "Olivier",
+      "character": "Concours Olivier",
+      "static": true,
+      "speed": 0,
+      "heading": {
+        "dx": 1,
+        "dz": 0
+      },
+      "waypoints": [
+        {
+          "x": -10,
+          "y": 1.5,
+          "z": -3.1
+        }
+      ],
+      "lines": [],
+      "drinkingScene": "olivier"
     }
   ],
   "ballSpawn": {

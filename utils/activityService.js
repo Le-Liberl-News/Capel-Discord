@@ -204,7 +204,7 @@ function createActivityService({
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && (!wasJumping||point.jumpLanding===player.lastLandedJump) && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
         let submitted=point;
         if(player.cooking){if(point.cookingHeld===true)player.cooking.heldUntil=now()+1500;else delete player.cooking;}

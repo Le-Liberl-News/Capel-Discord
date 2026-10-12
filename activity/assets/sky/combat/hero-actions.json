@@ -647,9 +647,22 @@
       "nativeLine": true,
       "effectDuration": 1200,
       "effectScale": 3,
-      "range": 24,
-      "radius": 0.75,
-      "fixedLength": true
+      "range": 12,
+      "radius": 1.1,
+      "fixedLength": true,
+      "effectWidth": 1.35,
+      "waveDuration": 850,
+      "hitOffsets": [
+        0.0,
+        212.5,
+        425.0,
+        637.5,
+        850.0,
+        1062.5,
+        1275.0,
+        1487.5,
+        1700.0
+      ]
     }
   }
 }

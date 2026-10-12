@@ -385,5 +385,12 @@
     "lastVisibleFrame": 9,
     "duration": 1000,
     "size": 4
+  },
+  "sc/paralyze._ef": {
+    "name": "sc-paralyze",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 1000,
+    "size": 4
   }
 }

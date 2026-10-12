@@ -286,5 +286,17 @@
   "Pom": {
     "height": 1.46,
     "radius": 0.36
+  },
+  "Concours Schera": {
+    "height": 1.58,
+    "radius": 0.36
+  },
+  "Concours Aina": {
+    "height": 1.61,
+    "radius": 0.36
+  },
+  "Concours Olivier": {
+    "height": 1.84,
+    "radius": 0.36
   }
 }
