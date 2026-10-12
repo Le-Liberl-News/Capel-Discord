@@ -35,6 +35,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function action(player, command, room) {
 
     players=room;
+    const cooking=require("../activity/phyllis-cooking.cjs");let food=null;
+    if(player.character==='Phyllis'&&command.kind==='craft'){if(command.cookPhase==='end'){cooking.cookingTick(player,now());delete player.cooking;return {};}if(player.hp<=0||player.spectator||player.duelProtected||player.canMove===false||immobilized(player,now()))return {error:"Cuisine indisponible."};if(player.cooking)return {};if(!player.foodStock?.length){if(player.jump||player.knockback)return {error:'Cuisine au sol uniquement.'};cooking.beginCooking(player,now());return {cooking:true};}food=player.foodStock[0];}
 
     if(player.character==='Campanella'&&command.kind==='craft'&&player.hp>0&&!player.spectator&&!player.duelProtected&&!immobilized(player,now())&&special.detonate(player,room))return {combatId:command.id};
 
@@ -131,6 +133,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     const travel = fps?Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z)/spec.projectileSpeed*1000:spec.leap?spec.leapDuration:spec.dash ? spec.dashDuration : !spec.projectile ? 0 : Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/14*1000;
 
     const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,technique:spec.name,target:supportTarget?.id??(spec.targetRequired?command.target:undefined),effect:spec.effect,origin:fps?fps.origin:origin,ray:fps,obstacleImpact,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.persistentBuff?spec.buffDuration:spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
+    if(food){attack.food=food;attack.technique=cooking.FOODS[food].name;player.foodStock.shift();}
 
     if(spec.lockOn){attack.target=lockedTarget;attack.lockedOffset=lockedOffset;attack.shots=[];}
 
@@ -188,6 +191,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   const driveContacts=new Map();
   function tick(room) {
+    const cooking=require("../activity/phyllis-cooking.cjs");for(const player of room.values())cooking.cookingTick(player,now());
 
     players=room;const time=now();special.tickEntities(room);
 
@@ -206,6 +210,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(time>attack.endsAt+5000){attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(attack.food&&!attack.cancelled){cooking.advanceFood(attack,time,room,geometry,canDamage,hurt);continue;}
       if(dashSpec?.inertia&&!attack.cancelled&&attack.resolved&&time<attack.impactAt+dashSpec.buffDuration){
         const actor=room.get(attack.actor);if(!actor||actor.hp<=0||actor.character!==attack.character||immobilized(actor,time)){driveContacts.delete(id);continue;}
         const state=driveContacts.get(id)??{point:{...attack.origin},at:attack.impactAt,hits:new Map()},from=state.point,end={x:actor.x,y:actor.y??0,z:actor.z},distance=Math.hypot(end.x-from.x,end.z-from.z);

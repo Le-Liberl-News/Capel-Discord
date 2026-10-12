@@ -47,6 +47,7 @@ export function createTraining({grid,geometry,character,opponent,now=Date.now,ra
   else if(distance>preferred)navigate(player);else path=[];
  }
  function tick(position,command){const time=now(),dt=Math.min(.1,Math.max(.001,(time-previous)/1000));previous=time;
+  if(player.cooking){if(position.cookingHeld)player.cooking.heldUntil=time+1500;else delete player.cooking;}
   velocity={x:(position.x-last.x)/dt,z:(position.z-last.z)/dt};for(const axis of ['x','z'])velocity[axis]=Math.max(-4,Math.min(4,velocity[axis]));last={...position};
   if(!player.jump&&!player.siegDive&&!player.knockback&&time>=(player.combatLockedUntil??0)&&!status.immobilized(player,time))Object.assign(player,{x:position.x,y:position.y,z:position.z});
   let actionResult;if(command&&time>=readyAt){let result={};if(command.type==='say')result={text:command.text,speaker:player.id};else if(!finish)result=world.action(player,command,players);actionResult={id:command.id,...result};}

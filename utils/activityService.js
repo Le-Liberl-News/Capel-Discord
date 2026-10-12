@@ -207,6 +207,7 @@ function createActivityService({
       if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
         let submitted=point;
+        if(player.cooking){if(point.cookingHeld===true)player.cooking.heldUntil=now()+1500;else delete player.cooking;}
         if(platforms&&point.platform&&!requestedJump){const d=platforms.definitions.find(d=>d.id===point.platform.id),pos=d&&platforms.position(d.id);if(!d||![point.platform.x,point.platform.z].every(Number.isFinite)||Math.abs(point.platform.x)>d.width/2+.15||Math.abs(point.platform.z)>d.width/2+.15)throw new ActivityError('Plateforme invalide.');submitted={...point,x:pos.x+point.platform.x,z:pos.z+point.platform.z,trace:[]};}
         const takeoff=requestedJump?(point.action.origin??player):submitted;
         const x = Number(takeoff.x),
@@ -342,6 +343,7 @@ function createActivityService({
           ? { id: point.action.id, error: actionResult?.error }
           : undefined,
         health: {
+          foodStock:player.foodStock??[],cooking:player.cooking??null,
           canDetonate:world.canDetonate?.(player.id)??false, frozenUntil:player.stoneUntil??0,downUntil:player.downUntil??0,
           combatDash:player.combatDash??null,
           knockback:player.knockback??null,

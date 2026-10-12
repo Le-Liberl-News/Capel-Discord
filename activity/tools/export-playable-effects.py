@@ -1,5 +1,5 @@
 """Copy only the selected EF assemblies and their dependencies from the local atelier."""
-import json, shutil
+import json, shutil, sys
 from pathlib import Path
 cache = Path('E:/dev/sky-activity-tools/atelier-combat')
 output = Path(__file__).resolve().parents[1] / 'assets/sky/effects/native'
@@ -43,11 +43,13 @@ def effect(identifier):
 heroes=json.loads((output.parents[1]/'combat/hero-actions.json').read_text(encoding='utf8'))
 hero_effects={action['nativeEffect'] for hero in heroes.values() for action in hero.values() if isinstance(action,dict) and action.get('nativeEffect')}
 hero_effects.update(action[key] for hero in heroes.values() for action in hero.values() if isinstance(action,dict) for key in ['hitEffect','explosionEffect','edgeEffect','phoenixEffect','shockwaveEffect','trailEffect'] if action.get(key))
-hero_effects.update(['SC/ms10920._ef','SC/mp066_01._ef','SC/ms10011._ef','SC/msc0548._ef','SC/sc480_03._ef'])
+hero_effects.update(['SC/mp050_00._ef','SC/ms10920._ef','SC/mp066_01._ef','SC/ms10011._ef','SC/msc0548._ef','SC/sc480_03._ef'])
 hero_effects.update(e['id'] for hero in heroes.values() for action in hero.values() if isinstance(action,dict) for e in action.get('chargeEffects',[]))
-for identifier in sorted(hero_effects) + [f'SC/damage{i}._ef' for i in [0,1,2,3,5]] + ['SC/mgblood2._ef', 'SC/mg050_0._ef', 'SC/sc001_10._ef', 'SC/mgaria0._ef', 'SC/mg011_0._ef']:
-    effect(identifier)
-for identifier in ['Third/msc0614._ef']:
-    effect(identifier)
+requested=next((arg[7:].split(',') for arg in sys.argv[1:] if arg.startswith('--only=')),None)
+identifiers=requested or (sorted(hero_effects) + [f'SC/damage{i}._ef' for i in [0,1,2,3,5]] + ['SC/mgblood2._ef', 'SC/mg050_0._ef', 'SC/sc001_10._ef', 'SC/mgaria0._ef', 'SC/mg011_0._ef','Third/msc0614._ef'])
+for identifier in identifiers:effect(identifier)
+if requested:
+    existing=json.loads((output/'catalogue.json').read_text(encoding='utf8'))
+    selected={**{entry['id'].lower():entry for entry in existing},**selected}
 (output / 'catalogue.json').write_text(json.dumps(list(selected.values()), ensure_ascii=False, separators=(',', ':')), encoding='utf8')
 print(len(selected), 'assemblies exported')
