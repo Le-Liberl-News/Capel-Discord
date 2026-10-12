@@ -242,6 +242,7 @@ async function publier() {
     body: JSON.stringify({
       ...submitted,
       trainingAck:lastTrainingRequest??undefined,
+      passive:training||trainingBusy?true:undefined,
       after: etat.messageCursor,
       action: training||trainingBusy?undefined:scene.action(),
     }),
