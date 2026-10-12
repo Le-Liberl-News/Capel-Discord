@@ -648,7 +648,8 @@
       "effectDuration": 1200,
       "effectScale": 3,
       "range": 24,
-      "radius": 2.25
+      "radius": 0.75,
+      "fixedLength": true
     }
   }
 }

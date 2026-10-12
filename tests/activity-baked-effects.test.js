@@ -37,7 +37,7 @@ test('native polar particles use angle, height and radius rather than a thirty-u
 test('a short craft plays the whole baked assembly rather than cutting off its final frames',async()=>{
  const THREE=await import('three'),{bakedEffectSprite}=await import('../activity/baked-effects.mjs');
  const bank={map:new THREE.Texture(),frames:90,columns:8,rows:12,duration:1400},effect=bakedEffectSprite(THREE,bank,4);
- effect.draw(1399);assert.equal(effect.sprite.material.map.offset.x,1/8);assert.equal(effect.sprite.material.map.offset.y,0);effect.dispose();bank.map.dispose();
+ effect.draw(1399);assert.equal(effect.sprite.material.map.offset.x,1/8+.5/(8*128));assert.equal(effect.sprite.material.map.offset.y,.5/(Math.ceil(bank.frames/8)*128));effect.dispose();bank.map.dispose();
 });
 
 test('orbit curves move the emitter and children inherit its position at their birth',async()=>{

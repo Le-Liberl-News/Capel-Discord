@@ -36,6 +36,12 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
   }
   const side=hero?Math.min(resolution,Math.max(right-left,bottom-top)+12):resolution,cx=hero?(left+right)/2:resolution/2,cy=hero?(top+bottom)/2:resolution/2;
   for(let i=0;i<frames;i++){ctx.putImageData(snapshots[i],0,0);atlas.getContext('2d').drawImage(frame,cx-side/2,cy-side/2,side,side,i%columns*128,Math.floor(i/columns)*128,128,128);}
+  if(name==='sc-mg017_0'){
+   // A clipped smoke frame must fade to transparent before the atlas cell boundary.
+   const ac=atlas.getContext('2d'),data=ac.getImageData(0,0,atlas.width,atlas.height);
+   for(let y=0;y<atlas.height;y++)for(let x=0;x<atlas.width;x++){const edge=Math.min(x%128,127-x%128,y%128,127-y%128);if(edge<5)data.data[(y*atlas.width+x)*4+3]*=edge/5;}
+   ac.putImageData(data,0,0);
+  }
 
   if(!peak)throw Error(`Invisible native effect: ${name}`);
   await fs.writeFile(path.join(root,`../${name}-frames.png`),atlas.toBuffer('image/png'));

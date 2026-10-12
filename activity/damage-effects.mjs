@@ -26,7 +26,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
    const nativeFist=impact?.nativeEffect==='SC/cr160_00._ef';
-   const effect=heal?null:impact?.nativeEffect==='Third/cr151_01._ef'?bakedEffectSprite(THREE,estelleBank,2):impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
+   const effect=heal?null:impact?.nativeEffect==='Third/cr151_01._ef'?bakedEffectSprite(THREE,estelleBank,4):impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
    const sprite=effect?.sprite??new THREE.Sprite(new THREE.SpriteMaterial({map,color:heal?0x70ff9a:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
    if(effect)map.dispose();
    sprite.renderOrder=5;scene.add(sprite);

@@ -73,7 +73,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const airborneMelee=command.kind==='basic'&&!spec.projectile;
 
-    const ground = fps||spec.effect||airborneMelee?endpoint.y:floor(endpoint);
+    const ground = fps||spec.effect||airborneMelee||spec.fixedLength?endpoint.y:floor(endpoint);
 
     if (ground === null || !Number.isFinite(ground) || Math.abs(ground-endpoint.y)>1.2)
 
@@ -392,7 +392,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
           const dx=attack.aim.x-attack.origin.x,dz=attack.aim.z-attack.origin.z,length2=dx*dx+dz*dz;
 
-          const t=((player.x-attack.origin.x)*dx+(player.z-attack.origin.z)*dz)/(length2||1);
+          const t=((player.x-attack.origin.x)*dx+(player.z-attack.origin.z)*dz)/(spec.fixedLength?Math.sqrt(length2)*spec.range:length2||1);
 
           inRange=inRange&&t>=Math.max(0,(hitIndex-.5)/(hitOffsets.length-1))&&t<=Math.min(1,(hitIndex+.5)/(hitOffsets.length-1))&&!attack.hits.some(h=>h.id===player.id);
 
