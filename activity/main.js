@@ -1,3 +1,4 @@
+import {DUEL_INTRO_DURATION} from './duel-intro.mjs';
 import {createTraining} from './training.mjs';
 import trainingCombat from './native-combat.cjs';
 import {createCapturePublisher} from "./capture-publisher.mjs";
@@ -41,8 +42,9 @@ async function startTraining(){
  if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
+ const titles=apercuLocal?{}:(await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}})).titles;
  training=null;scene.dispose();scene=null;
- try{scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent});bindScene();await scene.me(training.player);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent;music.setTrack(musicUrl('arena'));}
+ try{scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent,titles,introDuration:DUEL_INTRO_DURATION});bindScene();await scene.me(training.player);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent+' (IA)';music.setTrack(musicUrl('arena'));}
  catch(error){trainingBusy=false;await stopTraining();throw error;}
  trainingBusy=false;void tickTraining();
 }
@@ -329,6 +331,7 @@ async function start() {
     twoDialogues.textContent = "Tester deux bulles";
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
+    if(etat.map==='arena'){const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );

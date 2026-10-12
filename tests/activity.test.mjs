@@ -258,11 +258,11 @@ test("damage feedback uses confirmed HP losses, including lethal hits, without r
 });
 
 
-test('duel introduction follows the FC presentation order and never replays an expired match',async()=>{
- const {duelPhase}=await import('../activity/duel-intro.mjs');const duel={startsAt:1000,readyAt:10000};
- assert.equal(duelPhase(duel,500).kind,'overview');assert.equal(duelPhase(duel,3000).side,0);
- assert.equal(duelPhase(duel,5000).side,1);assert.equal(duelPhase(duel,7500).kind,'versus');
- assert.equal(duelPhase(duel,9500).kind,'begin');assert.equal(duelPhase(duel,10000),null);assert.equal(duelPhase(null,0),null);
+test('duel introduction follows the Third presentation order and never replays an expired match',async()=>{
+ const {duelPhase}=await import('../activity/duel-intro.mjs');const duel={startsAt:1000,readyAt:20000};
+ assert.equal(duelPhase(duel,500).kind,'overview');assert.equal(duelPhase(duel,9500).kind,'wide');
+ assert.equal(duelPhase(duel,12000).side,0);assert.equal(duelPhase(duel,15000).side,1);
+ assert.equal(duelPhase(duel,18500).kind,'versus');assert.equal(duelPhase(duel,19700).kind,'begin');assert.equal(duelPhase(duel,20000),null);assert.equal(duelPhase(null,0),null);
 });
 
 
