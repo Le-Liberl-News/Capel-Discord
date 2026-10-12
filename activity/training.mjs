@@ -6,13 +6,13 @@ import residents from './assets/sky/arena/residents.json';
 import {bodyHeight} from './fps-combat.cjs';
 
 // The same combat rules as online matches, with an isolated in-memory world.
-export function createTraining({grid,geometry,character,opponent,now=Date.now,random=Math.random,ballSpawns=residents.ballSpawns,titles={},introDuration=0}) {
+export function createTraining({grid,geometry,character,opponent,now=Date.now,random=Math.random,ballSpawns=residents.ballSpawns,titles={},entrances={},introDuration=0}) {
  const place=p=>pointAt(grid,nearestCell(grid,p));
  const player={id:'training:player',character,...place({x:-1,z:3.25}),hp:500,maxHp:500,noRespawn:true};
  const ai={id:'training:ai',character:opponent,name:opponent+' (IA)',...place({x:-1,z:-16.25}),hp:500,maxHp:500,noRespawn:true};
  const players=new Map([[player.id,player],[ai.id,ai]]);
  const world=worldModule.createActivityWorld({grid,geometry,now,combatEnabled:true,jumpEnabled:true,ballSpawns,disablePoms:!ballSpawns.length,canDamage:(a,b)=>a.id!==b.id});
- const startsAt=now(),readyAt=startsAt+introDuration,duel={id:"training:"+startsAt,startsAt,readyAt,players:[player.id,ai.id],names:[character,opponent+" (IA)"],titles:[titles[character],titles[opponent]]};
+ const startsAt=now(),readyAt=startsAt+introDuration,duel={id:"training:"+startsAt,startsAt,readyAt,players:[player.id,ai.id],names:[character,opponent+" (IA)"],titles:[titles[character],titles[opponent]],streaks:[0,0],phrases:[entrances[character]?.adversaires?.[opponent]??entrances[character]?.defaut,entrances[opponent]?.adversaires?.[character]??entrances[opponent]?.defaut]};
  let previous=now(),thinkAt=0,path=[],finish=null,count=0,velocity={x:0,z:0},last={...player},goal=null,trinity=null;
  const aimAt=(target,speed=0)=>{const lead=speed?Math.min(.7,Math.hypot(ai.x-target.x,ai.z-target.z)/speed):0;return {x:target.x+velocity.x*lead,y:target.y??0,z:target.z+velocity.z*lead};};
  const send=(command)=>world.action(ai,{id:'training:action:'+ ++count,...command},players);

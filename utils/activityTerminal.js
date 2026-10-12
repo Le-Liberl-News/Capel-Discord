@@ -15,6 +15,7 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  async function perform(token,body) {
   const {id}=lobby.identity(token);
   switch(body.action) {
+   case "rematch": {const opponent=lobby.rematchOpponent(body.invitation,id);return duels.challenge({id},opponent,client,true);}
    case "tower": {await nearby(token);lobby.enterTower(id,1);return {message:"Tour rejointe."};}
    case "test_character": {
     await nearby(token);
@@ -43,7 +44,7 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  async function action(token,body) {
   const {id}=lobby.identity(token);
   if(!body||typeof body.request!=="string"||!/^[a-zA-Z0-9-]{8,64}$/.test(body.request)||typeof body.action!=="string"||
-   (["accept","decline","hunt_join","hunt_start"].includes(body.action)&&(typeof body.invitation!=="string"||body.invitation.length>80)))throw new ActivityError("Requ\u00eate invalide.",400);
+   (["accept","decline","hunt_join","hunt_start","rematch"].includes(body.action)&&(typeof body.invitation!=="string"||body.invitation.length>80)))throw new ActivityError("Requ\u00eate invalide.",400);
   for(const [key,value]of completed)if(value.expires<now())completed.delete(key);
   const key=id+":"+body.request,fingerprint=JSON.stringify([body.action,body.character,body.invitation]);
   const previous=completed.get(key);

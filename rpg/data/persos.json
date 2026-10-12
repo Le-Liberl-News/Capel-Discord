@@ -37,7 +37,11 @@
     "style-dialogue": "Ton familier, direct et spontané. Un peu garçon manqué. Exprime ses émotions de manière très expressive et n'hésite pas à élever la voix.",
     "description": "Manie un long bâton. Excellente allonge et polyvalence.",
     "anonymeIndex": 0,
-    "combo": "Renne"
+    "combo": "Renne",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Joshua": {
     "hpMax": 120,
@@ -77,7 +81,11 @@
     "style-dialogue": "Poli, posé et réfléchi. Il sert souvent de voix de la raison pour tempérer l'énergie débordante d'Estelle.",
     "description": "Frappe avec deux lames courtes. Extrêmement rapide.",
     "anonymeIndex": 1,
-    "combo": "Loewe"
+    "combo": "Loewe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Zin": {
     "hpMax": 200,
@@ -112,7 +120,11 @@
     "style-dialogue": "Amical, chaleureux et protecteur. Utilise souvent un ton de vieux briscard expérimenté qui a tout vu.",
     "description": "Zin a un grand gabarit musclé. Il combat à mains nues en utilisant les arts martiaux de son pays natal, Calvard.",
     "anonymeIndex": 7,
-    "combo": "Kilika"
+    "combo": "Kilika",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Kloe": {
     "hpMax": 110,
@@ -152,7 +164,11 @@
     "style-dialogue": "Très polie, douce et respectueuse. Elle s'excuse facilement mais sait se montrer ferme.",
     "description": "Kloe est une jeune fille douce accompagnée de son fidèle faucon blanc, Sieg. Spécialisée dans les arts magiques de soin.",
     "anonymeIndex": 4,
-    "combo": "Clem"
+    "combo": "Clem",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Scherazard": {
     "hpMax": 130,
@@ -191,7 +207,11 @@
     "style-dialogue": "Taquin, autoritaire et piquant. Maltraite allégrement (mais avec affection) ceux qui la cherchent.",
     "description": "Surnommée l'Éclair d'Argent, cette mentor manie le fouet et les arts du vent. Redoutable au combat comme au bar.",
     "anonymeIndex": 2,
-    "combo": "Aina"
+    "combo": "Aina",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Olivier": {
     "hpMax": 120,
@@ -226,7 +246,11 @@
     "style-dialogue": "Extrêmement théâtral, poétique et mélodramatique. Adore les métaphores fleuries.",
     "description": "Utilise un pistolet orbal. Un génie des arts magiques dont l'imprévisibilité cache un grand intellect.",
     "anonymeIndex": 3,
-    "combo": "Mueller"
+    "combo": "Mueller",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Agate": {
     "hpMax": 165,
@@ -261,7 +285,11 @@
     "style-dialogue": "Sec, agressif, s'énerve très vite, mais bafouille misérablement quand il est touché émotionnellement.",
     "description": "Manie une épée lourde dévastatrice. Une force brute capable d'encaisser les assauts les plus violents.",
     "anonymeIndex": 5,
-    "combo": "Professeur Russell"
+    "combo": "Professeur Russell",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Renne": {
     "hpMax": 110,
@@ -301,7 +329,11 @@
     "style-dialogue": "Enfantin, hautain et parsemé de sous-entendus morbides ou cruels. Parle souvent d'elle à la troisième personne.",
     "description": "Génie précoce maniant une faux ornementée. Sa puissance magique est extrême.",
     "anonymeIndex": 18,
-    "combo": "Weissmann"
+    "combo": "Weissmann",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Anelace": {
     "hpMax": 140,
@@ -336,7 +368,11 @@
     "style-dialogue": "Enthousiaste, familier. Peut perdre toute concentration si elle voit quelque chose de mignon.",
     "description": "Pratiquante du style Huit Feuilles, Une Lame. Elle manie le katana avec précision et rapidité.",
     "anonymeIndex": 22,
-    "combo": "Richard"
+    "combo": "Richard",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Ries": {
     "hpMax": 155,
@@ -371,7 +407,11 @@
     "style-dialogue": "Vouvoiement strict, ton très monocorde et sarcastique, surtout lorsqu'elle réprimande Kevin.",
     "description": "Écuyère des Gralsritter maniant une épée segmentée. Grande résistance et appétit sans limites.",
     "anonymeIndex": 9,
-    "combo": "Kevin"
+    "combo": "Kevin",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Gilbert": {
     "hpMax": 105,
@@ -402,7 +442,11 @@
     "style-dialogue": "Extrêmement prétentieux, glousse de manière diabolique, puis devient hystérique et pleurnichard face à la défaite.",
     "description": "Ancien intendant devenu soldat d'Ouroboros. Son arrogance n'a d'égale que sa maladresse.",
     "anonymeIndex": 76,
-    "combo": "Campanella"
+    "combo": "Campanella",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "default": {
     "hpMax": 100,
@@ -452,7 +496,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 6,
-    "combo": "Agate"
+    "combo": "Agate",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Nial": {
     "hpMax": 100,
@@ -478,7 +526,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 8,
-    "combo": "Dorothy"
+    "combo": "Dorothy",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Kevin": {
     "hpMax": 100,
@@ -504,7 +556,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 10,
-    "combo": "Ries"
+    "combo": "Ries",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Dorothy": {
     "hpMax": 100,
@@ -530,7 +586,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 11,
-    "combo": "Nial"
+    "combo": "Nial",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Luciola": {
     "hpMax": 100,
@@ -556,7 +616,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 12,
-    "combo": "Scherazard"
+    "combo": "Scherazard",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Walter": {
     "hpMax": 100,
@@ -582,7 +646,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 13,
-    "combo": "Zin"
+    "combo": "Zin",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Bleublanc": {
     "hpMax": 100,
@@ -608,7 +676,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 14,
-    "combo": "Olivier"
+    "combo": "Olivier",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Campanella": {
     "hpMax": 100,
@@ -634,7 +706,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 15,
-    "combo": "Weissmann"
+    "combo": "Weissmann",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Loewe": {
     "hpMax": 100,
@@ -660,7 +736,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 16,
-    "combo": "Joshua"
+    "combo": "Joshua",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Weissmann": {
     "hpMax": 100,
@@ -686,7 +766,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 17,
-    "combo": "Loewe"
+    "combo": "Loewe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Professeur Russell": {
     "hpMax": 100,
@@ -712,7 +796,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 19,
-    "combo": "Erika Russell"
+    "combo": "Erika Russell",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Julia": {
     "hpMax": 100,
@@ -738,7 +826,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 20,
-    "combo": "Sieg"
+    "combo": "Sieg",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Josette": {
     "hpMax": 100,
@@ -764,7 +856,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 21,
-    "combo": "Joshua"
+    "combo": "Joshua",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Cassius": {
     "hpMax": 100,
@@ -790,7 +886,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 23,
-    "combo": "Estelle"
+    "combo": "Estelle",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Maire Maybelle": {
     "hpMax": 100,
@@ -816,7 +916,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 24,
-    "combo": "Lila"
+    "combo": "Lila",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Richard": {
     "hpMax": 100,
@@ -842,7 +946,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 25,
-    "combo": "Cassius"
+    "combo": "Cassius",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Mueller": {
     "hpMax": 100,
@@ -868,7 +976,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 26,
-    "combo": "Olivier"
+    "combo": "Olivier",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Grant": {
     "hpMax": 100,
@@ -894,7 +1006,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 27,
-    "combo": "Lugran"
+    "combo": "Lugran",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Aina": {
     "hpMax": 100,
@@ -920,7 +1036,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 28,
-    "combo": "Scherazard"
+    "combo": "Scherazard",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Proviseur Collins": {
     "hpMax": 100,
@@ -946,7 +1066,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 29,
-    "combo": "Jill"
+    "combo": "Jill",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Jill": {
     "hpMax": 100,
@@ -972,7 +1096,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 30,
-    "combo": "Kloe"
+    "combo": "Kloe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Hans": {
     "hpMax": 100,
@@ -998,7 +1126,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 31,
-    "combo": "Proviseur Collins"
+    "combo": "Proviseur Collins",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Carna": {
     "hpMax": 100,
@@ -1024,7 +1156,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 32,
-    "combo": "Jean"
+    "combo": "Jean",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Jean": {
     "hpMax": 100,
@@ -1050,7 +1186,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 33,
-    "combo": "Carna"
+    "combo": "Carna",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Général Morgan": {
     "hpMax": 100,
@@ -1076,7 +1216,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 34,
-    "combo": "Richard"
+    "combo": "Richard",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Lugran": {
     "hpMax": 100,
@@ -1102,7 +1246,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 35,
-    "combo": "Olivier"
+    "combo": "Olivier",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Kilika": {
     "hpMax": 100,
@@ -1128,7 +1276,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 36,
-    "combo": "Walter"
+    "combo": "Walter",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Kurt": {
     "hpMax": 100,
@@ -1154,7 +1306,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 37,
-    "combo": "Elnan"
+    "combo": "Elnan",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Elnan": {
     "hpMax": 100,
@@ -1180,7 +1336,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 38,
-    "combo": "Kurt"
+    "combo": "Kurt",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Majordome Philippe": {
     "hpMax": 100,
@@ -1206,7 +1366,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 39,
-    "combo": "Duc Dunan"
+    "combo": "Duc Dunan",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Duc Dunan": {
     "hpMax": 100,
@@ -1232,7 +1396,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 40,
-    "combo": "Majordome Philippe"
+    "combo": "Majordome Philippe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Lila": {
     "hpMax": 100,
@@ -1258,7 +1426,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 41,
-    "combo": "Maire Maybelle"
+    "combo": "Maire Maybelle",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Kyle": {
     "hpMax": 100,
@@ -1284,7 +1456,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 42,
-    "combo": "Don"
+    "combo": "Don",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Don": {
     "hpMax": 100,
@@ -1310,7 +1486,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 43,
-    "combo": "Kyle"
+    "combo": "Kyle",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Reine Alicia": {
     "hpMax": 100,
@@ -1336,7 +1516,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 44,
-    "combo": "Sieg"
+    "combo": "Sieg",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Orvid": {
     "hpMax": 100,
@@ -1362,7 +1546,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 45,
-    "combo": "Estelle"
+    "combo": "Estelle",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Anton": {
     "hpMax": 100,
@@ -1388,7 +1576,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 46,
-    "combo": "Aina"
+    "combo": "Aina",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Kanone": {
     "hpMax": 100,
@@ -1414,7 +1606,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 47,
-    "combo": "Richard"
+    "combo": "Richard",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Chancelier Osborne": {
     "hpMax": 100,
@@ -1440,7 +1636,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 48,
-    "combo": "Olivier"
+    "combo": "Olivier",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Theresa": {
     "hpMax": 100,
@@ -1466,7 +1666,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 49,
-    "combo": "Kloe"
+    "combo": "Kloe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Maire Klaus": {
     "hpMax": 100,
@@ -1492,7 +1696,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 50,
-    "combo": "Aina"
+    "combo": "Aina",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Mme Mao": {
     "hpMax": 100,
@@ -1518,7 +1726,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 51,
-    "combo": "Dorothy"
+    "combo": "Dorothy",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Antoine": {
     "hpMax": 100,
@@ -1544,7 +1756,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 52,
-    "combo": "Terry"
+    "combo": "Terry",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Lt-colonel Cid": {
     "hpMax": 100,
@@ -1570,7 +1786,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 53,
-    "combo": "Cassius"
+    "combo": "Cassius",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Dalmore": {
     "hpMax": 100,
@@ -1596,7 +1816,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 54,
-    "combo": "Gilbert"
+    "combo": "Gilbert",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Sieg": {
     "hpMax": 100,
@@ -1622,7 +1846,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 55,
-    "combo": "Kloe"
+    "combo": "Kloe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Clem": {
     "hpMax": 100,
@@ -1648,7 +1876,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 56,
-    "combo": "Theresa"
+    "combo": "Theresa",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Daniel": {
     "hpMax": 100,
@@ -1674,7 +1906,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 57,
-    "combo": "Clem"
+    "combo": "Clem",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Ambassadrice Elsa": {
     "hpMax": 100,
@@ -1700,7 +1936,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 58,
-    "combo": "Zin"
+    "combo": "Zin",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Deen": {
     "hpMax": 100,
@@ -1726,7 +1966,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 59,
-    "combo": "Rocco"
+    "combo": "Rocco",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Rocco": {
     "hpMax": 100,
@@ -1752,7 +1996,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 60,
-    "combo": "Agate"
+    "combo": "Agate",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Rais": {
     "hpMax": 100,
@@ -1778,7 +2026,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 61,
-    "combo": "Rocco"
+    "combo": "Rocco",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Jack": {
     "hpMax": 100,
@@ -1804,7 +2056,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 62,
-    "combo": "Halle"
+    "combo": "Halle",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Ambassadeur Davil": {
     "hpMax": 100,
@@ -1830,7 +2086,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 63,
-    "combo": "Mueller"
+    "combo": "Mueller",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Halle": {
     "hpMax": 100,
@@ -1856,7 +2116,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 64,
-    "combo": "Jack"
+    "combo": "Jack",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Lucy": {
     "hpMax": 100,
@@ -1882,7 +2146,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 65,
-    "combo": "Hans"
+    "combo": "Hans",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Mary": {
     "hpMax": 100,
@@ -1908,7 +2176,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 66,
-    "combo": "Theresa"
+    "combo": "Theresa",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Erika Russell": {
     "hpMax": 100,
@@ -1934,7 +2206,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 67,
-    "combo": "Dan Russell"
+    "combo": "Dan Russell",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Lechter": {
     "hpMax": 100,
@@ -1960,7 +2236,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 68,
-    "combo": "Lucy"
+    "combo": "Lucy",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Ein Selnate": {
     "hpMax": 100,
@@ -1986,7 +2266,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 69,
-    "combo": "Kevin"
+    "combo": "Kevin",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Leo": {
     "hpMax": 100,
@@ -2012,7 +2296,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 70,
-    "combo": "Lechter"
+    "combo": "Lechter",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Phyllis": {
     "hpMax": 100,
@@ -2038,7 +2326,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 71,
-    "combo": "Anelace"
+    "combo": "Anelace",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Dan Russell": {
     "hpMax": 100,
@@ -2064,7 +2356,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 72,
-    "combo": "Tita"
+    "combo": "Tita",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Rufina Argent": {
     "hpMax": 100,
@@ -2090,7 +2386,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 73,
-    "combo": "Ries"
+    "combo": "Ries",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Celeste von Auslese": {
     "hpMax": 100,
@@ -2116,7 +2416,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 74,
-    "combo": "Kloe"
+    "combo": "Kloe",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Intendante Hilda": {
     "hpMax": 100,
@@ -2142,7 +2446,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 75,
-    "combo": "Reine Alicia"
+    "combo": "Reine Alicia",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Polly": {
     "hpMax": 100,
@@ -2168,7 +2476,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 77,
-    "combo": "Mary"
+    "combo": "Mary",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Directeur Murdock": {
     "hpMax": 100,
@@ -2194,7 +2506,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 78,
-    "combo": "Professeur Russell"
+    "combo": "Professeur Russell",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Chef-mécanicien Gustav": {
     "hpMax": 100,
@@ -2220,7 +2536,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 79,
-    "combo": "Directeur Murdock"
+    "combo": "Directeur Murdock",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Ray": {
     "hpMax": 100,
@@ -2246,7 +2566,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 80,
-    "combo": "Antoine"
+    "combo": "Antoine",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Terry": {
     "hpMax": 100,
@@ -2272,7 +2596,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 81,
-    "combo": "Ray"
+    "combo": "Ray",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Luke": {
     "hpMax": 100,
@@ -2298,7 +2626,11 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 82,
-    "combo": "Pat"
+    "combo": "Pat",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   },
   "Pat": {
     "hpMax": 100,
@@ -2324,6 +2656,10 @@
     "style-dialogue": "Standard, sans tics de langage particuliers.",
     "description": "Combattant standard avec un équipement de base.",
     "anonymeIndex": 83,
-    "combo": "Luke"
+    "combo": "Luke",
+    "entree": {
+      "defaut": "Que le meilleur gagne !",
+      "adversaires": {}
+    }
   }
 }

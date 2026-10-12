@@ -234,6 +234,7 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
 const activiteService = createActivityLobby({
+    getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,
     huntGame,
     tower:[1,2,3,4].map(floor=>{
       const root=path.join(__dirname,'activity/assets/sky/tower'+floor),grid=require(path.join(root,'navigation.json')),layout=require(path.join(root,'layout.json'));
@@ -346,7 +347,7 @@ app.post('/api/state', async (req, res) => {
     try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, req.body, req.body?.after);res.json({...state,requests:activiteDuels.pending(activiteService.identity(token).id)}); }
     catch(error){res.status(error.status || 500).json({erreur:error.message});}
 });
-app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');if(req.query.training==='1'){activiteService.identity(activiteBearer(req));const registry=require('./utils/characters');res.json({titles:Object.fromEntries(registry.characterNames.map(name=>[name,registry.characterTitle(name)]))});}else res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
+app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');if(req.query.training==='1'){activiteService.identity(activiteBearer(req));const registry=require('./utils/characters');res.json({entrances:Object.fromEntries(registry.characterNames.map(name=>[name,require("./rpg/data/persos.json")[name].entree])),titles:Object.fromEntries(registry.characterNames.map(name=>[name,registry.characterTitle(name)]))});}else res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
 app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
 app.post('/api/craft-capture',async(req,res)=>{
   try{const {id}=activiteService.identity(activiteBearer(req));const replay=activiteService.duelCaptureFor(id,req.body?.id);if(replay)activityRoleplay.finish(replay);res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}

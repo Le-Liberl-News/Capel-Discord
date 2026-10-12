@@ -15,7 +15,7 @@ function cloneReplayMaterial(source) {
   clone.customProgramCacheKey=source.customProgramCacheKey;
   return clone;
 }
-function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, model) {
+function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, model, onRematch=async()=>{}) {
   const width = 448, height = 336, target = new THREE.WebGLRenderTarget(width, height);
   target.texture.colorSpace = THREE.SRGBColorSpace;
   const camera = new THREE.PerspectiveCamera(48, 4 / 3, 0.06, 350), pixels = new Uint8Array(width * height * 4), replay = new THREE.Scene();
@@ -41,9 +41,10 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
   leave.textContent = "Retour \xE0 l\u2019Ant\xE9rose";
   leave.style.cssText = "position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);padding:12px 20px;white-space:nowrap;border:1px solid #b49760;border-radius:4px;background:#2d211be8;color:#ffe7b0;font:18px AveriaSky,sans-serif";
   leave.onclick = onLeave;
+  const rematch=document.createElement("button");rematch.textContent="Revanche";rematch.hidden=true;rematch.style.cssText=leave.style.cssText;rematch.style.bottom="76px";rematch.onclick=async()=>{rematch.disabled=true;try{await onRematch(duel.id);rematch.textContent="Défi envoyé";}catch{rematch.disabled=false;rematch.textContent="Réessayer la revanche";}};
   const flash = document.createElement("div");
   flash.style.cssText = "position:absolute;inset:0;background:#fff1bf;pointer-events:none;opacity:0";
-  panel.append(view, top, bottom, flash, title, leave);
+  panel.append(view, top, bottom, flash, title, leave, rematch);
   document.body.append(panel);
   let duel = null, history = [], frames = [], next = 0, finishingAt = null, replayAt = null, encoded = false, worker = null, localId = null, clockOffset = 0, displayTarget = null, displayPixels = null, lastCapture = -1;
   const origin = new THREE.Vector3(), victim = new THREE.Vector3(), direction = new THREE.Vector3(), side = new THREE.Vector3(), focus = new THREE.Vector3(), position = new THREE.Vector3();
@@ -335,8 +336,8 @@ function createDuelFinish(THREE, renderer, scene, assets, onCapture, onLeave, mo
     receive(value, id, serverTime) {
       localId = id;
       if (Number.isFinite(serverTime)) clockOffset = serverTime - performance.now();
-      if (value?.id !== duel?.id) reset();
-      duel = value;
+      if (value?.id !== duel?.id){reset();rematch.disabled=false;rematch.textContent="Revanche";}
+      duel = value;rematch.hidden=!duel?.result||!duel.players?.includes(id)||duel.id.startsWith("training:");
       if (duel?.result && finishingAt === null) {
         title.textContent = "Victoire de " + duel.result.winnerName + " !";
         finishingAt = performance.now();

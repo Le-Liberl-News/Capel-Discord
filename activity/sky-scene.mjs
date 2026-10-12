@@ -78,7 +78,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
   const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
-  let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
+  let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
@@ -139,7 +139,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const dayNight=createDayNight(THREE,model,map,mapShadows,tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.torches??[]);
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,Number(map.slice(5))):null;
   const dungeonEffects=inTower?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
-  const duelIntro=map==="arena"?createDuelIntro({assets:ASSETS}):null;
+  const duelIntro=map==="arena"?createDuelIntro({assets:ASSETS,onSpeech:message=>dialogues.receive([message])}):null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
@@ -172,7 +172,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=(map==="arena"||inTower)?await createRenneCombat(THREE,scene,ASSETS):null;
   let notifyCapture=()=>{};
-  const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model):null;
+  const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
@@ -246,7 +246,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     disposed = false;
   const actionQueue = [];
   const predictedShots = new Map();
-  let notifyAction = () => {},notifyTerminal=()=>{};
+  let notifyAction = () => {},notifyTerminal=()=>{},notifyRematch=async()=>{};
   let environment = { npcs: [], poms: [], pom: null, receivedAt: 0 },
     health = { hp: playerHealth.PLAYER_MAX_HP,maxHp:playerHealth.PLAYER_MAX_HP },
     respawn = 0;
@@ -709,7 +709,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
-    const introPlaying=!!duelIntro?.active(time);const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
+    const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying)yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
@@ -801,6 +801,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
             ? carriedMotion
           : jump
             ? {moving:true,dx:jump.dx,dz:jump.dz}
+          : introPlaying
+            ? {moving:!!avatar.introWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}
           : id === localId
             ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:advance(avatar.position, path, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
@@ -845,9 +847,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
       avatar.mesh.position.set(
-        avatar.position.x,
+        avatar.position.x+(avatar.introOffset?.x??0),
         avatar.position.y+(avatar.deathLift??0)-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),
-        avatar.position.z,
+        avatar.position.z+(avatar.introOffset?.z??0),
       );
       if(avatar.shadow&&!avatar.shadow.userData.update)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
@@ -962,6 +964,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
+    onRematch(callback){notifyRematch=callback;},
     onCraftCapture(callback){notifyCapture=callback;},
     attack:startAttack,
     captureNotice(text){status.textContent=text;},
@@ -988,7 +991,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         },
       ]);
     },
-    async demoIntro(){if(!__ACTIVITY_PREVIEW__||!duelIntro)return;const own=avatars.get(localId),other={id:'preview-arena-foe',character:own.character==='Joshua'?'Renne':'Joshua',x:-1,y:0,z:-16.25,hp:500};Object.assign(own.position,{x:-1,y:0,z:3.25});await setAvatar(other);const now=Date.now();duelIntro.receive({id:crypto.randomUUID(),startsAt:now,readyAt:now+arenaIntroDefinition.duration,players:[localId,other.id],names:[own.character,other.character],titles:['Titre à renseigner','Titre à renseigner']},now);},
+    async demoIntro(){if(!__ACTIVITY_PREVIEW__||!duelIntro)return;const own=avatars.get(localId),other={id:'preview-arena-foe',character:own.character==='Joshua'?'Renne':'Joshua',x:-1,y:0,z:-16.25,hp:500};Object.assign(own.position,{x:-1,y:0,z:3.25});await setAvatar(other);const now=Date.now();duelIntro.receive({id:crypto.randomUUID(),startsAt:now,readyAt:now+arenaIntroDefinition.duration,players:[localId,other.id],names:[own.character,other.character],titles:['Titre à renseigner','Titre à renseigner'],phrases:['Que le meilleur gagne !','À nous deux !'],streaks:[2,1]},now);},
     async demoConversation() {
       if (!__ACTIVITY_PREVIEW__) return;
       const me = avatars.get(localId);
