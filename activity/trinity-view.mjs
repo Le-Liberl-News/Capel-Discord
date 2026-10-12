@@ -18,11 +18,11 @@ export function createTrinityView(THREE,scene,banks){
   const aura=bakedEffectSprite(THREE,banks.get(spec.hitEffect.toLowerCase()),2);blue(aura.sprite.material);group.add(aura.sprite);
   const v={group,trail,count,aura,walls:[],nova:null};views.set(event.id,v);return v;
  }
- function draw(event,spec,time,avatars){
+ function draw(event,spec,time,avatars,camera){
   const v=views.get(event.id)??create(event,spec),progress=Math.max(0,Math.min(1,(time-spec.windup)/spec.dashDuration)),age=time-(event.impactAt-event.started),dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,len=Math.hypot(dx,dz);
   v.trail.mesh.visible=progress>0&&age<spec.trailDuration;
   v.trail.mesh.count=Math.ceil(v.count*progress);v.trail.mesh.material.opacity=Math.min(1,Math.max(0,(spec.trailDuration-age)/600));
-  rotation.setFromAxisAngle(new THREE.Vector3(0,1,0),-Math.atan2(dz,dx));
+  if(camera)rotation.copy(camera.quaternion);else rotation.identity();
   for(let i=0;i<v.trail.mesh.count;i++){const t=Math.min(progress,(i+.5)/v.count);point.set(event.origin.x+dx*t,event.origin.y+(event.aim.y-event.origin.y)*t+.55,event.origin.z+dz*t);scale.set(Math.max(.9,len/v.count*1.5),1.2,1);matrix.compose(point,rotation,scale);v.trail.mesh.setMatrixAt(i,matrix);}
   v.trail.mesh.instanceMatrix.needsUpdate=true;v.trail.draw(Math.max(0,time-spec.windup),true);
   const owner=avatars.get(event.actor)?.position??event.origin;v.aura.sprite.visible=time<spec.windup+spec.dashDuration;v.aura.sprite.position.set(owner.x,owner.y+.7,owner.z);if(v.aura.sprite.visible)v.aura.draw(time*2);

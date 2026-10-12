@@ -326,3 +326,12 @@ test("delayed responses preserve movement credit for the next batched trace",asy
  const rejected=await f.service.state(session.activity_token,{x:4,z:0,trace:[{x:4,z:0,sequence:22}]});
  assert.equal(rejected.movementSequence,21);assert.equal(rejected.position.x,2.45);
 });
+
+test('a delayed in-flight poll cannot pull Julia back when Trinity reaches its endpoint',async()=>{
+ let clock=0;const grid={origin:{x:-10,z:-10},step:.5,width:41,height:41,cells:Array(1681).fill(0),spawn:{x:0,y:0,z:0}};
+ const service=createActivityService({grid,combatEnabled:true,resolveCharacter:async()=> 'Julia',now:()=>clock});const session=await service.join({id:'julia',channel:'tower'});
+ const first=await service.state(session.activity_token,{x:0,y:0,z:0,sequence:0,trace:[],action:{id:'dash-a',type:'attack',kind:'craft',aim:{x:4,y:0,z:0}}});assert.ok(!first.actionResult.error);
+ clock=700;const stale=await service.state(session.activity_token,{x:3.6,y:0,z:0,sequence:0,trace:[],combatDash:first.health.combatDash});assert.equal(stale.position.x,4);
+ clock=900;const second=await service.state(session.activity_token,{x:4,y:0,z:0,sequence:0,trace:[],combatDash:first.health.combatDash,action:{id:'dash-b',type:'attack',kind:'craft',aim:{x:4,y:0,z:4}}});assert.ok(!second.actionResult.error);
+ clock=1180;const late=await service.state(session.activity_token,{x:4,y:0,z:3.5,sequence:0,trace:[],combatDash:second.health.combatDash});assert.equal(late.position.z,4);
+});

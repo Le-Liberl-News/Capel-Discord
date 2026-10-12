@@ -769,7 +769,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     for (const [id, avatar] of avatars) {
       if(avatar.siegDive&&!avatar.dead){Object.assign(avatar.position,diveMechanics.divePosition(avatar.siegDive,Date.now()+jumpClockOffset));const first=avatar.siegDive.points[0],last=avatar.siegDive.points.at(-1);avatar.heading={dx:last.x-first.x,dz:last.z-first.z};if(__ACTIVITY_PREVIEW__&&Date.now()+jumpClockOffset>=avatar.siegDive.started+avatar.siegDive.duration)avatar.siegDive=null;}
       const dash=avatar.dead?null:renneCombat?.dash(id);
-      if(dash){Object.assign(avatar.position,dash.position);avatar.target={...dash.position};if(id===localId){path=[];movementTrace=[];}dash.event.dashFinished=!dash.active;}
+      if(dash){Object.assign(avatar.position,dash.position);avatar.target={...dash.position};if(id===localId){path=[];movementTrace=[];}dash.event.dashFinished=!dash.active;if(!dash.active)dash.event.localDashFinished=true;}
       const carried=!dash&&id!==localId&&!avatar.jump&&movingPlatforms&&avatar.platformId&&avatar.platformOffset;
       let carriedMotion;
       if(carried){const p=movingPlatforms.simulation.position(avatar.platformId,Date.now()+jumpClockOffset);if(p){avatar.platformRenderOffset??={...avatar.platformOffset,y:0};carriedMotion=advance(avatar.platformRenderOffset,[{...avatar.platformOffset,y:0}],seconds,6);Object.assign(avatar.position,{x:p.x+avatar.platformRenderOffset.x,y:p.y,z:p.z+avatar.platformRenderOffset.z});}}

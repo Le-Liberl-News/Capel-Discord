@@ -18,3 +18,11 @@ test('native Trinity view preserves separate segments, five-second expiry and ce
 });
 
 test('a closed empty triangle still produces exactly one central explosion',()=>{const f=fixture();f.room.delete(f.target.id);triangle(f);const a=f.combat.snapshot().attacks.at(-1);assert.ok(a.explodedAt);assert.deepEqual(a.explosionPoint,{x:0,y:0,z:-4/3});const at=a.explodedAt;f.advance(500);assert.equal(f.combat.snapshot().attacks.at(-1).explodedAt,at);});
+
+test('Trinity playback reaches its endpoint after a skipped final frame and cannot replay an old segment',async()=>{
+ const {dashPlayback}=await import('../activity/combat-dash-playback.mjs'),s=stageSpec(combatSpec('Julia','craft'),2),a={id:'a',actor:'julia',origin:{x:4,y:0,z:0},aim:{x:0,y:0,z:4}},actions=new Map([['older',{...a,id:'older',dashFinished:true}],[a.id,a]]);
+ let time=s.dashDuration-25;const get=()=>dashPlayback(actions,'julia',()=>time,()=>s);assert.ok(get().active);time+=100;const final=get();assert.equal(final.active,false);assert.deepEqual(final.position,a.aim);a.localDashFinished=true;a.dashFinished=false;assert.equal(get(),null);
+ const b={...a,id:'b',origin:a.aim,aim:{x:0,y:0,z:0},localDashFinished:false};actions.set('b',b);time=30;assert.equal(get().event.id,'b');b.dashFinished=true;assert.deepEqual(get().position,b.aim);
+});
+
+test('native flames face the camera while their centers stay on the dash segment',async()=>{const THREE=await import('three'),{createTrinityView}=await import('../activity/trinity-view.mjs'),s=combatSpec('Julia','craft'),bank=()=>({map:new THREE.Texture(),frames:90,columns:8,rows:12}),banks=new Map([[s.nativeEffect.toLowerCase(),bank()],[s.hitEffect.toLowerCase(),bank()]]),scene=new THREE.Scene(),view=createTrinityView(THREE,scene,banks),camera=new THREE.PerspectiveCamera(),e={id:'flame',actor:'Julia',origin:{x:1,y:0,z:2},aim:{x:1,y:0,z:7},started:0,impactAt:650,hits:[]};for(const yaw of [0,1.2,-2.4]){camera.rotation.set(-.7,yaw,0);view.draw(e,s,1000,new Map(),camera);const mesh=scene.children[0].children[0],m=new THREE.Matrix4(),q=new THREE.Quaternion(),p=new THREE.Vector3(),size=new THREE.Vector3();mesh.getMatrixAt(0,m);m.decompose(p,q,size);assert.ok(q.angleTo(camera.quaternion)<.001);assert.equal(p.x,1);assert.ok(p.z>2&&p.z<7);}view.dispose();});
