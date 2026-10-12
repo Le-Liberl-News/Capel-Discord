@@ -22,7 +22,7 @@ export async function createRenneCombat(THREE,scene,assets) {
   const earthBank=await prepareEarthWave(THREE,assets);
   const earthArt=await loadBakedEffect(THREE,assets,'mg011_0',54);
   const heroDefinitions=await fetch(new URL('effects/hero-frames.json',assets)).then(r=>{if(!r.ok)throw Error('Effets des techniques introuvables');return r.json();});
-  const heroBanks=new Map(await Promise.all(Object.entries(heroDefinitions).filter(([id])=>!id.includes('/damage')&&!id.includes('/msc0614')&&!id.includes('/mg011')).map(async([id,info])=>[id,{...await loadBakedEffect(THREE,assets,info.name,info.frames),size:info.size,duration:info.duration,blend:info.blend}])));
+  const heroBanks=new Map(await Promise.all(Object.entries(heroDefinitions).filter(([id])=>!['third/ms04671c._ef','third/ms04671i._ef'].includes(id)&&!id.includes('/damage')&&!id.includes('/msc0614')&&!id.includes('/mg011')).map(async([id,info])=>[id,{...await loadBakedEffect(THREE,assets,info.name,info.frames),size:info.size,duration:info.duration,blend:info.blend}])));
   const [metadata,ringTexture,vortexTexture,fireTexture]=await Promise.all([
     Promise.resolve(COMBAT.Renne),
     loader.loadAsync(new URL('combat/blood-circle.png',assets).href),loader.loadAsync(new URL('combat/blood-vortex.png',assets).href),loader.loadAsync(new URL('effects/fire-frames.png',assets).href),

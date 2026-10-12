@@ -607,7 +607,9 @@
       "nativeEffect": "Third/ms04671c._ef",
       "phoenixEffect": "Third/ms04671d._ef",
       "explosionEffect": "Third/ms04671i._ef",
-      "effectDuration": 1500
+      "effectDuration": 1500,
+      "shockwaveEffect": "Third/ms04671k._ef",
+      "trailEffect": "Third/ms04671l._ef"
     }
   }
 }
