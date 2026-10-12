@@ -819,9 +819,9 @@ export async function createSkyScene(canvas, map = "anterose") {
         right,
         forward,
       );
-      let info=avatar.info,selectedPose,craftHidden=false,craftFlip=false;
+      let info=avatar.info,selectedPose,craftHidden=false,craftFlip=false,craftTilt=null;
       if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
-      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;}
+      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking||!!avatar.siegDive,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
@@ -849,6 +849,12 @@ export async function createSkyScene(canvas, map = "anterose") {
       if(avatar.character==="Sieg"&&!avatar.dead&&!avatar.perched)avatar.mesh.quaternion.copy(camera.quaternion);
       else if(avatar.character==="Sieg")avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),0);
       else avatar.mesh.rotation.y = Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]);
+      if(craftTilt){
+        const m=camera.matrixWorld.elements,sx=craftTilt.x*m[0]+craftTilt.y*m[1]+craftTilt.z*m[2],sy=craftTilt.x*m[4]+craftTilt.y*m[5]+craftTilt.z*m[6],targetAngle=-Math.atan2(sx,sy);
+        const previous=avatar.craftTiltAngle??targetAngle,angle=previous+Math.atan2(Math.sin(targetAngle-previous),Math.cos(targetAngle-previous))*(1-Math.exp(-seconds*12));avatar.craftTiltAngle=angle;
+        avatar.mesh.quaternion.copy(camera.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),angle));
+        const pivot=new THREE.Vector3(0,.85,0).applyQuaternion(avatar.mesh.quaternion);avatar.mesh.position.add(new THREE.Vector3(0,.85,0).sub(pivot));
+      }else avatar.craftTiltAngle=null;
       }
     }
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);

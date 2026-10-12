@@ -14,4 +14,9 @@ function phoenixPose(time,s,direction){const p=phoenixPhases(s);if(time>=p.impac
  else pose=(front?41:35)+Math.floor((time-p.spinAt)/75)%6;
  return {bank:12,pose,flipX:!front&&flipX,hidden:time>=p.transformAt&&time<p.impactAt};
 }
-module.exports={phoenixPhases,phoenixPosition,phoenixPose};
+function phoenixOrientation(a,time,s){
+ const phase=phoenixPhases(s),p=phoenixPosition(a,time,s),dx=a.aim.x-p.x,dz=a.aim.z-p.z,dy=a.aim.y-p.y,h=Math.hypot(dx,dz),length=Math.hypot(h,dy),q=clamp((time-phase.spinAt)/(phase.transformAt-phase.spinAt)),ease=q*q*(3-2*q),angle=Math.acos(clampSigned(length?dy/length:-1))*ease;
+ return {x:(h?dx/h:1)*Math.sin(angle),y:Math.cos(angle),z:(h?dz/h:0)*Math.sin(angle)};
+}
+const clampSigned=n=>Math.max(-1,Math.min(1,n));
+module.exports={phoenixPhases,phoenixPosition,phoenixPose,phoenixOrientation};
