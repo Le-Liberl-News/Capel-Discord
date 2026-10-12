@@ -28,7 +28,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
   const snapshots=[];let left=resolution,top=resolution,right=0,bottom=0;
   let peak=0;
   for(let i=0;i<frames;i++){
-   ctx.clearRect(0,0,resolution,resolution);player.draw(ctx,i*1000/30,resolution,resolution,zoom,false);
+   ctx.clearRect(0,0,resolution,resolution);player.draw(ctx,i*1000/30+(id.toLowerCase()==='third/ms04671i._ef'?2000:0),resolution,resolution,zoom,false);
    const snapshot=ctx.getImageData(0,0,resolution,resolution),pixels=snapshot.data;let lit=0;
    for(let p=0;p<pixels.length;p+=4)if(pixels[p+3]&&Math.max(pixels[p],pixels[p+1],pixels[p+2])>12){lit++;const x=(p/4)%resolution,y=Math.floor(p/4/resolution);left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
    peak=Math.max(peak,lit);snapshots.push(snapshot);

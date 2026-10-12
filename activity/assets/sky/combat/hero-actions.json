@@ -589,5 +589,25 @@
       "effectDuration": 5000,
       "edgeEffect": "Third/sc014_02._ef"
     }
+  },
+  "Cassius": {
+    "craft": {
+      "name": "Vol du phénix",
+      "key": "g",
+      "special": "phoenix",
+      "groundTarget": true,
+      "leap": true,
+      "windup": 900,
+      "leapDuration": 3600,
+      "duration": 5000,
+      "cooldown": 10000,
+      "range": 16,
+      "radius": 3,
+      "damage": 65,
+      "nativeEffect": "Third/ms04671c._ef",
+      "phoenixEffect": "Third/ms04671d._ef",
+      "explosionEffect": "Third/ms04671i._ef",
+      "effectDuration": 1500
+    }
   }
 }

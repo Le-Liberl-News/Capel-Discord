@@ -199,12 +199,12 @@ function createActivityService({
       player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
       const wasJumping=!!player.jump;
-      const wasTrinityDashPending=!!player.trinityDashPending;
+      const wasScriptedDashPending=!!(player.trinityDashPending||player.phoenixDashPending);
       const requestedJump=(dungeon||jumpEnabled)&&point?.action?.type==="jump";
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && !(wasTrinityDashPending&&!player.trinityDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && !wasJumping && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
         let submitted=point;
         if(platforms&&point.platform&&!requestedJump){const d=platforms.definitions.find(d=>d.id===point.platform.id),pos=d&&platforms.position(d.id);if(!d||![point.platform.x,point.platform.z].every(Number.isFinite)||Math.abs(point.platform.x)>d.width/2+.15||Math.abs(point.platform.z)>d.width/2+.15)throw new ActivityError('Plateforme invalide.');submitted={...point,x:pos.x+point.platform.x,z:pos.z+point.platform.z,trace:[]};}

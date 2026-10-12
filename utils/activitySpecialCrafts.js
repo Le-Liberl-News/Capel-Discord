@@ -19,12 +19,19 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
   if(s.special==='summon')a.impactAt=a.started+s.windup;
   if(s.special==='boomerang'){a.flightEndsAt=a.started+s.windup+2200;a.endsAt=a.flightEndsAt+600;}
   if(['fireball','crescent'].includes(s.special)){a.flightEndsAt=a.started+s.windup+Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z)/(s.projectileSpeed??10)*1000;a.endsAt=a.flightEndsAt+700;}
+  if(s.special==='phoenix'){a.impactAt=a.started+s.windup+s.leapDuration;room.get(a.actor).phoenixDashPending=a.id;}
   if(s.special==='dive'){const t=room.get(command.target);if(t&&t.hp>0&&!t.spectator&&!t.duelProtected&&canDamage(room.get(a.actor),t)&&Math.hypot(t.x-a.origin.x,t.z-a.origin.z)<=s.range)a.target=t.id;a.impactAt=a.started+s.windup+s.leapDuration;}
  }
  function tickAttack(a,s,room,time){
   if(!s.special)return false;
   if(a.cancelled)return true;
-  const actor=room.get(a.actor);if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){a.cancelled=true;a.endsAt=time;return true;}
+  const actor=room.get(a.actor);if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
+  if(s.special==='phoenix'){
+   if(a.resolved)return true;
+   Object.assign(actor,require('../activity/cassius-phoenix.cjs').phoenixPosition(a,time-a.started,s));actor.acceptedAt=time;
+   if(time>=a.impactAt){actor.combatLockedUntil=0;delete actor.phoenixDashPending;a.resolved=true;a.dashFinished=true;a.explodedAt=a.impactAt;a.explosionPoint={...a.aim};damageArea(a,actor,room,a.aim,s.radius,s.damage,time);}
+   return true;
+  }
   if(s.special==='dive'){
    if(a.resolved)return true;
    const target=room.get(a.target);if(target&&target.hp>0&&Math.hypot(target.x-a.origin.x,target.z-a.origin.z)<=s.range*1.5){const y=floor({x:target.x,y:target.y??0,z:target.z});if(Number.isFinite(y))a.aim={x:target.x,y,z:target.z};}

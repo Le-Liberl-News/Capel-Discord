@@ -86,7 +86,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if((spec.effect||spec.chargeStun)&&hit&&Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2)return {error:'La cible est derrière un obstacle.'};
 
-    if(hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
+    if(spec.special!=='phoenix' && hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
 
       obstacleImpact=!!fps;
       const stop=spec.dash?Math.max(0,Math.hypot(hit.point.x-origin.x,hit.point.z-origin.z)-.2):null;
@@ -116,6 +116,13 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     }
 
+    if(spec.special==='phoenix'){
+      const gx=Math.round((endpoint.x-grid.origin.x)/grid.step),gz=Math.round((endpoint.z-grid.origin.z)/grid.step);
+      if(gx<0||gz<0||gx>=grid.width||gz>=grid.height||grid.cells[gz*grid.width+gx]===null)return {error:'Visez un sol accessible.'};
+      const {phoenixPosition}=require('../activity/cassius-phoenix.cjs');let previous={...origin,y:origin.y+.8};
+      for(let t=0;t<=spec.windup+spec.leapDuration;t+=40){const pos=phoenixPosition({origin,aim:endpoint},t,spec),body={...pos,y:pos.y+.8};if(geometry?.sweep(previous,body,.16))return {error:'Le trajet est bloqué par un obstacle.'};previous=body;}
+      if(geometry?.sweep(previous,{...endpoint,y:endpoint.y+.8},.16))return {error:'Le trajet est bloqué par un obstacle.'};
+    }
     let lockedTarget=null,lockedOffset=null;
 
     if(fps){let closest=Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z);for(const target of room.values()){if(target.id===player.id||target.hp<=0||target.spectator||!canDamage(player,target))continue;const body=rayBody(fps.origin,fps.direction,target,closest);if(body&&body.distance<closest){closest=body.distance;obstacleImpact=false;Object.assign(endpoint,body.point);if(spec.lockOn){lockedTarget=target.id;lockedOffset={x:body.point.x-target.x,y:body.point.y-(target.y??0),z:body.point.z-target.z};}}}}

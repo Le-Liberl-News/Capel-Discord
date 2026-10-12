@@ -51,7 +51,7 @@ export class NativeEffectPlayer{
     if(this.instances.some(i=>i.texture?.sharedFromThird))this.warnings.push('Texture commune reprise du catalogue The 3rd');
     const missing=new Set(this.instances.filter(i=>i.part.enabled&&!(i.part.renderFlags&1)&&!i.texture).map(i=>i.part.name||i.part.index));
     if(missing.size)this.warnings.push('Textures absentes : '+[...missing].join(', '));
-    if(this.instances.some(i=>i.part.primitive==null||(i.part.primitive>1&&i.part.primitive!==10)))this.warnings.push('Géométries spéciales : aperçu par plans texturés, forme 3D à compléter');
+    if(this.instances.some(i=>i.part.primitive==null||(i.part.primitive>1&&i.part.primitive!==3&&i.part.primitive!==10)))this.warnings.push('Géométries spéciales : aperçu par plans texturés, forme 3D à compléter');
     if(this.instances.some(i=>i.part.flags&0x40))this.warnings.push('Rubans : aperçu par particules, géométrie du ruban à compléter');
     if(this.instances.some(i=>i.part.motion&&i.part.motion!==0))this.warnings.push('Trajectoires liées à une cible : cible fixe dans cet aperçu');
     if(this.models.size)this.warnings.push('Modèle 3D chargé ; déformation du squelette à compléter');
@@ -148,6 +148,7 @@ export class NativeEffectPlayer{
     let count=0;
     for(const {item,s}of visible){
       if(item.part.primitive===10){const model=this.models.get(item.part.model);if(model)count+=this.drawModel(ctx,model,item,s,w,h,factor);continue;}
+      if(item.part.primitive===3){count+=this.drawSphere(ctx,item,s,w,h,factor);continue;}
       if(item.part.primitive===1){count+=this.drawCylinder(ctx,item,s,w,h,factor);continue;}
       const im=this.textureImages.get(item.part.renderFlags&0x44?item.texture.additiveTexture??item.texture.texture:item.texture.texture);if(!im)continue;
       const part=item.part;let [u,v,u2,v2]=part.uv;const uv=part.uvAnimation??{},tw=u2-u,th=v2-v;
@@ -178,6 +179,14 @@ export class NativeEffectPlayer{
       if(flipU||flipV){ctx.translate(flipU?fw:0,flipV?fh:0);ctx.scale(flipU?-1:1,flipV?-1:1);}ctx.drawImage(tint,0,0,fw,fh);ctx.restore();count++;
     }
     ctx.restore();return count;
+  }
+  drawSphere(ctx,item,s,w,h,zoom){
+    this.spheres??=new WeakMap();let model=this.spheres.get(item.part);
+    if(!model){const [u,v,u2,v2]=item.part.uv,positions=[],uv=[],indices=[],columns=20,rows=12;
+      for(let y=0;y<=rows;y++)for(let x=0;x<=columns;x++){const a=y/rows*Math.PI,b=x/columns*Math.PI*2;positions.push([Math.sin(a)*Math.cos(b)*.5,Math.cos(a)*.5,Math.sin(a)*Math.sin(b)*.5]);uv.push([lerp(u,u2,x/columns),lerp(v,v2,y/rows)]);if(x<columns&&y<rows){const i=y*(columns+1)+x;indices.push(i,i+columns+1,i+1,i+1,i+columns+1,i+columns+2);}}
+      model={meshes:[{positions,uv,indices,texture:item.texture,renderFlags:item.part.renderFlags}]};this.spheres.set(item.part,model);
+    }
+    return this.drawModel(ctx,model,item,s,w,h,zoom);
   }
   drawCylinder(ctx,item,s,w,h,zoom){
     this.cylinders??=new WeakMap();let model=this.cylinders.get(item.part);

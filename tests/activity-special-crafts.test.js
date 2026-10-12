@@ -33,3 +33,29 @@ test('tomato highlights require damage, group repeated hits, and cap at three pe
  const highlights=events.filter(e=>e.highlight);assert.equal(highlights.length,3);assert.ok(highlights.every(e=>e.hits[0].damage>0&&e.resolved));assert.ok(highlights[1].started-highlights[0].started>=20000);assert.ok(highlights[2].started-highlights[1].started>=20000);
  const blocked=[],other=fixture('Ray',{canDamage:()=>false,onCraft:e=>blocked.push(e)});other.cast();other.tick(10000);assert.equal(blocked.filter(e=>e.highlight).length,0);
 });
+
+test('Cassius Phoenix charges, spirals upward and accelerates into one hostile area impact',()=>{
+ const f=fixture('Cassius');f.room.set('near',{id:'near',enemy:true,x:5,y:0,z:2,hp:100});f.room.set('far',{id:'far',enemy:true,x:5,y:0,z:4,hp:100});assert.ok(f.cast().combatId);f.tick(400);assert.equal(f.actor.y,0);assert.equal(f.enemy.hp,100);f.tick(600);assert.ok(f.actor.y>3);assert.ok(f.actor.x>0&&f.actor.x<5);assert.equal(f.enemy.hp,100);f.tick(1300);assert.equal(f.actor.x,5);assert.equal(f.actor.y,0);assert.equal(f.enemy.hp,35);assert.equal(f.room.get('near').hp,35);assert.equal(f.room.get('far').hp,100);assert.equal(f.actor.phoenixDashPending,undefined);f.tick(500);assert.equal(f.enemy.hp,35);
+ const allied=fixture('Cassius',{canDamage:()=>false});allied.cast();allied.tick(2400);assert.equal(allied.enemy.hp,100);
+});
+
+test('Cassius native frame ranges mirror on the left and hide only during the Phoenix flight',()=>{
+ const {phoenixPose,phoenixPhases,phoenixPosition}=require('../activity/cassius-phoenix.cjs'),s=combatSpec('Cassius','craft'),p=phoenixPhases(s),a={origin:{x:0,y:0,z:0},aim:{x:10,y:0,z:0}};
+ assert.equal(phoenixPose(0,s,4).pose,22);assert.equal(phoenixPose(p.riseAt-1,s,4).pose,30);assert.equal(phoenixPose(p.riseAt,s,4).pose,32);assert.equal(phoenixPose(p.spinAt-1,s,4).pose,34);assert.equal(phoenixPose(p.spinAt,s,4).pose,35);assert.equal(phoenixPose(p.spinAt,s,2).pose,41);assert.equal(phoenixPose(p.spinAt,s,0).flipX,true);assert.equal(phoenixPose(p.spinAt,s,4).flipX,false);assert.equal(phoenixPose(p.transformAt,s,4).hidden,true);assert.equal(phoenixPose(p.impactAt,s,4).hidden,false);
+ for(const t of [p.riseAt,p.spinAt,p.transformAt,p.diveAt,p.impactAt]){const before=phoenixPosition(a,t-.01,s),after=phoenixPosition(a,t,s);assert.ok(Math.hypot(before.x-after.x,before.y-after.y,before.z-after.z)<.001);}
+ const q1=phoenixPosition(a,p.diveAt+(p.impactAt-p.diveAt)*.25,s),q2=phoenixPosition(a,p.diveAt+(p.impactAt-p.diveAt)*.5,s);assert.ok(q2.x-3.2>(q1.x-3.2)*3);assert.deepEqual(phoenixPosition(a,p.impactAt,s),a.aim);
+});
+
+test('Cassius rejects a blocked aerial path and cancels on defeat',()=>{
+ const blocked=fixture('Cassius',{geometry:{floor:()=>0,sweep:()=>({point:{x:1,y:1,z:0}})}});assert.ok(blocked.cast().error);assert.equal(blocked.actor.phoenixDashPending,undefined);
+ const f=fixture('Cassius');f.cast();f.tick(600);f.actor.hp=0;f.tick(40);assert.equal(f.combat.snapshot().attacks[0].cancelled,true);assert.equal(f.actor.phoenixDashPending,undefined);assert.equal(f.enemy.hp,100);
+});
+
+test('Cassius uses the native 3D Phoenix model and the selected impact atlas',async()=>{
+ const fs=require('node:fs/promises'),path=require('node:path'),THREE=await import('three'),canvas=require('@napi-rs/canvas'),savedFetch=global.fetch,savedDoc=global.document,root=path.resolve('activity/assets/sky/effects/native');
+ global.document={createElement:()=>canvas.createCanvas(128,128)};global.fetch=async url=>({ok:true,json:async()=>JSON.parse(await fs.readFile(path.join(root,url),'utf8'))});
+ try{const {NativeEffectPlayer}=await import('../activity/native-effect-player.mjs'),entries=JSON.parse(await fs.readFile(path.join(root,'catalogue.json'),'utf8')),native=new Map();for(const id of ['third/ms04671c._ef','third/ms04671d._ef'])native.set(id,await new NativeEffectPlayer(entries,url=>canvas.loadImage(path.join(root,url))).load(entries.find(e=>e.id.toLowerCase()===id)));
+ const {createPhoenixView}=await import('../activity/cassius-phoenix-view.mjs'),scene=new THREE.Scene(),map=new THREE.Texture();map.name='ms04671i';const banks=new Map([['third/ms04671i._ef',{map,frames:90,columns:8,rows:12}]]),view=createPhoenixView(THREE,scene,banks,native),s=combatSpec('Cassius','craft'),p=require('../activity/cassius-phoenix.cjs').phoenixPhases(s),a={id:'bird',actor:'cassius',started:1000,impactAt:1000+p.impactAt,origin:{x:0,y:0,z:0},aim:{x:5,y:0,z:0}};
+ view.draw(a,s,p.diveAt,new Map());const group=scene.children[0],bird=group.children[1];assert.ok(bird.visible);assert.ok(bird.children[0].children[0].children[0].isMesh);assert.ok(group.children[0].children.length<=30);assert.ok(group.children[0].children.some(m=>m.userData.nativeHelix&&m.geometry.attributes.position.count===66));a.resolved=true;a.explodedAt=a.impactAt;view.draw(a,s,p.impactAt+100,new Map());assert.equal(bird.visible,false);assert.equal(group.children[2].visible,true);assert.equal(group.children[2].position.x,5);assert.equal(group.children[2].material.map.name,'ms04671i');view.dispose();assert.equal(scene.children.length,0);
+ }finally{global.fetch=savedFetch;global.document=savedDoc;}
+});
