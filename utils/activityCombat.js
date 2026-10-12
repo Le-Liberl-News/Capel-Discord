@@ -152,7 +152,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const cooldown=cooldowns.get(player.id)??{};cooldown[command.kind]=time+spec.cooldown;cooldowns.set(player.id,cooldown);
 
-    player.attackBusyUntil=time+spec.duration;
+    player.attackBusyUntil=time+(food?spec.cooldown:spec.duration);
 
     if(player.character==='Anton'&&command.kind==='craft'){
       const phrases=["Aidios, je vous en prie...","Monde crueeeeel-- !!","V-Voudriez-vous bien... sortir avec moi ?!!"];
