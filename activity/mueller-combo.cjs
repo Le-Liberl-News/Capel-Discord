@@ -1,5 +1,5 @@
 // Shared timing and physical motion for the server, local training and sprite playback.
-function muellerPhases(a){const run=Math.max(60,Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z)/12*1000),swing=420,rise=260,hold=300,fall=260,jump=rise+hold+fall;return {run,swing,rise,hold,fall,jump,first:run+240,second:run+swing+240,jumpAt:run+swing*2,land:run+swing*2+jump,end:run+swing*2+jump+300};}
+function muellerPhases(a){const run=Math.max(60,Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z)/12*1000),swing=420,rise=260,hold=300,fall=260,jump=rise+hold+fall;return {run,swing,rise,hold,fall,jump,first:run+240,second:run+swing+240,jumpAt:run+swing*2,fallAt:run+swing*2+rise+hold,land:run+swing*2+jump,end:run+swing*2+jump+300};}
 function muellerSpec(a,s){const p=muellerPhases(a);return {...s,windup:0,dashDuration:p.land,duration:p.end};}
 function muellerMotion(a,time){const p=muellerPhases(a),t=Math.max(0,Math.min(1,time/p.run));let y=a.origin.y+(a.aim.y-a.origin.y)*t;
  if(time>=p.jumpAt&&time<p.land){const age=time-p.jumpAt;const height=age<p.rise?4.2*Math.sin(age/p.rise*Math.PI/2):age<p.rise+p.hold?4.2:4.2*(1-((age-p.rise-p.hold)/p.fall)**2);y=a.aim.y+height;}
