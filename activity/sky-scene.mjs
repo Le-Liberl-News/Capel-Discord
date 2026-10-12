@@ -51,7 +51,7 @@ export const ASSETS = new URL(
     : "./assets/sky/",
   location.href,
 );
-export async function createSkyScene(canvas, map = "anterose") {
+export async function createSkyScene(canvas, map = "anterose", {localTraining=false}={}) {
   if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inTower=/^tower[1-4]$/.test(map);
   const canJump=inTower||map==='arena';
@@ -169,7 +169,7 @@ export async function createSkyScene(canvas, map = "anterose") {
   const renneCombat=(map==="arena"||inTower)?await createRenneCombat(THREE,scene,ASSETS):null;
   let notifyCapture=()=>{};
   const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model):null;
-  const craftCapture=(renneCombat&&!inTower)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
+  const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event));
@@ -891,7 +891,7 @@ export async function createSkyScene(canvas, map = "anterose") {
             (performance.now() - health.received) / 1000,
         ),
       );
-      status.textContent = "0 / "+(health.maxHp??playerHealth.PLAYER_MAX_HP)+" PV · Réapparition dans " + remaining + " s";
+      status.textContent = "0 / "+(health.maxHp??playerHealth.PLAYER_MAX_HP)+" PV"+(health.noRespawn?"":" · Réapparition dans " + remaining + " s");
     }
     for (const [id, a] of avatars) {
       if (id.startsWith("world:pom") || a.prop) { if(nameplates.has(id)) nameplates.get(id).hidden=true; continue; }
@@ -949,6 +949,8 @@ export async function createSkyScene(canvas, map = "anterose") {
   requestAnimationFrame(render);
   return {
     spawn,
+    trainingGeometry:()=>({grid,geometry:collision}),
+    playerCharacter:()=>avatars.get(localId)?.character,
     catalogue,
     ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },

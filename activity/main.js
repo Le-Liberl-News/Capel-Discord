@@ -1,3 +1,5 @@
+import {createTraining} from './training.mjs';
+import trainingCombat from './native-combat.cjs';
 import {createCapturePublisher} from "./capture-publisher.mjs";
 import {downloadDiagnostics,recordDiagnostic} from './diagnostics.mjs';
 import {createTerminalUI} from "./terminal-ui.mjs";
@@ -24,19 +26,47 @@ const etat = {
   character: "Estelle",
   messageCursor: 0,
 };
-let scene, music, lastDuelIntro=null;
+let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
- action:body=>apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
+ action:body=>body.action==='training'?startTraining():apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
  changed:()=>wakePoll()
 });
-function bindScene(){scene.onAction(()=>{if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onCraftCapture(event=>void publishCraftCapture(event));}
+function bindScene(){scene.onAction(()=>{if(training){if(['leave_map','leave_duel'].includes(scene.action()?.type))void stopTraining();return;}if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onCraftCapture(event=>void publishCraftCapture(event));}
+
+const trainingResult=document.createElement('div');trainingResult.hidden=true;trainingResult.style.cssText='position:fixed;top:35%;left:50%;transform:translateX(-50%);z-index:35;background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;padding:20px;text-align:center;font:22px AveriaSky,sans-serif';
+const trainingWinner=document.createElement('p'),trainingAgain=document.createElement('button'),trainingExit=document.createElement('button');trainingAgain.textContent='Rejouer';trainingExit.textContent='Retour';for(const b of [trainingAgain,trainingExit])b.style.cssText='font:inherit;padding:8px;margin:5px;background:#ead29c;color:#241b15;border:1px solid #b49760;border-radius:4px';trainingResult.append(trainingWinner,trainingAgain,trainingExit);document.body.append(trainingResult);
+trainingAgain.onclick=()=>void startTraining();trainingExit.onclick=()=>void stopTraining();
+async function startTraining(){
+ if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
+ if(trainingStep)await trainingStep;
+ if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
+ training=null;scene.dispose();scene=null;
+ try{scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent});bindScene();await scene.me(training.player);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent;music.setTrack(musicUrl('arena'));}
+ catch(error){trainingBusy=false;await stopTraining();throw error;}
+ trainingBusy=false;void tickTraining();
+}
+function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
+async function runTrainingTick(){
+ const active=training,current=scene;if(!active||trainingBusy)return;
+ try{const submitted=current.movement(),command=current.action(),result=active.tick(submitted,command);
+ current.acknowledgeMovement(submitted.sequence);await current.world(result);await current.sync([...result.joueurs,...result.enemies,...result.poms.map(p=>({character:'Pom',npc:true,...p}))]);current.messages(result.messages);
+ if(result.finish){trainingResult.hidden=false;trainingWinner.textContent='Victoire de '+result.finish.winner;}
+ }catch(error){recordDiagnostic('training-error',{message:error.message},true);current.captureNotice(error.message);}
+ if(training===active&&scene===current)trainingTimer=setTimeout(tickTraining,33);
+}
+async function stopTraining(map){
+ if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);training=null;trainingResult.hidden=true;if(trainingStep)await trainingStep;
+ const saved=trainingReturn;trainingReturn=null;scene?.dispose();scene=await createSkyScene(toile,map??saved?.map??'anterose');if(map)etat.map=map;bindScene();await scene.me({...saved?.player,character:etat.character});scene.setConnected(true);leave.hidden=(map??saved?.map??'anterose')==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map??saved?.map??'anterose');music.setTrack(musicUrl(map??saved?.map??'anterose'));trainingBusy=false;wakePoll();
+}
+
 async function previewTravel(map){if(!__ACTIVITY_PREVIEW__)return;const previous=scene;scene=null;previous.dispose();etat.map=map;scene=await createSkyScene(toile,map);bindScene();await scene.me({...etat.moi,...scene.spawn,character:etat.character});scene.setConnected(true);leave.hidden=map==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map);if(window.__activityPreview)window.__activityPreview=scene;music?.setTrack(musicUrl(map));}
 const uploadCraftCapture=createCapturePublisher({send:async({id,bytes,final})=>{
  let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
  await fetchJson(apiUrl("craft-capture"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify({id,gif:btoa(binary)}),signal:AbortSignal.timeout(final?45000:10000)});
 },onEvent:(type,data)=>{recordDiagnostic(type,data,type.endsWith('failed')||type.includes('error'));if(type==='capture-failed'||type==='capture-encoding-error')scene?.captureNotice("Capture non publi\u00e9e.");}});
 async function publishCraftCapture({id,bytes,error}) {
+  if(training||trainingBusy)return;
   if(error){await uploadCraftCapture({id,error});return;}
   if(__ACTIVITY_PREVIEW__ && !new URLSearchParams(location.search).has("frame_id")) {
     if(window.__activityPreview)window.__activityPreview.lastCraftGif=new Blob([bytes],{type:"image/gif"});
@@ -202,7 +232,7 @@ let wakePoll = () => {};
 
 async function publier() {
   if (!etat.token) return;
-  const submitted = scene.movement();
+  const submitted = training||trainingBusy ? {} : scene.movement();
   const response = await fetchJson(apiUrl("state"), {
     method: "POST",
     headers: {
@@ -212,10 +242,12 @@ async function publier() {
     body: JSON.stringify({
       ...submitted,
       after: etat.messageCursor,
-      action: scene.action(),
+      action: training||trainingBusy?undefined:scene.action(),
     }),
   });
   const result = response;
+  if(trainingBusy)return;
+  if(training){terminal.setRequests(result.requests);if(result.map!=='arena')return;await stopTraining(result.map);}
   terminal.setRequests(result.requests);
   const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
   etat.moi=ownPlayer;
@@ -312,7 +344,7 @@ async function start() {
       await publier();if(failures)recordDiagnostic('connection-restored',{failures},true); failures = 0;connectionNotice.hidden=true;
       bandeau.textContent = "Votre personnage du jour : " + etat.character;
     } catch (error) {
-      recordDiagnostic('connection-error',{status:error.status??0},true);scene.setConnected(false); failures++;connectionNotice.textContent=error.message;connectionNotice.hidden=false;
+      recordDiagnostic('connection-error',{status:error.status??0},true);if(!training)scene.setConnected(false); failures++;connectionNotice.textContent=error.message;connectionNotice.hidden=false;
       bandeau.textContent = error.message;
       if (error.status === 409) { inFlight = false; stopped = true; return; } // Do not steal control back from another window.
       if (error.status === 401) {
@@ -330,7 +362,7 @@ async function start() {
       }
     }
     inFlight = false;
-    timer = setTimeout(poll, requested ? 0 : Math.min(2000, failures ? 300 * failures : 150));
+    timer = setTimeout(poll, training ? 1500 : requested ? 0 : Math.min(2000, failures ? 300 * failures : 150));
   }
   void poll();
 }
