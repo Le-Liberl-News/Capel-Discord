@@ -22,6 +22,7 @@ function createActivityService({
   combatEnabled = false,
   enemySpawns = [],
   dungeon = null,
+  jumpEnabled = false,
   canDamage = () => true,
   onSay = () => {},
   onDrink = null,
@@ -191,14 +192,14 @@ function createActivityService({
       player.character=session.character;
       let world = worlds.get(session.channel);
       if (!world) {
-        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, enemySpawns, dungeon, platforms, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
+        world = createActivityWorld({ grid, ...residents, now, geometry, spawnFor, combatEnabled, enemySpawns, dungeon, jumpEnabled, platforms, canDamage, onCraft, onDefeat, initialState: worldStates[session.channel] });
         worlds.set(session.channel, world);
       }
       room.set(session.id, player);
       player.acceptedAt ??= session.joinedAt;
       const previousRespawn = player.respawn ?? 0;
       const wasJumping=!!player.jump;
-      const requestedJump=dungeon&&point?.action?.type==="jump";
+      const requestedJump=(dungeon||jumpEnabled)&&point?.action?.type==="jump";
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;

@@ -9,7 +9,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
   const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
   const skies=airship&&require('./activityAirship').createActivityAirship({...airship,now,resolveCharacter:options.resolveCharacter,onSay:options.onSay,store:worldStores.liberl});
   const hangar=airship&&createActivityService({...options,grid:require('../activity/hangar-world.cjs').grid,residents:{npcs:[],disablePoms:true},geometry:null,onSay:event=>options.onSay?.({...event,map:'hangar'}),now,persistent:true,store:worldStores.hangar});
-  const stadium = arena && createActivityService({ ...options, ...arena, now, persistent: true, store: worldStores.arena,
+  const stadium = arena && createActivityService({ ...options, ...arena, jumpEnabled:true, now, persistent: true, store: worldStores.arena,
     spawnFor: user => spectators.has(user) ? (arena.spectatorGrid?.spawn ?? arena.grid.spawn) : arena.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? arena.grid.spawn,
     onDefeat: finishDuel,
     onSay:event=>options.onSay?.({...event,map:"arena"}),

@@ -470,3 +470,12 @@ test('spectator announcements are removed after cancellation and victory, withou
   assert.equal(await manager.publicationThread(id,client),'result-thread');assert.ok(posts.every(p=>!p.components));
  }
 });
+
+test('arena allows server-owned jumps while keeping spectators on their free camera',async()=>{
+ let time=1000;const lobby=createActivityLobby({grid,now:()=>time,resolveCharacter:async()=> 'Estelle',arena:{combatEnabled:true,grid,spawns:[grid.spawn,{x:8,y:0,z:1}],residents:{npcs:[],disablePoms:true}}});
+ lobby.createDuel({id:'jump-match',players:['a','b'],channel:'arena'});lobby.joinDuel('jump-match','a');lobby.joinDuel('jump-match','b');lobby.acceptDuel('jump-match','a');lobby.acceptDuel('jump-match','b');
+ const a=await lobby.join({id:'a',channel:'private'});await lobby.state(a.activity_token);
+ const launch=await lobby.state(a.activity_token,{action:{id:'jump-arena',type:'jump',direction:{dx:1,dz:0}}});assert.ok(launch.health.jump);
+ time+=500;assert.ok((await lobby.state(a.activity_token)).position.y>1.6);time+=500;const landed=await lobby.state(a.activity_token);assert.equal(landed.health.jump,null);assert.equal(landed.position.y,0);assert.equal(landed.position.x,5.5);
+ lobby.spectateDuel('jump-match','viewer');const viewer=await lobby.join({id:'viewer',channel:'private'});await lobby.state(viewer.activity_token);const denied=await lobby.state(viewer.activity_token,{action:{id:'spectator-jump',type:'jump',direction:{dx:1,dz:0}}});assert.ok(denied.actionResult.error);
+});

@@ -454,7 +454,7 @@ function createActivityWorld(options) {
   const world={...base,tick(players){base.tick(players);dive.tick(players);},action(player,command,players){return command?.type==='sieg_dive'?dive.action(player,command):base.action(player,command,players);}};
   if(!options.combatEnabled)return world;
   const combat=require("./activityCombat").createActivityCombat(options);
-  const jumps=options.dungeon?require('./activityDungeonJumps').createDungeonJumps(options):null;
+  const jumps=(options.dungeon||options.jumpEnabled)?require('./activityDungeonJumps').createDungeonJumps(options):null;
   const fire=options.dungeon?require('./activityDungeonFire').createDungeonFire({...options,traps:options.dungeon.traps??[]}):null;
   const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[],fire});
   return {...world,

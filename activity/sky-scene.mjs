@@ -54,6 +54,7 @@ export const ASSETS = new URL(
 export async function createSkyScene(canvas, map = "anterose") {
   if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inTower=/^tower[1-4]$/.test(map);
+  const canJump=inTower||map==='arena';
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -285,14 +286,14 @@ export async function createSkyScene(canvas, map = "anterose") {
     return action;
   }
   function startJump(){
-    const me=avatars.get(localId);if(!inTower||!me||me.character==="Sieg"||localJump||Date.now()+jumpClockOffset<jumpReadyAt||!connected||!movementAllowed||health.hp<=0)return;
+    const me=avatars.get(localId);if(!canJump||!me||health.spectator||me.character==="Sieg"||localJump||Date.now()+jumpClockOffset<jumpReadyAt||!connected||!movementAllowed||health.hp<=0)return;
     const stick=combatControls.vector(),horizontal=Number(keys.has("arrowright")||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has("arrowleft")||keys.has(movementKeys(keyboardLayout()).left))+stick.x,vertical=Number(keys.has("arrowup")||keys.has(movementKeys(keyboardLayout()).up))-Number(keys.has("arrowdown")||keys.has(movementKeys(keyboardLayout()).down))-stick.y;
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
     let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
     if(!horizontal&&!vertical&&path.length){dx=path[0].x-me.position.x;dz=path[0].z-me.position.z;}const length=Math.hypot(dx,dz);const direction={dx:length?dx/length:0,dz:length?dz/length:0};
     const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
   }
-  const jumpButton=document.createElement("button");jumpButton.id="sky-jump";jumpButton.type="button";jumpButton.textContent="↥";jumpButton.title=jumpButton.ariaLabel="Sauter";jumpButton.hidden=!inTower;jumpButton.addEventListener("click",()=>{startJump();jumpButton.blur();});document.body.append(jumpButton);
+  const jumpButton=document.createElement("button");jumpButton.id="sky-jump";jumpButton.type="button";jumpButton.textContent="↥";jumpButton.title=jumpButton.ariaLabel="Sauter";jumpButton.hidden=!canJump;jumpButton.addEventListener("click",()=>{startJump();jumpButton.blur();});document.body.append(jumpButton);
   touchStyle.textContent+="#sky-jump{position:fixed;right:12px;bottom:145px;width:54px;height:54px;border-radius:50%;border:1px solid #d5bc84;background:#292137;color:#ffe7b0;font:30px system-ui;z-index:27;touch-action:manipulation}#sky-jump[hidden]{display:none}#sky-jump:disabled{opacity:.45}body[data-sky-editing] #sky-jump{display:none}body[data-sky-touch] #sky-jump{left:136px;right:auto;bottom:146px}@media(any-pointer:coarse),(max-width:600px){#sky-jump{left:136px;right:auto;bottom:146px}}";
   function interaction(event) {
     const me = avatars.get(localId);
@@ -548,7 +549,7 @@ export async function createSkyScene(canvas, map = "anterose") {
     if(event.code==="Escape"){juliaCombo=null;craftTarget=false;combatControls.targeting(null);marker.visible=false;return;}
     if(event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
     if(!event.repeat && ["KeyF","KeyG","KeyC"].includes(event.code)){event.preventDefault();const kind=combatKeyAction(event.code,avatars.get(localId)?.character);if(kind)startAttack(kind);return;}
-    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"||health.spectator){keys.add(" ");return;}if(!event.repeat){if(inTower)startJump();else keyboardInteraction();}return;}
+    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"||health.spectator){keys.add(" ");return;}if(!event.repeat){if(canJump)startJump();else keyboardInteraction();}return;}
     if (
       [
         "ArrowUp",
@@ -763,7 +764,7 @@ export async function createSkyScene(canvas, map = "anterose") {
         marker.visible = false;
       }
     }
-    jumpButton.hidden=!inTower||me?.character==="Sieg";
+    jumpButton.hidden=!canJump||health.spectator||me?.character==="Sieg";
     jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump;
     for (const [id, avatar] of avatars) {
       if(avatar.siegDive&&!avatar.dead){Object.assign(avatar.position,diveMechanics.divePosition(avatar.siegDive,Date.now()+jumpClockOffset));const first=avatar.siegDive.points[0],last=avatar.siegDive.points.at(-1);avatar.heading={dx:last.x-first.x,dz:last.z-first.z};if(__ACTIVITY_PREVIEW__&&Date.now()+jumpClockOffset>=avatar.siegDive.started+avatar.siegDive.duration)avatar.siegDive=null;}
@@ -1038,7 +1039,7 @@ export async function createSkyScene(canvas, map = "anterose") {
       const bird=avatars.get(localId);
     if(bird){bird.frozenUntil=result.health?.frozenUntil;bird.downUntil=result.health?.downUntil;const previous=bird.siegDive,confirmed=result.health?.siegDive;if(confirmed){bird.siegDive=confirmed;divePending=null;}else if(!divePending||result.actionResult?.id===divePending){bird.siegDive=null;if(result.actionResult?.error&&result.actionResult.id===divePending)combatControls.rejected('craft');divePending=null;if(previous)Object.assign(bird.position,result.position);}if(previous||bird.siegDive){path=[];movementTrace=[];}}
       const pushed=avatars.get(localId);if(pushed){const previous=pushed.knockback;pushed.knockback=result.health?.knockback??null;if(pushed.knockback||previous){path=[];movementTrace=[];localJump=null;if(!pushed.knockback)Object.assign(pushed.position,result.position);}}
-      if(inTower){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
+      if(canJump){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects?.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
         else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
       }

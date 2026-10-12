@@ -6,6 +6,9 @@ python -c "import json,pathlib; p=pathlib.Path('E:/dev/sky-activity-tools/atelie
 if errorlevel 1 python tools\combat-browser\export.py
 if errorlevel 1 exit /b 1
 
+python tools\combat-browser\export-crafts.py --models
+if errorlevel 1 exit /b 1
+
 node tools\combat-browser\launch.cjs
 
 pause
