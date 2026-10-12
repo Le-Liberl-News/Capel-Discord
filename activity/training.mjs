@@ -9,7 +9,7 @@ import {bodyHeight} from './fps-combat.cjs';
 export function createTraining({grid,geometry,character,opponent,now=Date.now,random=Math.random,ballSpawns=residents.ballSpawns,titles={},introDuration=0}) {
  const place=p=>pointAt(grid,nearestCell(grid,p));
  const player={id:'training:player',character,...place({x:-1,z:3.25}),hp:500,maxHp:500,noRespawn:true};
- const ai={id:'training:ai',character:opponent,displayName:opponent+' (IA)',...place({x:-1,z:-16.25}),hp:500,maxHp:500,noRespawn:true};
+ const ai={id:'training:ai',character:opponent,name:opponent+' (IA)',...place({x:-1,z:-16.25}),hp:500,maxHp:500,noRespawn:true};
  const players=new Map([[player.id,player],[ai.id,ai]]);
  const world=worldModule.createActivityWorld({grid,geometry,now,combatEnabled:true,jumpEnabled:true,ballSpawns,disablePoms:!ballSpawns.length,canDamage:(a,b)=>a.id!==b.id});
  const startsAt=now(),readyAt=startsAt+introDuration,duel={id:"training:"+startsAt,startsAt,readyAt,players:[player.id,ai.id],names:[character,opponent+" (IA)"],titles:[titles[character],titles[opponent]]};
@@ -50,7 +50,7 @@ export function createTraining({grid,geometry,character,opponent,now=Date.now,ra
   velocity={x:(position.x-last.x)/dt,z:(position.z-last.z)/dt};for(const axis of ['x','z'])velocity[axis]=Math.max(-4,Math.min(4,velocity[axis]));last={...position};
   if(!player.jump&&!player.siegDive&&!player.knockback&&time>=(player.combatLockedUntil??0)&&!status.immobilized(player,time))Object.assign(player,{x:position.x,y:position.y,z:position.z});
   let actionResult;if(command&&time>=readyAt){let result={};if(command.type==='say')result={text:command.text,speaker:player.id};else if(!finish)result=world.action(player,command,players);actionResult={id:command.id,...result};}
-  if(!finish&&time>=readyAt){world.tick(players);if(player.hp<=0||ai.hp<=0){finish={winner:player.hp>0?player.character:ai.character};path=[];}else{if(time>=thinkAt){thinkAt=time+220;think(time);}if(!status.immobilized(ai,time)&&time>=(ai.combatLockedUntil??0)){const before={...ai};advance(ai,path,dt,3.5*status.movementFactor(ai,time));ai.heading={dx:ai.x-before.x,dz:ai.z-before.z};ai.moving=Math.hypot(ai.heading.dx,ai.heading.dz)>.001;}}}
+  if(!finish&&time>=readyAt){world.tick(players);if(player.hp<=0||ai.hp<=0){finish={winner:player.hp>0?player.character:ai.name};path=[];}else{if(time>=thinkAt){thinkAt=time+220;think(time);}if(!status.immobilized(ai,time)&&time>=(ai.combatLockedUntil??0)){const before={...ai};advance(ai,path,dt,3.5*status.movementFactor(ai,time));ai.heading={dx:ai.x-before.x,dz:ai.z-before.z};ai.moving=Math.hypot(ai.heading.dx,ai.heading.dz)>.001;}}}
   const canMove=time>=readyAt&&!finish&&player.hp>0&&!status.immobilized(player,time)&&time>=(player.combatLockedUntil??0);
   return {duel,...world.snapshot(),joueurs:[...players.values()].map(p=>({...p})),position:{x:player.x,y:player.y,z:player.z},actionResult,health:{...player,canMove,canDetonate:world.canDetonate(player.id),frozenUntil:player.stoneUntil??0,movementFactor:status.movementFactor(player,time),cooldowns:world.cooldownsFor(player.id),serverTime:time},messages:actionResult?.text?[{id:command.id,author:actionResult.speaker,character:player.character,text:actionResult.text}]:[],finish};
  }

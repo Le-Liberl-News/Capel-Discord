@@ -42,7 +42,7 @@ async function startTraining(){
  if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
- const titles=apercuLocal?{}:(await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}})).titles;
+ let titles={};try{if(!apercuLocal)titles=(await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}})).titles;}catch(error){trainingBusy=false;throw error;}
  training=null;scene.dispose();scene=null;
  try{scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent,titles,introDuration:DUEL_INTRO_DURATION});bindScene();await scene.me(training.player);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent+' (IA)';music.setTrack(musicUrl('arena'));}
  catch(error){trainingBusy=false;await stopTraining();throw error;}
