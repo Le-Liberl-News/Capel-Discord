@@ -1,4 +1,7 @@
 ﻿const path=require('node:path'),esbuild=require('esbuild');const root=path.resolve(__dirname,'..');
+// Generated from the bot's only character configuration, never edited separately.
+{const fs=require('node:fs'),characters=JSON.parse(fs.readFileSync(path.join(root,'../rpg/data/persos.json'),'utf8'));fs.writeFileSync(path.join(root,'assets/sky/character-titles.json'),JSON.stringify(Object.fromEntries(Object.entries(characters).filter(([name])=>name!=='default').map(([name,data])=>[name,data.titre??''])),null,2)+'\n');}
+
 esbuild.buildSync({entryPoints:[path.join(root,'craft-gif-worker.mjs')],bundle:true,format:'iife',minify:true,legalComments:'eof',outfile:path.join(root,'assets/sky/combat/gif-worker.js')});
 esbuild.buildSync({entryPoints:[path.join(root,'main.js')],bundle:true,format:'esm',minify:true,legalComments:'eof',define:{__ACTIVITY_PREVIEW__:'false'},outfile:path.join(root,'bundle.js')});
 

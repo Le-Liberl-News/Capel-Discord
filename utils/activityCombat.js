@@ -119,7 +119,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     }
 
-    if(spec.catLeap){const {combatMotion}=require('../activity/combat-motion.cjs');let previous={...origin,y:origin.y+.5};for(let t=40;t<=spec.leapDuration;t+=40){const p=combatMotion({origin,aim:endpoint},t,spec).position,body={...p,y:p.y+.5};if(geometry?.sweep(previous,body,.15))return {error:'Le bond est bloqué.'};previous=body;}}
+    if(spec.catLeap){const {combatMotion}=require('../activity/combat-motion.cjs');let previous={...origin,y:origin.y+.5};for(let t=40;t<spec.leapDuration+40;t+=40){const p=combatMotion({origin,aim:endpoint},Math.min(t,spec.leapDuration),spec).position,body={...p,y:p.y+.5};if(geometry?.sweep(previous,body,.15))return {error:'Le bond est bloqué.'};previous=body;}}
     if(spec.special==='phoenix'){
       const gx=Math.round((endpoint.x-grid.origin.x)/grid.step),gz=Math.round((endpoint.z-grid.origin.z)/grid.step);
       if(gx<0||gz<0||gx>=grid.width||gz>=grid.height||grid.cells[gz*grid.width+gx]===null)return {error:'Visez un sol accessible.'};

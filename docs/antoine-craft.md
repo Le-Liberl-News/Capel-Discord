@@ -1,6 +1,6 @@
 # Antoine, le chat
 
-G puis clic sur le sol : bond de 12 mètres maximum, 4 mètres de hauteur, 1,1 seconde. Il s’accroche au premier ennemi vivant le plus proche à moins de 1,05 mètre de son atterrissage. Les alliés de la tour sont exclus.
+G puis clic sur le sol : bond de 12 mètres maximum, 0,7 mètre de hauteur, 0,35 seconde. Il s’accroche au premier ennemi vivant le plus proche à moins de 1,05 mètre de son atterrissage. Les alliés de la tour sont exclus.
 
 Accroché : morsure de 8 PV toutes les 650 ms, petites éclaboussures natives Third/msc0601._ef ; vitesse du porteur multipliée par 0,8. Antoine suit le torse du porteur et ne peut plus marcher ni lancer une technique.
 

@@ -1,4 +1,6 @@
+import characterTitles from './assets/sky/character-titles.json' with {type:'json'};
 import native from './assets/sky/arena/intro.json' with {type:'json'};
+export function fighterSubtitle(character,title,streak=0){const value=title&&title!=='Titre à renseigner'?title:characterTitles[character]??'';return [value,'Série : '+streak+' victoire'+(streak>1?'s':'')].filter(Boolean).join(' · ');}
 export const DUEL_INTRO_DURATION=native.duration;
 export function duelHeading(from,to){return {dx:to.x-from.x,dz:to.z-from.z};}
 export function duelPhase(duel,time){
@@ -33,7 +35,7 @@ export function createDuelIntro({assets=null,onSpeech=()=>{}}={}){
    let pose;if(phase.kind==='fighter')pose=fighterOrbit({...positions[phase.side],x:positions[phase.side].x+(players[phase.side]?.introOffset?.x??0),z:positions[phase.side].z+(players[phase.side]?.introOffset?.z??0)},positions[1-phase.side],phase.progress);else if(['overview','wide'].includes(phase.kind))pose=nativeArenaCamera(phase);else pose={target:{...centre,y:centre.y+.8},position:{x:centre.x+14,y:centre.y+11,z:centre.z},fov:48,zoom:1};
    camera.position.set(pose.position.x,pose.position.y,pose.position.z);camera.lookAt(pose.target.x,pose.target.y,pose.target.z);camera.zoom=pose.zoom;camera.fov=pose.fov;camera.updateProjectionMatrix();
    caption.style.display=['fighter','versus','begin'].includes(phase.kind)?'block':'none';const names=players.map((p,i)=>duel.names?.[i]||p?.displayName||p?.character||'?'),titles=duel.titles??[];caption.style.opacity=phase.kind==='fighter'?String(Math.min(1,phase.progress*8,(1-phase.progress)*8)): '1';const elapsed=(time+offset-duel.startsAt)/(duel.readyAt-duel.startsAt)*DUEL_INTRO_DURATION,transition=Math.max(0,...[8000,10000,13500,17000].map(boundary=>1-Math.abs(elapsed-boundary)/350)),fade=Math.max(phase.fade??0,transition);overlay.style.backgroundColor=fade?'rgba(0,0,0,'+fade+')':'transparent';
-   title.textContent=phase.kind==='fighter'?names[phase.side]:phase.kind==='begin'?'Combat !':phase.kind==='versus'?names.join('  —  '):'';subtitle.textContent=phase.kind==='fighter'?(titles[phase.side]||'Titre à renseigner')+' · Série : '+(duel.streaks?.[phase.side]??0)+' victoire'+((duel.streaks?.[phase.side]??0)>1?'s':''):'';
+   title.textContent=phase.kind==='fighter'?names[phase.side]:phase.kind==='begin'?'Combat !':phase.kind==='versus'?names.join('  —  '):'';subtitle.textContent=phase.kind==='fighter'?fighterSubtitle(players[phase.side]?.character,titles[phase.side],duel.streaks?.[phase.side]??0):'';
    const sound=phase.kind==='overview'||phase.kind==='wide'?'opening':'fighters'+(phase.side??1);if(sound!==announced){announced=sound;if(sound!=='opening'){fighters?.pause();if(fighters)fighters.currentTime=0;}soundPlay(sound==='opening'?opening:fighters);}
   },dispose(){for(const sound of [opening,fighters])if(sound){sound.pause();sound.removeAttribute('src');sound.load();}for(const [type,fn]of listeners)document.removeEventListener(type,fn);document.body.removeAttribute?.('data-sky-intro');style.remove();overlay.remove();}
  };
