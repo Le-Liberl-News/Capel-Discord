@@ -164,7 +164,8 @@ export class NativeEffectPlayer{
       // Most EF planes are in XY; camera-facing flag 0x400 is retained.
       const ground=item.scale.length>0&&item.scale.every(k=>Math.abs(k.value[1])<1e-6)&&item.scale.some(k=>Math.abs(k.value[2])>1e-6);
       const raw=ground?[[a[0],0,a[1]],[b[0],0,a[1]],[a[0],0,b[1]]]:[[a[0],a[1],a[2]],[b[0],a[1],a[2]],[a[0],b[1],b[2]]];
-      const rotation=[...s.rotation];if(!ground&&(part.renderFlags&0x400)){rotation[1]-=this.yaw;rotation[0]-=this.pitch;}
+      // Native rotations are yaw, pitch, roll (the same order as angular curves).
+      const rotation=[s.rotation[1],s.rotation[0],s.rotation[2]];if(!ground&&(part.renderFlags&0x400)){rotation[1]-=this.yaw;rotation[0]-=this.pitch;}
       const points=raw.map(point=>this.project(add(rotate(point.map((val,j)=>val*s.scale[j]),rotation),s.position),w,h,factor));
       const [p0,p1,p2]=points;if(points.flat().some(n=>!Number.isFinite(n)))continue;
       const additive=!!(part.renderFlags&4),multiply=!additive&&!!(part.renderFlags&0x40);
@@ -193,7 +194,7 @@ export class NativeEffectPlayer{
       const original=this.textureImages.get(mode==='source-over'?mesh.texture?.texture:mesh.texture?.additiveTexture??mesh.texture?.texture);if(!original)continue;
       const tinted=this.tint(original,0,0,original.width,original.height,mode==='multiply'?[255,255,255,255]:s.color,mode==='source-over');
       const image=document.createElement('canvas');image.width=tinted.width;image.height=tinted.height;image.getContext('2d').drawImage(tinted,0,0);
-      const points=mesh.positions.map(p=>this.project(add(rotate(p.map((v,j)=>v*s.scale[j]),s.rotation),s.position),w,h,zoom));
+      const points=mesh.positions.map(p=>this.project(add(rotate(p.map((v,j)=>v*s.scale[j]),[s.rotation[1],s.rotation[0],s.rotation[2]]),s.position),w,h,zoom));
       for(let i=0;i<mesh.indices.length;i+=3){const ids=mesh.indices.slice(i,i+3);triangles.push({points:ids.map(j=>points[j]),uv:ids.map(j=>mesh.uv[j]),image,mode});}
     }
     triangles.sort((a,b)=>b.points.reduce((n,p)=>n+p[2],0)-a.points.reduce((n,p)=>n+p[2],0));

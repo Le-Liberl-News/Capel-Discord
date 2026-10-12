@@ -1,11 +1,44 @@
 import {bakedEffectSprite} from './baked-effects.mjs';
-export function createTrinityView(THREE,scene,banks){const views=new Map();
- const blue=material=>{material.color.set(0xffffff);material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace(/#include <map_(?:particle_)?fragment>/,'$&\n diffuseColor.rgb = vec3(max(max(diffuseColor.r,diffuseColor.g),diffuseColor.b)) * vec3(0.2,0.55,1.0);');};material.customProgramCacheKey=()=>"trinity-blue";};
- function create(event,spec){const group=new THREE.Group();scene.add(group);const bank=banks.get(spec.nativeEffect.toLowerCase()),map=bank.map.clone();map.repeat.set(1/bank.columns,1/bank.rows);const trail=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,color:0x68bfff}));blue(trail.material);trail.rotation.x=-Math.PI/2;trail.renderOrder=4;group.add(trail);const aura=bakedEffectSprite(THREE,banks.get(spec.hitEffect.toLowerCase()),2);blue(aura.sprite.material);group.add(aura.sprite);const v={group,trail,map,bank,aura,novas:[],seen:new Set()};views.set(event.id,v);return v;}
- function draw(event,spec,time,avatars){const v=views.get(event.id)??create(event,spec),progress=Math.max(0,Math.min(1,(time-spec.windup)/spec.dashDuration)),age=time-(event.impactAt-event.started),dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,len=Math.hypot(dx,dz);v.trail.visible=progress>0&&age<5000;v.trail.position.set(event.origin.x+dx*progress/2,event.origin.y+(event.aim.y-event.origin.y)*progress/2+.08,event.origin.z+dz*progress/2);v.trail.rotation.z=-Math.atan2(dz,dx);v.trail.scale.set(len*progress,1.3,1);v.trail.material.opacity=Math.min(1,Math.max(0,(5000-age)/600));const frame=Math.floor(Math.max(0,time-spec.windup)/45)%v.bank.frames;v.map.offset.set(frame%v.bank.columns/v.bank.columns,1-(Math.floor(frame/v.bank.columns)+1)/v.bank.rows);
- const owner=avatars.get(event.actor)?.position??event.origin;v.aura.sprite.visible=time<spec.windup+spec.dashDuration;v.aura.sprite.position.set(owner.x,owner.y+.7,owner.z);if(v.aura.sprite.visible)v.aura.draw(time*2);
- for(const hit of event.hits??[])if(hit.nova&&!v.seen.has(hit.id)){v.seen.add(hit.id);const fx=bakedEffectSprite(THREE,banks.get(spec.explosionEffect.toLowerCase()),4);blue(fx.sprite.material);v.group.add(fx.sprite);v.novas.push({fx,at:hit.at-event.started,point:hit.point});}
- for(const n of v.novas){const age=time-n.at;n.fx.sprite.visible=age>=0&&age<1400;n.fx.sprite.position.set(n.point.x,n.point.y,n.point.z);if(n.fx.sprite.visible)n.fx.draw(age*2);}}
- function remove(id){const v=views.get(id);if(!v)return;scene.remove(v.group);v.trail.geometry.dispose();v.trail.material.dispose();v.map.dispose();v.aura.dispose();for(const n of v.novas)n.fx.dispose();views.delete(id);}
+
+// One instanced draw call per trail; native particles are baked offline.
+export function createTrinityView(THREE,scene,banks){
+ const views=new Map(),matrix=new THREE.Matrix4(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3(),point=new THREE.Vector3();
+ const blue=material=>{material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace(/#include <map_(?:particle_)?fragment>/,'$&\n diffuseColor.rgb = vec3(max(max(diffuseColor.r,diffuseColor.g),diffuseColor.b)) * vec3(0.2,0.55,1.0);');};material.customProgramCacheKey=()=>"trinity-blue";};
+ function plane(bank,instances){
+  const map=bank.map.clone();map.repeat.set(1/bank.columns,1/bank.rows);
+  const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});blue(material);
+  const geometry=new THREE.PlaneGeometry(1,1),mesh=instances?new THREE.InstancedMesh(geometry,material,instances):new THREE.Mesh(geometry,material);
+  mesh.frustumCulled=false;mesh.renderOrder=4;
+  return {mesh,bank,map,draw(ms,loop=false){let frame=Math.floor(Math.max(0,ms)*bank.frames/(bank.duration??3000));frame=loop?frame%bank.frames:Math.min(bank.frames-1,frame);map.offset.set(frame%bank.columns/bank.columns,1-(Math.floor(frame/bank.columns)+1)/bank.rows);},dispose(){geometry.dispose();material.dispose();map.dispose();}};
+ }
+ function create(event,spec){
+  const group=new THREE.Group();scene.add(group);
+  const length=Math.hypot(event.aim.x-event.origin.x,event.aim.z-event.origin.z),count=Math.max(1,Math.ceil(length/.8));
+  const trail=plane(banks.get(spec.nativeEffect.toLowerCase()),count);group.add(trail.mesh);
+  const aura=bakedEffectSprite(THREE,banks.get(spec.hitEffect.toLowerCase()),2);blue(aura.sprite.material);group.add(aura.sprite);
+  const v={group,trail,count,aura,walls:[],nova:null};views.set(event.id,v);return v;
+ }
+ function draw(event,spec,time,avatars){
+  const v=views.get(event.id)??create(event,spec),progress=Math.max(0,Math.min(1,(time-spec.windup)/spec.dashDuration)),age=time-(event.impactAt-event.started),dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,len=Math.hypot(dx,dz);
+  v.trail.mesh.visible=progress>0&&age<spec.trailDuration;
+  v.trail.mesh.count=Math.ceil(v.count*progress);v.trail.mesh.material.opacity=Math.min(1,Math.max(0,(spec.trailDuration-age)/600));
+  rotation.setFromAxisAngle(new THREE.Vector3(0,1,0),-Math.atan2(dz,dx));
+  for(let i=0;i<v.trail.mesh.count;i++){const t=Math.min(progress,(i+.5)/v.count);point.set(event.origin.x+dx*t,event.origin.y+(event.aim.y-event.origin.y)*t+.55,event.origin.z+dz*t);scale.set(Math.max(.9,len/v.count*1.5),1.2,1);matrix.compose(point,rotation,scale);v.trail.mesh.setMatrixAt(i,matrix);}
+  v.trail.mesh.instanceMatrix.needsUpdate=true;v.trail.draw(Math.max(0,time-spec.windup),true);
+  const owner=avatars.get(event.actor)?.position??event.origin;v.aura.sprite.visible=time<spec.windup+spec.dashDuration;v.aura.sprite.position.set(owner.x,owner.y+.7,owner.z);if(v.aura.sprite.visible)v.aura.draw(time*2);
+  if(event.closed&&event.triangle&&event.explodedAt!=null){
+   if(!v.walls.length)for(let i=0;i<3;i++){
+    const from=event.triangle[i],to=event.triangle[(i+1)%3],wall=plane(banks.get(spec.edgeEffect.toLowerCase()));
+    wall.mesh.position.set((from.x+to.x)/2,(from.y+to.y)/2+1.7,(from.z+to.z)/2);
+    wall.mesh.rotation.y=-Math.atan2(to.z-from.z,to.x-from.x);wall.mesh.scale.set(Math.hypot(to.x-from.x,to.z-from.z),3.4,1);v.group.add(wall.mesh);v.walls.push(wall);
+   }
+   const elapsed=time-(event.explodedAt-event.started);
+   for(const wall of v.walls){wall.mesh.visible=elapsed>=0&&elapsed<3000;wall.draw(elapsed);}
+   if(!v.nova){v.nova=bakedEffectSprite(THREE,banks.get(spec.explosionEffect.toLowerCase()),7);blue(v.nova.sprite.material);v.group.add(v.nova.sprite);}
+   const center=event.explosionPoint??{x:event.triangle.reduce((n,p)=>n+p.x,0)/3,y:event.triangle.reduce((n,p)=>n+p.y,0)/3,z:event.triangle.reduce((n,p)=>n+p.z,0)/3};
+   v.nova.sprite.position.set(center.x,center.y+1.5,center.z);v.nova.sprite.visible=elapsed>=0&&elapsed<3000;if(v.nova.sprite.visible)v.nova.draw(elapsed);
+  }
+ }
+ function remove(id){const v=views.get(id);if(!v)return;scene.remove(v.group);v.trail.dispose();v.aura.dispose();for(const wall of v.walls)wall.dispose();v.nova?.dispose();views.delete(id);}
  return {draw,remove,dispose(){for(const id of views.keys())remove(id);}};
 }

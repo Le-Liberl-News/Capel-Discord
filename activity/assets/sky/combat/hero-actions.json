@@ -583,10 +583,11 @@
       "burnDamage": 4,
       "trailDuration": 5000,
       "comboWindow": 6500,
-      "nativeEffect": "Third/sc014_01._ef",
+      "nativeEffect": "Third/sc014_00._ef",
       "hitEffect": "Third/sc014_00._ef",
       "explosionEffect": "Third/sc005_16._ef",
-      "effectDuration": 5000
+      "effectDuration": 5000,
+      "edgeEffect": "Third/sc014_02._ef"
     }
   }
 }

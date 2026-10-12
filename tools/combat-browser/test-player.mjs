@@ -40,3 +40,12 @@ assert.deepEqual(cylinder.positions[0], [.8,1,0]);
 assert.equal(cylinder.uv[0][0],.25);assert.equal(cylinder.uv.at(-1)[0],.5);
 assert.ok(Math.abs(cylinder.positions[0][0]-cylinder.positions.at(-2)[0])<1e-6);
 console.log('Native casting cylinder: closed geometry and atlas UVs OK');
+// A spinning native cylinder must keep its vertical axis, rather than tumble over.
+const modelPlayer=new NativeEffectPlayer([],async()=>null),positions=[];
+modelPlayer.textureImages=new Map([['fixture',{width:16,height:16}]]);modelPlayer.tint=()=>({width:16,height:16});
+modelPlayer.project=p=>{positions.push(p);return p;};
+globalThis.document={createElement:()=>({getContext:()=>({drawImage(){}})})};
+const ctx=new Proxy({},{get:()=>()=>{}});
+modelPlayer.drawModel(ctx,{meshes:[{texture:{texture:'fixture'},renderFlags:4,positions:[[1,2,0],[0,2,1],[0,0,0]],uv:[[0,0],[1,0],[0,1]],indices:[0,1,2]}]}, {part:{renderFlags:4}},{position:[0,0,0],scale:[1,1,1],rotation:[90,0,0],color:[255,255,255,255]},100,100,1);
+assert.equal(positions[0][1],2);assert.equal(positions[1][1],2);assert.ok(Math.abs(positions[0][0])<1e-8);assert.equal(positions[0][2],-1);
+console.log('Native yaw rotates columns around their vertical axis OK');

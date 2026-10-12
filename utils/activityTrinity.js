@@ -16,7 +16,7 @@ function createTrinity({now,attacks,canDamage,hurt}){
    const inside=a.closed&&insideTriangle(t,a.triangle)&&a.edges.every(id=>{const edge=attacks.get(id);return edge&&!edge.cancelled&&time<edge.impactAt+s.trailDuration;});
    if(inside&&!a.novaDone&&time>=a.impactAt+120){const dealt=hurt(a,actor,t,s.novaDamage,time,{point:{x:t.x,y:(t.y??0)+.8,z:t.z}});a.hits.push({id:t.id,at:time,nova:true,point:{x:t.x,y:(t.y??0)+.8,z:t.z},...dealt});}
    if(segmentDistance(t,a.origin,a.aim)<s.radius){const key=a.chain+':'+t.id;if(time>=(burns.get(key)??0)){burns.set(key,time+750);const dealt=hurt(a,actor,t,s.burnDamage,time,{point:{x:t.x,y:(t.y??0)+.5,z:t.z}});a.hits.push({id:t.id,at:time,burn:true,...dealt});}}
-  }if(a.stage===3&&time>=a.impactAt+120)a.novaDone=true;}
+  }if(a.stage===3&&time>=a.impactAt+120){if(!a.novaDone&&a.closed&&a.edges.every(id=>{const edge=attacks.get(id);return edge&&!edge.cancelled&&time<edge.impactAt+s.trailDuration;})){a.explodedAt=time;a.explosionPoint={x:a.triangle.reduce((n,p)=>n+p.x,0)/3,y:a.triangle.reduce((n,p)=>n+p.y,0)/3,z:a.triangle.reduce((n,p)=>n+p.z,0)/3};}a.novaDone=true;}}
   for(const [key,at]of burns)if(time>at+6000)burns.delete(key);return true;
  }
  return {active,prepare,setup,tick};
