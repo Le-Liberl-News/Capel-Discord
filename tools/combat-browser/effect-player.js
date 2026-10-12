@@ -1,3 +1,4 @@
+import {nativeSector} from './native-sector.js';
 // Playback of decoded Sky EF assemblies. No hand-authored particle presets.
 const lerp=(a,b,t)=>a+(b-a)*t;
 const add=(a,b)=>a.map((v,i)=>v+b[i]);
@@ -51,7 +52,7 @@ export class NativeEffectPlayer{
     if(this.instances.some(i=>i.texture?.sharedFromThird))this.warnings.push('Texture commune reprise du catalogue The 3rd');
     const missing=new Set(this.instances.filter(i=>i.part.enabled&&!(i.part.renderFlags&1)&&!i.texture).map(i=>i.part.name||i.part.index));
     if(missing.size)this.warnings.push('Textures absentes : '+[...missing].join(', '));
-    if(this.instances.some(i=>i.part.primitive==null||(i.part.primitive>1&&i.part.primitive!==3&&i.part.primitive!==10)))this.warnings.push('Géométries spéciales : aperçu par plans texturés, forme 3D à compléter');
+    if(this.instances.some(i=>i.part.primitive==null||(i.part.primitive>1&&i.part.primitive!==3&&i.part.primitive!==4&&i.part.primitive!==10)))this.warnings.push('Géométries spéciales : aperçu par plans texturés, forme 3D à compléter');
     if(this.instances.some(i=>i.part.flags&0x40))this.warnings.push('Rubans : aperçu par particules, géométrie du ruban à compléter');
     if(this.instances.some(i=>i.part.motion&&i.part.motion!==0))this.warnings.push('Trajectoires liées à une cible : cible fixe dans cet aperçu');
     if(this.models.size)this.warnings.push('Modèle 3D chargé ; déformation du squelette à compléter');
@@ -148,6 +149,7 @@ export class NativeEffectPlayer{
     for(const {item,s}of visible){
       if(item.part.primitive===10){const model=this.models.get(item.part.model);if(model)count+=this.drawModel(ctx,model,item,s,w,h,factor);continue;}
       if(item.part.primitive===3){count+=this.drawSphere(ctx,item,s,w,h,factor);continue;}
+      if(item.part.primitive===4){const mesh=nativeSector(item.part.vertices,item.part.uv);count+=this.drawModel(ctx,{meshes:[{...mesh,texture:item.texture,renderFlags:item.part.renderFlags}]},item,s,w,h,factor);continue;}
       if(item.part.primitive===1){count+=this.drawCylinder(ctx,item,s,w,h,factor);continue;}
       const im=this.textureImages.get(item.part.renderFlags&0x44?item.texture.additiveTexture??item.texture.texture:item.texture.texture);if(!im)continue;
       const part=item.part;let [u,v,u2,v2]=part.uv;const uv=part.uvAnimation??{},tw=u2-u,th=v2-v;

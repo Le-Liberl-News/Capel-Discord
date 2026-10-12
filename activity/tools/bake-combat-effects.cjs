@@ -9,7 +9,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
  const entries=JSON.parse(await fs.readFile(path.join(root,'catalogue.json'),'utf8'));
  const heroes=JSON.parse(await fs.readFile(path.join(root,'../../combat/hero-actions.json'),'utf8'));
  const heroEffects=['Third/msc0614._ef',...new Set(Object.values(heroes).flatMap(h=>Object.values(h).filter(a=>a?.nativeEffect).map(a=>a.nativeEffect)))];
- heroEffects.push('Third/msc0601._ef','SC/cr172_02._ef','SC/mg017_0._ef','SC/mp067_02._ef','Third/sc270_12._ef','Third/sc040_09._ef','Third/sc040_07._ef','Third/sc003_17._ef','Third/sc001_12._ef');
+ heroEffects.push('Third/mp003_00._ef','Third/msc0601._ef','SC/cr172_02._ef','SC/mg017_0._ef','SC/mp067_02._ef','Third/sc270_12._ef','Third/sc040_09._ef','Third/sc040_07._ef','Third/sc003_17._ef','Third/sc001_12._ef');
  heroEffects.push(...new Set(Object.values(heroes).flatMap(h=>Object.values(h).flatMap(a=>(a?.chargeEffects??[]).map(e=>e.id)))));
  heroEffects.push(...new Set(Object.values(heroes).flatMap(h=>Object.values(h).flatMap(a=>[a?.hitEffect,a?.explosionEffect,a?.edgeEffect,a?.trailEffect].filter(Boolean)))),'SC/mp050_00._ef','SC/ms10920._ef','SC/mp066_01._ef','SC/ms10011._ef','SC/msc0548._ef','SC/sc480_03._ef');
  const specs=[...['mg011_0','damage0','damage1','damage2','damage3','damage5'].map(name=>({id:`sc/${name}._ef`,name,frames:name.startsWith('damage')?24:54,zoom:4})),...heroEffects.map(id=>({id,name:id.toLowerCase().replace('/','-').replace('._ef',''),frames:90,zoom:2}))];

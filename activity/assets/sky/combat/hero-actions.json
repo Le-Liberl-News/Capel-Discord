@@ -642,7 +642,10 @@
       "effectDuration": 1800
     },
     "craft": {
-      "nativeEffect": "SC/mg017_0._ef"
+      "nativeEffect": "Third/cr151_00._ef",
+      "hitEffect": "Third/cr151_01._ef",
+      "nativeLine": true,
+      "effectDuration": 1200
     }
   }
 }

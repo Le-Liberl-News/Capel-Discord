@@ -9,3 +9,5 @@ Seul un impact de singe-mouton sur le porteur, même absorbé par une protection
 La spritesheet originale est activity/assets/sky/ch01700.png : 8 × 8 cases de 72 × 53 pixels (576 × 424), transparence PNG. Copie fournie sur le Bureau : Antoine-spritesheet.png. Le sprite accroché utilise provisoirement son sprite existant, placé sur le torse ; aucune nouvelle pose n’a été inventée.
 
 Effets additionnels précalculés à partir des assemblages natifs du jeu : cœurs et onde répulsive d’Anton, terre d’Estelle, faisceau d’arrivée dans la tour, pétales de Richard, luth d’Olivier, glace et éclats de Campanella. Les cristaux terminent leur apparition puis restent sur leur dernière frame visible jusqu’au dégel.
+
+Le bond laisse huit copies du sprite original, teintées en orange et estompées en 260 ms. Third/mp003_00._ef se joue au point de départ, son axe orienté selon la dérivée initiale du bond. La pose accrochée conserve l’image originale intacte ; les essais de découpes externes ne sont pas utilisés par le jeu.

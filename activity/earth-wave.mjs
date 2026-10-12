@@ -1,7 +1,4 @@
-import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
-export async function prepareEarthWave(THREE,assets){return {...await loadBakedEffect(THREE,assets,'sc-mg017_0',90),duration:900};}
-// One shared pre-rendered native assembly, repeated along the server's hit positions.
-export function createEarthWave(THREE,scene,event,spec,bank){
- const steps=spec.hitOffsets.map((delay,index)=>{const t=index/Math.max(1,spec.hitOffsets.length-1),fx=bakedEffectSprite(THREE,bank,3);fx.sprite.position.set(event.origin.x+(event.aim.x-event.origin.x)*t,event.origin.y+(event.aim.y-event.origin.y)*t+.6,event.origin.z+(event.aim.z-event.origin.z)*t);scene.add(fx.sprite);return {delay,fx};});
- return {draw(time){for(const {delay,fx}of steps){const age=time-spec.windup-delay;fx.sprite.visible=age>=0&&age<900;if(fx.sprite.visible)fx.draw(age);}},dispose(){for(const {fx}of steps){scene.remove(fx.sprite);fx.dispose();}}};
-}
+import {nativeWorldEffect} from './native-effects.mjs';
+export async function prepareEarthWave(THREE,assets,native){const player=native.get('third/cr151_00._ef'),all=[],free=[],make=()=>{const fx=nativeWorldEffect(THREE,player,{nativeAxes:true,spatial:true,parts:[2,4,5,6,8],startBefore:1000});all.push(fx);return fx;};free.push(make(),make());return {player,acquire(){return free.pop()??make();},release(fx){fx.group.visible=false;free.push(fx);},warmup(renderer,scene,camera){for(const fx of all){scene.add(fx.group);fx.group.visible=true;fx.group.traverse(o=>{if(o.material?.map)renderer.initTexture(o.material.map);});}renderer.compile(scene,camera);for(const fx of all){scene.remove(fx.group);fx.group.visible=false;}},dispose(){for(const fx of all)fx.dispose();}};}
+// One original moving assembly, whose native +Z emitter follows the aimed segment.
+export function createEarthWave(THREE,scene,event,spec,bank){const fx=bank.acquire(),dx=event.aim.x-event.origin.x,dz=event.aim.z-event.origin.z,length=Math.hypot(dx,dz);fx.group.position.set(event.origin.x,event.origin.y+.06,event.origin.z);fx.group.rotation.y=Math.atan2(dx,dz);fx.group.scale.set(.18,.22,length/31);scene.add(fx.group);return {draw(time){const age=time-spec.windup;fx.group.visible=age>=0&&age<850;if(fx.group.visible)fx.draw(age*2);},dispose(){scene.remove(fx.group);bank.release(fx);}};}

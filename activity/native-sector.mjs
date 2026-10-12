@@ -1,0 +1,2 @@
+// EF primitive 4 uses two angular/radial bounds for a curved sector.
+export function nativeSector(vertices,uv=[0,0,1,1],segments=24){const [a,b]=vertices,positions=[],coords=[],indices=[];for(let i=0;i<=segments;i++){const t=i/segments,angle=a[0]+(b[0]-a[0])*t;for(const [r,v]of [[a[1],uv[1]],[b[1],uv[3]]]){positions.push([Math.sin(angle)*r,0,Math.cos(angle)*r]);coords.push([uv[0]+(uv[2]-uv[0])*t,v]);}if(i<segments){const j=i*2;indices.push(j,j+1,j+2,j+2,j+1,j+3);}}return {positions,uv:coords,indices};}

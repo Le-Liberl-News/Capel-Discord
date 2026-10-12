@@ -13,6 +13,7 @@ export function newDamageEvents(previous,player){
 export async function createDamageEffects(THREE,scene,container,url,loading) {
  const banks=new Map(await Promise.all([0,1,2,3,5].map(async index=>[index,await loadBakedEffect(THREE,new URL('../',url),`damage${index}`,24)])));
  const catBank=await loadBakedEffect(THREE,new URL('../',url),'third-msc0601',90);catBank.duration=3000;catBank.blend='normal';
+ const estelleBank=await loadBakedEffect(THREE,new URL('../',url),'third-cr151_01',90);estelleBank.duration=1800;
  const zinBank=await loadBakedEffect(THREE,new URL('../',url),'sc-cr160_00',90);
  zinBank.duration=650;
  const glowMap=await new THREE.TextureLoader(loading).loadAsync(new URL('native-hit-glow.png?v=2',url).href);glowMap.colorSpace=THREE.SRGBColorSpace;
@@ -25,7 +26,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
    const nativeFist=impact?.nativeEffect==='SC/cr160_00._ef';
-   const effect=heal?null:impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
+   const effect=heal?null:impact?.nativeEffect==='Third/cr151_01._ef'?bakedEffectSprite(THREE,estelleBank,2):impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
    const sprite=effect?.sprite??new THREE.Sprite(new THREE.SpriteMaterial({map,color:heal?0x70ff9a:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
    if(effect)map.dispose();
    sprite.renderOrder=5;scene.add(sprite);
@@ -57,6 +58,6 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     const scale=hit.time<.5?1-hit.time:.5+(hit.time-.5)*.133333;hit.number.style.width=(hit.labelWidth*scale)+'px';hit.number.style.height=(100*scale)+'px';hit.number.style.transform='translate(-50%,-100%)';
    }
   },
-  dispose(){for(const hit of hits){scene.remove(hit.sprite);hit.sprite.material.map.dispose();hit.sprite.material.dispose();if(hit.extra){scene.remove(hit.extra.sprite);hit.extra.dispose();}hit.number.remove();}hits.length=0;texture.dispose();glowMap.dispose();zinBank.dispose();catBank.dispose();for(const bank of banks.values())bank.dispose();}
+  dispose(){for(const hit of hits){scene.remove(hit.sprite);hit.sprite.material.map.dispose();hit.sprite.material.dispose();if(hit.extra){scene.remove(hit.extra.sprite);hit.extra.dispose();}hit.number.remove();}hits.length=0;texture.dispose();glowMap.dispose();zinBank.dispose();catBank.dispose();estelleBank.dispose();for(const bank of banks.values())bank.dispose();}
  };
 }

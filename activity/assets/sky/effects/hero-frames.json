@@ -371,5 +371,19 @@
     "lastVisibleFrame": 19,
     "duration": 1000,
     "size": 4
+  },
+  "third/mp003_00._ef": {
+    "name": "third-mp003_00",
+    "frames": 90,
+    "lastVisibleFrame": 14,
+    "duration": 1000,
+    "size": 4
+  },
+  "third/cr151_01._ef": {
+    "name": "third-cr151_01",
+    "frames": 90,
+    "lastVisibleFrame": 9,
+    "duration": 1000,
+    "size": 4
   }
 }

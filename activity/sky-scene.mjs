@@ -173,6 +173,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const dialogues = await createDialogues(ASSETS);
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=(map==="arena"||inTower)?await createRenneCombat(THREE,scene,ASSETS):null;
+  renneCombat?.warmup(renderer,camera);
   let notifyCapture=()=>{};
   const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
