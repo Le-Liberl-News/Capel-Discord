@@ -294,5 +294,11 @@
     "frames": 90,
     "duration": 1000,
     "size": 4
+  },
+  "third/sc006_17._ef": {
+    "name": "third-sc006_17",
+    "frames": 90,
+    "duration": 1000,
+    "size": 4
   }
 }

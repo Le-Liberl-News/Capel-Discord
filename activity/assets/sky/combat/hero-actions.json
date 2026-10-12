@@ -630,7 +630,8 @@
       "projectile": false,
       "nativeEffect": "SC/cr130_02._ef",
       "effectDuration": 1000,
-      "lockMovement": true
+      "lockMovement": true,
+      "explosionEffect": "Third/sc006_17._ef"
     }
   }
 }
