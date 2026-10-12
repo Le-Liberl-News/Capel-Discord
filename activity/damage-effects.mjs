@@ -12,7 +12,7 @@ export function newDamageEvents(previous,player){
 }
 export async function createDamageEffects(THREE,scene,container,url,loading) {
  const banks=new Map(await Promise.all([0,1,2,3,5].map(async index=>[index,await loadBakedEffect(THREE,new URL('../',url),`damage${index}`,24)])));
- const catBank=await loadBakedEffect(THREE,new URL('../',url),'third-msc0601',90);catBank.duration=650;
+ const catBank=await loadBakedEffect(THREE,new URL('../',url),'third-msc0601',90);catBank.duration=3000;catBank.blend='normal';
  const zinBank=await loadBakedEffect(THREE,new URL('../',url),'sc-cr160_00',90);
  zinBank.duration=650;
  const glowMap=await new THREE.TextureLoader(loading).loadAsync(new URL('native-hit-glow.png?v=2',url).href);glowMap.colorSpace=THREE.SRGBColorSpace;
@@ -25,7 +25,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
    const nativeFist=impact?.nativeEffect==='SC/cr160_00._ef';
-   const effect=heal?null:impact?.catBite?bakedEffectSprite(THREE,catBank,.45):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
+   const effect=heal?null:impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
    const sprite=effect?.sprite??new THREE.Sprite(new THREE.SpriteMaterial({map,color:heal?0x70ff9a:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
    if(effect)map.dispose();
    sprite.renderOrder=5;scene.add(sprite);
@@ -43,10 +43,10 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     if(!avatar||hit.time>=1.5){scene.remove(hit.sprite);hit.sprite.material.map.dispose();hit.sprite.material.dispose();if(hit.extra){scene.remove(hit.extra.sprite);hit.extra.dispose();}hit.number.remove();hits.splice(i,1);continue;}
     if(hit.time<0){hit.sprite.visible=false;if(hit.extra)hit.extra.sprite.visible=false;hit.number.hidden=true;continue;}
     const p=avatar.position,h=avatar.info.height;
-    hit.sprite.position.set(hit.impact?.point?.x??p.x,hit.impact?.point?.y??p.y+Math.min(h,1.8)*.55,hit.impact?.point?.z??p.z);
+    hit.sprite.position.set(hit.impact?.point?.x??p.x,hit.impact?.point?.y??p.y+Math.min(h,1.8)*(hit.impact?.catBite?.75:.55),hit.impact?.point?.z??p.z);
     // Place the flash just in front of the opaque character plane, keeping scenery occlusion.
     if(hit.impact?.nativeEffect==='SC/cr160_00._ef'&&hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.sprite.position.y+=[.18,-.1,.3,.04][n%4];}
-    hit.sprite.position.add(new THREE.Vector3().subVectors(camera.position,hit.sprite.position).normalize().multiplyScalar(.18));if(hit.extra){hit.extra.sprite.position.copy(hit.sprite.position);if(hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.extra.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.extra.sprite.position.y+=[.18,-.1,.3,.04][n%4];}hit.extra.sprite.visible=hit.time<.8;hit.extra.draw(hit.time*1000);if(hit.impact?.point&&hit.impact?.nativeEffect!=='SC/cr160_00._ef'){const units=camera.isOrthographicCamera?(camera.top-camera.bottom)/camera.zoom:2*camera.position.distanceTo(hit.extra.sprite.position)*Math.tan(camera.fov*Math.PI/360)/camera.zoom;hit.extra.sprite.scale.setScalar(Math.max(.55,units*58/Math.max(1,height))*(1+Math.min(1,hit.time/.08)*.15));}}
+    hit.sprite.position.add(new THREE.Vector3().subVectors(camera.position,hit.sprite.position).normalize().multiplyScalar(hit.impact?.catBite?.4:.18));if(hit.extra){hit.extra.sprite.position.copy(hit.sprite.position);if(hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.extra.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.extra.sprite.position.y+=[.18,-.1,.3,.04][n%4];}hit.extra.sprite.visible=hit.time<.8;hit.extra.draw(hit.time*1000);if(hit.impact?.point&&hit.impact?.nativeEffect!=='SC/cr160_00._ef'){const units=camera.isOrthographicCamera?(camera.top-camera.bottom)/camera.zoom:2*camera.position.distanceTo(hit.extra.sprite.position)*Math.tan(camera.fov*Math.PI/360)/camera.zoom;hit.extra.sprite.scale.setScalar(Math.max(.55,units*58/Math.max(1,height))*(1+Math.min(1,hit.time/.08)*.15));}}
     hit.sprite.visible=hit.time<(hit.effect ? .8 : .35);
     if(hit.effect){hit.effect.draw(hit.time*1000);hit.sprite.material.opacity=1;}else {hit.sprite.scale.setScalar(.65+hit.time*3);hit.sprite.material.opacity=Math.max(0,1-hit.time/.35);hit.sprite.material.map.offset.x=Math.min(3,Math.floor(hit.time*14))*.25;}
     const screen=new THREE.Vector3(p.x,p.y+h+.3,p.z).project(camera);

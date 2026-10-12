@@ -319,8 +319,9 @@
     "name": "third-msc0601",
     "frames": 90,
     "lastVisibleFrame": 23,
-    "duration": 1000,
-    "size": 4
+    "duration": 3000,
+    "size": 4,
+    "blend": "normal"
   },
   "sc/cr172_02._ef": {
     "name": "sc-cr172_02",
