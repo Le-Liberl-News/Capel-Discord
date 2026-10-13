@@ -8,6 +8,7 @@ function createSceneInvitations({client,canInvite,store=null,now=Date.now}){
  return {
   allowed(user){prune();return [...invitations.values()].some(value=>value.user===user&&value.claimed);},
   claim(customId,user){prune();const value=invitations.get(customId);if(!value||value.user!==user)throw new ActivityError('Lien de scène expiré ou inaccessible.',403);value.claimed=true;persist();},
+  async launchContext(customId,user){this.claim(customId,user);return (await client.users.fetch(user)).createDM();},
   async create(issuer,recipient){
    if(!await canInvite(issuer,{force:true}))throw new ActivityError('Création de lien de scène non autorisée.',403);
    const guild=await client.guilds.fetch(ACTIVITY_GUILD_ID);await guild.members.fetch({user:recipient,force:true});

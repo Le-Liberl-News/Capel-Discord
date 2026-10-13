@@ -29,3 +29,10 @@ test('scene command returns a private link and never sends a DM',async()=>{
  await invites.handle({commandName:'scene',isChatInputCommand:()=>true,user:{id:'issuer',send:()=>{throw Error('Unexpected DM');}},options:{getUser:()=>({id:'recipient',bot:false})},deferReply:async value=>privateReply=value.flags,editReply:async value=>reply=value});
  assert.equal(privateReply,64);assert.match(reply.content,/https:\/\/discord.com\/activities\/app/);assert.equal(JSON.stringify(reply).includes('recipient'),false);
 });
+
+test('a scene shared in a human DM uses the authenticated recipient own private context',async()=>{
+ const dm={id:'bot-private',recipient:{id:'recipient'},isDMBased:()=>true};let fetched;
+ const invites=createSceneInvitations({canInvite:async()=>true,client:{application:{id:'app'},guilds:{fetch:async()=>({members:{fetch:async()=>({})}})},users:{fetch:async id=>{fetched=id;return {createDM:async()=>dm};}}}});
+ const link=await invites.create('issuer','recipient'),id=new URL(link).searchParams.get('custom_id');
+ assert.equal(await invites.launchContext(id,'recipient'),dm);assert.equal(fetched,'recipient');await assert.rejects(invites.launchContext(id,'other'),e=>e.status===403);
+});

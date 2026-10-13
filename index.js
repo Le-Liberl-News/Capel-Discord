@@ -325,9 +325,10 @@ app.post('/api/profile', async (req, res) => {
         const response = await fetch('https://discord.com/api/users/@me', {headers: {Authorization: 'Bearer ' + activiteBearer(req)}});
         if (!response.ok) return res.status([401,403].includes(response.status) ? 401 : response.status === 429 ? 429 : 502).json({erreur: [401,403].includes(response.status) ? 'Identification Discord requise.' : 'Connexion Discord temporairement indisponible.'});
         const user = await response.json();
-        const channel = await client.channels.fetch(String(req.body?.channel || ''));
-        activityAccess.assertContext(channel,String(req.body?.guild || ''),user.id);
+        const sceneLaunch=typeof req.body?.sceneLink==='string'&&req.body.sceneLink.startsWith('scene:');
         await activityAccess.assertMember(user.id,{force:true});
+        const channel = sceneLaunch?await sceneInvitations.launchContext(req.body.sceneLink,user.id):await client.channels.fetch(String(req.body?.channel || ''));
+        activityAccess.assertContext(channel,String(req.body?.guild || ''),user.id);
         if (channel?.guild) {
           if (channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur:'Salon Discord invalide.'});
           const member = await channel.guild.members.fetch(user.id);
@@ -336,7 +337,7 @@ app.post('/api/profile', async (req, res) => {
           return res.status(403).json({erreur:'Conversation privée invalide.'});
         }
         res.set('Cache-Control', 'no-store');
-        if(typeof req.body?.sceneLink==='string'&&req.body.sceneLink.startsWith('scene:')){sceneInvitations.claim(req.body.sceneLink,user.id);await activiteService.enterHalloween(user.id);}
+        if(sceneLaunch)await activiteService.enterHalloween(user.id);
         res.json(await activiteService.join({id: user.id, channel: channel.id}));
     } catch (error) {
         if(error.status)return res.status(error.status).json({erreur:error.message});
