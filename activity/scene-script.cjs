@@ -8,7 +8,7 @@ function compileScene(source){
   const tokens=text.match(/"(?:[^"\\]|\\.)*"|\S+/g)||[],values=tokens.map(t=>t.startsWith('"')?JSON.parse(t):t),[command,...args]=values;
   const expect=n=>{if(args.length!==n)throw Error(`Scène ligne ${line}: ${command} attend ${n} arguments`);};
   if(command==='map'){expect(1);if(!/^[a-z0-9_-]+$/.test(args[0]))throw Error(`Scène ligne ${line}: map invalide`);map=args[0];return;}
-  if(command==='actor'){expect(6);if(!/^[a-z][a-z0-9_-]*$/i.test(args[0])||actors.some(a=>a.name===args[0]))throw Error(`Scène ligne ${line}: acteur invalide ou doublon`);if(!['npc','enemy','player'].includes(args[5]))throw Error(`Scène ligne ${line}: rôle invalide`);actors.push({name:args[0],character:args[1],position:{x:number(args[2],line),y:number(args[3],line),z:number(args[4],line)},kind:args[5]});return;}
+  if(command==='actor'){expect(6);if(!/^[a-z][a-z0-9_-]*$/i.test(args[0])||actors.some(a=>a.name===args[0]))throw Error(`Scène ligne ${line}: acteur invalide ou doublon`);if((args[0]==='player')!==(args[5]==='player'))throw Error(`Scène ligne ${line}: le joueur doit porter le nom player`);if(!['npc','enemy','player'].includes(args[5]))throw Error(`Scène ligne ${line}: rôle invalide`);actors.push({name:args[0],character:args[1],position:{x:number(args[2],line),y:number(args[3],line),z:number(args[4],line)},kind:args[5]});return;}
   let e={type:command,at,line};
   if(command==='wait'){expect(1);at+=seconds(args[0],line);end=Math.max(end,at);return;}
   if(command==='say'){expect(2);Object.assign(e,{actor:args[0],text:args[1]});}
