@@ -1,3 +1,7 @@
+map halloween
+actor player "Estelle" 0 0 1 player
+actor ray "Ray" 0 0 5 npc
+actor pumpkin "Pom-tiron" 2 0 6.5 npc
 # Scène de test Halloween. Durées en secondes ; coordonnées x y z.
 fade in 2 0
  title "CTZ · Laboratoire biologique" 6
@@ -6,18 +10,11 @@ walk player 0 0 1 0 0 3 3
 face ray 0 -1
 wait 3
 say ray "Ah, vous voilà ! Approchez... Et évitez de toucher aux éprouvettes."
-wait 7
 camera 0.9 0.7 5 43 37 15 2
 face ray 2 1.5
 say ray "Voici quelqu’un atteint de rhumertume."
-wait 5
 say pumpkin "Pom...? POM-TIRON !"
-wait 5
 say ray "Une expérience a mal tourné. La maladie s’est échappée de mon laboratoire..."
-wait 8
 say ray "Les malades se transforment en Pom-tirons. Ce n’était absolument pas prévu."
-wait 8
 say ray "Heureusement, j’ai mis au point un antidote. Il me manque seulement un ingrédient : la citrouille amère."
-wait 10
 say ray "Elle ne pousse qu’au sommet des tours tétracycliques. Gardez vos distances avec le cobaye, en attendant !"
-wait 11

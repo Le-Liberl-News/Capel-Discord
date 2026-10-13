@@ -103,13 +103,13 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
   return {
     async enterHalloween(user){
       if(!halloween||!await isHalloweenAdmin(user,{force:true}))throw new ActivityError("Accès au test Halloween non autorisé.",403);
-      release(user);huntGame?.leave(user);spectators.delete(user);
-      const definition=halloween.getScript?.(),playback={started:definition?null:now(),duration:definition?.duration??halloween.duration??54000,finished:false};
+      const definition=halloween.getScript?.();release(user);huntGame?.leave(user);spectators.delete(user);
+      const playback={started:definition?null:now(),duration:definition?.duration??halloween.duration??54000,finished:false,elapsed:0,done:false,eventsCount:definition?.events.length??0};
       halloweenPlayback.set(user,playback);
       const walk=require('../activity/scene-script.cjs').walkAt,first=definition?.events.find(e=>e.type==='walk'&&e.actor==='player');
-      halloweenScenes.set(user,createActivityService({...options,...halloween,now,persistent:true,store:null,combatEnabled:false,onSay:()=>{},onCraft:()=>{},onDrink:null,spawnFor:()=>first?.from??halloween.grid.spawn,playerPolicy:()=>{
-        const elapsed=playback.started===null?0:Math.max(0,now()-playback.started),locked=playback.started===null||elapsed<playback.duration;
-        const movement=definition&&walk(definition,'player',elapsed),position=movement&&(!playback.finished)?movement.position:{};
+      halloweenScenes.set(user,createActivityService({...options,...halloween,residents:definition?.actors.length?{disablePoms:true,npcs:[...(halloween.residents?.npcs??[]).filter(n=>!definition.actors.some(a=>'halloween-'+a.name===n.id)),...definition.actors.filter(a=>a.kind!=='player').map(a=>({id:'halloween-'+a.name,name:a.character,character:a.character,static:true,waypoints:[a.position],lines:[],heading:{dx:0,dz:-1}}))]}:halloween.residents,now,persistent:true,store:null,combatEnabled:false,onSay:()=>{},onCraft:()=>{},onDrink:null,spawnFor:()=>first?.from??halloween.grid.spawn,playerPolicy:()=>{
+        const elapsed=definition?playback.elapsed:Math.max(0,now()-playback.started),locked=definition?!playback.done:elapsed<playback.duration;
+        const movement=definition&&walk({...definition,events:definition.events.slice(0,playback.index??definition.events.length)},'player',elapsed),position=movement&&(!playback.finished)?movement.position:{};
         if(!locked)playback.finished=true;return {...position,canMove:!locked};
       }}));
       locations.set(user,"halloween");
@@ -217,7 +217,7 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
         else{session.towerActions.add(point.action.id);if(session.towerActions.size>128)session.towerActions.delete(session.towerActions.values().next().value);this.enterTower(session.id,next,up?tower[next-1].layout.start:tower[next-1].layout.exit);}
        }
       }
-      const playback=halloweenPlayback.get(session.id);if(playback&&playback.started===null&&point?.sceneReady==='halloween')playback.started=now();
+      const playback=halloweenPlayback.get(session.id);if(playback&&playback.started===null&&point?.sceneReady==='halloween')playback.started=now();if(playback&&Number.isFinite(point?.sceneTime))playback.elapsed=Math.min(playback.duration,Math.max(playback.elapsed,point.sceneTime));if(playback&&Number.isSafeInteger(point?.sceneIndex)&&point.sceneIndex>=0)playback.index=Math.max(playback.index??0,Math.min(point.sceneIndex,playback.eventsCount));if(playback&&point?.sceneDone===true)playback.done=true;
       const target=destination(session.id); let changed=false;
       if (session.key!==target.key || session.match!==target.match) {
         session.service.leave(session.token);

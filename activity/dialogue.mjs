@@ -108,6 +108,7 @@ export async function createDialogues(assets) {
     return item;
   }
   return {
+    advanceManual(){const entry=[...active].find(([,item])=>item.message.manual);if(!entry)return {closed:false};const [id,item]=entry;if(!item.complete&&!item.forced){item.forced=true;return {closed:false};}if(item.page+1<item.pages.length){item.page++;item.characters=graphemes(item.pages[item.page]);item.started=performance.now();item.forced=false;item.complete=false;return {closed:false};}item.element.remove();active.delete(id);return {closed:true};},
     receive(messages) {
       queue.receive(messages);
     },
@@ -146,7 +147,8 @@ export async function createDialogues(assets) {
             "px";
         }
         let progress = typewriterState(item.characters, time - item.started,item.message.instant?100000:32);
-        if (progress.expired) {
+        if(item.forced)progress={text:item.characters.join(""),complete:true,expired:false};item.complete=progress.complete;
+        if (progress.expired&&!item.message.manual) {
           if (++item.page < item.pages.length) {
             item.started = time;
             item.characters = graphemes(item.pages[item.page]);
@@ -182,7 +184,7 @@ export async function createDialogues(assets) {
             height: item.element.offsetHeight,
           });
       }
-      const hud = document.getElementById("hud")?.getBoundingClientRect();
+      const hud = document.body.hasAttribute("data-sky-cinematic")?null:document.getElementById("hud")?.getBoundingClientRect();
       const placements = placeDialogues(
         anchors,
         { width: innerWidth, height: innerHeight },

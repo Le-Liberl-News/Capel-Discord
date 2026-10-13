@@ -7,7 +7,7 @@ test('text scenes schedule concurrent actions, interpolate walks and reject unkn
  const scene=compileScene('fade in 2 0\nwalk player 0 0 1 0 0 3 3\nwait 3\nsay ray "Salut !"\nwait 7');
  assert.equal(scene.duration,10000);assert.equal(scene.events.at(-1).at,3000);assert.equal(walkAt(scene,'player',1500).position.z,2);assert.equal(walkAt(scene,'player',4000).moving,false);
  assert.throws(()=>compileScene('eval "bad"'),/ligne 1/);assert.throws(()=>compileScene('wait -2'),/durée/);
- const real=compileScene(fs.readFileSync('activity/assets/sky/halloween/ray.sky','utf8'));assert.equal(real.duration,57000);assert.equal(real.events.filter(e=>e.type==='say').length,7);
+ const real=compileScene(fs.readFileSync('activity/assets/sky/halloween/ray.sky','utf8'));assert.equal(real.duration,6000);assert.equal(real.events.filter(e=>e.type==='say').length,7);
 });
 test('private scene starts only after readiness, walks authoritatively, then releases movement',async()=>{
  let time=0;const scene=compileScene('walk player 1 0 1 1 0 3 3\nwait 5');
@@ -15,8 +15,8 @@ test('private scene starts only after readiness, walks authoritatively, then rel
  const session=await lobby.join({id:'tester',channel:'guild'});await lobby.enterHalloween('tester');
  time=9000;let state=await lobby.state(session.activity_token);assert.equal(state.halloween.started,null);assert.equal(state.health.canMove,false);
  state=await lobby.state(session.activity_token,{sceneReady:'halloween'});assert.equal(state.halloween.started,9000);
- time=10500;state=await lobby.state(session.activity_token);assert.equal(state.position.z,2);assert.equal(state.health.canMove,false);
- time=15000;state=await lobby.state(session.activity_token);assert.equal(state.position.z,3);assert.equal(state.health.canMove,true);
+ time=10500;state=await lobby.state(session.activity_token,{sceneTime:1500});assert.equal(state.position.z,2);assert.equal(state.health.canMove,false);
+ time=15000;state=await lobby.state(session.activity_token,{x:1,y:0,z:3,sceneTime:5000,sceneDone:true});assert.equal(state.position.z,3);assert.equal(state.health.canMove,true);
 });
 test('scene links are bound to a member, survive restart and expire without leaking user IDs',async()=>{
  let time=0,saved;const options={now:()=>time,canInvite:async id=>id==='issuer',client:{application:{id:'app'},guilds:{fetch:async()=>({members:{fetch:async()=>({})}})}},store:{load:()=>saved,save:data=>saved=data}};
@@ -35,4 +35,13 @@ test('a scene shared in a human DM uses the authenticated recipient own private 
  const invites=createSceneInvitations({canInvite:async()=>true,client:{application:{id:'app'},guilds:{fetch:async()=>({members:{fetch:async()=>({})}})},users:{fetch:async id=>{fetched=id;return {createDM:async()=>dm};}}}});
  const link=await invites.create('issuer','recipient'),id=new URL(link).searchParams.get('custom_id');
  assert.equal(await invites.launchContext(id,'recipient'),dm);assert.equal(fetched,'recipient');await assert.rejects(invites.launchContext(id,'other'),e=>e.status===403);
+});
+
+test('manual scene clock blocks forever on speech and resumes only after advancement',()=>{
+ const {createSceneClock}=require('../activity/scene-script.cjs'),scene=compileScene('wait 1\nsay ray "First"\nsay ray "Second"\nwait 1'),clock=createSceneClock(scene),spoken=[];
+ clock.tick(0,e=>spoken.push(e.text));clock.tick(2000,e=>spoken.push(e.text));assert.deepEqual(spoken,['First']);assert.equal(clock.state().time,1000);
+ clock.tick(100000,e=>spoken.push(e.text));assert.equal(clock.state().done,false);assert.deepEqual(spoken,['First']);clock.advance();clock.tick(100010,e=>spoken.push(e.text));assert.deepEqual(spoken,['First','Second']);clock.advance();clock.tick(101100,()=>{});assert.equal(clock.state().done,true);
+});
+test('map and staged actors round-trip from text and reject duplicate aliases',()=>{
+ const scene=compileScene('map tower1\nactor player "Estelle" 0 0 1 player\nactor foe "Mishy" 2 0 3 enemy\nwait 1');assert.equal(scene.map,'tower1');assert.equal(scene.actors[1].kind,'enemy');assert.equal(scene.actors[1].position.x,2);assert.throws(()=>compileScene('actor a "Ray" 0 0 0 npc\nactor a "Ray" 0 0 0 npc\nwait 1'),/doublon/);
 });

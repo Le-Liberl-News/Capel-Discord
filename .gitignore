@@ -13,3 +13,6 @@ activity/preview-bundle.js
 activity/tools/__pycache__/
 __pycache__/
 *.py[cod]
+
+# Generated local cutscene editor bundle
+tools/cutscene-editor/preview-bundle.js

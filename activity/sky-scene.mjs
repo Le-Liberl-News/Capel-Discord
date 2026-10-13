@@ -1,5 +1,6 @@
 import {createHalloweenScene} from './halloween-scene.mjs';
 import sceneScript from './scene-script.cjs';
+import {installCinematicStyle} from './cinematic-frame.mjs';
 import halloweenResidents from './assets/sky/halloween/residents.json';
 import {loadArenaModel,preloadArena} from './arena-preload.mjs';
 import photoMechanics from './dorothy-photo.cjs';
@@ -68,7 +69,7 @@ export const ASSETS = new URL(
 );
 export function prepareTrainingArena(){const version=new URL(import.meta.url).searchParams.get('v')??'rooftop-sky-20261009-4';return preloadArena(ASSETS,version);}
 export async function createSkyScene(canvas, map = "anterose", {localTraining=false}={}) {
-  if(map==='liberl')return createAirshipScene(canvas,ASSETS);
+  installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inTower=/^tower[1-4]$/.test(map);
   const canJump=inTower||map==='arena';
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
@@ -86,7 +87,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     catalogue = await fetch(new URL("characters.json", ASSETS),{cache:"no-store"}).then((r) =>
       r.json(),
     );
-  if(inTower||map==="arena")Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  if(inTower||map==="arena"||map==='halloween')Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
   if(map==="halloween")Object.assign(catalogue,await fetch(new URL("halloween/catalogue.json",ASSETS)).then(r=>r.json()));
   const combatPreparation=(map==='arena'||inTower)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
   const supportEffects=createSupportEffects(THREE,scene);
@@ -186,7 +187,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();avatar.craftTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
-  const halloweenScene=map==="halloween"?createHalloweenScene({definition:sceneScript.compileScene(await fetch(new URL('halloween/ray.sky',ASSETS),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Scène de Ray inaccessible');return r.text();})),onSpeech:message=>dialogues.receive([message])}):null;
+  const halloweenDefinition=map==="halloween"?sceneScript.compileScene(await fetch(new URL('halloween/ray.sky',ASSETS),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Scène de Ray inaccessible');return r.text();})):null;
+  const halloweenScene=halloweenDefinition?createHalloweenScene({definition:halloweenDefinition,onSpeech:message=>dialogues.receive([message]),onAdvance:()=>dialogues.advanceManual(),bindings:Object.assign({ray:'npc:halloween-ray',pumpkin:'npc:halloween-pumpkin'},Object.fromEntries(halloweenDefinition.actors.filter(a=>a.kind!=='player').map(a=>[a.name,'npc:halloween-'+a.name])))}):null;
   if(halloweenScene)dayNight.setTime(60000);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
@@ -1086,7 +1088,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     async me(player) {
       localId = player.id;
       await setAvatar({ ...spawn, ...player });
-      if(halloweenScene){for(const n of halloweenResidents.npcs)await setAvatar({...n,...n.waypoints[0],id:'npc:'+n.id,npc:true,hp:500});if(__ACTIVITY_PREVIEW__&&!new URLSearchParams(location.search).has('frame_id'))halloweenScene.start(performance.now());}
+      if(halloweenScene){for(const n of [...halloweenResidents.npcs.filter(n=>!halloweenDefinition.actors.some(a=>'halloween-'+a.name===n.id)),...halloweenDefinition.actors.filter(a=>a.kind!=='player').map(a=>({id:'halloween-'+a.name,character:a.character,waypoints:[a.position],heading:{dx:0,dz:-1}}))])await setAvatar({...n,...n.waypoints[0],id:'npc:'+n.id,npc:true,hp:500});if(__ACTIVITY_PREVIEW__&&!new URLSearchParams(location.search).has('frame_id'))halloweenScene.start(performance.now());}
     },
     async sync(players) {
       const present = new Set([localId]);
@@ -1205,6 +1207,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         heading:avatars.get(localId)?.character==='Josette'?{dx:-Math.sin(yaw),dz:Math.cos(yaw)}:{...avatars.get(localId)?.heading},
         cookingHeld,
         sceneReady:map==='halloween'?'halloween':undefined,
+        ...halloweenScene?.state(),
         jumpLanding:landedJump,
         ...(pending?.origin??this.position()),
         platform:movingPlatforms?.relative(this.position(),Date.now()+jumpClockOffset)??undefined,
