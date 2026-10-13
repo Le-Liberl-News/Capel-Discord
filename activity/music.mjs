@@ -1,5 +1,5 @@
 export function createMapMusic(url, container = document.body) {
-  const audio = new Audio(url.href);
+  let hasTrack=!!url;const audio = new Audio(url?.href);
   audio.loop = true;
   audio.volume = 0.1;
   try { const saved = localStorage.getItem("sky-music-volume"); if (saved !== null && Number.isFinite(Number(saved))) audio.volume = Math.max(0, Math.min(1, Number(saved))); } catch {}
@@ -15,7 +15,7 @@ export function createMapMusic(url, container = document.body) {
     button.setAttribute("aria-pressed", String(!disabled && !audio.paused));
   }
   async function play() {
-    if (disabled || pending || !audio.paused) return;
+    if (!hasTrack || disabled || pending || !audio.paused) return;
     pending = true;
     try { await audio.play(); } catch { /* Retry on a real user gesture. */ }
     finally { pending = false; update(); }
@@ -50,12 +50,12 @@ export function createMapMusic(url, container = document.body) {
     void play();
   });
   if(container !== document.body) panel.style.cssText="display:flex;align-items:center;gap:8px;margin-top:10px;color:inherit;font:inherit";
-  panel.append(button, slider); container.append(panel);
+  panel.hidden=!hasTrack;panel.style.display=hasTrack?'flex':'none';panel.append(button, slider); container.append(panel);
   document.addEventListener("pointerdown", gesture);
   document.addEventListener("keydown", gesture);
   update();
   void play();
-  return { restart(){audio.currentTime=0;void play();}, setTrack(url) { audio.pause(); audio.src = url.href; audio.load(); void play(); }, dispose() {
+  return { restart(){audio.currentTime=0;void play();}, setTrack(url) { audio.pause();hasTrack=!!url;panel.hidden=!hasTrack;panel.style.display=hasTrack?'flex':'none';if(url)audio.src=url.href;else audio.removeAttribute("src");audio.load();void play(); }, dispose() {
     audio.pause();
     document.removeEventListener("pointerdown", gesture);
     document.removeEventListener("keydown", gesture);

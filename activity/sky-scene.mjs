@@ -1,3 +1,5 @@
+import {createHorrorMembranes} from './horror-membranes.mjs';
+import {createHalloweenDungeonView} from './halloween-dungeon-view.mjs';
 import {createSceneAssets} from './scene-assets.mjs';
 import {createHalloweenScene} from './halloween-scene.mjs';
 import sceneScript from './scene-script.cjs';
@@ -71,7 +73,7 @@ export const ASSETS = new URL(
 export function prepareTrainingArena(){const version=new URL(import.meta.url).searchParams.get('v')??'rooftop-sky-20261009-4';return preloadArena(ASSETS,version);}
 export async function createSkyScene(canvas, map = "anterose", {localTraining=false}={}) {
   installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
-  const inTower=/^tower[1-4]$/.test(map);
+  const inDungeon=/^hallow[1-5]$/.test(map),floorNumber=Number(map.slice(inDungeon?6:5)),inTower=/^tower[1-4]$/.test(map)||inDungeon;
   const canJump=inTower||map==='arena';
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
@@ -90,12 +92,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     );
   if(inTower||map==="arena"||map==='halloween')Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
   if(map==="halloween")Object.assign(catalogue,await fetch(new URL("halloween/catalogue.json",ASSETS)).then(r=>r.json()));
-  const combatPreparation=(map==='arena'||inTower)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
+  const combatPreparation=(map==='arena'||inTower&&!inDungeon)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
   const supportEffects=createSupportEffects(THREE,scene);
   const photoWhite=document.createElement('div');photoWhite.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:18;background:#fff;opacity:0';document.body.append(photoWhite);const photoGhosts=new Map();
   const blindness=document.createElement('div');blindness.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;background:radial-gradient(ellipse at center,transparent 5%,rgba(0,0,0,.85) 48%,#000 80%);transition:opacity .15s;opacity:0';document.body.append(blindness);
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
-  const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
+  const enemyEffects=inTower&&!inDungeon?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
   let cookingHeld=false;let patDrive=null,patDriveId=null;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
@@ -110,7 +112,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   if(map==="tower4")removeNativeBackdrop(model);
   const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
-  const teamPanel=inTower?createTowerTeam(ASSETS,catalogue):null;
+  const teamPanel=inTower&&!inDungeon?createTowerTeam(ASSETS,catalogue):null;
   const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
   let terminalObject=null;
   if(terminal){const asset=await new GLTFLoader(loading).loadAsync(new URL(terminal.model,ASSETS).href);terminalObject=asset.scene;terminalObject.position.set(terminal.position.x,terminal.position.y,terminal.position.z);terminalObject.rotation.y=terminal.rotation;model.add(terminalObject);}
@@ -137,6 +139,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         ? object.material
         : [object.material];
       for (const material of materials) {
+        if(material.userData?.horrorDecal)object.raycast=()=>{};
         configureSkyMaterial(material);
         if (material.transparent) object.renderOrder=3;
         if (cutaway) {
@@ -154,10 +157,13 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   });
   const tavernBeer=map==="anterose"?createTavernBeer(THREE,scene):null;
   const tavernTables=map==='anterose'?await createTavernTables(THREE,model,collision,ASSETS):null;
+  const horrorMembranes=inDungeon?await createHorrorMembranes(model,ASSETS,towerLayout.membranes):null;
+  const halloweenDecor=inDungeon?await createHalloweenDungeonView(model,ASSETS,towerLayout):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
-  const dayNight=createDayNight(THREE,model,map,mapShadows,tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.torches??[]);
-  const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,Number(map.slice(5))):null;
-  const dungeonEffects=inTower?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
+  const dayNight=createDayNight(THREE,model,map,mapShadows,tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]);
+  halloweenDecor?.install();
+  const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
+  const dungeonEffects=inTower&&!inDungeon?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
   const duelIntro=map==="arena"?createDuelIntro({assets:ASSETS,onSpeech:message=>dialogues.receive([message])}):null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
@@ -194,7 +200,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   if(halloweenScene)dayNight.setTime(60000);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
-  const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
+  const previewRoom=__ACTIVITY_PREVIEW__&&inDungeon?towerLayout.platforms.find(p=>p.id==='room:'+new URLSearchParams(location.search).get('room')):null;
+  const spawn = previewRoom?{x:previewRoom.x,y:previewRoom.y,z:previewRoom.z}:grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=await combatPreparation;
   renneCombat?.warmup(renderer,camera);
   let notifyCapture=()=>{};
@@ -574,8 +581,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
     const nearby=environment.npcs.filter(n=>Math.hypot(n.x-me.position.x,n.z-me.position.z)<=2.2 && Math.abs(n.y-me.position.y)<.6).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z));
     const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
-    if(towerLayout&&Number(map.slice(5))<4&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<2.2){queueAction("tower_step","up");return;}
-    if(towerLayout&&Number(map.slice(5))>1&&Math.hypot(me.position.x-towerLayout.start.x,me.position.z-towerLayout.start.z)<2.2){queueAction("tower_step","down");return;}
+    if(towerLayout&&floorNumber<(towerLayout.totalFloors??4)&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<2.2){queueAction("tower_step","up");return;}
+    if(towerLayout&&floorNumber>1&&Math.hypot(me.position.x-towerLayout.start.x,me.position.z-towerLayout.start.z)<2.2){queueAction("tower_step","down");return;}
     if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)){queueAction('flight_board');return;}
     if(drinkingTable?.nearby(me.position))drinkingTable.open();else if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
@@ -782,7 +789,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const airForward=forward.clone(),airRight=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
     forward.y = 0;
     forward.normalize();
-    combatControls.update({arena:map==="arena"||inTower,character:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
+    combatControls.update({arena:map==="arena"||inTower&&!inDungeon,character:inDungeon?undefined:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
     const patEvent=renneCombat?.inertia(localId);if(!patEvent||!connected||!movementAllowed||health.hp<=0){patDrive=null;patDriveId=null;}else if(patEvent.id!==patDriveId){patDrive=patDriveMechanics.createPatDrive(me.heading);patDriveId=patEvent.id;}
@@ -1003,6 +1010,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     enemyEffects?.animate();supportEffects.update(avatars,Date.now()+jumpClockOffset);
     dungeonEffects?.update();
     tavernTables?.update(time,camera);
+    horrorMembranes?.update(Date.now()+jumpClockOffset);
+    halloweenDecor?.update(camera,avatars.get(localId)?.position);
     const lightState=dayNight.update();dayNight.photo(renneCombat?.photoFlashes()??[]);
     rooftopSky?.update(camera,lightState);
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
@@ -1149,7 +1158,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         receivedAt: performance.now(),
       };
       if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);if(event.character==='Julia'&&event.kind==='craft'){juliaCombo=null;craftTarget=false;combatControls.targeting(null);}if(renneMechanics.combatSpec(event.character,event.kind)?.dash){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];}}}
-      combatControls.update({arena:map==="arena"||inTower,character:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
+      combatControls.update({arena:map==="arena"||inTower&&!inDungeon,character:inDungeon?undefined:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
       for (const ball of environment.poms) {
         if (!projectiles.has(ball.id)) {
           projectiles.set(ball.id,createProjectilePlayback());
@@ -1252,7 +1261,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       removeEventListener("resize", resize);
       muellerTarget.geometry.dispose();muellerTarget.material.dispose();
       touches.reset();touchButton.remove();touchStyle.remove();
-      halloweenScene?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      horrorMembranes?.dispose();halloweenDecor?.dispose();halloweenScene?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       drinkingTable?.dispose();tavernTables?.dispose();crosshair.remove();blindness.remove();photoWhite.remove();for(const ghost of photoGhosts.values()){scene.remove(ghost);ghost.material.dispose();}teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();

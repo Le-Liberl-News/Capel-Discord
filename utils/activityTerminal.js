@@ -16,7 +16,7 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
   const {id}=lobby.identity(token);
   switch(body.action) {
    case "rematch": {const opponent=lobby.rematchOpponent(body.invitation,id);return duels.challenge({id},opponent,client,true);}
-   case "halloween_test": {await nearby(token);await lobby.enterHalloween(id);return {message:"Laboratoire rejoint."};}
+   case "halloween_test": {await nearby(token);await lobby.enterHalloween(id);return {message:"Donjon Halloween rejoint."};}
    case "tower": {await nearby(token);lobby.enterTower(id,1);return {message:"Tour rejointe."};}
    case "test_character": {
     await nearby(token);

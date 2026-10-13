@@ -1,0 +1,16 @@
+import * as THREE from 'three';
+import {createNativeRig} from './native-rig.mjs';
+// The same native X3 rig, UV repeat and deformation bounds as Another Dimension.
+// A shared skeleton and merged native submeshes keep ten surfaces inexpensive.
+export async function createHorrorMembranes(model,assets,definitions){
+ if(!definitions?.length)return null;
+ const url=p=>new URL('effects/native/'+p,assets).href;
+ const data=await fetch(url('models/Third/ms04550.json')).then(r=>{if(!r.ok)throw Error('Architecture Another Dimension introuvable');return r.json();}),first=data.meshes[0];
+ if(!data.meshes.every(m=>JSON.stringify(m.positions)===JSON.stringify(first.positions)&&JSON.stringify(m.uv)===JSON.stringify(first.uv)))throw Error('Le maillage natif a changé');
+ const texture=await new THREE.TextureLoader().loadAsync(url(first.texture.texture));texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(.2,.2);
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(first.positions.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(first.uv.flat(),2));geometry.setIndex(data.meshes.flatMap(m=>m.indices));
+ const rig=createNativeRig(THREE,data.rig),objects=[],materials=[];model.add(rig.group);
+ for(const d of definitions){const group=new THREE.Group(),material=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.NormalBlending});material.userData.horrorDecal=true;material.userData.dungeonWall=d.surface==='wall';material.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 dimensionXZ;').replace('#include <project_vertex>','transformed.y=max(transformed.y,-2.0);dimensionXZ=transformed.xz;\n#include <project_vertex>');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 dimensionXZ;').replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.a*=1.0-smoothstep(125.0,140.0,length(dimensionXZ));');};material.customProgramCacheKey=()=>'horror-native-dimension-1';
+ const animated=rig.skin(geometry,material);animated.bindMode='detached';animated.raycast=()=>{};animated.renderOrder=2;group.add(animated);const baseMaterial=material.clone();baseMaterial.userData={...material.userData};baseMaterial.onBeforeCompile=material.onBeforeCompile;baseMaterial.customProgramCacheKey=material.customProgramCacheKey;const base=new THREE.Mesh(geometry,baseMaterial);base.position.y=-1.2;base.raycast=()=>{};base.renderOrder=1;group.add(base);materials.push(material,baseMaterial);group.position.set(d.position.x,d.position.y,d.position.z);if(d.surface==='wall'){group.scale.set(d.width/280,.03,d.height/280);group.rotation.x=-Math.PI/2;}else group.scale.setScalar(d.radius/140);model.add(group);objects.push(group);}
+ return {update(time){const phase=(time%11000)/11000,sample=550+1300*(.5-.5*Math.cos(phase*Math.PI*2));rig.draw(sample);},dispose(){for(const o of objects)o.removeFromParent();rig.group.removeFromParent();rig.dispose();geometry.dispose();for(const m of materials)m.dispose();texture.dispose();}};
+}

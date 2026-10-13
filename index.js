@@ -244,6 +244,8 @@ const halloweenRoot=path.join(__dirname,'activity/assets/sky/halloween');
 const activiteService = createActivityLobby({
     isPumpkin:character=>rhumertume.isInfected(character),
     isHalloweenAdmin:async(id,options)=>await isHalloweenAdmin(id,options)||sceneInvitations.allowed(id),
+    isDungeonAdmin:isHalloweenAdmin,
+    halloweenDungeon:[1,2,3,4,5].map(floor=>{const root=path.join(__dirname,'activity/assets/sky/hallow'+floor);return {grid:require(path.join(root,'navigation.json')),layout:require(path.join(root,'layout.json')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};}),
     halloween:{grid:require(path.join(halloweenRoot,'navigation.json')),residents:require(path.join(halloweenRoot,'residents.json')),getScript:()=>require('./activity/scene-script.cjs').compileScene(fs.readFileSync(path.join(halloweenRoot,'ray.sky'),'utf8')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(halloweenRoot,'anterose.gltf'),'utf8')))},
     getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,
     huntGame,
