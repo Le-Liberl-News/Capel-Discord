@@ -1,7 +1,7 @@
 const $=id=>document.getElementById(id),view=$('view'),send=data=>view.contentWindow.postMessage(data,location.origin);let project={map:'halloween',actors:[],events:[]},catalogue={},point=null,camera=null,debounce;
 const status=text=>$('status').textContent=text;
 async function api(url,options){const r=await fetch(url,options),d=await r.json();if(!r.ok)throw Error(d.error);return d;}
-const tokens=line=>line.match(/"(?:[^"\\]|\\.)*"|\S+/g)?.map(t=>t.startsWith('"')?JSON.parse(t):t)||[];
+const tokens=line=>{try{return line.match(/"(?:[^"\\]|\\.)*"|\S+/g)?.map(t=>t.startsWith('"')?JSON.parse(t):t)||[];}catch{return [];}};
 function read(){const actors=[];for(const line of $('script').value.split(/\r?\n/)){const t=tokens(line);if(t[0]==='actor')actors.push({name:t[1],character:t[2],position:{x:+t[3],y:+t[4],z:+t[5]},kind:t[6]});}return actors;}
 function refresh(){const selected=$('actor').value,actors=read();$('actor').replaceChildren();for(const a of actors){const o=new Option(a.name+' · '+a.character,a.name);$('actor').append(o);}if(actors.some(a=>a.name===selected))$('actor').value=selected;send({type:'load',script:$('script').value,map:$('map').value});}
 function addLine(line){$('script').value+='\n'+line;refresh();}
