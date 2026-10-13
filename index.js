@@ -242,6 +242,7 @@ const isHalloweenAdmin=require('./utils/activityHalloweenAccess').createHallowee
 const sceneInvitations=require('./utils/activitySceneInvitations').createSceneInvitations({client,canInvite:isHalloweenAdmin,store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-scene-invitations.json'))});
 const halloweenRoot=path.join(__dirname,'activity/assets/sky/halloween');
 const activiteService = createActivityLobby({
+    isPumpkin:character=>rhumertume.isInfected(character),
     isHalloweenAdmin:async(id,options)=>await isHalloweenAdmin(id,options)||sceneInvitations.allowed(id),
     halloween:{grid:require(path.join(halloweenRoot,'navigation.json')),residents:require(path.join(halloweenRoot,'residents.json')),getScript:()=>require('./activity/scene-script.cjs').compileScene(fs.readFileSync(path.join(halloweenRoot,'ray.sky'),'utf8')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(halloweenRoot,'anterose.gltf'),'utf8')))},
     getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,

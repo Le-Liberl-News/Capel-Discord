@@ -442,7 +442,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     let avatar = avatars.get(player.id);
     const dead = player.hp === 0;
     const prop = propCatalogue[player.prop] ? player.prop : null;
-    const character = (catalogue[player.character]||renneMechanics.COMBAT[player.character]||player.character==='Anton')
+    // a character with the rhumertume shows up as a pom-tiron, still under its own name
+    const character = player.pumpkin&&catalogue['Pom-tiron'] ? 'Pom-tiron' : (catalogue[player.character]||renneMechanics.COMBAT[player.character]||player.character==='Anton')
       ? player.character
       : "Estelle";
     if (avatar && avatar.character === character && avatar.dead === dead && avatar.prop === prop) {
