@@ -701,7 +701,7 @@
       "radius": 6,
       "windup": 1170,
       "duration": 5560,
-      "cooldown": 13000,
+      "cooldown": 6500,
       "stunDuration": 2500,
       "prepDuration": 780,
       "holdDuration": 2000,

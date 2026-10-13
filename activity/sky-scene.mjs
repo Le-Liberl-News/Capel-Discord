@@ -869,7 +869,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
-      if(avatar.character==='Loewe')avatar.mesh.scale.setScalar(bodyScale);
+      if(avatar.character==='Loewe')avatar.mesh.scale.setScalar(bodyScale);else if(avatar.info.sceneScale)avatar.mesh.scale.setScalar(avatar.info.sceneScale);
       avatar.mesh.position.set(
         avatar.position.x+(avatar.introOffset?.x??0)+bodyOffsetX*right.x,
         avatar.position.y+(avatar.deathLift??0)-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),

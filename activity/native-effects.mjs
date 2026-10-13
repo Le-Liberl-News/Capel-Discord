@@ -62,7 +62,7 @@ export function nativeWorldEffect(THREE,player,options={}){
   const[a,b]=p.vertices,width=Math.abs(b[0]-a[0])||1,height=Math.abs(b[1]-a[1])||1;
   let object;
   const material={map,transparent:true,depthWrite:false,blending:options.blend==='normal'?THREE.NormalBlending:additive?THREE.AdditiveBlending:THREE.NormalBlending};
-  if(p.primitive===4||p.primitive===7||p.primitive===9){const mesh=p.primitive===7?nativeCrossBeam(p.vertices):p.primitive===9?nativeRing(p.vertices):nativeSector(p.vertices),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(mesh.positions.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(mesh.uv.flat().map((v,i)=>i%2?1-v:v),2));geometry.setIndex(mesh.indices);object=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));}
+  if(p.primitive===4||p.primitive===7||p.primitive===9){const mesh=p.primitive===7?nativeCrossBeam(p.vertices):p.primitive===9?nativeRing(p.vertices):nativeSector(p.vertices),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(mesh.positions.map(v=>options.flatRings&&p.primitive===9?[v[0],0,v[2]]:v).flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(mesh.uv.flat().map((v,i)=>i%2?1-v:v),2));geometry.setIndex(mesh.indices);object=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));}
   else if(options.spatial&&p.primitive===3){object=new THREE.Mesh(new THREE.SphereGeometry(.5,24,16),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));object.userData.nativeSphere=true;}
   else if(ground){object=new THREE.Mesh(options.groundParts?.includes(p.index)?new THREE.CircleGeometry(.5,48):new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));object.userData.nativeGround=true;object.userData.nativeGroundXY=!!options.groundParts?.includes(p.index);}
   else if(options.spatial&&p.primitive===9){object=new THREE.Mesh(new THREE.RingGeometry(Math.min(Math.abs(a[0]),Math.abs(b[0])),Math.max(Math.abs(a[0]),Math.abs(b[0])),48),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));const uv=object.geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,Math.floor(i/49),Math.floor(i/49));object.userData.nativeSpatialRing=true;}
@@ -82,7 +82,7 @@ export function nativeWorldEffect(THREE,player,options={}){
   if(offset)object.position.sub(new THREE.Vector3(...offset));
   object.scale.set(object.isSprite?width*state.scale[0]:state.scale[0],object.isSprite?height*state.scale[1]:pRing(item.part)&&!object.userData.nativeHelix?state.scale[2]:state.scale[1],object.isSprite?1:pRing(item.part)&&!object.userData.nativeHelix?1:state.scale[2]);
   if((object.isMesh||object.isGroup)&&(!pRing(item.part)||item.part.primitive===9||object.userData.nativeHelix))object.rotation.set(...(options.nativeAxes?[state.rotation[1],state.rotation[0],state.rotation[2]]:state.rotation).map(v=>v*Math.PI/180));
-  if(item.part.primitive===9){object.position.set(...state.position);object.scale.set(...state.scale);}
+  if(item.part.primitive===9){object.position.set(...state.position);object.scale.set(...state.scale);if(options.flatRings){object.position.y=0;object.scale.y=1;object.rotation.set(0,state.rotation[0]*Math.PI/180,0);}}
   if(options.spatial){
     if(object.userData.nativeSphere)object.scale.set(...state.scale);
     else if(object.userData.nativeSpatialRing||object.userData.nativeGround){

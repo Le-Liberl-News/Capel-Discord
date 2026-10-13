@@ -3288,6 +3288,37 @@
     "bodyRadiusPixels": 18,
     "centerY": 0.9450000000000001,
     "pixelScale": 0.02,
-    "bodyHeight": 1.84
+    "bodyHeight": 1.84,
+    "sceneScale": 0.85
+  },
+  "Erika Russell": {
+    "texture": "ch03970.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 87,
+    "frames": 64,
+    "directions": 8,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "fps": 12,
+    "height": 1.74,
+    "pixelScale": 0.02,
+    "centerX": 0,
+    "centerY": 0.85,
+    "bodyPixelHeight": 81,
+    "bodyRadiusPixels": 18,
+    "bodyHeight": 1.62
   }
 }
