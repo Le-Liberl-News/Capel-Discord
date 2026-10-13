@@ -1,6 +1,6 @@
 import argparse,json,sys,hashlib
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('--extracted',type=Path,default=Path('E:/dev/sky-activity-tools'));p.add_argument('--decoder',type=Path,default=Path('E:/dev/Website/toolchain'));p.add_argument('--output',type=Path,default=Path('E:/dev/sky-activity-tools/atelier-combat'));p.add_argument('--animations-only',action='store_true');p.add_argument('--sprites-only',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--extracted',type=Path,default=Path('E:/dev/sky-activity-tools'));p.add_argument('--decoder',type=Path,default=Path('E:/dev/Website/toolchain'));p.add_argument('--output',type=Path,default=Path('E:/dev/sky-activity-tools/atelier-combat'));p.add_argument('--animations-only',action='store_true');p.add_argument('--sprites-only',action='store_true');p.add_argument('--character');a=p.parse_args()
 third_effects = a.extracted/'third-33/ED6_DT33'
 if not third_effects.exists():
  third_effects = Path.home()/'.codex/sky-effect-work/third-33/ED6_DT33'
@@ -15,6 +15,7 @@ sys.path.insert(0,str(a.decoder));import third_as as decoder
 out=a.output;out.mkdir(parents=True,exist_ok=True);characters={};warnings=[]
 previous_catalogue=json.loads((out/'catalogue.json').read_text(encoding='utf-8')) if (out/'catalogue.json').exists() else {}
 previous=previous_catalogue.get('characters',{})
+if a.character:characters.update(previous)
 def sequence(data,entries,end,slot,available,dynamic):
  pc=entries[slot];bank=0;mapping={int(k):k for k in available if k.isdigit()};result=[];stack=[];visited={}
  for _ in range(1600):
@@ -44,6 +45,7 @@ rows=json.loads((a.extracted/'combat/characters.json').read_text(encoding='utf-8
 avatars=json.loads((repo/'activity/assets/sky/characters.json').read_text(encoding='utf-8'))
 configured=json.loads((repo/'activity/assets/sky/combat/catalogue.json').read_text(encoding='utf-8'))
 for row in rows:
+ if a.character and row['character']!=a.character:continue
  if not (row.get('currentAvatar') or row['character'] in configured or row['character'] in avatars) or not row.get('source'):continue
  name=row['character'];src=row['source'];game=src['game'].lower();folder=a.extracted/('sc-subtitle-base' if game=='sc' else 'third-30')/'ED6_DT30'
  if game=='fc':folder=a.extracted/'fc-combat-10/ED6_DT10'
@@ -97,6 +99,7 @@ for row in rows:
   print(name,len(banks),'banques',len(routines),'routines',flush=True)
  except Exception as e:warnings.append(name+': '+str(e))
 for name,info in avatars.items():
+ if a.character and name!=a.character:continue
  if name not in characters:characters[name]={'source':info['texture'],'game':'Sky','banks':{'0':{**info,'texture':'/assets/'+info['texture'],'source':info['texture']}},'routines':{},'configured':configured.get(name)}
 if a.sprites_only:
  catalogue=json.loads((out/'catalogue.json').read_text(encoding='utf-8'));characters.update(catalogue.get('localCharacters',{}));catalogue['characters']=characters;catalogue['warnings']=warnings

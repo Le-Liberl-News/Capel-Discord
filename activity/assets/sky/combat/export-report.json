@@ -1,9 +1,4 @@
 {
-  "characters": 38,
-  "omitted": [
-    {
-      "character": "Dorothy",
-      "reason": "Photography AS uses special banks from SC DT06; no playable self sequence exported."
-    }
-  ]
+  "characters": 39,
+  "omitted": []
 }

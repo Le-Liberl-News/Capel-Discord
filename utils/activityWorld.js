@@ -162,7 +162,7 @@ function createSingleActivityWorld({
       if (p.hp === 0 && !p.noRespawn && time >= p.deadUntil) {
         Object.assign(p, spawnFor(p.id));
         p.jump=null;p.jumpTickAt=null;
-        for(const key of ['guard','shield','attackBuff','defenseBuff','speedBuff','cooking','foodStock','slowUntil','slowFactor','stunUntil','stoneUntil','blindUntil'])delete p[key];
+        for(const key of ['guard','shield','attackBuff','defenseBuff','speedBuff','cooking','foodStock','slowUntil','slowFactor','stunUntil','stoneUntil','blindUntil','photoFlash'])delete p[key];
         p.hp = MAX_HP;
         p.deadUntil = 0;
         p.respawn = (p.respawn ?? 0) + 1;

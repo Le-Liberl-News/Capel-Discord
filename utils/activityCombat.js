@@ -73,7 +73,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if(spec.targetRequired&&!spec.effect){const target=room.get(command.target);if(!target||target.id===player.id||target.hp<=0||target.spectator||!canDamage(player,target)||Math.hypot(target.x-player.x,target.z-player.z)>spec.range)return {error:'Cible indisponible.'};if(spec.minRange&&Math.hypot(target.x-player.x,target.z-player.z)<spec.minRange)return {error:'La cible est trop proche pour charger.'};Object.assign(endpoint,{x:target.x,y:target.y??0,z:target.z});}
 
-    const airborneMelee=command.kind==='basic'&&!spec.projectile;
+    const airborneMelee=spec.special==='photo'||command.kind==='basic'&&!spec.projectile;
 
     const ground = fps||spec.effect||airborneMelee||spec.fixedLength?endpoint.y:floor(endpoint);
 
@@ -82,6 +82,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       return { error: "Visez le sol." };
 
     endpoint.y=ground;
+    if(Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)>.001)player.heading={dx:endpoint.x-origin.x,dz:endpoint.z-origin.z};
 
     const from=fps?fps.origin:{...origin,y:origin.y+.85},to=fps?endpoint:{...endpoint,y:endpoint.y+.85};
 
@@ -215,6 +216,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(dashSpec?.special==='photo'){if(!attack.resolved&&time>=attack.impactAt){const actor=room.get(attack.actor);if(!actor||actor.hp<=0||immobilized(actor,time)){attack.cancelled=true;}else require('../activity/dorothy-photo.cjs').resolvePhoto(attack,actor,room,canDamage,geometry);attack.resolved=true;}continue;}
+
       if(attack.food&&!attack.cancelled){cooking.advanceFood(attack,time,room,geometry,canDamage,hurt);continue;}
       if(dashSpec?.inertia&&!attack.cancelled&&attack.resolved&&time<attack.impactAt+dashSpec.buffDuration){
         const actor=room.get(attack.actor);if(!actor||actor.hp<=0||actor.character!==attack.character||immobilized(actor,time)){driveContacts.delete(id);continue;}

@@ -288,6 +288,7 @@ function createActivityService({
         }
         }
       }
+      if(point?.heading&&Number.isFinite(point.heading.dx)&&Number.isFinite(point.heading.dz)&&Math.hypot(point.heading.dx,point.heading.dz)>.001){const n=Math.hypot(point.heading.dx,point.heading.dz);player.heading={dx:point.heading.dx/n,dz:point.heading.dz/n};}
       player.seen = now();
       player.nom = session.character;
       player.character = session.character;
@@ -359,6 +360,7 @@ function createActivityService({
           cooldowns: player.character==='Sieg'?{craft:player.siegDiveReadyAt??0}:world.cooldownsFor?.(player.id) ?? {},
           movementFactor:movementFactor(player,now()),
           blindUntil:player.blindUntil??0,
+          photoFlash:player.photoFlash??null,
           maxHp: MAX_HP,
           deadUntil: player.deadUntil,
           respawn: player.respawn ?? 0,

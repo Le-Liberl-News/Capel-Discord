@@ -1,3 +1,4 @@
+import photoMechanics from './dorothy-photo.cjs';
 import loeweMechanics from './loewe-collapse.cjs';
 import dimensionMechanics from './weissmann-dimension.cjs';
 import drinkingContest from './drinking-contest.cjs';
@@ -81,6 +82,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     );
   if(inTower||map==="arena")Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
   const supportEffects=createSupportEffects(THREE,scene);
+  const photoWhite=document.createElement('div');photoWhite.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:18;background:#fff;opacity:0';document.body.append(photoWhite);const photoGhosts=new Map();
   const blindness=document.createElement('div');blindness.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;background:radial-gradient(ellipse at center,transparent 5%,rgba(0,0,0,.85) 48%,#000 80%);transition:opacity .15s;opacity:0';document.body.append(blindness);
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
   const enemyEffects=inTower?createEnemyEffects(THREE,scene):null;
@@ -222,7 +224,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(spec.targetRequired){target=pickCombatTarget(event,spec);if(!target)return false;}
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
     let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
-    const aim=ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
+    const photoHeading=me.heading??{dx:0,dz:-1};
+    const aim=spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
     const stage=spec.special==='trinity'?(continuing?juliaCombo.stage+1:1):1;
     const action=queueAction("attack",undefined,aim,undefined,{kind,target,ray});if(!action)return false;
@@ -891,6 +894,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }else avatar.craftTiltAngle=null;
       }
     }
+    const photoTime=(health.serverTime??Date.now())+(performance.now()-(health.received??performance.now())),photoAmount=photoMechanics.photoStrength(health.photoFlash,photoTime);
+    photoWhite.style.opacity=String(photoAmount*.95);
+    for(const [id,ghost] of photoGhosts){const a=avatars.get(id);if(!a||!photoAmount){scene.remove(ghost);ghost.material.dispose();photoGhosts.delete(id);}}
+    if(photoAmount)for(const [id,a] of avatars){if(a.character!=='Dorothy'||id===localId)continue;let ghost=photoGhosts.get(id);if(!ghost){ghost=a.mesh.clone();ghost.material=a.mesh.material.clone();ghost.material.depthWrite=false;scene.add(ghost);photoGhosts.set(id,ghost);}ghost.geometry=a.mesh.geometry;ghost.material.map=a.mesh.material.map;ghost.material.opacity=.4*photoAmount;ghost.position.copy(a.mesh.position).addScaledVector(right,.25*photoAmount);ghost.quaternion.copy(a.mesh.quaternion);ghost.scale.copy(a.mesh.scale);ghost.visible=a.mesh.visible;}
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
@@ -971,7 +978,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     enemyEffects?.animate();supportEffects.update(avatars,Date.now()+jumpClockOffset);
     dungeonEffects?.update();
     tavernTables?.update(time,camera);
-    const lightState=dayNight.update();
+    const lightState=dayNight.update();dayNight.photo(renneCombat?.photoFlashes()??[]);
     rooftopSky?.update(camera,lightState);
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     if(previewDrinkingClock){previewDrinkingClock.tick(environment.npcs);dialogues.receive(environment.npcs.filter(n=>n.utterance).map(n=>({...n.utterance,author:n.id})));}
@@ -1018,6 +1025,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         },
       ]);
     },
+    async demoPhoto(){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Dorothy',...origin,hp:500});const started=Date.now()-520;renneCombat.receive([{id:crypto.randomUUID(),actor:localId,character:'Dorothy',kind:'craft',origin,aim:{x:-1,y:0,z:13.25},started,impactAt:started+500,endsAt:started+1250,hits:[]}],Date.now());},
     async demoLoewe(){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Loewe',...origin,hp:500});Object.assign(avatars.get(localId).position,origin);const targets=[{id:'preview-collapse-1',character:'Estelle',x:-4,y:0,z:3.25},{id:'preview-collapse-2',character:'Joshua',x:2,y:0,z:3.25}];for(const p of targets)await setAvatar({...p,hp:500});const started=Date.now(),hits=targets.map(p=>({id:p.id,collapse:true,at:started+585,point:{x:p.x,y:p.y+.8,z:p.z}}));previewCollapse={started,targets:hits};renneCombat.receive([{id:crypto.randomUUID(),actor:localId,character:'Loewe',kind:'craft',special:'loewe',origin,aim:origin,started,impactAt:started+585,endsAt:started+2780,hits}],started);},
     async demoDimension(empty=false){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Weissmann',...origin,hp:500});Object.assign(avatars.get(localId).position,origin);const targets=empty?[]:[{id:'preview-dimension-1',character:'Estelle',x:-2.25,y:0,z:4.25},{id:'preview-dimension-2',character:'Joshua',x:.25,y:0,z:4.25}];for(const p of targets)await setAvatar({...p,hp:500});const started=Date.now(),hits=targets.map(p=>({id:p.id,trapped:true,at:started,point:{x:p.x,y:p.y,z:p.z}})),event={id:crypto.randomUUID(),actor:localId,character:'Weissmann',kind:'craft',technique:'Another Dimension',special:'dimension',origin,aim:{x:-1,y:0,z:4.25},started,impactAt:started+2600,endsAt:started+4000,hits};previewDimension={started,targets:hits};renneCombat.receive([event],started);},
     async demoIntro(){if(!__ACTIVITY_PREVIEW__||!duelIntro)return;const own=avatars.get(localId),other={id:'preview-arena-foe',character:own.character==='Joshua'?'Renne':'Joshua',x:-1,y:0,z:-16.25,hp:500};Object.assign(own.position,{x:-1,y:0,z:3.25});await setAvatar(other);const now=Date.now();duelIntro.receive({id:crypto.randomUUID(),startsAt:now,readyAt:now+arenaIntroDefinition.duration,players:[localId,other.id],names:[own.character,other.character],titles:['Titre à renseigner','Titre à renseigner'],phrases:['Que le meilleur gagne !','À nous deux !'],streaks:[2,1]},now);},
@@ -1167,6 +1175,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     movement() {
       const pending=[...(renneCombat?.actions.values()??[])].find(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap));
       return {
+        heading:avatars.get(localId)?.character==='Josette'?{dx:-Math.sin(yaw),dz:Math.cos(yaw)}:{...avatars.get(localId)?.heading},
         cookingHeld,
         jumpLanding:landedJump,
         ...(pending?.origin??this.position()),
@@ -1210,7 +1219,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       muellerTarget.geometry.dispose();muellerTarget.material.dispose();
       touches.reset();touchButton.remove();touchStyle.remove();
       arenaAudience?.dispose();rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
-      drinkingTable?.dispose();tavernTables?.dispose();crosshair.remove();blindness.remove();teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
+      drinkingTable?.dispose();tavernTables?.dispose();crosshair.remove();blindness.remove();photoWhite.remove();for(const ghost of photoGhosts.values()){scene.remove(ghost);ghost.material.dispose();}teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();
       labels.remove();
