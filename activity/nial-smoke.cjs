@@ -10,7 +10,7 @@ function createSmoke(hurt){
    p.smokeHiddenUntil=p.character==='Nial'?time+350:0;
    const period=p.character==='Nial'?2000:1000;let state=exposure.get(p.id);
    if(!state){state={next:time+period};exposure.set(p.id,state);}
-   if(time>=state.next){const actor=room.get(cloud.actor);if(actor){const dealt=hurt(cloud,actor,p,1,time,{point:{x:p.x,y:(p.y??0)+.8,z:p.z}});cloud.hits.push({id:p.id,at:time,smoke:true,...dealt});}state.next=time+period;}
+   if(time>=state.next){const actor=room.get(cloud.actor);if(actor){const dealt=hurt(cloud,actor,p,1,time,{point:{x:p.x,y:(p.y??0)+.8,z:p.z},smoke:true});cloud.hits.push({id:p.id,at:time,smoke:true,...dealt});}state.next=time+period;}
   }
   for(const id of exposure.keys())if(!room.has(id))exposure.delete(id);
  }};

@@ -164,7 +164,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = map === "arena" ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
-  const arenaAudience=map==='arena'?await createArenaAudience(THREE,scene,ASSETS,catalogue,arenaIntroDefinition):null;
+  const arenaAudience=map==='arena'?await createArenaAudience(THREE,scene,ASSETS,catalogue,arenaIntroDefinition,cutaway):null;
   const introCamera=map==='arena'?new THREE.PerspectiveCamera(53.2,innerWidth/innerHeight,.08,250):null;
   const airBounds=flight.flightBounds(grid);
   let walkingGrid = grid, movementAllowed = true;
@@ -1093,7 +1093,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       for (const player of players) {
         const before=avatars.get(player.id);if(before?.hp>0&&player.hp>before.hp)damageEffects.heal(player.id,player.hp-before.hp);
         const lost=damageAmount(before,player);
-        const events=newDamageEvents(before,player);
+        // smoke ticks would give away where the hidden players are: only the player being hurt sees them
+        const events=newDamageEvents(before,player).filter(e=>!e.smoke||player.id===localId);
         if(events.length)for(const event of events)damageEffects.hit(player.id,event.amount,false,Math.min(.8,(event.at-events[0].at)/1000),event);
         else if(lost&&!player.damageEvents)damageEffects.hit(player.id,lost);
         if (player.id === localId) {
