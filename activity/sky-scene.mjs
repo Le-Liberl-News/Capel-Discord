@@ -1,3 +1,5 @@
+import loeweMechanics from './loewe-collapse.cjs';
+import dimensionMechanics from './weissmann-dimension.cjs';
 import drinkingContest from './drinking-contest.cjs';
 import {createDrinkingTable} from './drinking-table.mjs';
 import spriteScale from './assets/sky/sprite-scale.json';
@@ -174,7 +176,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
-  let previewDrinkingClock=null;
+  let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=(map==="arena"||inTower)?await createRenneCombat(THREE,scene,ASSETS):null;
@@ -220,7 +222,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(spec.targetRequired){target=pickCombatTarget(event,spec);if(!target)return false;}
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
     let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
-    const aim=ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
+    const aim=ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
     const stage=spec.special==='trinity'?(continuing?juliaCombo.stage+1:1):1;
     const action=queueAction("attack",undefined,aim,undefined,{kind,target,ray});if(!action)return false;
@@ -432,7 +434,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
       avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;avatar.guard=player.guard??null;
-      avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
+      avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.dimensionLift=player.dimensionLift??null;avatar.fallAnimation=player.fallAnimation??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
       avatar.npc = !!player.npc;
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
       avatar.frozenUntil=player.stoneUntil;avatar.downUntil=player.downUntil;avatar.speed = player.speed ?? 0.8;avatar.spawnedAt=player.spawnedAt;avatar.summoned=player.summoned;avatar.deathAt=player.deathAt;
@@ -510,7 +512,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       displayName: player.nom ?? player.name ?? player.character,
       dead,deathStarted:performance.now(),
       hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
-      towerArrival:inTower&&!player.enemy&&!player.npc&&!String(player.id).startsWith("world:")?performance.now():null,platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??playerHealth.PLAYER_MAX_HP,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,siegDive:player.siegDive??null,catCling:player.catCling??null,
+      towerArrival:inTower&&!player.enemy&&!player.npc&&!String(player.id).startsWith("world:")?performance.now():null,platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,maxHp:player.maxHp??playerHealth.PLAYER_MAX_HP,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,dimensionLift:player.dimensionLift??null,fallAnimation:player.fallAnimation??null,siegDive:player.siegDive??null,catCling:player.catCling??null,
       frozenUntil:player.stoneUntil,downUntil:player.downUntil,spawnedAt:player.spawnedAt,summoned:player.summoned,deathAt:player.deathAt,npc: !!player.npc,
       foodStock:player.foodStock??[],cooking:player.cooking??null,walking: !!player.moving,
       speed: player.speed ?? 0.8,
@@ -723,6 +725,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
     if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Sieg"].includes(avatars.get(localId)?.character))yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
+    if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;a.downUntil=age>=585&&age<3085?previewCollapse.started+3085:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3200)previewCollapse=null;}
+    if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
     const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
@@ -830,12 +834,13 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
               );
       if(avatar.catCling&&!avatar.dead){const carrier=avatars.get(avatar.catCling.target);if(carrier)Object.assign(avatar.position,{x:carrier.position.x+.18,y:carrier.position.y+.8,z:carrier.position.z+.12});}
       if(avatar.knockback&&!avatar.dead)Object.assign(avatar.position,projectionMechanics.projectionPosition(avatar.knockback,Date.now()+jumpClockOffset));
+      if(avatar.dimensionLift)Object.assign(avatar.position,dimensionMechanics.liftPosition(avatar.dimensionLift,Date.now()+jumpClockOffset));
       if (motion.moving || avatar.walking || (avatar.character==="Sieg"&&!avatar.dead)) {
         if (motion.moving) avatar.heading = { dx: motion.dx, dz: motion.dz };
         avatar.time += seconds;
       } else if ((avatar.npc || avatar.enemyAttack) && !avatar.dead) avatar.time += seconds;
       else avatar.time = 0;
-      const down=avatar.downUntil>Date.now()+jumpClockOffset;
+      const down=avatar.downUntil>Date.now()+jumpClockOffset,fall=avatar.fallAnimation?loeweMechanics.fallPose(avatar.fallAnimation,Date.now()+jumpClockOffset):null,falling=fall?.active;
       let craftTilt=null;
       if (!avatar.prop) {
       const attack=avatar.dead||down?null:renneCombat?.current(id);
@@ -848,7 +853,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       );
       let info=avatar.info,selectedPose,selectedDirection,craftHidden=false,craftFlip=false;
       if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
-      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
+      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down&&!falling?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down&&!falling?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking||!!avatar.siegDive,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
@@ -872,7 +877,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(avatar.shadow&&!avatar.shadow.userData.update)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {
       if(avatar.fallbackDeath||down&&(!avatar.battleTextures?.has(4)))avatar.mesh.position.y+=avatar.info.height/2+Math.abs(avatar.info.centerX??0);
-      avatar.mesh.rotation.z = avatar.fallbackDeath||down&&(!avatar.battleTextures?.has(4)) ? Math.PI / 2 : 0;
+      avatar.mesh.rotation.z = falling?fall.angle:avatar.fallbackDeath||down&&(!avatar.battleTextures?.has(4)) ? Math.PI / 2 : 0;
+      if(falling)avatar.mesh.position.y+=fall.hop+(avatar.geometryInfo?.centerY??avatar.info.height/2)*(1-Math.cos(fall.angle));
       if(avatar.character==="Sieg"&&!avatar.dead&&!avatar.perched)avatar.mesh.quaternion.copy(camera.quaternion);
       else if(avatar.character==="Sieg")avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),0);
       else avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),avatar.mesh.rotation.z);
@@ -894,7 +900,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       );
     if(juliaCombo&&(performance.now()>juliaCombo.until||me?.character!=='Julia'||health.hp<=0)){juliaCombo=null;craftTarget=false;combatControls.targeting(null);}
     aimLine.visible=false;
-    if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){if(aimLine.visible)marker.visible=false;marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,(target.y+me.position.y)/2+.07,(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
+    if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){if(aimLine.visible)marker.visible=false;marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(spec.special==='dimension'?spec.radius/.22:2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,(target.y+me.position.y)/2+.07,(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
     muellerTarget.visible=!!craftTarget&&renneMechanics.combatSpec(me?.character,craftTarget)?.special==='mueller'&&marker.visible;if(muellerTarget.visible){muellerTarget.position.copy(marker.position);muellerTarget.scale.setScalar(renneMechanics.combatSpec(me.character,craftTarget).radius);marker.visible=false;}
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
@@ -1011,6 +1017,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         },
       ]);
     },
+    async demoLoewe(){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Loewe',...origin,hp:500});Object.assign(avatars.get(localId).position,origin);const targets=[{id:'preview-collapse-1',character:'Estelle',x:-4,y:0,z:3.25},{id:'preview-collapse-2',character:'Joshua',x:2,y:0,z:3.25}];for(const p of targets)await setAvatar({...p,hp:500});const started=Date.now(),hits=targets.map(p=>({id:p.id,collapse:true,at:started+585,point:{x:p.x,y:p.y+.8,z:p.z}}));previewCollapse={started,targets:hits};renneCombat.receive([{id:crypto.randomUUID(),actor:localId,character:'Loewe',kind:'craft',special:'loewe',origin,aim:origin,started,impactAt:started+585,endsAt:started+2780,hits}],started);},
+    async demoDimension(){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Weissmann',...origin,hp:500});Object.assign(avatars.get(localId).position,origin);const targets=[{id:'preview-dimension-1',character:'Estelle',x:-4,y:0,z:3.25},{id:'preview-dimension-2',character:'Joshua',x:2,y:0,z:3.25}];for(const p of targets)await setAvatar({...p,hp:500});const started=Date.now(),hits=targets.map(p=>({id:p.id,trapped:true,at:started,point:{x:p.x,y:p.y,z:p.z}})),event={id:crypto.randomUUID(),actor:localId,character:'Weissmann',kind:'craft',technique:'Another Dimension',special:'dimension',origin,aim:{x:-1,y:0,z:4.25},started,impactAt:started+2600,endsAt:started+4000,hits};previewDimension={started,targets:hits};renneCombat.receive([event],started);},
     async demoIntro(){if(!__ACTIVITY_PREVIEW__||!duelIntro)return;const own=avatars.get(localId),other={id:'preview-arena-foe',character:own.character==='Joshua'?'Renne':'Joshua',x:-1,y:0,z:-16.25,hp:500};Object.assign(own.position,{x:-1,y:0,z:3.25});await setAvatar(other);const now=Date.now();duelIntro.receive({id:crypto.randomUUID(),startsAt:now,readyAt:now+arenaIntroDefinition.duration,players:[localId,other.id],names:[own.character,other.character],titles:['Titre à renseigner','Titre à renseigner'],phrases:['Que le meilleur gagne !','À nous deux !'],streaks:[2,1]},now);},
     async demoConversation() {
       if (!__ACTIVITY_PREVIEW__) return;
@@ -1084,7 +1092,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();
       const bird=avatars.get(localId);
     if(bird){bird.frozenUntil=result.health?.frozenUntil;bird.downUntil=result.health?.downUntil;const previous=bird.siegDive,confirmed=result.health?.siegDive;if(confirmed){bird.siegDive=confirmed;divePending=null;}else if(!divePending||result.actionResult?.id===divePending){bird.siegDive=null;if(result.actionResult?.error&&result.actionResult.id===divePending)combatControls.rejected('craft');divePending=null;if(previous)Object.assign(bird.position,result.position);}if(previous||bird.siegDive){path=[];movementTrace=[];}}
-      const pushed=avatars.get(localId);if(pushed){const previous=pushed.knockback;pushed.knockback=result.health?.knockback??null;if(pushed.knockback||previous){path=[];movementTrace=[];localJump=null;if(!pushed.knockback)Object.assign(pushed.position,result.position);}}
+      const pushed=avatars.get(localId);if(pushed){const previous=pushed.knockback;pushed.knockback=result.health?.knockback??null;pushed.dimensionLift=result.health?.dimensionLift??null;pushed.fallAnimation=result.health?.fallAnimation??null;if(pushed.knockback||previous){path=[];movementTrace=[];localJump=null;if(!pushed.knockback)Object.assign(pushed.position,result.position);}}
       if(canJump){jumpClockOffset=(result.health?.serverTime??Date.now())-Date.now();if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects?.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed&&confirmed.id!==landedJump){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}
         else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
@@ -1147,7 +1155,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     },
     correct(position, submitted) {
       const me = avatars.get(localId);
-      if(health.catCling||localJump||inTower&&health.jump&&health.jump.id!==landedJump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
+      if(health.dimensionLift||health.catCling||localJump||inTower&&health.jump&&health.jump.id!==landedJump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
         recordCorrection(me.position,position,submitted,map);
         Object.assign(me.position, position);

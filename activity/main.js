@@ -332,7 +332,7 @@ async function start() {
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
     if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
-    if(etat.map==='arena'){const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
+    if(etat.map==='arena'){const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );

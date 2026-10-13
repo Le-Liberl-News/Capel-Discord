@@ -664,5 +664,58 @@
         1700.0
       ]
     }
+  },
+  "Weissmann": {
+    "craft": {
+      "name": "Another Dimension",
+      "key": "g",
+      "special": "dimension",
+      "groundTarget": true,
+      "shape": "area",
+      "range": 12,
+      "radius": 4.5,
+      "damage": 0,
+      "windup": 0,
+      "duration": 8000,
+      "cooldown": 14000,
+      "prisonDuration": 2000,
+      "finalAt": 2600,
+      "tickDamage": 5,
+      "finalDamage": 110,
+      "liftDuration": 800,
+      "liftHeight": 2,
+      "nativeEffect": "Third/ms04550c._ef",
+      "releaseEffect": "Third/sc001_25._ef",
+      "impactEffect": "Third/ms04550b._ef",
+      "effectDuration": 4000
+    }
+  },
+  "Loewe": {
+    "craft": {
+      "name": "Onde du Lion",
+      "key": "g",
+      "special": "loewe",
+      "selfTarget": true,
+      "damage": 60,
+      "range": 6,
+      "radius": 6,
+      "windup": 1170,
+      "duration": 5560,
+      "cooldown": 13000,
+      "stunDuration": 2500,
+      "prepDuration": 780,
+      "holdDuration": 2000,
+      "fallDuration": 450,
+      "nativeEffect": "SC/cr04150._ef",
+      "chargeEffects": [
+        {
+          "id": "SC/sc053_07._ef"
+        }
+      ],
+      "impactEffect": "SC/sc008_00._ef",
+      "explosionEffect": "SC/sc006_17._ef",
+      "hitEffect": "Third/cr163_01._ef",
+      "effectDuration": 2800
+    }
   }
 }

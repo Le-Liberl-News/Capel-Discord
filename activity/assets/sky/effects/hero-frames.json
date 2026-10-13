@@ -392,5 +392,68 @@
     "lastVisibleFrame": 89,
     "duration": 1000,
     "size": 4
+  },
+  "third/ms04550c._ef": {
+    "name": "third-ms04550c",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 4000,
+    "size": 4
+  },
+  "third/mgfire50._ef": {
+    "name": "third-mgfire50",
+    "frames": 90,
+    "lastVisibleFrame": 58,
+    "duration": 1000,
+    "size": 4
+  },
+  "third/ms04550b._ef": {
+    "name": "third-ms04550b",
+    "frames": 90,
+    "lastVisibleFrame": 73,
+    "duration": 1000,
+    "size": 4
+  },
+  "third/sc001_25._ef": {
+    "name": "third-sc001_25",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/cr04150._ef": {
+    "name": "sc-cr04150",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 2800,
+    "size": 4
+  },
+  "sc/sc053_07._ef": {
+    "name": "sc-sc053_07",
+    "frames": 90,
+    "lastVisibleFrame": 59,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/sc008_00._ef": {
+    "name": "sc-sc008_00",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/sc006_17._ef": {
+    "name": "sc-sc006_17",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 1000,
+    "size": 4
+  },
+  "third/cr163_01._ef": {
+    "name": "third-cr163_01",
+    "frames": 90,
+    "lastVisibleFrame": 28,
+    "duration": 1000,
+    "size": 4
   }
 }

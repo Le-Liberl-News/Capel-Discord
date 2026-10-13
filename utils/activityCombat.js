@@ -32,6 +32,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
 
+  const loewe=require('./activityLoeweCollapse').createLoeweCollapse({geometry,canDamage,hurt:(...args)=>hurt(...args)});
+  const dimension=require('./activityDimension').createDimension({geometry,canDamage,hurt:(...args)=>hurt(...args)});
   const cats=require('./activityCatCling').createCatCling({floor,geometry,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
   function action(player, command, room) {
 
@@ -144,6 +146,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(spec.leap&&spec.landingOffset){const length=Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z),ratio=length?1-Math.min(spec.landingOffset,Math.max(0,length-.2))/length:1,p={x:origin.x+(endpoint.x-origin.x)*ratio,y:endpoint.y,z:origin.z+(endpoint.z-origin.z)*ratio},height=floor(p);attack.landingPoint=height!==null&&Number.isFinite(height)&&Math.abs(height-p.y)<1.2?{...p,y:height}:{...endpoint};}
 
     special.setup(attack,spec,command,room);
+    if(spec.special==='dimension')dimension.setup(attack,spec,room);
     if(spec.special==='trinity')trinity.setup(attack,spec,player);
 
     attacks.set(attack.id,attack);players=room;if(spec.chargeStun){const target=room.get(attack.target);applyStatus(target,{status:'stun',statusDuration:spec.duration},time);}
@@ -195,7 +198,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function tick(room) {
     const cooking=require("../activity/phyllis-cooking.cjs");for(const player of room.values())cooking.cookingTick(player,now());
 
-    players=room;const time=now();cats.tick(room,time);special.tickEntities(room);
+    players=room;const time=now();for(const p of room.values())if(p.fallAnimation&&time>=p.fallAnimation.started+p.fallAnimation.duration)p.fallAnimation=null;cats.tick(room,time);special.tickEntities(room);
 
     for(const player of room.values())if(player.knockback&&!projections.has(player.id)){player.knockback=null;}
 
@@ -209,7 +212,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     for(const [id,attack]of attacks) {
 
-      if(time>attack.endsAt+5000){attacks.delete(id);driveContacts.delete(id);continue;}
+      if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
       if(attack.food&&!attack.cancelled){cooking.advanceFood(attack,time,room,geometry,canDamage,hurt);continue;}
@@ -239,6 +242,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       }
 
       if(trinity.tick(attack,dashSpec,room,time))continue;
+      if(dashSpec?.special==='loewe'){loewe.tick(attack,dashSpec,room,time);continue;}
+      if(dashSpec?.special==='dimension'){dimension.tick(attack,dashSpec,room,time);continue;}
       if(special.tickAttack(attack,dashSpec,room,time))continue;
 
       if(dashSpec?.lockOn&&!attack.resolved&&!attack.cancelled){

@@ -9,7 +9,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
  const entries=JSON.parse(await fs.readFile(path.join(root,'catalogue.json'),'utf8'));
  const heroes=JSON.parse(await fs.readFile(path.join(root,'../../combat/hero-actions.json'),'utf8'));
  const heroEffects=['Third/msc0614._ef',...new Set(Object.values(heroes).flatMap(h=>Object.values(h).filter(a=>a?.nativeEffect).map(a=>a.nativeEffect)))];
- heroEffects.push('SC/paralyze._ef','Third/mp003_00._ef','Third/msc0601._ef','SC/cr172_02._ef','SC/mg017_0._ef','SC/mp067_02._ef','Third/sc270_12._ef','Third/sc040_09._ef','Third/sc040_07._ef','Third/sc003_17._ef','Third/sc001_12._ef');
+ heroEffects.push('SC/cr04150._ef','SC/sc053_07._ef','SC/sc008_00._ef','SC/sc006_17._ef','Third/cr163_01._ef','Third/mgfire50._ef','Third/ms04550c._ef','Third/ms04550b._ef','Third/sc001_25._ef','SC/paralyze._ef','Third/mp003_00._ef','Third/msc0601._ef','SC/cr172_02._ef','SC/mg017_0._ef','SC/mp067_02._ef','Third/sc270_12._ef','Third/sc040_09._ef','Third/sc040_07._ef','Third/sc003_17._ef','Third/sc001_12._ef');
  heroEffects.push(...new Set(Object.values(heroes).flatMap(h=>Object.values(h).flatMap(a=>(a?.chargeEffects??[]).map(e=>e.id)))));
  heroEffects.push(...new Set(Object.values(heroes).flatMap(h=>Object.values(h).flatMap(a=>[a?.hitEffect,a?.explosionEffect,a?.edgeEffect,a?.trailEffect].filter(Boolean)))),'SC/mp050_00._ef','SC/ms10920._ef','SC/mp066_01._ef','SC/ms10011._ef','SC/msc0548._ef','SC/sc480_03._ef');
  const specs=[...['mg011_0','damage0','damage1','damage2','damage3','damage5'].map(name=>({id:`sc/${name}._ef`,name,frames:name.startsWith('damage')?24:54,zoom:4})),...heroEffects.map(id=>({id,name:id.toLowerCase().replace('/','-').replace('._ef',''),frames:90,zoom:2}))];
@@ -22,7 +22,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
    // Bake one of the three identical native walls; runtime places it on each actual edge.
    const item=player.instances.find(i=>i.part.index===5);player.instances=[item];item.parent=null;item.position=[];item.rotation=[];item.offset=[0,0,0];player.yaw=0;player.pitch=0;player.fit();
   }
-  if(name.includes('-')&&player.extent>20&&id.toLowerCase()!=='third/sc005_16._ef')player.extent=5;
+  if(name.includes('-')&&player.extent>20&&!['third/sc005_16._ef','sc/sc006_17._ef'].includes(id.toLowerCase()))player.extent=5;
   const columns=8,rows=Math.ceil(frames/columns);
   const hero=name.includes('-'),resolution=hero?256:128;
   const atlas=createCanvas(columns*128,rows*128),frame=createCanvas(resolution,resolution),ctx=frame.getContext('2d');
@@ -36,7 +36,7 @@ const root=path.resolve(__dirname,'../assets/sky/effects/native');
   }
   const side=hero?Math.min(resolution,Math.max(right-left,bottom-top)+12):resolution,cx=hero?(left+right)/2:resolution/2,cy=hero?(top+bottom)/2:resolution/2;
   for(let i=0;i<frames;i++){ctx.putImageData(snapshots[i],0,0);atlas.getContext('2d').drawImage(frame,cx-side/2,cy-side/2,side,side,i%columns*128,Math.floor(i/columns)*128,128,128);}
-  if(name==='sc-mg017_0'){
+  if(['sc-mg017_0','sc-sc006_17','sc-cr04150','sc-sc053_07','sc-sc008_00','third-cr163_01'].includes(name)){
    // A clipped smoke frame must fade to transparent before the atlas cell boundary.
    const ac=atlas.getContext('2d'),data=ac.getImageData(0,0,atlas.width,atlas.height);
    for(let y=0;y<atlas.height;y++)for(let x=0;x<atlas.width;x++){const edge=Math.min(x%128,127-x%128,y%128,127-y%128);if(edge<5)data.data[(y*atlas.width+x)*4+3]*=edge/5;}

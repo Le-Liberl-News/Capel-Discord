@@ -347,6 +347,7 @@ function createActivityService({
           canDetonate:world.canDetonate?.(player.id)??false, frozenUntil:player.stoneUntil??0,downUntil:player.downUntil??0,
           combatDash:player.combatDash??null,
           knockback:player.knockback??null,
+          dimensionLift:player.dimensionLift??null,fallAnimation:player.fallAnimation??null,
           siegDive:player.siegDive??null,
           siegDiveReadyAt:player.siegDiveReadyAt??0,
           jump: player.jump??null,
