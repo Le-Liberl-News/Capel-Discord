@@ -908,7 +908,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(photoAmount)for(const [id,a] of avatars){if(a.character!=='Dorothy'||id===localId)continue;let ghost=photoGhosts.get(id);if(!ghost){ghost=a.mesh.clone();ghost.material=a.mesh.material.clone();ghost.material.depthWrite=false;scene.add(ghost);photoGhosts.set(id,ghost);}ghost.geometry=a.mesh.geometry;ghost.material.map=a.mesh.material.map;ghost.material.opacity=.4*photoAmount;ghost.position.copy(a.mesh.position).addScaledVector(right,.25*photoAmount);ghost.quaternion.copy(a.mesh.quaternion);ghost.scale.copy(a.mesh.scale);ghost.visible=a.mesh.visible;}
     // hidden in Nial's smoke only once the cloud has come out of his cigarette (not during the drag)
     const cloudDelay=actor=>avatars.get(actor)?.craftInfo?.smokeStartsAtMs??0;
-    for(const a of avatars.values()){const inside=(renneCombat?.smokeAmount(a.position,cloudDelay)??0)>0;if(inside){a.mesh.material.opacity=.02;a.smokeDimmed=true;}else if(a.smokeDimmed){a.smokeDimmed=false;if(a.prop)a.mesh.material.opacity=1;}}
+    // fade in and out of the smoke over 0.6 s instead of vanishing at once
+    for(const a of avatars.values()){const inside=(renneCombat?.smokeAmount(a.position,cloudDelay)??0)>0;a.smokeVeil=Math.max(0,Math.min(1,(a.smokeVeil??0)+(inside?1:-1)*seconds/.6));if(a.smokeVeil>0){const base=a.prop?1:a.mesh.material.opacity;a.mesh.material.opacity=base+(.02-base)*a.smokeVeil;a.smokeDimmed=true;}else if(a.smokeDimmed){a.smokeDimmed=false;if(a.prop)a.mesh.material.opacity=1;}}
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
@@ -961,7 +962,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       ).project(camera);
       label.style.left = ((p.x + 1) * viewport.width) / 2 + "px";
       label.style.top = ((1 - p.y) * viewport.height) / 2 + "px";
-      label.style.opacity=(renneCombat?.smokeAmount(a.position,actor=>avatars.get(actor)?.craftInfo?.smokeStartsAtMs??0)??0)>0?'0.02':'1';
+      label.style.opacity=String(1-.98*(a.smokeVeil??0));
       label.hidden = p.z > 1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1;
       if (
         label.dataset.hp !== String(a.hp) ||
