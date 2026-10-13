@@ -28,6 +28,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   };
 
+  const smoke=require('../activity/nial-smoke.cjs').createSmoke((attack,actor,target,amount,time,impact)=>hurt(attack,actor,target,amount/attackFactor(actor,time),time,impact));
   const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft});
 
   const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
@@ -211,11 +212,13 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     }
 
+    smoke.tick([...attacks.values()].filter(a=>a.character==='Nial'&&a.kind==='craft'),room,time);
     for(const [id,attack]of attacks) {
 
       if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(dashSpec?.special==='smoke'){attack.resolved=true;continue;}
       if(dashSpec?.special==='photo'){if(!attack.resolved&&time>=attack.impactAt){const actor=room.get(attack.actor);if(!actor||actor.hp<=0||immobilized(actor,time)){attack.cancelled=true;}else require('../activity/dorothy-photo.cjs').resolvePhoto(attack,actor,room,canDamage,geometry);attack.resolved=true;}continue;}
 
       if(attack.food&&!attack.cancelled){cooking.advanceFood(attack,time,room,geometry,canDamage,hurt);continue;}

@@ -18,7 +18,7 @@ export function createTraining({grid,geometry,character,opponent,now=Date.now,ra
  const aimAt=(target,speed=0)=>{const lead=speed?Math.min(.7,Math.hypot(ai.x-target.x,ai.z-target.z)/speed):0;return {x:target.x+velocity.x*lead,y:target.y??0,z:target.z+velocity.z*lead};};
  const send=(command)=>world.action(ai,{id:'training:action:'+ ++count,...command},players);
  function navigate(target){if(path.length&&goal&&Math.hypot(goal.x-target.x,goal.z-target.z)<.6)return;goal={...target};path=smoothRoute(grid,ai,route(grid,ai,target));}
- function think(time){
+ function think(time){if(player.smokeHiddenUntil>time){path=[];return;}
   if(ai.hp<=0||player.hp<=0||status.immobilized(ai,time)||time<(ai.combatLockedUntil??0))return;
   const snapshot=world.snapshot(),balls=snapshot.poms??[],held=balls.find(p=>p.owner===ai.id),distance=Math.hypot(ai.x-player.x,ai.z-player.z),busy=ai.attackBusyUntil>time;
   if(ai.catCarrier?.active){

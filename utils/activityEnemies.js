@@ -19,7 +19,7 @@ function createActivityEnemies({grid,spawns=[],now=Date.now,geometry=null,initia
    if(e.hp<=0){e.moving=false;e.state='dead';e.path=[];e.attack=null;if(!e.deadUntil)e.deadUntil=time+30000;if(time>=e.deadUntil){Object.assign(e,e.home,{hp:e.maxHp,deadUntil:0,state:'idle',cooldown:time+2000,patrolAt:time+1000});}continue;}
    if(immobilized(e,time)){e.moving=false;e.state='stunned';continue;}
    if(e.impact&&time>e.impact.at+700)e.impact=null;
-   const targets=[...players.values()].filter(p=>p.hp>0&&!p.spectator&&p.catCling?.target!==e.id&&Math.abs((p.y??0)-e.y)<(e.ranged?2.5:1.2)&&distance(p,e.home)<14);
+   const targets=[...players.values()].filter(p=>p.hp>0&&!(p.smokeHiddenUntil>time)&&!p.spectator&&p.catCling?.target!==e.id&&Math.abs((p.y??0)-e.y)<(e.ranged?2.5:1.2)&&distance(p,e.home)<14);
    const target=targets.sort((a,b)=>distance(a,e)-distance(b,e))[0];
    if(e.attack){e.state='attack';e.moving=false;if(time>=e.attack.at){const aim=e.attack.point;if(e.attack.kind==='fire'){fire?.launch({x:e.x,y:e.y+.7,z:e.z},{x:aim.x-e.x,y:0,z:aim.z-e.z},{speed:7,damage:12,ttl:2200,source:e.id});}else for(const p of targets){if(!inSector(p,e.attack))continue;const from={x:e.x,y:e.y+.65,z:e.z},to={x:p.x,y:(p.y??0)+.65,z:p.z},wall=geometry?.sweep(from,to,.05);if(wall&&wall.distance<distance(e,p)-.15)continue;applyDamage(p,10,time);if(!p.hp)p.deadUntil=time+10000;}e.impact={...e.attack,id:e.id+':'+e.attack.started,at:time};e.attack=null;e.cooldown=time+1600;e.state='idle';}continue;}
    const engaged=target&&distance(target,e)<9;
