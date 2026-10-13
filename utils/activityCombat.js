@@ -32,7 +32,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
 
-  const loewe=require('./activityLoeweCollapse').createLoeweCollapse({geometry,canDamage,hurt:(...args)=>hurt(...args)});
+  const loewe=require('./activityLoeweCollapse').createLoeweCollapse({geometry,canDamage,project:(...args)=>project(...args),hurt:(...args)=>hurt(...args)});
   const dimension=require('./activityDimension').createDimension({geometry,canDamage,hurt:(...args)=>hurt(...args)});
   const cats=require('./activityCatCling').createCatCling({floor,geometry,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
   function action(player, command, room) {
@@ -181,7 +181,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   function project(attack,attacker,player,spec,direction,time){
 
-    const safeFloor=point=>{const x=Math.round((point.x-grid.origin.x)/grid.step),z=Math.round((point.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return null;const y=floor(point);return Number.isFinite(y)&&Math.abs(y-grid.cells[z*grid.width+x])<=.35?y:null;};
+    const safeFloor=point=>{if(!grid)return floor(point);const x=Math.round((point.x-grid.origin.x)/grid.step),z=Math.round((point.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return null;const y=floor(point);return Number.isFinite(y)&&Math.abs(y-grid.cells[z*grid.width+x])<=.35?y:null;};
     const path=projectionPath(player,direction,spec.knockback,safeFloor,geometry);if(!path)return;
 
     const duration=spec.knockbackDuration??450,projection={...path,id:attack.id+':'+player.id,started:time,duration};
@@ -206,7 +206,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
       Object.assign(player,projectionPosition(projection,time));player.acceptedAt=time;
 
-      if(time>=projection.started+projection.duration){player.knockback=null;projections.delete(id);if(projection.wall&&spec.wallDamage){const dealt=hurt(attack,attacker,player,spec.wallDamage,time,{point:{x:player.x,y:(player.y??0)+.8,z:player.z}});attack.hits.push({id:player.id,at:time,wall:true,...dealt});if(dealt.damage){applyStatus(player,{status:'stun',statusDuration:spec.wallStun},time);player.downUntil=time+spec.wallStun;}}}
+      if(time>=projection.started+projection.duration){player.knockback=null;projections.delete(id);if(spec.collapse){const ended=projection.started+projection.duration;applyStatus(player,{status:'stun',statusDuration:spec.stunDuration},ended);player.downUntil=ended+spec.stunDuration;}if(projection.wall&&spec.wallDamage){const dealt=hurt(attack,attacker,player,spec.wallDamage,time,{point:{x:player.x,y:(player.y??0)+.8,z:player.z}});attack.hits.push({id:player.id,at:time,wall:true,...dealt});if(dealt.damage){applyStatus(player,{status:'stun',statusDuration:spec.wallStun},time);player.downUntil=time+spec.wallStun;}}}
 
     }
 
