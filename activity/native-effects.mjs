@@ -61,7 +61,7 @@ export function nativeWorldEffect(THREE,player,options={}){
   }
   const[a,b]=p.vertices,width=Math.abs(b[0]-a[0])||1,height=Math.abs(b[1]-a[1])||1;
   let object;
-  const material={map,transparent:true,depthWrite:false,blending:additive?THREE.AdditiveBlending:THREE.NormalBlending};
+  const material={map,transparent:true,depthWrite:false,blending:options.blend==='normal'?THREE.NormalBlending:additive?THREE.AdditiveBlending:THREE.NormalBlending};
   if(p.primitive===4||p.primitive===7||p.primitive===9){const mesh=p.primitive===7?nativeCrossBeam(p.vertices):p.primitive===9?nativeRing(p.vertices):nativeSector(p.vertices),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(mesh.positions.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(mesh.uv.flat().map((v,i)=>i%2?1-v:v),2));geometry.setIndex(mesh.indices);object=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));}
   else if(options.spatial&&p.primitive===3){object=new THREE.Mesh(new THREE.SphereGeometry(.5,24,16),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));object.userData.nativeSphere=true;}
   else if(ground){object=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));object.userData.nativeGround=true;}
@@ -93,6 +93,6 @@ export function nativeWorldEffect(THREE,player,options={}){
     if(object.isMesh&&uv?.mode===1){object.material.map.wrapS=object.material.map.wrapT=THREE.RepeatWrapping;object.material.map.offset.set(item.part.uv[0]+uv.speed[0]*(ms-item.start)/30,1-item.part.uv[3]-uv.speed[1]*(ms-item.start)/30);}
   }
   if(object.isGroup){object.userData.nativeRig?.draw(animationTime*(options.animationSpeed??1));for(const mesh of object.children){if(!mesh.material)continue;mesh.material.color.setRGB(...state.color.slice(0,3).map(v=>v/255));mesh.material.opacity=state.color[3]/255;const uv=item.part.uvAnimation;mesh.material.map.offset.set((uv.speed[0]*ms/30)%1,(uv.speed[1]*ms/30)%1);}continue;}
-  const heal=player.entry.id.toLowerCase()==='sc/mg110_0._ef';object.material.color.setRGB(...(heal?[.25,.7,1]:state.color.slice(0,3).map(v=>v/255)));object.material.opacity=item.part.renderFlags&4?1:state.color[3]/255;if(object.isSprite)object.material.rotation=state.rotation[2]*Math.PI/180;
+  const heal=player.entry.id.toLowerCase()==='sc/mg110_0._ef';object.material.color.setRGB(...(heal?[.25,.7,1]:state.color.slice(0,3).map(v=>v/255)));object.material.opacity=options.blend==='normal'&&(item.part.renderFlags&4)?Math.max(...state.color.slice(0,3))/255:item.part.renderFlags&4?1:state.color[3]/255;if(object.isSprite)object.material.rotation=state.rotation[2]*Math.PI/180;
  }},dispose(){for(const{object}of parts){if(object.isGroup){object.userData.nativeRig?.dispose();for(const mesh of object.children){mesh.geometry?.dispose();mesh.material?.dispose();}}else{object.geometry?.dispose();object.material.dispose();}}for(const map of maps.values())map.dispose();}};
 }

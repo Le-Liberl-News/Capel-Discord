@@ -673,7 +673,7 @@
       "groundTarget": true,
       "shape": "area",
       "range": 12,
-      "radius": 4.5,
+      "radius": 2.25,
       "damage": 0,
       "windup": 0,
       "duration": 8000,

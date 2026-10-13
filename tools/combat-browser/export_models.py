@@ -29,7 +29,7 @@ def export_model(source,game,textures):
    positions=[[-p[0],p[1],p[2]] for p in values(primitive['attributes']['POSITION'])]
    meshes.append({'positions':positions,'uv':values(primitive['attributes']['TEXCOORD_0']),'indices':[p[0] for p in values(primitive['indices'])],'texture':texture,'renderFlags':native_materials.get(name,0)})
  result={'meshes':meshes,'extent':max(abs(v) for m in meshes for p in m['positions'] for v in p)}
- if source.stem.lower()=='ms04671d':
+ if source.stem.lower() in ['ms04671d','ms04550']:
   from x3_animation import export_rig
   result['rig']=export_rig(source)
  target=CACHE/'models'/game/(source.stem+'.json');target.parent.mkdir(parents=True,exist_ok=True);target.write_text(json.dumps(result),encoding='utf-8');return target

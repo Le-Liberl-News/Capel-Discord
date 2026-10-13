@@ -45,8 +45,8 @@ export async function createRenneCombat(THREE,scene,assets) {
   const projectileMaps=new Map(await Promise.all(['bullet','arrow','cannon'].map(async name=>{const map=await loader.loadAsync(new URL('effects/native-'+name+'.png',assets).href);map.colorSpace=THREE.SRGBColorSpace;return [name,map];})));
   function nativeShot(type){const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:projectileMaps.get(type),transparent:true,depthWrite:false}));sprite.scale.set(type==='cannon'?.32:type==='arrow'?.35:.12,type==='cannon'?.32:type==='arrow'?.7:.45,1);sprite.renderOrder=4;return sprite;}
   const catLeap=createCatLeapView(THREE,scene,native);
-  const loeweView=createLoeweView(THREE,scene,heroBanks);
-  const dimensionView=createDimensionView(THREE,scene,heroBanks);
+  const loeweView=createLoeweView(THREE,scene,native);
+  const dimensionView=await createDimensionView(THREE,scene,native,assets);
   const accents=createCraftAccentView(THREE,scene,heroBanks);
   const phyllisView=await createPhyllisView(THREE,scene,assets,heroBanks);
   const specialView=await createSpecialCraftView(THREE,scene,assets,heroBanks,fireTexture,native);
