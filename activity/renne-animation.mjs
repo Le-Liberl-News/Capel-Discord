@@ -30,13 +30,13 @@ import mechanics from './native-combat.cjs';
 const {COMBAT,combatSpec,attackPoint}=mechanics;
 export async function createRenneCombat(THREE,scene,assets) {
   const loader=new THREE.TextureLoader();
-  const native=await loadNativeEffects(assets);
-  const arcBank=await prepareArcFencer(THREE,assets);
+  const [native,arcBank,earthArt,heroDefinitions]=await Promise.all([
+    loadNativeEffects(assets),prepareArcFencer(THREE,assets),loadBakedEffect(THREE,assets,'mg011_0',54),
+    fetch(new URL('effects/hero-frames.json?v='+encodeURIComponent(new URL(import.meta.url).searchParams.get('v')??'phyllis-20261012'),assets)).then(r=>{if(!r.ok)throw Error('Effets des techniques introuvables');return r.json();})
+  ]);
   const earthBank=await prepareEarthWave(THREE,assets,native);
-  const earthArt=await loadBakedEffect(THREE,assets,'mg011_0',54);
-  const heroDefinitions=await fetch(new URL('effects/hero-frames.json?v='+encodeURIComponent(new URL(import.meta.url).searchParams.get('v')??'phyllis-20261012'),assets)).then(r=>{if(!r.ok)throw Error('Effets des techniques introuvables');return r.json();});
   const heroBanks=new Map(),effectJobs=new Map(),characterJobs=new Map(),readyCharacters=new Set();
-  async function ensureEffects(character){if(!characterJobs.has(character))characterJobs.set(character,(async()=>{await Promise.all([...effectSelection.characterEffects(character)].map(async id=>{const info=heroDefinitions[id];if(!info||['third/ms04671c._ef','third/ms04671i._ef'].includes(id))return;if(!effectJobs.has(id))effectJobs.set(id,loadBakedEffect(THREE,assets,info.name,info.frames).then(bank=>heroBanks.set(id,{...bank,size:info.size,duration:info.duration,blend:info.blend,lastVisibleFrame:info.lastVisibleFrame})));await effectJobs.get(id);}));readyCharacters.add(character);})());await characterJobs.get(character);}
+  async function ensureEffects(character){if(!characterJobs.has(character))characterJobs.set(character,(async()=>{await native.ensure([...effectSelection.characterEffects(character)]);await Promise.all([...effectSelection.characterEffects(character)].map(async id=>{const info=heroDefinitions[id];if(!info||['third/ms04671c._ef','third/ms04671i._ef'].includes(id))return;if(!effectJobs.has(id))effectJobs.set(id,loadBakedEffect(THREE,assets,info.name,info.frames).then(bank=>heroBanks.set(id,{...bank,size:info.size,duration:info.duration,blend:info.blend,lastVisibleFrame:info.lastVisibleFrame})));await effectJobs.get(id);}));readyCharacters.add(character);})());await characterJobs.get(character);}
 
   const [metadata,ringTexture,vortexTexture,fireTexture]=await Promise.all([
     Promise.resolve(COMBAT.Renne),
@@ -54,10 +54,8 @@ export async function createRenneCombat(THREE,scene,assets) {
   const smokeView=createSmokeView(THREE,scene,heroBanks,native);
   const photoView=createPhotoView(THREE,scene,native);
   const loeweView=createLoeweView(THREE,scene,native);
-  const dimensionView=await createDimensionView(THREE,scene,native,assets);
+  const [dimensionView,phyllisView,specialView]=await Promise.all([createDimensionView(THREE,scene,native,assets),createPhyllisView(THREE,scene,assets,heroBanks),createSpecialCraftView(THREE,scene,assets,heroBanks,fireTexture,native)]);
   const accents=createCraftAccentView(THREE,scene,heroBanks);
-  const phyllisView=await createPhyllisView(THREE,scene,assets,heroBanks);
-  const specialView=await createSpecialCraftView(THREE,scene,assets,heroBanks,fireTexture,native);
   const trinityView=createTrinityView(THREE,scene,heroBanks);
   const muellerView=createMuellerView(THREE,scene,heroBanks);
   const phoenixView=createPhoenixView(THREE,scene,heroBanks,native);

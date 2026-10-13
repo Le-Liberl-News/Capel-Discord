@@ -3,7 +3,7 @@ const {characterEffects}=require('../activity/combat-effect-selection.cjs');
 const definitions=require('../activity/assets/sky/effects/hero-frames.json');
 test('combatants only request their atlas dependencies and shared status effects',()=>{
  const nial=characterEffects('Nial'),mueller=characterEffects('Mueller');
- assert.ok(nial.has('sc/mp050_00._ef'));assert.ok(!nial.has('sc/cr130_02._ef'));
+ assert.ok(characterEffects('Josette').has('sc/ms10920._ef'));assert.ok(characterEffects('Josette').has('sc/msc0548._ef'));assert.ok(nial.has('sc/mp050_00._ef'));assert.ok(!nial.has('sc/cr130_02._ef'));
  assert.ok(mueller.has('sc/cr130_02._ef'));assert.ok(mueller.has('third/sc006_17._ef'));
  for(const character of ['Joshua','Nial','Estelle','Mueller','Julia','Cassius','Renne','Campanella'])assert.ok([...characterEffects(character)].filter(id=>definitions[id]).length<10,character);
 });

@@ -1,3 +1,4 @@
+import {loadArenaModel,preloadArena} from './arena-preload.mjs';
 import photoMechanics from './dorothy-photo.cjs';
 import loeweMechanics from './loewe-collapse.cjs';
 import dimensionMechanics from './weissmann-dimension.cjs';
@@ -61,6 +62,7 @@ export const ASSETS = new URL(
     : "./assets/sky/",
   location.href,
 );
+export function prepareTrainingArena(){const version=new URL(import.meta.url).searchParams.get('v')??'rooftop-sky-20261009-4';return preloadArena(ASSETS,version);}
 export async function createSkyScene(canvas, map = "anterose", {localTraining=false}={}) {
   if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inTower=/^tower[1-4]$/.test(map);
@@ -81,6 +83,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       r.json(),
     );
   if(inTower||map==="arena")Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  const combatPreparation=(map==='arena'||inTower)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
   const supportEffects=createSupportEffects(THREE,scene);
   const photoWhite=document.createElement('div');photoWhite.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:18;background:#fff;opacity:0';document.body.append(photoWhite);const photoGhosts=new Map();
   const blindness=document.createElement('div');blindness.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;background:radial-gradient(ellipse at center,transparent 5%,rgba(0,0,0,.85) 48%,#000 80%);transition:opacity .15s;opacity:0';document.body.append(blindness);
@@ -93,7 +96,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = map === "arena" ? createArenaCutaway() : null;
   renderer.localClippingEnabled = !!cutaway;
-  const loaded = map==="hangar"?{scene:new THREE.Group()}:await new GLTFLoader(loading).loadAsync(
+  const loaded = map==="hangar"?{scene:new THREE.Group()}:map==="arena"?await loadArenaModel(ASSETS,version):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = new THREE.Group();model.add(loaded.scene);
@@ -181,7 +184,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
-  const renneCombat=(map==="arena"||inTower)?await createRenneCombat(THREE,scene,ASSETS):null;
+  const renneCombat=await combatPreparation;
   renneCombat?.warmup(renderer,camera);
   let notifyCapture=()=>{};
   const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
@@ -994,6 +997,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   requestAnimationFrame(render);
   return {
     spawn,
+    prepareCombat:character=>renneCombat?.load(character),
     retainCombatCharacters:characters=>renneCombat?.retainCharacters(characters),
     resetTraining(){renneCombat?.reset();for(const a of avatars.values())removeAvatar(a);avatars.clear();path=[];movementTrace=[];localJump=null;actionQueue.length=0;},
     trainingGeometry:()=>({grid,geometry:collision}),

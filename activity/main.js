@@ -8,7 +8,7 @@ import {keyboardLayout,createBindingOptions} from "./controls.mjs";
 import { fetchJson, retryConnection } from "./network.mjs";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { createMapMusic } from "./music.mjs";
-import { createSkyScene, ASSETS } from "./sky-scene.mjs";
+import { createSkyScene, prepareTrainingArena, ASSETS } from "./sky-scene.mjs";
 const CLIENT_ID = window.__CLIENT_ID__ || "__CLIENT_ID__";
 const dedansDiscord = new URLSearchParams(location.search).has("frame_id");
 const apercuLocal = __ACTIVITY_PREVIEW__ && !dedansDiscord;
@@ -39,14 +39,14 @@ const trainingResult=document.createElement('div');trainingResult.hidden=true;tr
 const trainingWinner=document.createElement('p'),trainingAgain=document.createElement('button'),trainingExit=document.createElement('button');trainingAgain.textContent='Rejouer';trainingExit.textContent='Retour';for(const b of [trainingAgain,trainingExit])b.style.cssText='font:inherit;padding:8px;margin:5px;background:#ead29c;color:#241b15;border:1px solid #b49760;border-radius:4px';trainingResult.append(trainingWinner,trainingAgain,trainingExit);document.body.append(trainingResult);
 trainingAgain.onclick=()=>void startTraining();trainingExit.onclick=()=>void stopTraining();
 async function startTraining(){
- if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
+ if(trainingBusy)return;const trainingLoadStarted=performance.now();trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
  let titles={},entrances={};try{if(!apercuLocal){const config=await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});titles=config.titles;entrances=config.entrances;}}catch(error){trainingBusy=false;throw error;}
  const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;}
- try{if(!reuseArena)scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];scene.retainCombatCharacters([trainingReturn.player.character,opponent]);training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent,titles,entrances,introDuration:DUEL_INTRO_DURATION});bindScene();await scene.me(training.player);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent+' (IA)';music.setTrack(musicUrl('arena'));}
+ try{if(!reuseArena)scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];scene.retainCombatCharacters([trainingReturn.player.character,opponent]);training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent,titles,entrances,introDuration:DUEL_INTRO_DURATION});bindScene();await Promise.all([scene.me(training.player),scene.prepareCombat(opponent)]);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent+' (IA)';music.setTrack(musicUrl('arena'));}
  catch(error){trainingBusy=false;await stopTraining();throw error;}
- trainingBusy=false;void tickTraining();
+ trainingBusy=false;await tickTraining();recordDiagnostic('training-load',{durationMs:Math.round(performance.now()-trainingLoadStarted),reused:reuseArena});
 }
 function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
 async function runTrainingTick(){
@@ -303,6 +303,7 @@ async function start() {
   leave.hidden = etat.map === "anterose";
   document.querySelector("#hud h1").textContent = mapTitle(etat.map);
   await scene.me({ ...etat.moi, character: etat.character });
+  if((etat.map??'anterose')==='anterose'){const warm=()=>void prepareTrainingArena().catch(error=>recordDiagnostic('arena-preload-error',{message:error.message}));if(window.requestIdleCallback)window.requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,500);}
   if(apercuLocal)scene.setConnected(true);
   chat.hidden = false;document.body.dataset.skyReady="true";
   if (
@@ -332,7 +333,7 @@ async function start() {
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
     if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
-    if(etat.map==='arena'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
+    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester entraînement IA';trainingTest.onclick=()=>void startTraining();dialogueTest.append(trainingTest);if(etat.map==='arena'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );

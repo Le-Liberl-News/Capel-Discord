@@ -10,7 +10,9 @@ async function loadBank(assets) {
  for(const entry of entries)entry.animation=url(entry.animation);
  const images=new Map(),players=new Map();
  const image=path=>{if(!images.has(path))images.set(path,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url(path);}));return images.get(path);};
- await Promise.all(entries.map(async entry=>{const player=await new NativeEffectPlayer(entries,image).load(entry);players.set(entry.id.toLowerCase(),player);}));
+ const jobs=new Map(),lookup=new Map(entries.map(entry=>[entry.id.toLowerCase(),entry]));
+ players.ensure=async ids=>{await Promise.all([...new Set(ids.map(id=>id.toLowerCase()))].map(async id=>{const entry=lookup.get(id);if(!entry)return;if(!jobs.has(id))jobs.set(id,new NativeEffectPlayer(entries,image).load(entry).then(player=>players.set(id,player)).catch(error=>{jobs.delete(id);throw error;}));await jobs.get(id);}));};
+ await players.ensure(['third/cr151_00._ef','sc/mp050_00._ef']);
  return players;
 }
 

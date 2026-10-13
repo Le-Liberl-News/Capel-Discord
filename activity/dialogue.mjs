@@ -7,13 +7,11 @@ import {
   paginateDialogue,
   typewriterState,
 } from "./dialogue-text.mjs";
+const fonts=new Map();
+export function ensureDialogueFont(assets){const url=new URL('dialogue/AveriaSansLibre-Regular.ttf',assets).href;if(!fonts.has(url))fonts.set(url,new FontFace('AveriaSky','url("'+url+'")').load().then(font=>{document.fonts.add(font);return font;}).catch(error=>{fonts.delete(url);throw error;}));return fonts.get(url);}
 export async function createDialogues(assets) {
   const url = (name) => new URL("dialogue/" + name, assets).href;
-  const font = await new FontFace(
-    "AveriaSky",
-    'url("' + url("AveriaSansLibre-Regular.ttf") + '")',
-  ).load();
-  document.fonts.add(font);
+  await ensureDialogueFont(assets);
   await Promise.all(
     ["frame.png", "name.png", "tail.png", "continue.png"].map(async (name) => {
       const image = new Image();
@@ -223,7 +221,7 @@ export async function createDialogues(assets) {
       voices.dispose();
       layer.remove();
       style.remove();
-      document.fonts.delete(font);
+
       active.clear();
     },
   };
