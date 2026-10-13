@@ -119,6 +119,8 @@ async function execute(interaction) {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         };
+        const malade = interaction.channelId === roleplayId ? interaction.client.rhumertume?.roleplay(pseudo, texte) : null;
+        if (malade) { payload.content = malade.text; payload.avatarURL = malade.avatarURL; }
         if (image) payload.files = [image.url];
         if (interaction.channelId !== roleplayId) payload.threadId = threadId;
         

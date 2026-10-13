@@ -227,10 +227,14 @@ const { createActivityLobby } = require('./utils/activityLobby.js');
 const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
 const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:{...require("./activity/assets/sky/characters.json"),Anton:{}}});
 const capelModel=require("./activity/assets/sky/capel.json");
+// Halloween 2026: one character of the day catches the rhumertume, see utils/rhumertume.js
+const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),announce:async text=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,allowedMentions:{parse:[]}});},log:console.log});
+client.rhumertume=rhumertume;
+setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
 const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
-  send:async payload=>payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
+  send:async payload=>payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{}),threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
@@ -452,6 +456,8 @@ client.on('messageCreate', async message => {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         }
+        const malade = message.channelId === roleplayId ? rhumertume.roleplay(pseudo, texte) : null;
+        if (malade) { payload.content = malade.text; payload.avatarURL = malade.avatarURL; }
         if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );
