@@ -2,10 +2,17 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../..'),assets=path.join(root,'activity/assets/sky'),projects='E:/dev/sky-activity-tools/cutscenes';
 fs.mkdirSync(projects,{recursive:true});require('esbuild').buildSync({entryPoints:[path.join(__dirname,'preview.mjs')],bundle:true,format:'esm',outfile:path.join(__dirname,'preview-bundle.js')});
 const safeName=name=>{if(!/^[a-zA-Z0-9_-]{1,64}$/.test(name))throw Error('Nom : lettres, chiffres, tirets uniquement');return path.join(projects,name+'.sky');};
-const types={'.html':'text/html; charset=utf-8','.js':'application/javascript','.mjs':'application/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.gltf':'model/gltf+json','.ttf':'font/ttf','.sky':'text/plain; charset=utf-8'};
+const types={'.html':'text/html; charset=utf-8','.js':'application/javascript','.mjs':'application/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.gltf':'model/gltf+json','.ttf':'font/ttf','.sky':'text/plain; charset=utf-8','.ogg':'audio/ogg','.wav':'audio/wav','.mp3':'audio/mpeg'};
+const library=require('./assets.cjs');
 const server=http.createServer(async(req,res)=>{try{
  const url=new URL(req.url,'http://127.0.0.1:3030');res.setHeader('Cache-Control','no-store');
  const json=data=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));};
+ if(url.pathname==='/api/character')return json(library.character(url.searchParams.get('id')));
+ if(url.pathname==='/api/catalogue')return json(library.catalog());
+ if(url.pathname==='/api/effect'){const c=JSON.parse(fs.readFileSync(path.join(library.cache,'catalogue.json'),'utf8'));return json({id:url.searchParams.get('id'),entries:c.animations});}
+ if(url.pathname==='/api/package'){if(req.headers.origin&&req.headers.origin!=='http://127.0.0.1:3030')throw Error('Origine refusée');let body='';for await(const chunk of req){body+=chunk;if(body.length>1024*1024)throw Error('Projet trop volumineux');}const d=JSON.parse(body);return json(library.prepare(d.script,d.name));}
+ if(url.pathname==='/api/assets'){let body='';for await(const chunk of req){body+=chunk;if(body.length>1024*1024)throw Error('Projet trop volumineux');}let published=null,comparison='manifeste local';try{const r=await fetch('https://leliberlnews.fr/activite/release.json',{signal:AbortSignal.timeout(4000)});if(r.ok){published=(await r.json()).files;comparison='serveur publié';}}catch{}return json({...library.report(JSON.parse(body).script,published),comparison});}
+ if(url.pathname.startsWith('/cache/')){const file=library.fileFor(url.pathname);if(!fs.existsSync(file)&&url.pathname.startsWith('/cache/scene-models/')){const parts=url.pathname.split('/');require('node:child_process').execFileSync('python',[library.importer,parts[3],parts[4]],{encoding:'utf8',maxBuffer:1024*1024});}if(!fs.existsSync(file)&&url.pathname.startsWith('/cache/sounds/')){const parts=url.pathname.split('/');require('node:child_process').execFileSync('python',[library.importer,parts[3],parts[4]],{encoding:'utf8'});}res.setHeader('Content-Type',types[path.extname(file)]||'application/octet-stream');return res.end(fs.readFileSync(file));}
  if(url.pathname==='/api/maps')return json(['anterose',...fs.readdirSync(assets).filter(name=>fs.existsSync(path.join(assets,name,'navigation.json')))].map(name=>({name})));
  if(url.pathname==='/api/projects')return json(fs.readdirSync(projects).filter(n=>n.endsWith('.sky')).map(n=>n.slice(0,-4)));
  if(url.pathname==='/api/project'){

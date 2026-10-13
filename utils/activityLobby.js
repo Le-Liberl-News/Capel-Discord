@@ -106,7 +106,7 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
       const definition=halloween.getScript?.();release(user);huntGame?.leave(user);spectators.delete(user);
       const playback={started:definition?null:now(),duration:definition?.duration??halloween.duration??54000,finished:false,elapsed:0,done:false,eventsCount:definition?.events.length??0};
       halloweenPlayback.set(user,playback);
-      const walk=require('../activity/scene-script.cjs').walkAt,first=definition?.events.find(e=>e.type==='walk'&&e.actor==='player');
+      const walk=require('../activity/scene-script.cjs').walkAt,first=definition?.events.find(e=>['walk','curve'].includes(e.type)&&e.actor==='player');
       halloweenScenes.set(user,createActivityService({...options,...halloween,residents:definition?.actors.length?{disablePoms:true,npcs:[...(halloween.residents?.npcs??[]).filter(n=>!definition.actors.some(a=>'halloween-'+a.name===n.id)),...definition.actors.filter(a=>a.kind!=='player').map(a=>({id:'halloween-'+a.name,name:a.character,character:a.character,static:true,waypoints:[a.position],lines:[],heading:{dx:0,dz:-1}}))]}:halloween.residents,now,persistent:true,store:null,combatEnabled:false,onSay:()=>{},onCraft:()=>{},onDrink:null,spawnFor:()=>first?.from??halloween.grid.spawn,playerPolicy:()=>{
         const elapsed=definition?playback.elapsed:Math.max(0,now()-playback.started),locked=definition?!playback.done:elapsed<playback.duration;
         const movement=definition&&walk({...definition,events:definition.events.slice(0,playback.index??definition.events.length)},'player',elapsed),position=movement&&(!playback.finished)?movement.position:{};

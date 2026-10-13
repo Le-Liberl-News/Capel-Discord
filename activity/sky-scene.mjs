@@ -1,3 +1,4 @@
+import {createSceneAssets} from './scene-assets.mjs';
 import {createHalloweenScene} from './halloween-scene.mjs';
 import sceneScript from './scene-script.cjs';
 import {installCinematicStyle} from './cinematic-frame.mjs';
@@ -188,7 +189,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   const dialogues = await createDialogues(ASSETS);
   const halloweenDefinition=map==="halloween"?sceneScript.compileScene(await fetch(new URL('halloween/ray.sky',ASSETS),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Scène de Ray inaccessible');return r.text();})):null;
-  const halloweenScene=halloweenDefinition?createHalloweenScene({definition:halloweenDefinition,onSpeech:message=>dialogues.receive([message]),onAdvance:()=>dialogues.advanceManual(),bindings:Object.assign({ray:'npc:halloween-ray',pumpkin:'npc:halloween-pumpkin'},Object.fromEntries(halloweenDefinition.actors.filter(a=>a.kind!=='player').map(a=>[a.name,'npc:halloween-'+a.name])))}):null;
+  const cinematicAssets=halloweenDefinition?await createSceneAssets({THREE,loader:new GLTFLoader(),scene,definition:halloweenDefinition,resolve:p=>new URL(p,ASSETS).href}):null;
+  const halloweenScene=halloweenDefinition?createHalloweenScene({definition:halloweenDefinition,onFrame:(time,index)=>cinematicAssets?.update(time,index,true),onDispose:()=>cinematicAssets?.dispose(),onSpeech:message=>dialogues.receive([message]),onAdvance:()=>dialogues.advanceManual(),bindings:Object.assign({ray:'npc:halloween-ray',pumpkin:'npc:halloween-pumpkin'},Object.fromEntries(halloweenDefinition.actors.filter(a=>a.kind!=='player').map(a=>[a.name,'npc:halloween-'+a.name])))}):null;
   if(halloweenScene)dayNight.setTime(60000);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
