@@ -461,7 +461,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
     let baseInfo = (catalogue[character]??renneMechanics.COMBAT[character]?.banks["0"]??catalogue.Estelle);if(player.id.startsWith("world:pom")){const factor=spriteScale.ballSpriteHeight/baseInfo.height;baseInfo={...baseInfo,height:spriteScale.ballSpriteHeight,bodyHeight:baseInfo.bodyHeight*factor,footOffsets:baseInfo.footOffsets?.map(v=>v*factor)};}
     const battle=renneCombat&&renneCombat.metadataFor(character);
-    const combatAssets=battle?await renneCombat.load(character):null;
+    const combatAssets=renneCombat?await renneCombat.load(character):null;
     const info = battle ? (combatAssets.metadata.banks[dead?"4":"0"]??combatAssets.metadata.banks["0"]) :
       dead && baseInfo.death
         ? {
@@ -994,10 +994,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   requestAnimationFrame(render);
   return {
     spawn,
+    retainCombatCharacters:characters=>renneCombat?.retainCharacters(characters),
+    resetTraining(){renneCombat?.reset();for(const a of avatars.values())removeAvatar(a);avatars.clear();path=[];movementTrace=[];localJump=null;actionQueue.length=0;},
     trainingGeometry:()=>({grid,geometry:collision}),
     playerCharacter:()=>avatars.get(localId)?.character,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,combatEffects:renneCombat?.effectStats(),triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
     onRematch(callback){notifyRematch=callback;},

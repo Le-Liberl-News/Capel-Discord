@@ -26,7 +26,7 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
       shader.vertexShader='varying vec3 vSkyWorld;\n'+shader.vertexShader;
       shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvSkyWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
       const photoDeclarations=Array.from({length:4},(_,i)=>`uniform vec4 skyPhoto${i};uniform vec2 skyPhotoDir${i};`).join('\n');
-      const photoLight=Array.from({length:4},(_,i)=>`{vec2 delta=vSkyWorld.xz-skyPhoto${i}.xz;float facing=smoothstep(0.0,0.12,dot(normalize(delta+vec2(0.0001)),skyPhotoDir${i}));float reach=max(0.0,1.0-length(delta)/18.0);outgoingLight+=vec3(skyPhoto${i}.w*facing*reach*2.0);}`).join('\n');
+      const photoLight=Array.from({length:4},(_,i)=>`if(skyPhoto${i}.w>0.0){vec2 delta=vSkyWorld.xz-skyPhoto${i}.xz;float facing=smoothstep(0.0,0.12,dot(normalize(delta+vec2(0.0001)),skyPhotoDir${i}));float reach=max(0.0,1.0-length(delta)/18.0);outgoingLight+=vec3(skyPhoto${i}.w*facing*reach*2.0);}`).join('\n');
       const declarations=sources.map((_,i)=>`uniform vec4 skyLight${i};uniform vec3 skyColor${i};`).join('\n');
       const lights=sources.map((_,i)=>`{float falloff = max(0.0,1.0-distance(vSkyWorld,skyLight${i}.xyz)/skyLight${i}.w);illumination += skyColor${i}*falloff*falloff*skyLamps;}`).join('\n');
       shader.fragmentShader='varying vec3 vSkyWorld;uniform vec3 skyTint;uniform float skyLamps;\n'+declarations+'\n'+photoDeclarations+'\n'+shader.fragmentShader;

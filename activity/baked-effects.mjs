@@ -1,5 +1,8 @@
+const imageCache=new Map();let cachedBytes=0;
+const CACHE_LIMIT=128*1024*1024;
+async function sharedImage(THREE,url){let entry=imageCache.get(url);if(!entry){entry={bytes:0,promise:new THREE.TextureLoader().loadAsync(url).then(texture=>{const image=texture.image;texture.dispose();entry.bytes=(image?.width??0)*(image?.height??0)*4;cachedBytes+=entry.bytes;for(const [key,old]of imageCache){if(cachedBytes<=CACHE_LIMIT)break;if(key!==url&&old.bytes){imageCache.delete(key);cachedBytes-=old.bytes;}}return image;}).catch(error=>{imageCache.delete(url);throw error;})};imageCache.set(url,entry);}else{imageCache.delete(url);imageCache.set(url,entry);}return entry.promise;}
 export async function loadBakedEffect(THREE,assets,name,frames){
- const map=await new THREE.TextureLoader().loadAsync(new URL(`effects/${name}-frames.png?v=combat-20261012-earth-gutter`,assets).href);
+ const url=new URL(`effects/${name}-frames.png?v=combat-20261012-earth-gutter`,assets).href;const map=new THREE.Texture(await sharedImage(THREE,url));map.name=url;map.needsUpdate=true;
  map.colorSpace=THREE.SRGBColorSpace;map.generateMipmaps=false;map.minFilter=map.magFilter=THREE.LinearFilter;
  return {map,frames,columns:8,rows:Math.ceil(frames/8),dispose(){map.dispose();}};
 }
