@@ -1,0 +1,7 @@
+// Source editing for direct actor and waypoint manipulation.
+// Preserve routes when an actor is repositioned; keep neighbouring segments joined.
+function tokens(line){try{return line.match(/"(?:[^"\\]|\\.)*"|\S+/g)?.map(t=>t.startsWith('"')?JSON.parse(t):t)||[];}catch{return [];}}
+const round=n=>Math.round(n*1000)/1000;
+function moveActor(source,name,position){let delta=null;const lines=source.split(/\r?\n/);for(let i=0;i<lines.length;i++){const t=tokens(lines[i]);if(t[0]==='actor'&&t[1]===name){delta={x:position.x-+t[3],y:position.y-+t[4],z:position.z-+t[5]};lines[i]=`actor ${name} ${JSON.stringify(t[2])} ${round(position.x)} ${round(position.y)} ${round(position.z)} ${t[6]}`;break;}}if(!delta)return source;return lines.map(line=>{const t=tokens(line);if(t[0]!=='walk'||t[1]!==name)return line;for(const base of [2,5])for(const [i,k]of ['x','y','z'].entries())t[base+i]=round(+t[base+i]+delta[k]);return t.join(' ');}).join('\n');}
+function moveWaypoint(source,lineNumber,position){const lines=source.split(/\r?\n/),t=tokens(lines[lineNumber-1]);if(t[0]!=='walk')return source;const before=t.slice(5,8).map(Number),after=['x','y','z'].map(k=>round(position[k]));for(let j=0;j<3;j++)t[5+j]=after[j];lines[lineNumber-1]=t.join(' ');for(let i=lineNumber;i<lines.length;i++){const next=tokens(lines[i]);if(next[0]==='walk'&&next[1]===t[1]){if(next.slice(2,5).every((n,j)=>Math.abs(+n-before[j])<.0011)){for(let j=0;j<3;j++)next[2+j]=after[j];lines[i]=next.join(' ');}break;}}return lines.join('\n');}
+export default {moveActor,moveWaypoint};

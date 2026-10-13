@@ -9,3 +9,7 @@ Double-cliquer `Lancer.cmd`, puis ouvrir http://127.0.0.1:3030.
 - Sauvegarder écrit dans `E:/dev/sky-activity-tools/cutscenes`. Les boutons Importer et Exporter manipulent des fichiers `.sky`.
 
 Les ennemis sont des acteurs de scène, sans IA de combat. Les déplacements sont des segments directs : ajouter des étapes pour contourner les murs. L’éditeur ne publie pas les projets automatiquement. Pour remplacer la scène de test de Ray, son script est `activity/assets/sky/halloween/ray.sky` ; publier ce fichier sur les deux hébergements. Le rôle `player` utilise le personnage du joueur en production et le sprite choisi dans l’éditeur.
+
+## Manipulation directe
+
+Saisir et glisser un sprite le déplace en continu sur la map. Un clic simple sélectionne le personnage ; un clic dans le vide ne le téléporte plus. Les points jaunes de son trajet se déplacent également à la souris. Déplacer le personnage translate son trajet ; déplacer une étape conserve la jonction avec l’étape suivante. Centrer agrandit la sélection ; Vue d’ensemble revient à une vue large. Annuler / Rétablir et Ctrl+Z / Ctrl+Y permettent de revenir sur ces modifications. La caméra garde son cadrage lors des déplacements.
