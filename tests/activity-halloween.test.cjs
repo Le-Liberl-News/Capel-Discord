@@ -22,3 +22,11 @@ test('Halloween access checks Administrator, refreshes on entry and fails closed
  assert.equal(await allowed('user'),true);permitted=false;assert.equal(await allowed('user',{force:true}),false);assert.equal(calls,2);
  assert.equal(await createHalloweenAccess({guilds:{fetch:async()=>{throw Error('offline');}}})('user'),false);
 });
+
+test('Halloween admits the designated non-admin member, but rejects other members and missing membership',async()=>{
+ let present=true;
+ const allowed=createHalloweenAccess({guilds:{fetch:async()=>({members:{fetch:async()=>{if(!present)throw Error('Unknown member');return {permissions:{has:()=>false}};}}})}});
+ assert.equal(await allowed('744964573249011712'),true);
+ assert.equal(await allowed('other-member'),false);
+ present=false;assert.equal(await allowed('744964573249011712',{force:true}),false);
+});

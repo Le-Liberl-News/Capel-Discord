@@ -102,7 +102,7 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
   }
   return {
     async enterHalloween(user){
-      if(!halloween||!await isHalloweenAdmin(user,{force:true}))throw new ActivityError("Test réservé aux administrateurs Discord.",403);
+      if(!halloween||!await isHalloweenAdmin(user,{force:true}))throw new ActivityError("Accès au test Halloween non autorisé.",403);
       release(user);huntGame?.leave(user);spectators.delete(user);
       const started=now(),duration=halloween.duration??54000;
       halloweenScenes.set(user,createActivityService({...options,...halloween,now,persistent:true,store:null,combatEnabled:false,onSay:()=>{},onCraft:()=>{},onDrink:null,playerPolicy:()=>({canMove:now()>=started+duration})}));
