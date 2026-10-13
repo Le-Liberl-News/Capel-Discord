@@ -214,7 +214,7 @@ async function entrer() {
       "Content-Type": "application/json",
       Authorization: "Bearer " + jeton,
     },
-    body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId }),
+    body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId,sceneLink:new URLSearchParams(location.search).get('custom_id')??undefined }),
   }), { onRetry: (_, attempt, total) => etape(`Connexion au duel : nouvelle tentative ${attempt}/${total}...`) });
   const profile = profileResponse;
   etat.map = profile.map ?? "anterose";

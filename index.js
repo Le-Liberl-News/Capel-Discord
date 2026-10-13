@@ -129,6 +129,7 @@ client.once('clientReady', async () => {
 
 client.on('interactionCreate', async interaction => {
     if (await require('./utils/activityEntry').handleActivityEntry(interaction)) return;
+    if (await sceneInvitations.handle(interaction)) return;
     if (await arenaBoard.handle(interaction)) return;
     if (await activiteDuels.handle(interaction)) return;
     if (await activitePropHunt.handle(interaction)) return;
@@ -234,10 +235,11 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
 const isHalloweenAdmin=require('./utils/activityHalloweenAccess').createHalloweenAccess(client);
+const sceneInvitations=require('./utils/activitySceneInvitations').createSceneInvitations({client,canInvite:isHalloweenAdmin,store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-scene-invitations.json'))});
 const halloweenRoot=path.join(__dirname,'activity/assets/sky/halloween');
 const activiteService = createActivityLobby({
-    isHalloweenAdmin,
-    halloween:{grid:require(path.join(halloweenRoot,'navigation.json')),residents:require(path.join(halloweenRoot,'residents.json')),duration:require(path.join(halloweenRoot,'scene.json')).duration,geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(halloweenRoot,'anterose.gltf'),'utf8')))},
+    isHalloweenAdmin:async(id,options)=>await isHalloweenAdmin(id,options)||sceneInvitations.allowed(id),
+    halloween:{grid:require(path.join(halloweenRoot,'navigation.json')),residents:require(path.join(halloweenRoot,'residents.json')),getScript:()=>require('./activity/scene-script.cjs').compileScene(fs.readFileSync(path.join(halloweenRoot,'ray.sky'),'utf8')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(halloweenRoot,'anterose.gltf'),'utf8')))},
     getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,
     huntGame,
     tower:[1,2,3,4].map(floor=>{
@@ -334,6 +336,7 @@ app.post('/api/profile', async (req, res) => {
           return res.status(403).json({erreur:'Conversation privée invalide.'});
         }
         res.set('Cache-Control', 'no-store');
+        if(typeof req.body?.sceneLink==='string'&&req.body.sceneLink.startsWith('scene:')){sceneInvitations.claim(req.body.sceneLink,user.id);await activiteService.enterHalloween(user.id);}
         res.json(await activiteService.join({id: user.id, channel: channel.id}));
     } catch (error) {
         if(error.status)return res.status(error.status).json({erreur:error.message});

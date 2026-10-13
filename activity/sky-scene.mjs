@@ -1,5 +1,5 @@
 import {createHalloweenScene} from './halloween-scene.mjs';
-import halloweenDefinition from './assets/sky/halloween/scene.json';
+import sceneScript from './scene-script.cjs';
 import halloweenResidents from './assets/sky/halloween/residents.json';
 import {loadArenaModel,preloadArena} from './arena-preload.mjs';
 import photoMechanics from './dorothy-photo.cjs';
@@ -186,7 +186,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();avatar.craftTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
-  const halloweenScene=map==="halloween"?createHalloweenScene({definition:halloweenDefinition,onSpeech:message=>dialogues.receive([message])}):null;
+  const halloweenScene=map==="halloween"?createHalloweenScene({definition:sceneScript.compileScene(await fetch(new URL('halloween/ray.sky',ASSETS),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Scène de Ray inaccessible');return r.text();})),onSpeech:message=>dialogues.receive([message])}):null;
   if(halloweenScene)dayNight.setTime(60000);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
@@ -739,7 +739,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
-    if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(halloweenScene?.active(time)){movementAllowed=false;path=[];keys.clear();}else if(halloweenScene)movementAllowed=health.canMove!==false;if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Sieg"].includes(avatars.get(localId)?.character))yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
+    if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(halloweenScene?.active(time)){movementAllowed=false;path=[];keys.clear();}else if(halloweenScene)movementAllowed=health.canMove!==false;if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Sieg"].includes(avatars.get(localId)?.character))yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&!halloweenScene?.active(time)&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;const push={origin:{x:target.point.x,y:target.point.y-.8,z:target.point.z},end:{x:target.point.x+(target.point.x>=-1?1.5:-1.5),y:target.point.y-.8,z:target.point.z},started:previewCollapse.started+585,duration:250};if(age>=585){Object.assign(a.position,projectionMechanics.projectionPosition(push,Date.now()));a.knockback=age<835?push:null;}a.downUntil=age>=835&&age<3335?previewCollapse.started+3335:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3400)previewCollapse=null;}
     if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
     const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
@@ -822,7 +822,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         isPom = id.startsWith("world:pom");
       if (isPom && ballState && (ballState.mode !== "held" || predictedShots.has(id)))
         flying.set(id, projectiles.get(id)?.update(seconds, avatar.position));
-      const motion = isPom
+      const motion = avatar.scriptControlled?{moving:!!avatar.scriptWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}:isPom
         ? {
             moving: ballState?.mode === "flight" || predictedShots.has(id),
             dx: ballState?.vx ?? 0,
@@ -1086,7 +1086,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     async me(player) {
       localId = player.id;
       await setAvatar({ ...spawn, ...player });
-      if(halloweenScene){for(const n of halloweenResidents.npcs)await setAvatar({...n,...n.waypoints[0],id:'npc:'+n.id,npc:true,hp:500});halloweenScene.start(performance.now());}
+      if(halloweenScene){for(const n of halloweenResidents.npcs)await setAvatar({...n,...n.waypoints[0],id:'npc:'+n.id,npc:true,hp:500});if(__ACTIVITY_PREVIEW__&&!new URLSearchParams(location.search).has('frame_id'))halloweenScene.start(performance.now());}
     },
     async sync(players) {
       const present = new Set([localId]);
@@ -1116,6 +1116,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         }
     },
     async world(result) {
+      halloweenScene?.receive(result.halloween,result.health?.serverTime);
       teamPanel?.update(result.team);
       enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
       dialogues.receive((result.enemies??[]).filter(e=>e.utterance&&e.hp>0).map(e=>({id:e.utterance.id,author:e.id,character:e.name,text:e.utterance.text})));
@@ -1188,6 +1189,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       return actionQueue[0];
     },
     correct(position, submitted) {
+      if(halloweenScene?.active(performance.now()))return;
       const me = avatars.get(localId);
       if(health.dimensionLift||health.catCling||localJump||inTower&&health.jump&&health.jump.id!==landedJump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
@@ -1202,6 +1204,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       return {
         heading:avatars.get(localId)?.character==='Josette'?{dx:-Math.sin(yaw),dz:Math.cos(yaw)}:{...avatars.get(localId)?.heading},
         cookingHeld,
+        sceneReady:map==='halloween'?'halloween':undefined,
         jumpLanding:landedJump,
         ...(pending?.origin??this.position()),
         platform:movingPlatforms?.relative(this.position(),Date.now()+jumpClockOffset)??undefined,
@@ -1243,7 +1246,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       removeEventListener("resize", resize);
       muellerTarget.geometry.dispose();muellerTarget.material.dispose();
       touches.reset();touchButton.remove();touchStyle.remove();
-      arenaAudience?.dispose();rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      halloweenScene?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       drinkingTable?.dispose();tavernTables?.dispose();crosshair.remove();blindness.remove();photoWhite.remove();for(const ghost of photoGhosts.values()){scene.remove(ghost);ghost.material.dispose();}teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();
