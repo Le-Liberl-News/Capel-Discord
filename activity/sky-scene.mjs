@@ -1,3 +1,6 @@
+import {createHalloweenScene} from './halloween-scene.mjs';
+import halloweenDefinition from './assets/sky/halloween/scene.json';
+import halloweenResidents from './assets/sky/halloween/residents.json';
 import {loadArenaModel,preloadArena} from './arena-preload.mjs';
 import photoMechanics from './dorothy-photo.cjs';
 import smokeMechanics from './nial-smoke.cjs';
@@ -84,6 +87,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       r.json(),
     );
   if(inTower||map==="arena")Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  if(map==="halloween")Object.assign(catalogue,await fetch(new URL("halloween/catalogue.json",ASSETS)).then(r=>r.json()));
   const combatPreparation=(map==='arena'||inTower)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
   const supportEffects=createSupportEffects(THREE,scene);
   const photoWhite=document.createElement('div');photoWhite.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:18;background:#fff;opacity:0';document.body.append(photoWhite);const photoGhosts=new Map();
@@ -182,6 +186,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();avatar.craftTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
+  const halloweenScene=map==="halloween"?createHalloweenScene({definition:halloweenDefinition,onSpeech:message=>dialogues.receive([message])}):null;
+  if(halloweenScene)dayNight.setTime(60000);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
   const spawn = grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
@@ -733,7 +739,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
     const seconds = Math.min((time - lastTime) / 1000, 0.1);
     lastTime = time;
-    if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Sieg"].includes(avatars.get(localId)?.character))yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
+    if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(halloweenScene?.active(time)){movementAllowed=false;path=[];keys.clear();}else if(halloweenScene)movementAllowed=health.canMove!==false;if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Sieg"].includes(avatars.get(localId)?.character))yaw=Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;const push={origin:{x:target.point.x,y:target.point.y-.8,z:target.point.z},end:{x:target.point.x+(target.point.x>=-1?1.5:-1.5),y:target.point.y-.8,z:target.point.z},started:previewCollapse.started+585,duration:250};if(age>=585){Object.assign(a.position,projectionMechanics.projectionPosition(push,Date.now()));a.knockback=age<835?push:null;}a.downUntil=age>=835&&age<3335?previewCollapse.started+3335:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3400)previewCollapse=null;}
     if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
     const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
@@ -758,6 +764,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec('Josette',localAttack.kind):null,active:isFPS,time,moving:me?.walking||keys.size>0,yaw})??0;crosshair.hidden=!isFPS||josetteBlend>.05;
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
+    halloweenScene?.update(time,avatars,localId,camera,follow);
     camera.updateMatrixWorld();
     arenaAudience?.update(time,camera);
     cutaway?.update(camera, follow);
@@ -1079,6 +1086,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     async me(player) {
       localId = player.id;
       await setAvatar({ ...spawn, ...player });
+      if(halloweenScene){for(const n of halloweenResidents.npcs)await setAvatar({...n,...n.waypoints[0],id:'npc:'+n.id,npc:true,hp:500});halloweenScene.start(performance.now());}
     },
     async sync(players) {
       const present = new Set([localId]);
@@ -1156,7 +1164,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       health = { ...result.health, received: performance.now() };
       if (map === "arena" && wasSpectator !== !!health.spectator) { camera=health.spectator?flightCamera:walkingCamera;pitch=health.spectator?.25:CAMERA_PITCH;zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
-      movementAllowed = health.spectator||health.canMove !== false;const cat=avatars.get(localId);if(cat)cat.catCling=health.catCling??null;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
+      movementAllowed = (health.spectator||health.canMove !== false)&&!halloweenScene?.active(performance.now());const cat=avatars.get(localId);if(cat)cat.catCling=health.catCling??null;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {

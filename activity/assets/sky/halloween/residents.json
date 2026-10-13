@@ -1,0 +1,45 @@
+{
+  "disablePoms": true,
+  "npcs": [
+    {
+      "id": "halloween-ray",
+      "name": "Ray",
+      "character": "Ray",
+      "static": true,
+      "waypoints": [
+        {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        }
+      ],
+      "heading": {
+        "dx": 0,
+        "dz": -1
+      },
+      "lines": [
+        "Voilà quelqu’un atteint de rhumertume."
+      ]
+    },
+    {
+      "id": "halloween-pumpkin",
+      "name": "Pom-tiron",
+      "character": "Pom-tiron",
+      "static": true,
+      "waypoints": [
+        {
+          "x": 2,
+          "y": 0,
+          "z": 6.5
+        }
+      ],
+      "heading": {
+        "dx": -1,
+        "dz": -1
+      },
+      "lines": [
+        "Pom... POM-TIRON !"
+      ]
+    }
+  ]
+}

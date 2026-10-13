@@ -1,9 +1,10 @@
 const { randomBytes } = require("node:crypto");
 const { createActivityService, ActivityError } = require("./activityService");
 // Real Discord IDs stay inside the server. Every scene exposes random avatar IDs.
-function createActivityLobby({ arena, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
+function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>false, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
   const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
+  const halloweenScenes=new Map();
   const trainingRequests=new Map();let trainingSequence=0;
   const presenceGrace = 2 * 60 * 1000;
   const sources = new Map(), locations = new Map(), spectators = new Map();
@@ -52,7 +53,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
     return aliases.get(id);
   };
   function detach(user, returnHome = true) {
-    if (returnHome) locations.set(user,"anterose");
+    if (returnHome) {locations.set(user,"anterose");halloweenScenes.delete(user);}
     assignments.delete(user); lastSeen.delete(user);
     if (returnHome) for (const session of sessions.values()) if (session.id === user && session.key !== "tavern") session.service.leave(session.token);
   }
@@ -81,6 +82,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
   }
   function destination(user) {
     prune(); const id = assignments.get(user), duel = duels.get(id);
+    if(locations.get(user)==='halloween'&&halloweenScenes.has(user))return {key:'halloween:'+alias(user),service:halloweenScenes.get(user),map:'halloween',channel:'map:halloween:'+alias(user),match:null};
     if(hangar&&locations.get(user)==='hangar')return {key:'hangar',service:hangar,map:'hangar',channel:'map:hangar',match:null};
     if(skies&&locations.get(user)==='liberl')return {key:'liberl',service:skies,map:'liberl',channel:'map:liberl',match:null};
     const floor=/^tower([1-4])$/.exec(locations.get(user)??"");if(floor&&towers[Number(floor[1])-1]){const map="tower"+floor[1];return {key:map,service:towers[Number(floor[1])-1],map,channel:"map:"+map,match:null};}
@@ -99,6 +101,13 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
+    async enterHalloween(user){
+      if(!halloween||!await isHalloweenAdmin(user,{force:true}))throw new ActivityError("Test réservé aux administrateurs Discord.",403);
+      release(user);huntGame?.leave(user);spectators.delete(user);
+      const started=now(),duration=halloween.duration??54000;
+      halloweenScenes.set(user,createActivityService({...options,...halloween,now,persistent:true,store:null,combatEnabled:false,onSay:()=>{},onCraft:()=>{},onDrink:null,playerPolicy:()=>({canMove:now()>=started+duration})}));
+      locations.set(user,"halloween");
+    },
     requestTraining(user){trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),expires:now()+120000});},
     cancelTraining(user){trainingRequests.delete(user);},
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
@@ -176,6 +185,7 @@ function createActivityLobby({ arena, tower = [], rolent = null, airship = null,
       prune(); const session=sessions.get(token); if (!session) throw new ActivityError("Reconnectez-vous à l'activité.",401);
       if (active.get(session.id)!==token) throw new ActivityError("Activité ouverte dans une autre fenêtre.",409);
       session.seen=now();
+      if(locations.get(session.id)==="halloween"&&!await isHalloweenAdmin(session.id))release(session.id);
       const trainingRequest=trainingRequests.get(session.id);if(trainingRequest&&(trainingRequest.expires<=now()||point?.trainingAck===trainingRequest.id))trainingRequests.delete(session.id);
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
       if (["leave_duel","leave_map"].includes(point?.action?.type)) { skies?.resetPlayer(session.id);huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }

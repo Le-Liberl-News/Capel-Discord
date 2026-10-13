@@ -1,0 +1,40 @@
+{
+  "duration": 54000,
+  "lines": [
+    {
+      "at": 0,
+      "speaker": "ray",
+      "text": "Ah, vous voilà ! Approchez... Et évitez de toucher aux éprouvettes."
+    },
+    {
+      "at": 7000,
+      "speaker": "ray",
+      "text": "Voici quelqu’un atteint de rhumertume."
+    },
+    {
+      "at": 12000,
+      "speaker": "pumpkin",
+      "text": "Pom...? POM-TIRON !"
+    },
+    {
+      "at": 17000,
+      "speaker": "ray",
+      "text": "Une expérience a mal tourné. La maladie s’est échappée de mon laboratoire..."
+    },
+    {
+      "at": 25000,
+      "speaker": "ray",
+      "text": "Les malades se transforment en Pom-tirons. Ce n’était absolument pas prévu."
+    },
+    {
+      "at": 33000,
+      "speaker": "ray",
+      "text": "Heureusement, j’ai mis au point un antidote. Il me manque seulement un ingrédient : la citrouille amère."
+    },
+    {
+      "at": 43000,
+      "speaker": "ray",
+      "text": "Elle ne pousse qu’au sommet des tours tétracycliques. Gardez vos distances avec le cobaye, en attendant !"
+    }
+  ]
+}

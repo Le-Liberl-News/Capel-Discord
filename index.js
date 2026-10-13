@@ -233,7 +233,11 @@ const activityRoleplay=require('./utils/activityRoleplay').createActivityRolepla
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
+const isHalloweenAdmin=require('./utils/activityHalloweenAccess').createHalloweenAccess(client);
+const halloweenRoot=path.join(__dirname,'activity/assets/sky/halloween');
 const activiteService = createActivityLobby({
+    isHalloweenAdmin,
+    halloween:{grid:require(path.join(halloweenRoot,'navigation.json')),residents:require(path.join(halloweenRoot,'residents.json')),duration:require(path.join(halloweenRoot,'scene.json')).duration,geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(halloweenRoot,'anterose.gltf'),'utf8')))},
     getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,
     huntGame,
     tower:[1,2,3,4].map(floor=>{
@@ -281,7 +285,7 @@ client.once('clientReady',()=>arenaBoard.refresh().catch(e=>console.error('Arena
 setInterval(()=>{if(client.isReady())arenaBoard.tick().catch(e=>console.error('Arena board:',e.message));},10000).unref();
 client.on('messageCreate',message=>{if(message.channelId==='1558125759682576475'&&message.type===18)setTimeout(()=>{if(activiteDuels.ownsThread(message.reference?.channelId??message.id))message.delete().catch(e=>console.error('Arena thread notice:',e.code));},1500).unref();});
 const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({client,lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
-const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
+const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({isHalloweenAdmin,announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {
