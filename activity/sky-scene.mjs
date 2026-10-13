@@ -1,5 +1,6 @@
 import {loadArenaModel,preloadArena} from './arena-preload.mjs';
 import photoMechanics from './dorothy-photo.cjs';
+import smokeMechanics from './nial-smoke.cjs';
 import loeweMechanics from './loewe-collapse.cjs';
 import dimensionMechanics from './weissmann-dimension.cjs';
 import drinkingContest from './drinking-contest.cjs';
@@ -178,7 +179,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function removeAvatar(avatar) {
     scene.remove(avatar.mesh);
     if(avatar.shadow){scene.remove(avatar.shadow);avatar.shadow.geometry.dispose();avatar.shadow.material.dispose();}
-    if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();} avatar.mesh.material.dispose(); }
+    if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();avatar.craftTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
   const dialogues = await createDialogues(ASSETS);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
@@ -495,6 +496,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     texture.needsUpdate = true;
     let walkingTexture=null;
     if(!battle&&!dead&&baseInfo.walk){const key=character+':walk';if(!textures.has(key))textures.set(key,textureLoader.loadAsync(new URL(baseInfo.walk.texture,ASSETS).href));walkingTexture=(await textures.get(key)).clone();walkingTexture.colorSpace=THREE.SRGBColorSpace;walkingTexture.magFilter=walkingTexture.minFilter=THREE.NearestFilter;walkingTexture.repeat.set(1/baseInfo.walk.columns,1/baseInfo.walk.rows);walkingTexture.needsUpdate=true;}
+    let craftTexture=null;
+    if(!battle&&!dead&&baseInfo.craft){const key=character+':craft';if(!textures.has(key))textures.set(key,textureLoader.loadAsync(new URL(baseInfo.craft.texture,ASSETS).href));craftTexture=(await textures.get(key)).clone();craftTexture.colorSpace=THREE.SRGBColorSpace;craftTexture.magFilter=craftTexture.minFilter=THREE.NearestFilter;craftTexture.generateMipmaps=false;craftTexture.repeat.set(1/baseInfo.craft.columns,1/baseInfo.craft.rows);craftTexture.needsUpdate=true;}
     const geometry = new THREE.PlaneGeometry(
       (info.height * info.frameWidth) / info.frameHeight,
       info.height,
@@ -522,7 +525,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       frozenUntil:player.stoneUntil,downUntil:player.downUntil,spawnedAt:player.spawnedAt,summoned:player.summoned,deathAt:player.deathAt,npc: !!player.npc,
       foodStock:player.foodStock??[],cooking:player.cooking??null,walking: !!player.moving,
       speed: player.speed ?? 0.8,
-      initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,
+      initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,craftTexture,craftInfo:baseInfo.craft,
       battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=base.clone();clone.needsUpdate=true;return [bank,clone];})):null,
       fallbackDeath: dead && !baseInfo.death && (!battle||!battle.banks["4"]),
       info,
@@ -859,6 +862,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       );
       let info=avatar.info,selectedPose,selectedDirection,craftHidden=false,craftFlip=false;
       if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
+      // Nial's cigarette drag: front-facing sheet for the gesture, then back to his usual sprite
+      if(!avatar.battleTextures&&avatar.craftTexture){const drag=attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special==='smoke'?smokeMechanics.cigarettePose(avatar.craftInfo,performance.now()-attack.localStart):null;if(drag){info=avatar.craftInfo;avatar.mesh.material.map=avatar.craftTexture;selectedPose=drag.pose;selectedDirection=0;}else if(avatar.mesh.material.map===avatar.craftTexture)avatar.mesh.material.map=avatar.initialTexture;}
       if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down&&!falling?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down&&!falling?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking||!!avatar.siegDive,avatar.position.y,avatar.flightFloor);
@@ -901,7 +906,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     photoWhite.style.opacity=String(photoAmount*.95);
     for(const [id,ghost] of photoGhosts){const a=avatars.get(id);if(!a||!photoAmount){scene.remove(ghost);ghost.material.dispose();photoGhosts.delete(id);}}
     if(photoAmount)for(const [id,a] of avatars){if(a.character!=='Dorothy'||id===localId)continue;let ghost=photoGhosts.get(id);if(!ghost){ghost=a.mesh.clone();ghost.material=a.mesh.material.clone();ghost.material.depthWrite=false;scene.add(ghost);photoGhosts.set(id,ghost);}ghost.geometry=a.mesh.geometry;ghost.material.map=a.mesh.material.map;ghost.material.opacity=.4*photoAmount;ghost.position.copy(a.mesh.position).addScaledVector(right,.25*photoAmount);ghost.quaternion.copy(a.mesh.quaternion);ghost.scale.copy(a.mesh.scale);ghost.visible=a.mesh.visible;}
-    for(const a of avatars.values()){const inside=(renneCombat?.smokeAmount(a.position)??0)>0;if(inside){a.mesh.material.opacity=.02;a.smokeDimmed=true;}else if(a.smokeDimmed){a.smokeDimmed=false;if(a.prop)a.mesh.material.opacity=1;}}
+    // hidden in Nial's smoke only once the cloud has come out of his cigarette (not during the drag)
+    const cloudDelay=actor=>avatars.get(actor)?.craftInfo?.smokeStartsAtMs??0;
+    for(const a of avatars.values()){const inside=(renneCombat?.smokeAmount(a.position,cloudDelay)??0)>0;if(inside){a.mesh.material.opacity=.02;a.smokeDimmed=true;}else if(a.smokeDimmed){a.smokeDimmed=false;if(a.prop)a.mesh.material.opacity=1;}}
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
@@ -954,7 +961,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       ).project(camera);
       label.style.left = ((p.x + 1) * viewport.width) / 2 + "px";
       label.style.top = ((1 - p.y) * viewport.height) / 2 + "px";
-      label.style.opacity=(renneCombat?.smokeAmount(a.position)??0)>0?'0.02':'1';
+      label.style.opacity=(renneCombat?.smokeAmount(a.position,actor=>avatars.get(actor)?.craftInfo?.smokeStartsAtMs??0)??0)>0?'0.02':'1';
       label.hidden = p.z > 1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1;
       if (
         label.dataset.hp !== String(a.hp) ||

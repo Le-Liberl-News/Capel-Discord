@@ -15,4 +15,6 @@ function createSmoke(hurt){
   for(const id of exposure.keys())if(!room.has(id))exposure.delete(id);
  }};
 }
-module.exports={CRAFT,smokeDensity,contains,createSmoke};
+// Hand-to-mouth drag (characters.json Nial.craft): pose and burning tip (frame pixel) at a given time, null once the gesture is over.
+function cigarettePose(info,time){if(!info?.sequence||time<0)return null;let cursor=time;for(const frame of info.sequence){if(cursor<frame.ms)return {pose:frame.pose,tip:info.tips[frame.pose]};cursor-=frame.ms;}return null;}
+module.exports={CRAFT,smokeDensity,contains,createSmoke,cigarettePose};

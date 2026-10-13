@@ -508,7 +508,84 @@
     "bodyPixelHeight": 87,
     "bodyRadiusPixels": 12.25,
     "pixelScale": 0.02,
-    "bodyHeight": 1.74
+    "bodyHeight": 1.74,
+    "craft": {
+      "texture": "nial-cigarette.png",
+      "columns": 7,
+      "rows": 1,
+      "frameWidth": 52,
+      "frameHeight": 92,
+      "frames": 7,
+      "directions": 1,
+      "height": 1.84,
+      "sequence": [
+        {
+          "pose": 0,
+          "ms": 300
+        },
+        {
+          "pose": 1,
+          "ms": 120
+        },
+        {
+          "pose": 2,
+          "ms": 110
+        },
+        {
+          "pose": 3,
+          "ms": 380
+        },
+        {
+          "pose": 4,
+          "ms": 160
+        },
+        {
+          "pose": 5,
+          "ms": 130
+        },
+        {
+          "pose": 6,
+          "ms": 240
+        }
+      ],
+      "tips": [
+        [
+          19,
+          34
+        ],
+        [
+          19,
+          34
+        ],
+        [
+          18,
+          36
+        ],
+        [
+          18,
+          36
+        ],
+        [
+          18,
+          36
+        ],
+        [
+          16,
+          34
+        ],
+        [
+          0,
+          61
+        ]
+      ],
+      "mouthTip": [
+        19,
+        34
+      ],
+      "exhaleAtMs": 1070,
+      "smokeStartsAtMs": 1240,
+      "source": "ch02060 (Sud) + geste de Walter ch04509, retouché à la main"
+    }
   },
   "Luciola": {
     "texture": "combat/as04520/0.png",
