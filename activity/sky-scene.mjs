@@ -841,9 +841,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       } else if ((avatar.npc || avatar.enemyAttack) && !avatar.dead) avatar.time += seconds;
       else avatar.time = 0;
       const down=avatar.downUntil>Date.now()+jumpClockOffset,fall=avatar.fallAnimation?loeweMechanics.fallPose(avatar.fallAnimation,Date.now()+jumpClockOffset):null,falling=fall?.active;
-      let craftTilt=null;
+      let craftTilt=null,bodyScale=1,bodyOffsetX=0;
       if (!avatar.prop) {
-      const attack=avatar.dead||down?null:renneCombat?.current(id);
+      const attack=avatar.dead||down?null:renneCombat?.current(id);if(avatar.character==='Loewe'){const visual=loeweMechanics.loeweVisual(attack);bodyScale=visual.scale;bodyOffsetX=visual.offsetX;}
       if(attack)avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
       avatar.direction = facing(
         avatar.heading.dx,
@@ -869,10 +869,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
+      if(avatar.character==='Loewe')avatar.mesh.scale.setScalar(bodyScale);
       avatar.mesh.position.set(
-        avatar.position.x+(avatar.introOffset?.x??0),
+        avatar.position.x+(avatar.introOffset?.x??0)+bodyOffsetX*right.x,
         avatar.position.y+(avatar.deathLift??0)-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),
-        avatar.position.z+(avatar.introOffset?.z??0),
+        avatar.position.z+(avatar.introOffset?.z??0)+bodyOffsetX*right.z,
       );
       if(avatar.shadow&&!avatar.shadow.userData.update)avatar.shadow.position.set(avatar.position.x,avatar.position.y+.018,avatar.position.z);
       if (!avatar.prop) {

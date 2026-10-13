@@ -9,3 +9,7 @@ CH04549 contient 33 images : les numéros de l’atelier sont comptés à partir
 Le moteur et l’atelier reconstruisent maintenant les anneaux (primitive 9) et les faisceaux croisés (primitive 7), notamment ceux de Third/mgfire50. Les effets jouables sont précalculés en atlas afin d’éviter de recalculer l’animation native à chaque frame.
 
 Correction du rendu : les deux crafts utilisent les assemblages natifs en volume avec fusion normale, pas les atlas aplatis en additive. Le cast de Weissmann utilise cr04150 recoloré rouge sang ; sa zone comporte mgfire50 et le modèle ms04550 (texture de visages, animation squelettique native), même sans cible. Le modèle est adapté au rayon de la zone, avec faces agrandies par répétition UV 0,2 et contour circulaire adouci. Les parties du modèle qui descendent sont maintenues juste au-dessus du terrain pour éviter les coupures. Le sprite CH04549 conserve 0,02 unité par pixel comme les autres banques ; ses cylindres de nova suivent réellement le plan du sol.
+
+Ajustement demandé pour CH04549 : réduction visuelle à 80 % uniquement pendant ce craft, avec recentrage du corps de 11 pixels natifs vers la droite avant réduction. Les banques et mouvements ordinaires conservent leur échelle commune. Le disque sc053_07 (partie 1) est posé sur le sol et sa périphérie blanche est traitée comme transparente, pour éviter le quad devant le personnage.
+
+Palette finale de Loewe : bleu nuit (RGB linéaire 0,008 / 0,012 / 0,04), parties neutres de fumée rendues blanches lumineuses, sans rendre visibles les pixels transparents.
