@@ -97,6 +97,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(inTower?0x06080b:map==='axis'?0x8db9df:0x201b18);   // Axis: open sky above the sea of clouds
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // which GPU draws the game: without hardware acceleration (Discord setting) WebGL falls back to the CPU and crawls
+  const gpu=(()=>{try{const gl=renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return String(ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER));}catch{return 'inconnu';}})(),softwareGpu=/swiftshader|llvmpipe|software|basic render|microsoft basic/i.test(gpu);
+  recordDiagnostic('gpu',{map,gpu,software:softwareGpu},softwareGpu);
+  let gpuWarning=null;if(softwareGpu){gpuWarning=document.createElement('div');gpuWarning.style.cssText='position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:40;max-width:min(560px,90vw);padding:8px 14px;background:#5a1d1df0;color:#ffe7d0;border:1px solid #e07a6a;border-radius:6px;font:14px system-ui;text-align:center';gpuWarning.textContent='Le jeu tourne sans accélération matérielle : il sera très lent. Dans Discord : Paramètres › Avancés › activez « Accélération matérielle », puis redémarrez Discord.';document.body.append(gpuWarning);}
   canvas.addEventListener('webglcontextlost',()=>recordDiagnostic('webgl-context-lost',{map},true));
   const scene = new THREE.Scene(),
     walkingCamera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, map === "rolent" ? 350 : 150),
@@ -862,8 +866,21 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   // the newer per-frame layers run guarded: a failure there leaves the rest of the frame untouched
   function guarded(part,run){try{return run();}catch(error){reportFrameError(part,error);return undefined;}}
+  // frame statistics for the FPS display and the diagnostic (frames drawn, JS time per frame, worst gap)
+  const frameStats={frames:0,cpu:0,worst:0,last:0,since:performance.now()};let lastStats={fps:0,cpuMs:0,worstMs:0};
+  const xrayView=new THREE.Vector3(),xrayFrom=new THREE.Vector3();
+  function fighterHidden(){
+    camera.getWorldDirection(xrayView);
+    for(const a of avatars.values()){if(a.npc||a.prop||a.dead||!a.mesh?.visible)continue;const h=a.info?.bodyHeight??a.info?.height??1.6;
+      for(const lift of [.3,.75]){const to={x:a.position.x,y:a.position.y+h*lift,z:a.position.z};
+        if(camera.isOrthographicCamera)xrayFrom.set(to.x,to.y,to.z).addScaledVector(xrayView,-60);else xrayFrom.copy(camera.position);
+        if(collision.sweep({x:xrayFrom.x,y:xrayFrom.y,z:xrayFrom.z},to,0))return true;}}
+    return false;
+  }
   function render(time) {
-    try{renderFrame(time);}
+    const started=performance.now();if(frameStats.last)frameStats.worst=Math.max(frameStats.worst,started-frameStats.last);frameStats.last=started;
+    if(started-frameStats.since>=1000){const span=(started-frameStats.since)/1000;lastStats={fps:Math.round(frameStats.frames/span),cpuMs:frameStats.frames?+(frameStats.cpu/frameStats.frames).toFixed(1):0,worstMs:Math.round(frameStats.worst),calls:renderer.info.render.calls};Object.assign(frameStats,{frames:0,cpu:0,worst:0,since:started});}
+    try{renderFrame(time);frameStats.frames++;frameStats.cpu+=performance.now()-started;}
     catch(error){
       reportFrameError('frame',error);
       // still show the world as it is, so the game never looks frozen
@@ -1164,7 +1181,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     drinkingTable?.update(time,avatars);
     dialogues.update(time, avatars, camera);
     renderer.render(scene, camera);
-    if(xray)guarded('xray',()=>xray.render(renderer, scene, camera));
+    // the x-ray pass only runs when a fighter is actually hidden by the scenery (a second render otherwise wasted)
+    if(xray)guarded('xray',()=>{if(fighterHidden())xray.render(renderer, scene, camera);});
     craftCapture?.update(time);
     duelFinish?.update(time,avatars,camera);
     requestAnimationFrame(render);
@@ -1176,6 +1194,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     retainCombatCharacters:characters=>renneCombat?.retainCharacters(characters),
     // capture the flag (ctf.mjs): flag and scoreboard, null to clear
     setCaptureTheFlag(state){if(!state){ctfView?.receive(null);return;}ctfView??=createCtfView(THREE,scene,document.body);ctfView.receive(state);},
+    performanceStats(){return {...lastStats,gpu,softwareGpu,hidden:document.hidden};},
     resetTraining(){renneCombat?.reset();for(const a of avatars.values())removeAvatar(a);avatars.clear();path=[];movementTrace=[];localJump=null;actionQueue.length=0;},
     trainingGeometry:()=>({grid,geometry:collision}),
     playerCharacter:()=>avatars.get(localId)?.character,
@@ -1419,7 +1438,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       labels.remove();
       style.remove();
       dialogues.dispose();
-      damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();ctfView?.dispose();
+      damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();gpuWarning?.remove();ctfView?.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();
       scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
