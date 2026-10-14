@@ -69,7 +69,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { createDialogues } from "./dialogue.mjs";
 import { needsCorrection } from "./reconciliation.mjs";
-import { advance, route, nearestCell, pointAt, facing, cellAt } from "./movement.mjs";
+import { advance, route, nearestCell, pointAt, facing, cellAt, steer } from "./movement.mjs";
 import {shareTexture} from './shared-texture.mjs';
 export const ASSETS = new URL(
   new URLSearchParams(location.search).has("frame_id")
@@ -108,7 +108,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
   const enemyEffects=inTower&&!inDungeon?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
-  let localCombo=null;let cookingHeld=false;let patDrive=null,patDriveId=null;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
+  let localCombo=null,steering=null;let cookingHeld=false;let patDrive=null,patDriveId=null;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
@@ -834,7 +834,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
     const patEvent=renneCombat?.inertia(localId);if(!patEvent||!connected||!movementAllowed||health.hp<=0){patDrive=null;patDriveId=null;}else if(patEvent.id!==patDriveId){patDrive=patDriveMechanics.createPatDrive(me.heading);patDriveId=patEvent.id;}
     if(localJump&&me){const landing=dungeonMechanics.predictedLanding(walkingGrid,localJump,Date.now()+jumpClockOffset,collision);if(landing){landedJump=localJump.id;Object.assign(me.position,landing);localJump=null;jumpPending=false;movementTrace=[];}}
-    flightMotion={moving:false,dx:0,dz:0};
+    flightMotion={moving:false,dx:0,dz:0};steering=null;
     if (!freeSpectator && me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
@@ -847,13 +847,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         const direction=airForward.multiplyScalar(vertical).addScaledVector(airRight,horizontal);direction.y+=lift;
         path=[];marker.visible=false;flightMotion=flight.moveFlight(me.position,direction,seconds,airBounds,collision,recordMovement);
       }else if (!patEvent&&(horizontal || vertical)) {
-        const length = Math.hypot(horizontal, vertical),
-          dx = (right.x * horizontal + forward.x * vertical) / length,
-          dz = (right.z * horizontal + forward.z * vertical) / length;
-        path = route(walkingGrid, me.position, {
-          x: me.position.x + dx * 0.6,
-          z: me.position.z + dz * 0.6,
-        });
+        // analog: the stick's angle and tilt are kept as they are (keys give a full-speed push)
+        const tilt = Math.min(1, Math.hypot(horizontal, vertical)) / Math.hypot(horizontal, vertical);
+        steering = { x: (right.x * horizontal + forward.x * vertical) * tilt, z: (right.z * horizontal + forward.z * vertical) * tilt };
+        path = [];
         marker.visible = false;
       }
     }
@@ -893,7 +890,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           : introPlaying
             ? {moving:!!avatar.introWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}
           : id === localId
-            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??advance(avatar.position, path, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
+            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??(steering?(p,input,...rest)=>steer(walkingGrid,p,input,...rest):(p,_input,...rest)=>advance(p,path,...rest))(avatar.position, steering, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
                 avatar.position,
                 avatar.target ? [avatar.target] : [],

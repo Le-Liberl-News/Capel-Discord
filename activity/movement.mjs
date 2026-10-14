@@ -168,3 +168,35 @@ export function facing(dx, dz, right, forward) {
     8
   );
 }
+// Direct, analog steering for the stick and the keys: the fighter goes exactly where the input points,
+// at a speed that follows how far the stick is pushed, and slides along walls instead of stopping.
+// Small sub-steps with the same height and corner rules as the server keep every recorded sample valid.
+export const STICK_DEADZONE = 0.15;
+export function steer(grid, position, input, seconds, speed = SPEED, record = () => {}) {
+  const length = Math.hypot(input.x, input.z), magnitude = Math.min(1, (Math.min(1, length) - STICK_DEADZONE) / (1 - STICK_DEADZONE));
+  if (!(magnitude > 0)) return { moving: false, dx: 0, dz: 0 };
+  const dx = input.x / length, dz = input.z / length, sub = grid.step / 2;
+  const height = (x, z) => { const c = cellAt(grid, x, z); return walkable(grid, c.x, c.z) ? grid.cells[indexAt(grid, c.x, c.z)] : null; };
+  const canStep = (x, z) => {
+    const from = cellAt(grid, position.x, position.z), to = cellAt(grid, x, z), h = height(x, z), here = height(position.x, position.z);
+    if (h === null || (here !== null && Math.abs(h - here) > 0.35)) return false;
+    return !(to.x !== from.x && to.z !== from.z && (!walkable(grid, to.x, from.z) || !walkable(grid, from.x, to.z)));
+  };
+  let remaining = Math.max(0, seconds) * speed * magnitude, moved = 0;
+  while (remaining > 1e-6) {
+    const s = Math.min(remaining, sub);
+    let stepped = false;
+    // straight ahead, else the part of the move along each wall axis
+    for (const [mx, mz] of [[dx, dz], [dx, 0], [0, dz]]) {
+      const part = Math.hypot(mx, mz);
+      if (part < 0.2) continue;
+      const nx = position.x + mx * s, nz = position.z + mz * s;
+      if (!canStep(nx, nz)) continue;
+      position.x = nx; position.z = nz; position.y = height(nx, nz);
+      record({ ...position }); moved += s * part; stepped = true; break;
+    }
+    if (!stepped) break;
+    remaining -= s;
+  }
+  return { moving: moved > 1e-5, dx, dz };
+}
