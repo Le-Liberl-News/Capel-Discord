@@ -509,5 +509,6 @@
   "audio": {
     "opening": "arena/audience/ed6se174.ogg",
     "fighters": "arena/audience/ed6se175.ogg"
-  }
+  },
+  "title": "Arène de Grancel"
 }

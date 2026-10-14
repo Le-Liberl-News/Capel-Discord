@@ -124,7 +124,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   );
   const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;
   if(map==="tower4")removeNativeBackdrop(model);
-  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):map==="axis"?await createAxisSky(THREE,scene,mapAssets,loading):null;
+  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena?await createAxisSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
   const teamPanel=inTower&&!inDungeon?createTowerTeam(ASSETS,catalogue):null;
   const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
