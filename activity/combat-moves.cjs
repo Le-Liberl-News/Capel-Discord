@@ -39,7 +39,7 @@ function fromFront(defender,source){
  const hx=defender?.heading?.dx??0,hz=defender?.heading?.dz??-1,dx=source.x-defender.x,dz=source.z-defender.z,h=Math.hypot(hx,hz),d=Math.hypot(dx,dz);
  return d<1e-6||h<1e-6||(hx*dx+hz*dz)/(h*d)>=PARRY.frontCos;
 }
-// A maintained guard blocks basics only inside its fixed forward cone. Heartbeats
+// A maintained guard blocks basics only inside its camera-directed forward cone. Heartbeats
 // keep it alive without reopening the timed craft-parry window.
 function blocksBasic(player,source,time){
  const hold=player?.guardHold;if(player.hp<=0||player.spectator||player.catCling||player.stunUntil>time||player.stoneUntil>time||player.frozenUntil>time||player.downUntil>time)return false;
@@ -47,4 +47,12 @@ function blocksBasic(player,source,time){
  const dx=source.x-player.x,dz=source.z-player.z,d=Math.hypot(dx,dz);
  return d<.05||(dx*hold.dx+dz*hold.dz)/d>=PARRY.frontCos;
 }
-module.exports={blocksBasic,fromFront,PARRY,DODGE,COMBO,keepsArt,comboOf,comboFactor,tempoSpec,parryActive,dodgeEndpoint};
+function turnGuard(player,direction,time){
+ if(!(player.guardHold?.until>time))return false;
+ const length=Math.hypot(direction?.dx,direction?.dz);if(!Number.isFinite(length)||length<.001)return false;
+ player.guardHold.dx=direction.dx/length;player.guardHold.dz=direction.dz/length;
+ player.heading={dx:player.guardHold.dx,dz:player.guardHold.dz};return true;
+}
+function cameraFacing(yaw){return {dx:-Math.sin(yaw),dz:Math.cos(yaw)};}
+function forwardAim(origin,heading,range){const length=Math.hypot(heading.dx,heading.dz)||1;return {x:origin.x+heading.dx/length*range,y:origin.y,z:origin.z+heading.dz/length*range};}
+module.exports={cameraFacing,forwardAim,turnGuard,blocksBasic,fromFront,PARRY,DODGE,COMBO,keepsArt,comboOf,comboFactor,tempoSpec,parryActive,dodgeEndpoint};

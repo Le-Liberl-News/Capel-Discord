@@ -81,11 +81,11 @@ export function createTraining({grid,geometry,character,opponent,now=Date.now,ra
   else if(resting){if(!path.length&&random()<.5){const dx=ai.x-target.x,dz=ai.z-target.z,len=Math.hypot(dx,dz)||1,side=random()<.5?-1:1;navigate({x:ai.x+dz/len*2.5*side,z:ai.z-dx/len*2.5*side});}}
   else if(distance>preferred+.5)navigate(target);else path=[];
  }
- function tick(position,command){if(position.heading)player.heading={...position.heading};const time=now(),dt=Math.min(.1,Math.max(.001,(time-previous)/1000));previous=time;
+ function tick(position,command){if(position.heading)player.heading={...position.heading};const time=now(),dt=Math.min(.1,Math.max(.001,(time-previous)/1000));previous=time;require('./combat-moves.cjs').turnGuard(player,player.heading,time);
   if(player.cooking){if(position.cookingHeld)player.cooking.heldUntil=time+1500;else delete player.cooking;}
   seen.push({t:time,x:position.x,y:position.y??0,z:position.z});while(seen.length&&seen[0].t<time-1000)seen.shift();
   velocity={x:(position.x-last.x)/dt,z:(position.z-last.z)/dt};for(const axis of ['x','z'])velocity[axis]=Math.max(-4,Math.min(4,velocity[axis]));last={...position};
-  if(!player.jump&&!player.siegDive&&!player.knockback&&time>=(player.combatLockedUntil??0)&&!status.immobilized(player,time))Object.assign(player,{x:position.x,y:position.y,z:position.z});
+  if(!(player.guardHold?.until>time)&&!player.jump&&!player.siegDive&&!player.knockback&&time>=(player.combatLockedUntil??0)&&!status.immobilized(player,time))Object.assign(player,{x:position.x,y:position.y,z:position.z});
   let actionResult;if(command&&time>=readyAt){let result={};if(command.type==='say')result={text:command.text,speaker:player.id};else if(!finish)result=world.action(player,command,players);actionResult={id:command.id,...result};}
   if(pendingParry&&time>=pendingParry.at&&!finish&&ai.hp>0){world.action(ai,{type:'parry',id:'training:parry:'+pendingParry.id},players);pendingParry=null;}
   if(!finish&&time>=readyAt){world.tick(players);if(player.hp<=0||ai.hp<=0){finish={winner:player.hp>0?player.character:ai.name};path=[];}else{if(time>=thinkAt){thinkAt=time+between(THINK);think(time);}if(!status.immobilized(ai,time)&&time>=(ai.combatLockedUntil??0)){const before={...ai};advance(ai,path,dt,3.5*AI_SPEED*status.movementFactor(ai,time));const moved={dx:ai.x-before.x,dz:ai.z-before.z};ai.moving=Math.hypot(moved.dx,moved.dz)>.001;if(ai.moving)ai.heading=moved;}}}

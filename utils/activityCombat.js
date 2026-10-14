@@ -82,7 +82,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const airborneMelee=spec.special==='photo'||command.kind==='basic'&&!spec.projectile;
 
-    const ground = fps||spec.effect||airborneMelee||spec.fixedLength?endpoint.y:floor(endpoint);
+    const ground = fps||spec.effect||airborneMelee||spec.fixedLength?endpoint.y:command.kind==='basic'?(floor(endpoint)??endpoint.y):floor(endpoint);
 
     if (ground === null || !Number.isFinite(ground) || Math.abs(ground-endpoint.y)>1.2)
 
@@ -200,17 +200,17 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   // Parry: live for PARRY.window after the key; pressing again is refused for PARRY.cooldown.
   function parry(player,room,command={}){
     players=room;const time=now();
-    if(command.phase==='end'){player.guardHold=null;return {guarding:false};}
+    if(command.phase==='end'){player.acceptedAt=time;player.movementCredit=0;player.guardHold=null;return {guarding:false};}
     if(player.hp<=0||player.spectator||player.catCling)return {error:'Parade indisponible.'};
     if(command.phase==='keep'){
-      if(player.guardHold?.until>time)player.guardHold.until=time+moves.PARRY.holdLease;
+      if(player.guardHold?.until>time){moves.turnGuard(player,{dx:command.direction?.x??player.heading?.dx,dz:command.direction?.z??player.heading?.dz},time);player.guardHold.until=time+moves.PARRY.holdLease;player.acceptedAt=time;player.movementCredit=0;}
       return {guarding:player.guardHold?.until>time};
     }
     if(command.phase==='begin'){
       if(player.guardHold?.until>time)return {guarding:true};
       const direction=command.direction??{x:player.heading?.dx??0,z:player.heading?.dz??-1},length=Math.hypot(direction.x,direction.z);
       if(!Number.isFinite(length)||length<.001)return {error:'Direction de garde invalide.'};
-      player.guardHold={dx:direction.x/length,dz:direction.z/length,until:time+moves.PARRY.holdLease};
+      player.guardHold={dx:direction.x/length,dz:direction.z/length,until:time+moves.PARRY.holdLease};player.heading={dx:player.guardHold.dx,dz:player.guardHold.dz};player.acceptedAt=time;player.movementCredit=0;
       if(time<(cooldowns.get(player.id)?.parry??0))return {guarding:true};
     }
     if(time<(cooldowns.get(player.id)?.parry??0))return {error:'Parade en récupération.'};

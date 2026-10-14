@@ -160,3 +160,35 @@ test('releasing a held guard stops basic blocking even inside its initial parry 
  assert.ok(moves.blocksBasic(b,{x:1,z:0},w.time()));w.combat.parry(b,w.room,{phase:'end'});
  assert.equal(moves.blocksBasic(b,{x:1,z:0},w.time()),false);assert.ok(moves.parryActive(b,w.time()),'the separate craft-parry timing is preserved');
 });
+
+
+test('turning a held guard changes its blocking cone without reopening the craft parry',()=>{
+ const b=fighter('b','Joshua',0),w=arena(b);w.combat.parry(b,w.room,{phase:'begin',direction:{x:1,z:0}});const at=b.parry.at;
+ w.step(500);w.combat.parry(b,w.room,{phase:'keep',direction:{x:0,z:3}});
+ assert.ok(moves.blocksBasic(b,{x:0,z:5},w.time()));assert.equal(moves.blocksBasic(b,{x:5,z:0},w.time()),false);
+ assert.equal(b.parry.at,at);assert.equal(moves.parryActive(b,w.time()),false);assert.deepEqual(b.heading,{dx:0,dz:1});
+ const status=require('../activity/combat-status.cjs');assert.equal(status.movementFactor(b,w.time()),0);
+ w.combat.parry(b,w.room,{phase:'end'});assert.equal(status.movementFactor(b,w.time()),1);
+});
+
+test('camera-facing normal attacks aim straight ahead at every camera angle',()=>{
+ const origin={x:3,y:-.3,z:7};
+ for(const yaw of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]){
+  const h=moves.cameraFacing(yaw),aim=moves.forwardAim(origin,h,5);
+  assert.ok(Math.abs(Math.hypot(aim.x-origin.x,aim.z-origin.z)-5)<1e-8);assert.equal(aim.y,origin.y);
+  assert.ok(Math.abs((aim.x-origin.x)/5+Math.sin(yaw))<1e-8);assert.ok(Math.abs((aim.z-origin.z)/5-Math.cos(yaw))<1e-8);
+ }
+});
+
+
+test('a forward ranged basic can hit a wall even when its full-range endpoint has no floor',()=>{
+ const a=fighter('a','Olivier',0),combat=createActivityCombat({now:()=>1000,geometry:{floor:x=>x<3?0:null,sweep:(from,to)=>to.x>3?{point:{x:3,y:.85,z:0},distance:3}:null}});
+ assert.ok(combat.action(a,{id:'wall-shot',kind:'basic',aim:{x:12,y:0,z:0}},new Map([['a',a]])).combatId);
+});
+
+test('left mouse press during right-button camera drag confirms a click without ending the drag',()=>{
+ const source=require('fs').readFileSync('activity/sky-scene.mjs','utf8'),body=source.match(/function mouseChordDown\(event\)\{([\s\S]*?)\n  \}/)[1],drag={moved:false},clicks=[];
+ const down=new Function('event','drag','click',body);let prevented=false;
+ down({button:0,buttons:3,preventDefault(){prevented=true;}},drag,e=>clicks.push(e));assert.equal(clicks.length,1);assert.equal(drag.moved,true);assert.ok(prevented);
+ down({button:2,buttons:2},drag,e=>clicks.push(e));assert.equal(clicks.length,1);
+});

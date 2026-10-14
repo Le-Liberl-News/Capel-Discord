@@ -50,7 +50,7 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     for(const hit of event.hits??[]){
      if(hit.parried&&!done.has('parry:'+hit.id)){done.add('parry:'+hit.id);labels.push({el:callout('Parade !','#9fe8ff'),id:hit.id,started:now});}
      // a basic attack stopped by a guard facing it
-     if(hit.blocked&&!done.has('block:'+hit.id+':'+hit.at)){done.add('block:'+hit.id+':'+hit.at);burst('spark',hit.point,1.4,0,hit.point?null:hit.id);sounds?.play('block');}
+     if(hit.blocked&&!done.has('block:'+hit.id+':'+hit.at)){done.add('block:'+hit.id+':'+hit.at);burst('spark',hit.point,2.8,0,hit.point?null:hit.id);sounds?.play('block');}
     }
     // dodge: puffs of dust left on the ground along the way
     const owner=avatars.get(event.actor);

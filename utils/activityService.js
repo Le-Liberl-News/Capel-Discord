@@ -205,7 +205,7 @@ function createActivityService({
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
-      if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && (!wasJumping||point.jumpLanding===player.lastLandedJump) && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
+      if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && (!wasJumping||point.jumpLanding===player.lastLandedJump) && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !(player.guardHold?.until>now()) && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
         let submitted=point;
         if(player.cooking){if(point.cookingHeld===true)player.cooking.heldUntil=now()+1500;else delete player.cooking;}
@@ -289,7 +289,7 @@ function createActivityService({
         }
         }
       }
-      if(point?.heading&&Number.isFinite(point.heading.dx)&&Number.isFinite(point.heading.dz)&&Math.hypot(point.heading.dx,point.heading.dz)>.001){const n=Math.hypot(point.heading.dx,point.heading.dz);player.heading={dx:point.heading.dx/n,dz:point.heading.dz/n};}
+      if(point?.heading&&Number.isFinite(point.heading.dx)&&Number.isFinite(point.heading.dz)&&Math.hypot(point.heading.dx,point.heading.dz)>.001){const n=Math.hypot(point.heading.dx,point.heading.dz);player.heading={dx:point.heading.dx/n,dz:point.heading.dz/n};require('../activity/combat-moves.cjs').turnGuard(player,player.heading,now());}
       player.seen = now();
       player.nom = session.character;
       player.character = session.character;
@@ -358,7 +358,7 @@ function createActivityService({
           jumpReadyAt:player.jumpReadyAt??0,
           hp: player.hp,
           spectator: player.spectator,
-          canMove: player.canMove !== false && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0),
+          canMove: player.canMove !== false && !(player.guardHold?.until>now()) && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0),
           combatLockedUntil: player.combatLockedUntil ?? 0,
           cooldowns: player.character==='Sieg'?{craft:player.siegDiveReadyAt??0}:world.cooldownsFor?.(player.id) ?? {},
           movementFactor:movementFactor(player,now()),

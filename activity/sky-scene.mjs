@@ -275,9 +275,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(phase==='end'){if(guardHeld){guardHeld=false;guardDirection=null;const me=avatars.get(localId);if(me)me.parryPose=null;combatControls.guarding(false);queueAction('parry',undefined,undefined,undefined,{phase:'end'});}return true;}
     if(guardHeld)return true;
     const me=avatars.get(localId);if(!connected||!me||me.dead||health.hp<=0||health.spectator||!movementAllowed)return false;
-    const heading=me.character==='Josette'?{dx:-Math.sin(yaw),dz:Math.cos(yaw)}:me.heading;
+    const heading=combatMoves.cameraFacing(yaw);
     if(!queueAction('parry',undefined,undefined,undefined,{phase:'begin',direction:{x:heading?.dx??0,z:heading?.dz??-1}}))return false;
-    guardHeld=true;me.parryPose={kind:'basic',character:me.character,localStart:performance.now()};guardDirection={...heading};combatControls.guarding(true);guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;
+    guardHeld=true;path=[];movementTrace=[];me.parryPose={kind:'basic',character:me.character,localStart:performance.now()};guardDirection={...heading};combatControls.guarding(true);guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;
     if(combatControls.ready('parry')){combatControls.started('parry',me.character);combatFeedback?.parryPressed(localId);}return true;
   }
   function startParry(){
@@ -287,6 +287,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   function startAttack(kind,event=cursor,confirmed=false) {
     if(kind==='parry')return startParry();
+    if(guardHeld&&kind!=='basic')return false;
     if(kind==='art'&&renneMechanics.combatSpec(avatars.get(localId)?.character,'art')?.dodge)return startDodge();
     if(kind==='craft'&&avatars.get(localId)?.character==='Phyllis')return cookingInput('begin',event);
     const bird=avatars.get(localId);
@@ -299,6 +300,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
     const me=avatars.get(localId);const continuing=kind==='craft'&&me?.character==='Julia'&&juliaCombo&&juliaCombo.stage<3&&performance.now()<juliaCombo.until;if(!renneCombat||!connected||!me||!renneMechanics.combatSpec(me.character,kind)||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||(!continuing&&!combatControls.ready(kind)))return false;
     const spec=renneMechanics.combatSpec(me.character,kind);let target;
+    me.heading=combatMoves.cameraFacing(yaw);
     // phones: straight-line ground techniques go straight ahead of the fighter, no aiming step
     const lineAhead=document.body.hasAttribute('data-sky-touch')&&spec.groundTarget&&(spec.shape==='line'||spec.dash)&&!confirmed?straightAhead(me,spec.range):null;
     if(lineAhead)confirmed=true;
@@ -307,7 +309,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
     let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
     const photoHeading=me.heading??{dx:0,dz:-1};
-    const aim=lineAhead?lineAhead:spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
+    const aim=lineAhead?lineAhead:spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:kind==='basic'?combatMoves.forwardAim(me.position,me.heading,spec.range):target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
     const stage=spec.special==='trinity'?(continuing?juliaCombo.stage+1:1):1;
     const action=queueAction("attack",undefined,aim,undefined,{kind,target,ray});if(!action)return false;
@@ -388,6 +390,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     return action;
   }
   function startJump(){
+    if(guardHeld)return;
     const me=avatars.get(localId);if(!canJump||!me||health.spectator||me.character==="Sieg"||localJump||Date.now()+jumpClockOffset<jumpReadyAt||!connected||!movementAllowed||health.hp<=0)return;
     const stick=combatControls.vector(),horizontal=Number(keys.has("arrowright")||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has("arrowleft")||keys.has(movementKeys(keyboardLayout()).left))+stick.x,vertical=Number(keys.has("arrowup")||keys.has(movementKeys(keyboardLayout()).up))-Number(keys.has("arrowdown")||keys.has(movementKeys(keyboardLayout()).down))-stick.y;
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
@@ -703,7 +706,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     menu.hidden = true;
     if(fpsActive()){startAttack('basic',event,true);return;}
     if(craftTarget){startAttack(craftTarget,event,true);return;}
-    if (health.hp === 0 || !movementAllowed) return;
+    if (health.hp === 0 || !movementAllowed || guardHeld) return;
     pointer.set(
       (event.clientX / viewport.width) * 2 - 1,
       (-event.clientY / viewport.height) * 2 + 1,
@@ -757,6 +760,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     };
     canvas.setPointerCapture(event.pointerId);
   }
+  function mouseChordDown(event){
+    if(event.button===0&&(event.buttons&2)){event.preventDefault();if(drag)drag.moved=true;click(event);}
+  }
+  function mouseChordUp(event){if(event.button===2&&drag)endDrag({type:'pointerup',pointerId:drag.id});}
   function pointermove(event) {
     if(document.pointerLockElement===canvas&&event.pointerType!=="locked")return;
     const previousCursor=cursor;
@@ -802,6 +809,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     event.preventDefault();
 
   }
+  canvas.addEventListener("mousedown",mouseChordDown);canvas.addEventListener("mouseup",mouseChordUp);
   canvas.addEventListener("pointerdown", pointerdown);
   canvas.addEventListener("pointermove", pointermove);
   canvas.addEventListener("pointerup", endDrag);
@@ -885,7 +893,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const patEvent=renneCombat?.inertia(localId);if(!patEvent||!connected||!movementAllowed||health.hp<=0){patDrive=null;patDriveId=null;}else if(patEvent.id!==patDriveId){patDrive=patDriveMechanics.createPatDrive(me.heading);patDriveId=patEvent.id;}
     if(localJump&&me){const landing=dungeonMechanics.predictedLanding(walkingGrid,localJump,Date.now()+jumpClockOffset,collision);if(landing){landedJump=localJump.id;Object.assign(me.position,landing);localJump=null;jumpPending=false;movementTrace=[];}}
     flightMotion={moving:false,dx:0,dz:0};steering=null;
-    if (!freeSpectator && me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
+    if (!guardHeld && !freeSpectator && me && !me.siegDive && !localJump && !renneCombat?.dash(localId) && health.hp > 0 && movementAllowed ) {
       const horizontal =
         Number(keys.has("arrowright") || keys.has(movementKeys(keyboardLayout()).right)) -
         Number(keys.has("arrowleft") || keys.has(movementKeys(keyboardLayout()).left)) + stick.x;
@@ -905,7 +913,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }
     }
     let patMotion=null;
-    if(patDrive&&movementAllowed&&!localJump&&me){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,goal=path[0],input=h||v?{x:right.x*h+forward.x*v,z:right.z*h+forward.z*v}:goal?{x:goal.x-me.position.x,z:goal.z-me.position.z}:{x:0,z:0};if(goal&&Math.hypot(input.x,input.z)<.5)path.shift();const drift=patDrive.step(input,seconds,Math.min(1,(health.movementFactor??6)/6)),next={x:me.position.x+drift.x,y:me.position.y,z:me.position.z+drift.z},cx=Math.round((next.x-walkingGrid.origin.x)/walkingGrid.step),cz=Math.round((next.z-walkingGrid.origin.z)/walkingGrid.step),floor=cx>=0&&cz>=0&&cx<walkingGrid.width&&cz<walkingGrid.height?walkingGrid.cells[cz*walkingGrid.width+cx]:null,hit=collision.sweep({...me.position,y:me.position.y+.7},{...next,y:next.y+.7},.22);if(hit)patDrive.bounce(hit.normal);else if(floor!==null&&Math.abs(floor-next.y)<.65){Object.assign(me.position,{...next,y:floor});recordMovement(me.position);}else patDrive.stop();patMotion={moving:drift.speed>.15,dx:drift.vx,dz:drift.vz};}
+    if(patDrive&&!guardHeld&&movementAllowed&&!localJump&&me){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,goal=path[0],input=h||v?{x:right.x*h+forward.x*v,z:right.z*h+forward.z*v}:goal?{x:goal.x-me.position.x,z:goal.z-me.position.z}:{x:0,z:0};if(goal&&Math.hypot(input.x,input.z)<.5)path.shift();const drift=patDrive.step(input,seconds,Math.min(1,(health.movementFactor??6)/6)),next={x:me.position.x+drift.x,y:me.position.y,z:me.position.z+drift.z},cx=Math.round((next.x-walkingGrid.origin.x)/walkingGrid.step),cz=Math.round((next.z-walkingGrid.origin.z)/walkingGrid.step),floor=cx>=0&&cz>=0&&cx<walkingGrid.width&&cz<walkingGrid.height?walkingGrid.cells[cz*walkingGrid.width+cx]:null,hit=collision.sweep({...me.position,y:me.position.y+.7},{...next,y:next.y+.7},.22);if(hit)patDrive.bounce(hit.normal);else if(floor!==null&&Math.abs(floor-next.y)<.65){Object.assign(me.position,{...next,y:floor});recordMovement(me.position);}else patDrive.stop();patMotion={moving:drift.speed>.15,dx:drift.vx,dz:drift.vz};}
     jumpButton.hidden=!canJump||health.spectator||me?.character==="Sieg";
     jumpButton.disabled=!connected||Date.now()+jumpClockOffset<jumpReadyAt||health.hp<=0||!movementAllowed||!!localJump;
     for (const [id, avatar] of avatars) {
@@ -940,7 +948,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           : introPlaying
             ? {moving:!!avatar.introWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}
           : id === localId
-            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??(steering?(p,input,...rest)=>guarded('steer',()=>steer(walkingGrid,p,input,...rest))??{moving:false,dx:0,dz:0}:(p,_input,...rest)=>advance(p,path,...rest))(avatar.position, steering, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
+            ? !movementAllowed||guardHeld ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??(steering?(p,input,...rest)=>guarded('steer',()=>steer(walkingGrid,p,input,...rest))??{moving:false,dx:0,dz:0}:(p,_input,...rest)=>advance(p,path,...rest))(avatar.position, steering, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
@@ -951,7 +959,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(avatar.knockback&&!avatar.dead)Object.assign(avatar.position,projectionMechanics.projectionPosition(avatar.knockback,Date.now()+jumpClockOffset));
       if(avatar.dimensionLift)Object.assign(avatar.position,dimensionMechanics.liftPosition(avatar.dimensionLift,Date.now()+jumpClockOffset));
       if (motion.moving || avatar.walking || (avatar.character==="Sieg"&&!avatar.dead)) {
-        if (motion.moving) avatar.heading = { dx: motion.dx, dz: motion.dz };
+        if (motion.moving&&(id===localId||avatar.npc||avatar.enemy)) avatar.heading = { dx: motion.dx, dz: motion.dz };
         avatar.time += seconds;
       } else if ((avatar.npc || avatar.enemyAttack) && !avatar.dead) avatar.time += seconds;
       else avatar.time = 0;
@@ -959,8 +967,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       let craftTilt=null,bodyScale=1,bodyOffsetX=0;
       if (!avatar.prop) {
       const attack=avatar.dead||down?null:renneCombat?.current(id);if(avatar.character==='Loewe'){const visual=loeweMechanics.loeweVisual(attack);bodyScale=visual.scale;bodyOffsetX=visual.offsetX;}
-      if(avatar===me&&guardHeld&&guardDirection)avatar.heading={...guardDirection};
+
       if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
+      if(avatar===me&&!introPlaying&&!halloweenScene?.active(time))avatar.heading=combatMoves.cameraFacing(yaw);
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,
@@ -1023,7 +1032,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
-    if(guardHeld){if(!connected||!movementAllowed||me?.dead||health.hp<=0||health.spectator)guardInput('end');else if(performance.now()>=guardRefreshAt&&queueAction('parry',undefined,undefined,undefined,{phase:'keep'}))guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;}
+    if(guardHeld){guardDirection=combatMoves.cameraFacing(yaw);if(!connected||!movementAllowed||me?.dead||health.hp<=0||health.spectator)guardInput('end');else if(performance.now()>=guardRefreshAt&&queueAction('parry',undefined,undefined,undefined,{phase:'keep',direction:{x:guardDirection.dx,z:guardDirection.dz}}))guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;}
     if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);});
     if (me&&!freeSpectator)
       follow.lerp(
@@ -1344,6 +1353,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       disposed = true;
       endDrag();
       releaseMouse();document.removeEventListener("mousemove",lockedMouseMove);document.removeEventListener("focusin",focusUI);
+      canvas.removeEventListener("mousedown",mouseChordDown);canvas.removeEventListener("mouseup",mouseChordUp);
       canvas.removeEventListener("pointerdown", pointerdown);
       canvas.removeEventListener("pointermove", pointermove);
       canvas.removeEventListener("pointerup", endDrag);

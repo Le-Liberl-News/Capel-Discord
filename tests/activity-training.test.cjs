@@ -22,3 +22,12 @@ test('A human-like AI hesitates before a ready strike and an AI with crafts rare
  for(let i=0;i<1200;i++){const state=step();const now=state.poms.some(p=>p.owner===game.ai.id);if(now&&!held)pickups++;held=now;}
  assert.ok(pickups<=2,'pickups '+pickups);
 });
+
+
+test('training rejects walking while guard is held, but accepts turning the guard',()=>{
+ const {game,step}=setup('Walter',{ballSpawns:[]});step(1000,{id:'guard',type:'parry',phase:'begin',direction:{x:1,z:0}});
+ const before={x:game.player.x,y:game.player.y,z:game.player.z},parryAt=game.player.parry.at;
+ const state=game.tick({...game.player,x:game.player.x+2,heading:{dx:0,dz:1}});
+ assert.deepEqual(state.position,before);assert.equal(state.health.movementFactor,0);assert.equal(game.player.guardHold.dz,1);assert.equal(game.player.parry.at,parryAt);
+ step(100,{id:'release',type:'parry',phase:'end'});assert.equal(game.player.guardHold,null);
+});

@@ -46,4 +46,6 @@ Une chope est placee sur la table de l'etage de l'Anterose. Clic droit pres de l
 
 Etude de la tour PVE : [DUNGEON.md](DUNGEON.md).
 
-Garde : maintenir V (ou le bouton bouclier) bloque les attaques normales dans un cône de 120° devant le personnage, orienté au début de l’appui. Les crafts gardent leur parade de 350 ms au début de l’appui, avec récupération de 1,2 s ; le maintien ne renouvelle pas cette fenêtre. Relâcher ou quitter la fenêtre termine la garde. Une garde sans renouvellement réseau expire après 1,8 s.
+Garde : maintenir V (ou le bouton bouclier) bloque les attaques normales dans un cône de 120° devant le personnage, orienté avec la caméra, avec déplacement bloqué pendant le maintien. Les crafts gardent leur parade de 350 ms au début de l’appui, avec récupération de 1,2 s ; le maintien ne renouvelle pas cette fenêtre. Relâcher ou quitter la fenêtre termine la garde. Une garde sans renouvellement réseau expire après 1,8 s.
+
+La rotation horizontale de la caméra oriente le personnage. Les attaques normales partent dans cette direction (la visée des crafts reste distincte). Le clic gauche peut confirmer une cible pendant le maintien du clic droit pour la caméra.
