@@ -1,4 +1,7 @@
-import {DUEL_INTRO_DURATION} from './duel-intro.mjs';
+import {introDurationFor} from './duel-intro.mjs';
+import axisResidents from './assets/sky/axis/residents.json';
+// training also takes place one time in two at the top of the Axis Pillar
+const TRAINING_VENUES={arena:{},axis:{spawns:[{x:0,z:-9.5},{x:0,z:9.5}],ballSpawns:axisResidents.ballSpawns}};let trainingVenue='arena';
 import {createTraining} from './training.mjs';
 import trainingCombat from './native-combat.cjs';
 import {createCapturePublisher} from "./capture-publisher.mjs";
@@ -43,8 +46,8 @@ async function startTraining(){
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
  let titles={},entrances={};try{if(!apercuLocal){const config=await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});titles=config.titles;entrances=config.entrances;}}catch(error){trainingBusy=false;throw error;}
- const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;}
- try{if(!reuseArena)scene=await createSkyScene(toile,'arena',{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];scene.retainCombatCharacters([trainingReturn.player.character,opponent]);training=createTraining({...scene.trainingGeometry(),character:trainingReturn.player.character,opponent,titles,entrances,introDuration:DUEL_INTRO_DURATION});bindScene();await Promise.all([scene.me(training.player),scene.prepareCombat(opponent)]);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent+' (IA)';music.setTrack(musicUrl('arena'));}
+ const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=Math.random()<.5?'axis':'arena';}
+ try{if(!reuseArena)scene=await createSkyScene(toile,trainingVenue,{localTraining:true});const opponents=Object.keys(trainingCombat.COMBAT).filter(name=>scene.catalogue[name]&&['basic','craft','art'].some(kind=>trainingCombat.combatSpec(name,kind)));const opponent=opponents[Math.floor(Math.random()*opponents.length)];scene.retainCombatCharacters([trainingReturn.player.character,opponent]);training=createTraining({...scene.trainingGeometry(),...TRAINING_VENUES[trainingVenue],character:trainingReturn.player.character,opponent,titles,entrances,introDuration:introDurationFor(trainingVenue)});bindScene();await Promise.all([scene.me(training.player),scene.prepareCombat(opponent)]);scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Entraînement · '+opponent+' (IA)';music.setTrack(musicUrl(trainingVenue));}
  catch(error){trainingBusy=false;await stopTraining();throw error;}
  trainingBusy=false;await tickTraining();recordDiagnostic('training-load',{durationMs:Math.round(performance.now()-trainingLoadStarted),reused:reuseArena});
 }

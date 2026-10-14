@@ -14,6 +14,7 @@ function axisPhase(elapsed){
 }
 const VENUES={arena:{duration:native.duration,boundaries:[8000,10000,13500,17000],audio:native.audio},axis:{duration:axis.duration,boundaries:[axis.phases.tower,axis.phases.tower+axis.phases.fighter,axis.phases.tower+2*axis.phases.fighter,axis.phases.tower+2*axis.phases.fighter+axis.phases.orbit],audio:null}};
 const venueOf=name=>VENUES[name]?name:'arena';
+export const introDurationFor=venue=>VENUES[venueOf(venue)].duration;
 export function duelPhase(duel,time,venue=duel?.venue){
  if(!duel||!Number.isFinite(duel.startsAt)||!Number.isFinite(duel.readyAt)||time>=duel.readyAt)return null;
  const duration=duel.readyAt-duel.startsAt;if(duration<=0)return null;const elapsed=Math.max(0,time-duel.startsAt)/duration*VENUES[venueOf(venue)].duration;
@@ -38,6 +39,7 @@ export function createDuelIntro({assets=null,onSpeech=()=>{},venue='arena'}={}){
  const caption=document.createElement('div');caption.style.cssText="position:absolute;bottom:-8vh;left:0;right:0;text-align:center;color:white;font-family:AveriaSky,'Averia Sans Libre',sans-serif;paint-order:stroke fill;-webkit-text-stroke:2px #000;text-shadow:0 2px 3px #000,0 0 12px #000;line-height:1.05;background:#09070d70;padding:16px 24px;border-radius:4px";
  const title=document.createElement('div'),subtitle=document.createElement('div');title.style.cssText='font-size:clamp(38px,7vw,94px);font-weight:bold;letter-spacing:.02em';subtitle.style.cssText='font-size:clamp(24px,4vw,52px);margin-top:12px';caption.append(title,subtitle);overlay.append(caption);
  // name of the venue over the far shot, in an engraved serif rather than the dialogue font
+ if(assets&&venue==='axis'&&typeof FontFace!=='undefined'&&document.fonts){const face=new FontFace('Cinzel','url("'+new URL('fonts/Cinzel.ttf',assets).href+'")',{weight:'400 900'});face.load().then(loaded=>document.fonts.add(loaded)).catch(()=>{});}
  const placeName=document.createElement('div');placeName.textContent=venue==='axis'?axis.title:'';placeName.style.cssText="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:#f4ecd8;font-family:Cinzel,'Cormorant Garamond','Trajan Pro',Georgia,'Times New Roman',serif;font-size:clamp(34px,6.5vw,92px);letter-spacing:.14em;font-weight:600;text-shadow:0 0 18px #000c,0 2px 4px #000;display:none";overlay.append(placeName);document.body.append(overlay);
  const style=document.createElement('style');style.textContent='body[data-sky-intro] :is(#hud,#sky-chat,#sky-settings,#sky-renne-actions,#sky-jump,#sky-leave,#sky-chat-toggle,#sky-prophunt,#sky-labels,#sky-combat,#sky-actions){visibility:hidden!important}';document.head?.append(style);
  let duel=null,offset=0,announced=null,spoken=new Set(),opening=null,fighters=null;const listeners=[];

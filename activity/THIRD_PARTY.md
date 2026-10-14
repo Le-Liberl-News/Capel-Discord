@@ -11,6 +11,10 @@ Les éléments des bulles proviennent des atlas originaux ED6_DT00/c_waku3._ch e
 
 Averia Sans Libre : [Google Fonts](https://github.com/google/fonts/tree/main/ofl/averiasanslibre), SIL Open Font License 1.1 ; le fichier OFL.txt est conservé avec la copie de la police dans assets/sky/dialogue.
 
+Cinzel (titre de l’arène du Pilier Axis) : [Google Fonts](https://github.com/google/fonts/tree/main/ofl/cinzel), SIL Open Font License 1.1 ; licence conservée dans assets/sky/fonts/Cinzel-OFL.txt.
+
+Pilier Axis, sommet : modèle SC C5313 (ED6_DT2A/c5313._x3) et textures ED6_DT35, exportés depuis l’installation Steam SC ; musique BGM/ED6403.ogg (BGM 43 du scénario c5313), copiée dans assets/sky/music/axis.ogg.
+
 Musique de la map : BGM/ED6101.ogg (Commercial City of Bose), copie de l’installation Steam FC dans assets/sky/music/anterose.ogg. Le scénario T1131 utilise BGM 11.
 
 Rolent : modèle SC T0100, textures et objets T01TAR00 (tonneau), T01BOX00 (caisse), exportés depuis la même installation Steam SC. Les gradins utilisent le modèle original de Grancel, avec une grille de navigation séparée.
