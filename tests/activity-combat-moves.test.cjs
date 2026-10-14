@@ -192,3 +192,11 @@ test('left mouse press during right-button camera drag confirms a click without 
  down({button:0,buttons:3,preventDefault(){prevented=true;}},drag,e=>clicks.push(e));assert.equal(clicks.length,1);assert.equal(drag.moved,true);assert.ok(prevented);
  down({button:2,buttons:2},drag,e=>clicks.push(e));assert.equal(clicks.length,1);
 });
+
+
+test('starting a right-button camera drag preserves compatibility mouse events for the second button',()=>{
+ const source=require('fs').readFileSync('activity/sky-scene.mjs','utf8'),body=source.match(/function pointerdown\(event\) \{([\s\S]*?)\n  \}/)[1];
+ let prevented=false;const down=new Function('event','connected','fpsActive','canvas','click','let drag;'+body+';return drag;');
+ const drag=down({button:2,pointerId:1,pointerType:'mouse',clientX:5,clientY:6,preventDefault(){prevented=true;}},true,()=>false,{setPointerCapture(){}},()=>{});
+ assert.equal(drag.id,1);assert.equal(prevented,false,'cancelling pointerdown would suppress the subsequent chorded mousedown');
+});

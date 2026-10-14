@@ -749,7 +749,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       click(event);
       return;
     }
-    event.preventDefault();
+    // Keep compatibility mousedown events for a second button during this drag.
+    // The contextmenu handler already cancels the browser menu.
     drag = {
       id: event.pointerId,
       x: event.clientX,
