@@ -6,12 +6,13 @@ export function createTouchControls({tap,action,camera,setTimer=setTimeout,clear
     has:id=>points.has(id),
     down(event){
       clearHold();points.set(event.pointerId,{x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,used:false});
-      if(points.size>1){for(const p of points.values())p.used=true;gesture=pair();return;}
+      if(points.size>1){for(const p of points.values()){p.used=true;p.dragging=true;}gesture=pair();return;}
       timer=setTimer(()=>{timer=null;const p=points.get(event.pointerId);if(!p||p.used||points.size!==1)return;p.used=true;action({clientX:p.x,clientY:p.y});},holdMs);
     },
     move(event){
-      const p=points.get(event.pointerId);if(!p)return;p.x=event.clientX;p.y=event.clientY;
-      if(Math.hypot(p.x-p.startX,p.y-p.startY)>slop){p.used=true;clearHold();}
+      const p=points.get(event.pointerId);if(!p)return;const dx=event.clientX-p.x,dy=event.clientY-p.y;p.x=event.clientX;p.y=event.clientY;
+      if(Math.hypot(p.x-p.startX,p.y-p.startY)>slop){p.used=true;p.dragging=true;clearHold();}
+      if(points.size===1&&p.dragging)camera({dx,dy,scale:1});
       if(points.size>=2){const next=pair();if(gesture&&next&&gesture.distance>1&&next.distance>1)camera({dx:next.x-gesture.x,dy:next.y-gesture.y,scale:gesture.distance/next.distance});gesture=next;}
     },
     up(event,cancelled=false){

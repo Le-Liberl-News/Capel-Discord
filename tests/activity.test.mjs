@@ -228,11 +228,12 @@ test("touch taps move only on release; long presses interact once without moving
  const f=touchFixture();f.controls.down(f.event(1));assert.equal(f.calls.length,0);f.controls.up(f.event(1));assert.equal(f.calls[0][0],"tap");f.hold();assert.equal(f.calls.length,1);
  f.controls.down(f.event(2));f.hold();f.controls.up(f.event(2));assert.deepEqual(f.calls.map(c=>c[0]),["tap","action"]);
 });
-test("touch drags and cancellations never cause accidental actions or walking",()=>{
- const f=touchFixture();f.controls.down(f.event(1));f.controls.move(f.event(1,140));f.hold();f.controls.up(f.event(1,140));assert.equal(f.calls.length,0);
- f.controls.down(f.event(2));f.controls.up(f.event(2),true);f.hold();assert.equal(f.calls.length,0);
- f.controls.down(f.event(3));f.controls.reset();f.hold();f.controls.up(f.event(3));assert.equal(f.calls.length,0);
+test("single-finger drags rotate the camera without interacting or walking; cancellations stay inert",()=>{
+ const f=touchFixture();f.controls.down(f.event(1));f.controls.move(f.event(1,140));f.hold();f.controls.up(f.event(1,140));assert.equal(f.calls.length,1);assert.equal(f.calls[0][0],"camera");assert.equal(f.calls[0][1].dx,40);
+ f.controls.down(f.event(2));f.controls.up(f.event(2),true);f.hold();assert.equal(f.calls.length,1);
+ f.controls.down(f.event(3));f.controls.reset();f.hold();f.controls.up(f.event(3));assert.equal(f.calls.length,1);
 });
+
 test("two finger camera gestures cancel long presses and never trigger leftover taps",()=>{
  const f=touchFixture();f.controls.down(f.event(1,100));f.controls.down(f.event(2,200));f.hold();f.controls.move(f.event(2,220,120));assert.equal(f.calls.length,1);assert.equal(f.calls[0][0],"camera");assert.ok(f.calls[0][1].scale<1);assert.equal(f.calls[0][1].dx,10);
  f.controls.up(f.event(2,220,120));f.controls.up(f.event(1));assert.equal(f.calls.length,1);

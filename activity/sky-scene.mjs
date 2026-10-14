@@ -83,7 +83,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inDungeon=/^hallow[1-5]$/.test(map),floorNumber=Number(map.slice(inDungeon?6:5)),inTower=/^tower[1-4]$/.test(map)||inDungeon;
   // the two duel venues: Grancel ("arena") and the top of the Axis Pillar ("axis")
-  const isArena=map==='arena'||map==='axis';
+  const isArena=map==='arena'||map==='axis',combatCamera=combatMoves.usesCombatFacing(map);
   const canJump=inTower||isArena;
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
@@ -274,7 +274,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function guardInput(phase){
     if(phase==='end'){if(guardHeld){guardHeld=false;guardDirection=null;const me=avatars.get(localId);if(me)me.parryPose=null;combatControls.guarding(false);queueAction('parry',undefined,undefined,undefined,{phase:'end'});}return true;}
     if(guardHeld)return true;
-    const me=avatars.get(localId);if(!connected||!me||me.dead||health.hp<=0||health.spectator||!movementAllowed)return false;
+    const me=avatars.get(localId);if(!combatCamera||!connected||!me||me.dead||health.hp<=0||health.spectator||!movementAllowed)return false;
     const heading=combatMoves.cameraFacing(yaw);
     if(!queueAction('parry',undefined,undefined,undefined,{phase:'begin',direction:{x:heading?.dx??0,z:heading?.dz??-1}}))return false;
     guardHeld=true;path=[];movementTrace=[];me.parryPose={kind:'basic',character:me.character,localStart:performance.now()};guardDirection={...heading};combatControls.guarding(true);guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;
@@ -300,7 +300,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
     const me=avatars.get(localId);const continuing=kind==='craft'&&me?.character==='Julia'&&juliaCombo&&juliaCombo.stage<3&&performance.now()<juliaCombo.until;if(!renneCombat||!connected||!me||!renneMechanics.combatSpec(me.character,kind)||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||(!continuing&&!combatControls.ready(kind)))return false;
     const spec=renneMechanics.combatSpec(me.character,kind);let target;
-    me.heading=combatMoves.cameraFacing(yaw);
+    if(combatCamera)me.heading=combatMoves.cameraFacing(yaw);
     // phones: straight-line ground techniques go straight ahead of the fighter, no aiming step
     const lineAhead=document.body.hasAttribute('data-sky-touch')&&spec.groundTarget&&(spec.shape==='line'||spec.dash)&&!confirmed?straightAhead(me,spec.range):null;
     if(lineAhead)confirmed=true;
@@ -338,6 +338,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     yaw = 0,
     pitch = CAMERA_PITCH,
     drag = null,
+    restMoveHeld=false,restMoveAt=0,
     zoom = map==="hangar"?8.5:CAMERA_ZOOM,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
@@ -696,6 +697,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     keys.delete(remapKey(event).key.toLowerCase());
   }
   function blur() {
+    restMoveHeld=false;
     guardInput('end');
     cookingInput('end');
     keys.clear();craftTarget=false;
@@ -746,6 +748,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       event.preventDefault();document.body.dataset.skyTouch="true";menu.hidden=true;touches.down(event);canvas.setPointerCapture(event.pointerId);return;
     }
     if (event.button !== 2) {
+      if(event.button===0&&!combatCamera&&!craftTarget&&!fpsActive()){restMoveHeld=true;restMoveAt=0;canvas.setPointerCapture(event.pointerId);}
       click(event);
       return;
     }
@@ -764,7 +767,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function mouseChordDown(event){
     if(event.button===0&&(event.buttons&2)){event.preventDefault();if(drag)drag.moved=true;click(event);}
   }
-  function mouseChordUp(event){if(event.button===2&&drag)endDrag({type:'pointerup',pointerId:drag.id});}
+  function mouseChordUp(event){if(event.button===0)restMoveHeld=false;if(event.button===2&&drag)endDrag({type:'pointerup',pointerId:drag.id});}
   function pointermove(event) {
     if(document.pointerLockElement===canvas&&event.pointerType!=="locked")return;
     const previousCursor=cursor;
@@ -778,6 +781,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(drag){drag.moved=true;drag.x=event.clientX;drag.y=event.clientY;}
       return;
     }
+    if(restMoveHeld&&!combatCamera&&(event.buttons&1)&&!drag&&performance.now()>=restMoveAt){restMoveAt=performance.now()+100;click({button:0,clientX:event.clientX,clientY:event.clientY});}
     if (!drag || event.pointerId !== drag.id) return;
     if (
       Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5
@@ -791,6 +795,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     drag.y = event.clientY;
   }
   function endDrag(event) {
+    if(!event||event.type!=='pointerup'||!(event.buttons&1))restMoveHeld=false;
     if(event&&touches.has(event.pointerId)){
       touches.up(event,event.type!=="pointerup");
       if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);return;
@@ -970,7 +975,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       const attack=avatar.dead||down?null:renneCombat?.current(id);if(avatar.character==='Loewe'){const visual=loeweMechanics.loeweVisual(attack);bodyScale=visual.scale;bodyOffsetX=visual.offsetX;}
 
       if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
-      if(avatar===me&&!introPlaying&&!halloweenScene?.active(time))avatar.heading=combatMoves.cameraFacing(yaw);
+      if(combatCamera&&avatar===me&&!introPlaying&&!halloweenScene?.active(time))avatar.heading=combatMoves.cameraFacing(yaw);
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,

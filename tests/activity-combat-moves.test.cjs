@@ -200,3 +200,9 @@ test('starting a right-button camera drag preserves compatibility mouse events f
  const drag=down({button:2,pointerId:1,pointerType:'mouse',clientX:5,clientY:6,preventDefault(){prevented=true;}},true,()=>false,{setPointerCapture(){}},()=>{});
  assert.equal(drag.id,1);assert.equal(prevented,false,'cancelling pointerdown would suppress the subsequent chorded mousedown');
 });
+
+
+test('camera-driven facing applies only in arenas and exploration dungeons',()=>{
+ for(const map of ['arena','axis','tower1','tower2','tower3','tower4','hallow1','hallow5'])assert.equal(moves.usesCombatFacing(map),true,map);
+ for(const map of ['anterose','hangar','rolent','halloween','liberl'])assert.equal(moves.usesCombatFacing(map),false,map);
+});

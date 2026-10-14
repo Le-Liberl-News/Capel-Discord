@@ -53,6 +53,7 @@ function turnGuard(player,direction,time){
  player.guardHold.dx=direction.dx/length;player.guardHold.dz=direction.dz/length;
  player.heading={dx:player.guardHold.dx,dz:player.guardHold.dz};return true;
 }
+function usesCombatFacing(map){return map==='arena'||map==='axis'||/^tower[1-4]$/.test(map)||/^hallow[1-5]$/.test(map);}
 function cameraFacing(yaw){return {dx:-Math.sin(yaw),dz:Math.cos(yaw)};}
 function forwardAim(origin,heading,range){const length=Math.hypot(heading.dx,heading.dz)||1;return {x:origin.x+heading.dx/length*range,y:origin.y,z:origin.z+heading.dz/length*range};}
-module.exports={cameraFacing,forwardAim,turnGuard,blocksBasic,fromFront,PARRY,DODGE,COMBO,keepsArt,comboOf,comboFactor,tempoSpec,parryActive,dodgeEndpoint};
+module.exports={usesCombatFacing,cameraFacing,forwardAim,turnGuard,blocksBasic,fromFront,PARRY,DODGE,COMBO,keepsArt,comboOf,comboFactor,tempoSpec,parryActive,dodgeEndpoint};
