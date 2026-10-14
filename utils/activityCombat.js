@@ -1,3 +1,4 @@
+const {COMBAT_STEP_HEIGHT,smallStep}=require('../activity/combat-ground.cjs');
 const {rayBody,validateRay,bodyHeight}=require('../activity/fps-combat.cjs');
 
 const {projectionPosition,projectionPath,tornadoPosition,segmentDistance}=require('../activity/combat-projection.cjs');
@@ -20,7 +21,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const moving=platforms?.floor(point);if(moving!==null&&moving!==undefined)return moving;
 
-    if (geometry) return geometry.floor(point.x, point.z, point.y + .5);
+    if (geometry) return geometry.floor(point.x, point.z, point.y + COMBAT_STEP_HEIGHT + .05);
 
     const x=Math.round((point.x-grid.origin.x)/grid.step), z=Math.round((point.z-grid.origin.z)/grid.step);
 
@@ -112,7 +113,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
         const t=n/Math.ceil(length/.2),p={x:origin.x+(endpoint.x-origin.x)*t,y:previous,z:origin.z+(endpoint.z-origin.z)*t},height=floor(p);
 
-        if(height===null||!Number.isFinite(height)||Math.abs(height-previous)>.35)return {error:'Le trajet doit rester sur un sol accessible.'};
+        if(height===null||!Number.isFinite(height)||!smallStep(height,previous))return {error:'Le trajet doit rester sur un sol accessible.'};
         if(spec.special==='trinity'){const x=Math.round((p.x-grid.origin.x)/grid.step),z=Math.round((p.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return {error:'Le trajet doit rester sur un sol accessible.'};}
 
         previous=height;
