@@ -490,5 +490,12 @@
     "lastVisibleFrame": 16,
     "duration": 1000,
     "size": 4
+  },
+  "sc/sc001_10._ef": {
+    "name": "sc-sc001_10",
+    "frames": 90,
+    "lastVisibleFrame": 19,
+    "duration": 1000,
+    "size": 4
   }
 }
