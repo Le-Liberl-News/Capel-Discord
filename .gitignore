@@ -16,3 +16,7 @@ __pycache__/
 
 # Generated local cutscene editor bundle
 tools/cutscene-editor/preview-bundle.js
+
+# Generated local map editor bundles
+tools/map-editor/bundle.js
+tools/map-editor/game-bundle.js
