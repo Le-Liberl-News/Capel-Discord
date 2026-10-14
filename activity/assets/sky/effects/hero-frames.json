@@ -455,5 +455,33 @@
     "lastVisibleFrame": 28,
     "duration": 1000,
     "size": 4
+  },
+  "sc/mp094_00._ef": {
+    "name": "sc-mp094_00",
+    "frames": 90,
+    "lastVisibleFrame": 33,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/ms30001c._ef": {
+    "name": "sc-ms30001c",
+    "frames": 90,
+    "lastVisibleFrame": 44,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/ms00271b._ef": {
+    "name": "sc-ms00271b",
+    "frames": 90,
+    "lastVisibleFrame": 9,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/ms04532._ef": {
+    "name": "sc-ms04532",
+    "frames": 90,
+    "lastVisibleFrame": 36,
+    "duration": 1000,
+    "size": 4
   }
 }

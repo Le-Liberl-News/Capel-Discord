@@ -28,6 +28,8 @@ def effect(identifier):
     for part in definition['parts']:
         if part.get('model'):
             original=cache/part['model'].removeprefix('/cache/')
+            if not original.exists():  # e.g. the missile body of ms30001c: keep only its smoke
+                part['enabled']=False;part.pop('model');continue
             model=json.loads(original.read_text(encoding='utf8'))
             for mesh in model['meshes']:
                 for key in ['texture','additiveTexture']:

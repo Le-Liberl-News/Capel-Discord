@@ -26,11 +26,13 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
    const nativeFist=impact?.nativeEffect==='SC/cr160_00._ef';
-   const effect=heal?null:impact?.nativeEffect==='Third/cr151_01._ef'?bakedEffectSprite(THREE,estelleBank,4):impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
+   // quiet: combat-feedback.mjs already plays this hit's own impact; only the number is shown here
+   const quiet=!!impact?.quiet;
+   const effect=heal||quiet?null:impact?.nativeEffect==='Third/cr151_01._ef'?bakedEffectSprite(THREE,estelleBank,4):impact?.catBite?bakedEffectSprite(THREE,catBank,1.4):nativeFist?bakedEffectSprite(THREE,zinBank,3):bakedEffectSprite(THREE,banks.get(damageEffectIndex(amount)),impact?.point?.8:[4.5,4,3.6,3.2,2.8,2.6][damageEffectIndex(amount)]);
    const sprite=effect?.sprite??new THREE.Sprite(new THREE.SpriteMaterial({map,color:heal?0x70ff9a:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
    if(effect)map.dispose();
    sprite.renderOrder=5;scene.add(sprite);
-   const extra=impact?.point&&!impact?.catBite?{sprite:new THREE.Sprite(new THREE.SpriteMaterial({map:glowMap,color:0xff2020,transparent:true,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending})),draw(ms){this.sprite.material.opacity=Math.max(0,1-ms/700);},dispose(){this.sprite.material.dispose();}}:null;if(extra){extra.sprite.renderOrder=8;scene.add(extra.sprite);}
+   const extra=impact?.point&&!impact?.catBite&&!quiet?{sprite:new THREE.Sprite(new THREE.SpriteMaterial({map:glowMap,color:0xff2020,transparent:true,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending})),draw(ms){this.sprite.material.opacity=Math.max(0,1-ms/700);},dispose(){this.sprite.material.dispose();}}:null;if(extra){extra.sprite.renderOrder=8;scene.add(extra.sprite);}
    const number=document.createElement("div");number.className="sky-damage";
    number.style.cssText="position:absolute;pointer-events:none;display:flex;transform-origin:50% 100%;z-index:18";
    const label=damageLabel(amount);number.innerHTML=label.markup;
@@ -48,7 +50,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     // Place the flash just in front of the opaque character plane, keeping scenery occlusion.
     if(hit.impact?.nativeEffect==='SC/cr160_00._ef'&&hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.sprite.position.y+=[.18,-.1,.3,.04][n%4];}
     hit.sprite.position.add(new THREE.Vector3().subVectors(camera.position,hit.sprite.position).normalize().multiplyScalar(hit.impact?.catBite?.4:.18));if(hit.extra){hit.extra.sprite.position.copy(hit.sprite.position);if(hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.extra.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.extra.sprite.position.y+=[.18,-.1,.3,.04][n%4];}hit.extra.sprite.visible=hit.time<.8;hit.extra.draw(hit.time*1000);if(hit.impact?.point&&hit.impact?.nativeEffect!=='SC/cr160_00._ef'){const units=camera.isOrthographicCamera?(camera.top-camera.bottom)/camera.zoom:2*camera.position.distanceTo(hit.extra.sprite.position)*Math.tan(camera.fov*Math.PI/360)/camera.zoom;hit.extra.sprite.scale.setScalar(Math.max(.55,units*58/Math.max(1,height))*(1+Math.min(1,hit.time/.08)*.15));}}
-    hit.sprite.visible=hit.time<(hit.effect ? .8 : .35);
+    hit.sprite.visible=!hit.impact?.quiet&&hit.time<(hit.effect ? .8 : .35);
     if(hit.effect){hit.effect.draw(hit.time*1000);hit.sprite.material.opacity=1;}else {hit.sprite.scale.setScalar(.65+hit.time*3);hit.sprite.material.opacity=Math.max(0,1-hit.time/.35);hit.sprite.material.map.offset.x=Math.min(3,Math.floor(hit.time*14))*.25;}
     const screen=new THREE.Vector3(p.x,p.y+h+.3,p.z).project(camera);
     hit.number.hidden=screen.z>1||screen.z< -1||Math.abs(screen.x)>1.1||Math.abs(screen.y)>1.1;

@@ -314,7 +314,7 @@ function createActivityService({
           } else if(point.action.type==='drink'&&onDrink){actionResult=await onDrink({id:point.action.id,actor:session.id,character:session.character,player:{...player},channel:session.channel});}
           else if(player.duelProtected) actionResult={error:player.duelFinished?"Le duel est termine.":"Le combat va commencer."};
           // a character turned into a pom-tiron has no basic attack, art or craft left
-          else if(['basic','art','craft'].includes(point.action.kind)&&isPumpkin(session.character)) actionResult={error:"Pom ?"};
+          else if((['basic','art','craft'].includes(point.action.kind)||point.action.type==='parry')&&isPumpkin(session.character)) actionResult={error:"Pom ?"};
           else actionResult = world.action(player, point.action, room);
           if (actionResult.text) {
             const events = messageStreams.get(session.channel) ?? [];

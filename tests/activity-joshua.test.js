@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {createActivityCombat}=require('../utils/activityCombat');
 const {createActivityService}=require('../utils/activityService');
 const {applyDamage}=require('../utils/activityDamage');
-const {COMBAT,combatSpec}=require('../activity/native-combat.cjs');
+const {COMBAT,combatSpec,nativeSpec}=require('../activity/native-combat.cjs');
 const grid={origin:{x:-12,z:-12},step:1,width:25,height:25,cells:Array(625).fill(0),spawn:{x:0,y:0,z:0}};
 function fixture(extra={}){let time=1000;const players=new Map([['j',{id:'j',character:'Joshua',hp:100,x:0,y:0,z:0}],['a',{id:'a',hp:100,x:2,y:0,z:0}],['b',{id:'b',hp:100,x:5,y:0,z:.5}],['outside',{id:'outside',hp:100,x:3,y:0,z:2}]]);const combat=createActivityCombat({grid,now:()=>time,...extra});return {players,combat,start:()=>combat.action(players.get('j'),{id:'fang',kind:'craft',aim:{x:7,y:0,z:0}},players),tick(ms){time+=ms;combat.tick(players);}};}
 test('Black Fang crosses its selected segment and applies three distinct impacts to every enemy on that segment',()=>{
@@ -33,7 +33,7 @@ test('all damage sources retain separately numbered impacts after shield absorpt
 });
 test('Olivier has his own verified banks and Joshua uses AS 19 and the bank dynamically loaded by Black Fang',()=>{
  assert.equal(COMBAT.Olivier.source.as,'as04030._dt');assert.ok(Object.values(COMBAT.Olivier.banks).every(b=>b.texture.includes('as04030')));
- assert.deepEqual(COMBAT.Joshua.sequences.art.map(f=>f.pose),[0,1,2]);assert.ok(COMBAT.Joshua.sequences.craft.some(f=>f.bank===12));assert.equal(combatSpec('Joshua','art').element,'time');
+ assert.deepEqual(COMBAT.Joshua.sequences.art.map(f=>f.pose),[0,1,2]);assert.ok(COMBAT.Joshua.sequences.craft.some(f=>f.bank===12));assert.equal(nativeSpec('Joshua','art').element,'time');assert.equal(combatSpec('Joshua','art').dodge,true);
 });
 
 test('the runtime resolves every selected EF and texture relative to the public Sky asset directory',async()=>{
@@ -46,9 +46,9 @@ test('the runtime resolves every selected EF and texture relative to the public 
 });
 
 
-test('Joshua charges for one full second before releasing his art with the native casting halo',()=>{
- const spec=combatSpec('Joshua','art');assert.equal(spec.windup,1000);assert.equal(spec.castDuration,1000);assert.equal(spec.castEffect,'SC/mgaria0._ef');assert.ok(spec.duration>=spec.windup);
- const f=fixture(),j=f.players.get('j');assert.ok(f.combat.action(j,{id:'wind',kind:'art',aim:{x:2,y:0,z:0}},f.players).combatId);f.tick(999);assert.equal(f.players.get('a').hp,100);f.tick(1);assert.equal(f.players.get('a').hp,76);
+// Joshua's art key now dodges (combat-moves.cjs); his native Soul Blur data is kept.
+test('Joshua keeps the data of his native one-second Soul Blur charge',()=>{
+ const spec=nativeSpec('Joshua','art');assert.equal(spec.windup,1000);assert.equal(spec.castDuration,1000);assert.equal(spec.castEffect,'SC/mgaria0._ef');assert.ok(spec.duration>=spec.windup);
 });
 
 

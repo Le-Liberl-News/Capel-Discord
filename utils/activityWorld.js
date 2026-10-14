@@ -463,7 +463,7 @@ function createActivityWorld(options) {
   const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[],fire});
   return {...world,
     tick(players){world.tick(players,new Map([...players,...enemies.entities,...combat.entities]));options.platforms?.tick(players);jumps?.tick(players);enemies.tick(new Map([...players,...combat.entities]));fire?.tick(new Map([...players,...combat.entities]));combat.tick(new Map([...players,...enemies.entities,...combat.entities]));if(options.dungeon)for(const p of players.values())if(p.hp===0&&!p.noRespawn)p.deadUntil=Math.min(p.deadUntil??Infinity,(options.now??Date.now)()+2000);},
-    action(player,command,players){return command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,new Map([...players,...enemies.entities,...combat.entities])) : world.action(player,command,players);},
+    action(player,command,players){return command?.type==='parry'?combat.parry(player,new Map([...players,...enemies.entities,...combat.entities])):command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,new Map([...players,...enemies.entities,...combat.entities])) : world.action(player,command,players);},
     snapshot(){return {...world.snapshot(),combat:combat.snapshot(),enemies:[...enemies.snapshot(),...combat.entities.values()],fire:fire?.snapshot()??[]};},
     cooldownsFor:combat.cooldownsFor,canDetonate:combat.canDetonate,
   };

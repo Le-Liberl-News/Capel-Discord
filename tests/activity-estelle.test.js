@@ -18,9 +18,9 @@ test('wave targeting accepts diagonals, respects walls and protects dungeon alli
  const f=fixture({canDamage:(_a,b)=>b.id!=='near',geometry:{floor:()=>0,sweep:(a,b)=>a.x<3&&b.x>3?{point:{x:3,y:.85,z:0}}:null}});f.cast();f.tick(1000);assert.equal(f.players.get('near').hp,100);assert.equal(f.players.get('far').hp,100);
  const diagonal=fixture();diagonal.players.get('near').x=2;diagonal.players.get('near').z=2;assert.ok(diagonal.cast('craft',{x:6,y:0,z:6}).combatId);diagonal.tick(1000);assert.equal(diagonal.players.get('near').hp,70);
 });
-test('Estelle casts native Earth Lance after one second of native halo and cast poses',()=>{
- const spec=combatSpec('Estelle','art');assert.equal(spec.nativeEffect,'SC/mg017_0._ef');assert.equal(spec.castDuration,1000);assert.equal(spec.windup,1000);assert.ok(COMBAT.Estelle.sequences.spell.length&&COMBAT.Estelle.sequences.cast.length);
- const f=fixture();f.cast('art',{x:2,y:0,z:0});f.tick(999);assert.equal(f.players.get('near').hp,100);f.tick(1000);assert.equal(f.players.get('near').hp,80);
+// Estelle's art key now dodges; the native Earth Lance data is kept.
+test('Estelle keeps the data of her native Earth Lance, one second of halo and cast poses',()=>{
+ const spec=require('../activity/native-combat.cjs').nativeSpec('Estelle','art');assert.equal(spec.nativeEffect,'SC/mg017_0._ef');assert.equal(spec.castDuration,1000);assert.equal(spec.windup,1000);assert.ok(COMBAT.Estelle.sequences.spell.length&&COMBAT.Estelle.sequences.cast.length);
 });
 
 test('Estelle uses one spatial native line whose curved geometry follows the aimed segment without texture uploads',async()=>{

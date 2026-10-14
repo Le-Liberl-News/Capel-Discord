@@ -11,6 +11,8 @@ const {applyDamage}=require('./activityDamage');
 
 const { combatSpec, attackPoint } = require("../activity/native-combat.cjs");
 
+const moves=require("../activity/combat-moves.cjs");
+
 function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft = () => {}, onDefeat = () => {}, canDamage = () => true, dungeon=null, platforms=null }) {
 
   const attacks = new Map(), cooldowns = new Map(), projections=new Map();
@@ -46,6 +48,9 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(player.character==='Campanella'&&command.kind==='craft'&&player.hp>0&&!player.spectator&&!player.duelProtected&&!immobilized(player,now())&&special.detonate(player,room))return {combatId:command.id};
 
     let spec = combatSpec(player.character,command.kind);const time=now(),continuation=spec?.special==='trinity'&&trinity.active(player);if(spec?.special==='trinity')spec=trinity.prepare(player,spec);
+    if(spec?.dodge)return dodge(player,command,spec,room,time);
+    // basic attacks speed up with the combo (combat-moves.cjs)
+    if(command.kind==='basic'&&spec)spec=moves.tempoSpec(spec,moves.comboFactor(moves.comboOf(player,time)));
 
     if (!spec || player.catCling || player.hp <= 0 || player.spectator || player.canMove === false || immobilized(player,time) || time<(player.combatLockedUntil??0))
 
@@ -139,7 +144,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const travel = fps?Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z)/spec.projectileSpeed*1000:spec.leap?spec.leapDuration:spec.dash ? spec.dashDuration : !spec.projectile ? 0 : Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/14*1000;
 
-    const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,technique:spec.name,target:supportTarget?.id??(spec.targetRequired?command.target:undefined),effect:spec.effect,origin:fps?fps.origin:origin,ray:fps,obstacleImpact,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.persistentBuff?spec.buffDuration:spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
+    const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,tempo:spec.tempo,technique:spec.name,target:supportTarget?.id??(spec.targetRequired?command.target:undefined),effect:spec.effect,origin:fps?fps.origin:origin,ray:fps,obstacleImpact,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.persistentBuff?spec.buffDuration:spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
     if(food){attack.food=food;attack.technique=cooking.FOODS[food].name;player.foodStock.shift();}
 
     if(spec.lockOn){attack.target=lockedTarget;attack.lockedOffset=lockedOffset;attack.shots=[];}
@@ -172,7 +177,53 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   }
 
+  // Dodge: a short dash along the movement direction, refused during a craft (combat-moves.cjs).
+  function dodge(player,command,spec,room,time){
+    if(player.catCling||player.hp<=0||player.spectator||player.canMove===false||player.cooking||immobilized(player,time)||time<(player.combatLockedUntil??0))return {error:'Esquive indisponible.'};
+    if([...attacks.values()].some(a=>a.actor===player.id&&a.kind==='craft'&&!a.cancelled&&time<a.started+(combatSpec(a.character,'craft')?.duration??0)))return {error:'Esquive impossible pendant un craft.'};
+    if(time<(cooldowns.get(player.id)?.[command.kind]??0))return {error:'Technique en récupération.'};
+    if(attacks.has(command.id))return {error:'Attaque déjà reçue.'};
+    const wanted=command.direction&&[command.direction.x,command.direction.z].every(Number.isFinite)?command.direction:{x:player.heading?.dx??0,z:player.heading?.dz??-1};
+    const walkable=p=>{if(!grid)return true;const x=Math.round((p.x-grid.origin.x)/grid.step),z=Math.round((p.z-grid.origin.z)/grid.step);return x>=0&&z>=0&&x<grid.width&&z<grid.height&&grid.cells[z*grid.width+x]!==null;};
+    const origin={x:player.x,y:player.y??0,z:player.z},endpoint=moves.dodgeEndpoint(origin,wanted,{floor,walkable,blocked:(a,b)=>!!geometry?.sweep(a,b,.12)});
+    if(!endpoint)return {error:'Pas la place pour esquiver.'};
+    // a basic attack in progress is abandoned
+    for(const other of attacks.values())if(other.actor===player.id&&other.kind==='basic'&&!other.resolved){other.cancelled=true;other.resolved=true;}
+    const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,technique:spec.name,dodge:true,origin,aim:endpoint,started:time,impactAt:time+spec.dashDuration,endsAt:time+spec.dashDuration+500,resolved:false,nextHit:0,hits:[]};
+    attacks.set(attack.id,attack);
+    player.heading={dx:endpoint.x-origin.x,dz:endpoint.z-origin.z};
+    Object.assign(player,{combatDash:attack.id,combatLockedUntil:time+spec.dashDuration,acceptedAt:time,jump:null,jumpTickAt:null,jumpLandedAt:time,platformId:null,platformOffset:null});
+    const cooldown=cooldowns.get(player.id)??{};cooldown[command.kind]=time+spec.cooldown;cooldowns.set(player.id,cooldown);
+    player.attackBusyUntil=time+spec.dashDuration;
+    return {combatId:attack.id};
+  }
+  // Parry: live for PARRY.window after the key; pressing again is refused for PARRY.cooldown.
+  function parry(player,room){
+    players=room;const time=now();
+    if(player.hp<=0||player.spectator||player.catCling)return {error:'Parade indisponible.'};
+    if(time<(cooldowns.get(player.id)?.parry??0))return {error:'Parade en récupération.'};
+    const cooldown=cooldowns.get(player.id)??{};cooldown.parry=time+moves.PARRY.cooldown;cooldowns.set(player.id,cooldown);
+    player.parry={at:time};
+    return {parry:true};
+  }
+  // A craft landing on a fighter whose parry is live is blocked; its caster takes the counter.
+  function parried(attack,victim,time){
+    if(attack.kind!=='craft'||attack.character==='Nial'||!victim)return false;
+    if(attack.parriedBy?.includes(victim.id))return true;
+    if(!moves.parryActive(victim,time))return false;
+    victim.parry=null;(attack.parriedBy??=[]).push(victim.id);attack.cancelled=true;attack.resolved=true;
+    attack.hits.push({id:victim.id,at:time,parried:true,damage:0,point:{x:victim.x,y:(victim.y??0)+.9,z:victim.z}});
+    const caster=players?.get(attack.actor);
+    if(caster&&caster.id!==victim.id&&caster.hp>0&&!caster.spectator&&canDamage(victim,caster)){
+      const counter={...attack,id:attack.id+':parry',actor:victim.id,character:victim.character,kind:'parry',technique:'Parade'};
+      const dealt=hurt(counter,victim,caster,moves.PARRY.counterDamage,time,{nativeEffect:moves.PARRY.effect,parry:true,point:{x:caster.x,y:(caster.y??0)+.9,z:caster.z}});
+      attack.hits.push({id:caster.id,at:time,counter:true,...dealt});
+      if(caster.hp>0)project(counter,victim,caster,{knockback:moves.PARRY.knockback,knockbackDuration:moves.PARRY.knockbackDuration},{x:caster.x-victim.x||.01,z:caster.z-victim.z},time);
+    }
+    return true;
+  }
   function hurt(attack,attacker,player,amount,time,impact){
+    if(parried(attack,player,time))return {damage:0,absorbed:0,parried:true};
 
     const dealt=applyDamage(player,amount*attackFactor(attacker,time),time,impact);
 
@@ -350,6 +401,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       }
 
       if(dashSpec?.catLeap){if(attack.dashFinished)attack.resolved=true;continue;}
+      if(attack.dodge){if(attack.dashFinished||attack.cancelled)attack.resolved=true;continue;}
       const hitOffsets=dashSpec?.hitOffsets??[0];
 
       if(attack.resolved||time<attack.impactAt+hitOffsets[attack.nextHit])continue;
@@ -371,6 +423,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(spec.selfTarget){attack.origin={x:attacker.x,y:attacker.y??0,z:attacker.z};attack.aim={...attack.origin};}
 
       if(attack.kind==='basic'&&!spec.projectile){const dx=attack.aim.x-attack.origin.x,dz=attack.aim.z-attack.origin.z;attack.origin={x:attacker.x,y:attacker.y??0,z:attacker.z};attack.aim={x:attacker.x+dx,y:attacker.y??0,z:attacker.z+dz};}
+      const comboNext=attack.kind==='basic'?moves.comboOf(attacker,time)+1:0;let landed=false;
 
       for(const player of room.values()) {
 
@@ -421,14 +474,18 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         const to=precise?.point??{x:player.x,y:(player.y??0)+.85,z:player.z},wall=geometry?.sweep(attack.ray?.origin??from,to,.08);
 
         if(wall && Math.hypot(wall.point.x-from.x,wall.point.y-from.y,wall.point.z-from.z)<Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z)-.15)continue;
+        if(parried(attack,player,time))break;
 
-        const dealt=applyDamage(player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)*attackFactor(attacker,time)/(spec.wave||spec.sweepShots?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex],precise?{point:precise.point,headshot:precise.headshot}:spec.hitEffect?{nativeEffect:spec.hitEffect,hitIndex}:undefined);if(dealt.damage)applyStatus(player,spec.status==='stun'?{...spec,statusDuration:Math.max(0,attack.started+spec.duration-time)}:spec,time);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+hitOffsets[hitIndex],endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
+        const dealt=applyDamage(player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)*attackFactor(attacker,time)/(spec.wave||spec.sweepShots?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex],precise?{point:precise.point,headshot:precise.headshot}:spec.hitEffect?{nativeEffect:spec.hitEffect,hitIndex,...(comboNext?{combo:comboNext}:{})}:comboNext?{nativeEffect:moves.COMBO.hitEffect,combo:comboNext}:undefined);if(dealt.damage||dealt.absorbed)landed=true;if(dealt.damage)applyStatus(player,spec.status==='stun'?{...spec,statusDuration:Math.max(0,attack.started+spec.duration-time)}:spec,time);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+hitOffsets[hitIndex],endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
 
         attack.hits.push({id:player.id,hitIndex,at:attack.impactAt+hitOffsets[hitIndex],...dealt});
 
         if(spec.kick&&dealt.damage&&player.hp>0)project(attack,attacker,player,spec,{x:attack.aim.x-attack.origin.x,z:attack.aim.z-attack.origin.z},time);
 
       }
+      if(attack.cancelled)break;
+      // a landed basic attack feeds the combo, a missed one resets it
+      if(comboNext){if(landed)attacker.combo={count:comboNext,until:time+moves.COMBO.window};else{attacker.combo=null;attack.missed={at:time,point:{x:attack.aim.x,y:(attack.aim.y??0)+.9,z:attack.aim.z}};}}
 
     }
 
@@ -440,7 +497,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   function snapshot(){return {attacks:[...attacks.values()].filter(a=>now()<=a.endsAt+1800).map(a=>({...a,hits:a.hits.map(h=>({...h}))})),cooldowns:{}};}
 
-  return {action,tick,snapshot,entities:special.entities,canDetonate:id=>!!special.activeSpire(id),cooldownsFor:id=>({...cooldowns.get(id)})};
+  return {action,parry,tick,snapshot,entities:special.entities,canDetonate:id=>!!special.activeSpire(id),cooldownsFor:id=>({...cooldowns.get(id)})};
 
 }
 
