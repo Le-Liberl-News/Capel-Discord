@@ -40,6 +40,10 @@ const terminal=createTerminalUI({
 });
 function bindScene(){scene.onAction(()=>{if(training){if(['leave_map','leave_duel'].includes(scene.action()?.type))void stopTraining();return;}if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onRematch(async id=>{try{const result=await fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify({action:"rematch",invitation:id,request:crypto.randomUUID()})});scene?.captureNotice(result.message);wakePoll();}catch(error){scene?.captureNotice(error.message);throw error;}});scene.onCraftCapture(event=>void publishCraftCapture(event));}
 
+// arena queue: a banner while waiting in the activity, a sound when the opponent is found
+const queueBanner=document.createElement('div');queueBanner.id='sky-queue';queueBanner.hidden=true;queueBanner.style.cssText='position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:24;padding:6px 14px;background:#151019e0;border:1px solid #b49760;border-radius:6px;color:#ffe7b0;font:600 16px Cinzel,Georgia,serif;pointer-events:none';document.body.append(queueBanner);
+function showQueue(queue,serverTime){if(!queue||training){queueBanner.hidden=true;return;}const s=Math.max(0,Math.floor(((serverTime??Date.now())-queue.since)/1000));queueBanner.textContent='⏳ En file d’attente… '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');queueBanner.hidden=false;}
+function playMatchFound(){try{const audio=new Audio(new URL('sounds/se/fight.wav',ASSETS).href);audio.volume=effectsVolume();void audio.play().catch(()=>{});}catch{}}
 const trainingResult=document.createElement('div');trainingResult.hidden=true;trainingResult.style.cssText='position:fixed;top:35%;left:50%;transform:translateX(-50%);z-index:35;background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;padding:20px;text-align:center;font:22px AveriaSky,sans-serif';
 const trainingWinner=document.createElement('p'),trainingAgain=document.createElement('button'),trainingExit=document.createElement('button');trainingAgain.textContent='Rejouer';trainingExit.textContent='Retour';for(const b of [trainingAgain,trainingExit])b.style.cssText='font:inherit;padding:8px;margin:5px;background:#ead29c;color:#241b15;border:1px solid #b49760;border-radius:4px';trainingResult.append(trainingWinner,trainingAgain,trainingExit);document.body.append(trainingResult);
 trainingAgain.onclick=()=>void (trainingMode==='ctf'?startCaptureTheFlag():startTraining());trainingExit.onclick=()=>void stopTraining();
@@ -305,7 +309,8 @@ async function publier() {
   scene.acknowledgeMovement(result.movementSequence ?? submitted.sequence);
   scene.correct(result.position, submitted);
   updateHunt(result.game ? {...result.game,received:Date.now()} : null);
-  if(result.duel&&result.duel.id!==lastDuelIntro&&result.health.serverTime<result.duel.readyAt){lastDuelIntro=result.duel.id;music.restart();}
+  if(result.duel&&result.duel.id!==lastDuelIntro&&result.health.serverTime<result.duel.readyAt){lastDuelIntro=result.duel.id;music.restart();playMatchFound();}
+  showQueue(result.duel?null:result.queue,result.health?.serverTime);
   await scene.world(result);
   await scene.sync([
     ...result.joueurs,

@@ -1,6 +1,8 @@
 const CHANNEL='1558125759682576475';
 function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveCharacter=null,now=Date.now,render=require("./activityArenaBoardImage").renderArenaBoard}) {
- const saved=store.load()??{};const queue=new Map();let page=0,busy=false,ticking=false,lastSignature=null;
+ const saved=store.load()??{};const queue=new Map();lobby.attachQueue?.(queue);
+ // queued players whose activity answers (polled within 15 s) are the ones a duel can start with
+ const readyCount=()=>[...queue.keys()].filter(id=>lobby.isConnected(id)).length;let page=0,busy=false,ticking=false,lastSignature=null;
  const notices=new Map(saved.queueNotices??[]);
  const saveNotices=()=>{saved.queueNotices=[...notices];store.save(saved);};
  async function removeNotice(user){const id=notices.get(user);if(!id)return;try{const channel=await client.channels.fetch(CHANNEL);await channel.messages.delete(id);}catch(e){if(e.code!==10008&&e.code!==10003)throw e;}notices.delete(user);saveNotices();}
@@ -14,9 +16,9 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
    const scores=new Map(ranking.rows().map(r=>[r.user,r]));
    const rows=(await assigned()).map(({user,name})=>({...scores.get(user),user,name,pb:scores.get(user)?.pb??0})).sort((a,b)=>b.pb-a.pb||a.name.localeCompare(b.name,'fr'));
    const pages=Math.max(1,Math.ceil(rows.length/12));page=Math.min(page,pages-1);const slice=rows.slice(page*12,page*12+12).map(({name,wins,streak,lastWin,delta,pb})=>({name,wins,streak,lastWin,delta,pb}));
-   const components=[{type:1,components:[button('choose','D\u00e9fier',1),button('queue',`File d\u2019attente (${queue.size})`,1),button('leave','Quitter la file'),button('training','Entraînement'),button('ctf','Capture du drapeau')]}];
+   const components=[{type:1,components:[button('choose','D\u00e9fier',1),button('queue',`File d\u2019attente (${queue.size} \u00b7 ${readyCount()} pr\u00eat${readyCount()>1?'s':''})`,1),button('leave','Quitter la file'),button('training','Entraînement'),button('ctf','Capture du drapeau')]}];
    if(pages>1)components.push({type:1,components:[{...button('previous','\u25c0'),disabled:page===0},{...button('next','\u25b6'),disabled:page===pages-1}]});
-   const visual={rows:slice,page,pages,queueSize:queue.size};const signature=JSON.stringify(visual);
+   const visual={rows:slice,page,pages,queueSize:queue.size,ready:readyCount()};const signature=JSON.stringify(visual);
    if(signature===lastSignature)return;
    const image=await render(visual);
    const payload={embeds:[{color:0x68baa0,image:{url:'attachment://arena.png'}}],attachments:[],files:[{attachment:image,name:'arena.png'}],components,allowedMentions:{parse:[]}};
@@ -29,6 +31,9 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
    for(const [id,at] of queue)if(now()-at>10*60*1000||lobby.matchFor(id))queue.delete(id);
    const ready=[...queue.keys()].filter(id=>lobby.isConnected(id));
    while(ready.length>=2){const pair=ready.splice(0,2);pair.forEach(id=>queue.delete(id));try{await duels.match(pair,client);}catch(e){console.error('Arena matchmaking:',e.message);}}
+   // someone waits in the activity and a recent queued player closed theirs: start the duel and send them the way back in DM
+   const away=[...queue].filter(([id,at])=>!lobby.isConnected(id)&&now()-at<3*60*1000).map(([id])=>id);
+   while(ready.length&&away.length){const present=ready.shift(),absent=away.shift();queue.delete(present);queue.delete(absent);try{const id=await duels.match([present,absent],client);const user=await client.users.fetch(absent);await user.send({content:'Adversaire trouvé dans la file d’attente de l’arène !',components:[{type:1,components:[{type:2,custom_id:'activity:'+id,label:'Rejoindre le duel',style:1}]}],allowedMentions:{parse:[]}});}catch(e){console.error('Arena matchmaking (DM):',e.code??e.message);}}
    for(const user of notices.keys())if(!queue.has(user))await removeNotice(user);
    await duels.cleanupAnnouncements?.(client);
    await refresh();

@@ -56,3 +56,15 @@ test('queue notifications show only the character, deduplicate clicks and disapp
 });
 
 test('Training board button launches privately without queueing or creating a duel',async()=>{let requested,launched=0,replied=0,cancelled=false;const lobby={matchFor:()=>null,isConnected:()=>false,requestTraining:user=>requested=user,cancelTraining:()=>cancelled=true};const board=createArenaBoard({client:{},lobby,duels:{},ranking:{},assigned:async()=>[],store:{load:()=>null},render:async()=>Buffer.from('image')});const i={isButton:()=>true,customId:'arena:training',user:{id:'private'},launchActivity:async()=>launched++,reply:async p=>{assert.equal(p.flags,64);replied++;}};await board.handle(i);assert.equal(requested,'private');assert.equal(launched,1);assert.equal(replied,0);assert.equal(cancelled,false);lobby.isConnected=()=>true;await board.handle(i);assert.equal(launched,1);assert.equal(replied,1);});
+
+test('a player waiting in the activity is matched with a recently queued player whose activity is closed, who gets the way back in DM',async()=>{
+ let clock=0,payload;const connected=new Set(['here']),pairs=[],dms=[];
+ const message={id:'board',edit:async p=>payload=p};const channel={guild:{roles:{everyone:{id:'everyone'}}},permissionOverwrites:{edit:async()=>{}},messages:{fetch:async()=>message},send:async p=>{payload=p;return message;}};
+ const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel},users:{fetch:async id=>({send:async m=>dms.push([id,m])})}},lobby:{isConnected:id=>connected.has(id),matchFor:()=>null},duels:{match:async p=>{pairs.push(p);return 'duel:x';}},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>[],store:{load:()=>null,save:()=>{}},render:async()=>Buffer.from('image'),now:()=>clock});
+ const interaction=id=>({isButton:()=>true,customId:'arena:queue',user:{id},launchActivity:async()=>{},reply:async()=>{}});
+ await board.handle(interaction('stale'));clock=4*60*1000;await board.handle(interaction('here'));await board.tick();
+ assert.equal(pairs.length,0,'an absent player queued 4 minutes ago is not matched');
+ assert.match(payload.components[0].components[1].label,/2 · 1 prêt\)/);
+ await board.handle(interaction('away'));await board.tick();
+ assert.deepEqual(pairs,[['here','away']]);assert.equal(dms[0][0],'away');assert.equal(dms[0][1].components[0].components[0].custom_id,'activity:duel:x');
+});
