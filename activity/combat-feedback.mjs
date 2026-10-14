@@ -6,7 +6,7 @@ import moves from './combat-moves.cjs';
 const SHAKE_MS=260,PUFF_MS=600,DUST_EVERY=22,FLASH_MS=90;
 // combo count drawn like the damage numbers, outlined in yellow
 let comboLabelId=0;
-function comboMarkup(count){const text=count+(count>1?' HITS':' HIT'),width=text.length*34+36,id='combo-glow-'+(++comboLabelId);return {width,markup:`<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 ${width} 100" style="overflow:visible"><defs><filter id="${id}" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" font-style="italic" fill="#ffc400" stroke="#ffc400" stroke-width="5" filter="url(#${id})">${text}</text><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" font-style="italic" fill="white" stroke="#e0a800" stroke-width="2" paint-order="stroke fill">${text}</text></svg>`};}
+function comboMarkup(count){const text=count+(count>1?' coups':' coup'),width=text.length*34+36,id='combo-glow-'+(++comboLabelId);return {width,markup:`<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 ${width} 100" style="overflow:visible"><defs><filter id="${id}" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" font-style="italic" fill="#ffc400" stroke="#ffc400" stroke-width="5" filter="url(#${id})">${text}</text><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" font-style="italic" fill="white" stroke="#e0a800" stroke-width="2" paint-order="stroke fill">${text}</text></svg>`};}
 // game sounds of the moves (combat-sounds.mjs)
 const HIT_SOUNDS=['hit1','hit2','hit3','hit4'],CRAFT_SOUNDS={Olivier:'olivier',Antoine:'antoine',Joshua:'joshua'};
 export async function createCombatFeedback(THREE,scene,assets,container,sounds=null){
@@ -76,7 +76,8 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
    for(const [id,c]of combos){const avatar=avatars.get(id),age=now-c.started;if(!avatar||age>c.hold){c.el.remove();combos.delete(id);continue;}
     c.el.hidden=age<0;if(age<0)continue;
     const h=avatar.info?.bodyHeight??avatar.info?.height??1.6,screen=new THREE.Vector3(avatar.position.x,avatar.position.y+h+.3,avatar.position.z).project(camera),pop=Math.min(1,age/80),scale=.55+.15*(1-pop);
-    c.el.hidden=screen.z>1;c.el.style.left=((screen.x+1)*width/2+26)+'px';c.el.style.top=((1-screen.y)*height/2+18)+'px';c.el.style.width=(c.width*scale)+'px';c.el.style.height=(100*scale)+'px';c.el.style.opacity=String(Math.min(1,(c.hold-age)/300));}
+    c.el.hidden=screen.z>1;const tremble=age<1000?4*(1-age/1000):0;
+    c.el.style.left=((screen.x+1)*width/2+26+tremble*Math.sin(age*.09))+'px';c.el.style.top=((1-screen.y)*height/2+18+tremble*Math.cos(age*.13))+'px';c.el.style.width=(c.width*scale)+'px';c.el.style.height=(100*scale)+'px';c.el.style.opacity=String(Math.min(1,(c.hold-age)/300));}
    for(const [id,started]of parries){const avatar=avatars.get(id),age=now-started;if(!avatar||age>moves.PARRY.window){if(avatar)avatar.mesh.material.color.setRGB(1,1,1);parries.delete(id);continue;}
     const glow=1-age/moves.PARRY.window;avatar.mesh.material.color.setRGB(1-.35*glow,1-.1*glow,1);}
    for(let i=labels.length-1;i>=0;i--){const l=labels[i],avatar=avatars.get(l.id),age=(now-l.started)/1000;if(!avatar||age>1.1){l.el.remove();labels.splice(i,1);continue;}

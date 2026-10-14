@@ -177,7 +177,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   halloweenDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
   const dungeonEffects=inTower&&!inDungeon?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
-  // "Combat !" sound, and the wind of the Axis Pillar looping through its introduction
+  // "Commencez !" sound, and the wind of the Axis Pillar looping through its introduction
   let introAmbience=null;
   const duelIntro=isArena?createDuelIntro({assets:ASSETS,venue:map,onSpeech:message=>dialogues.receive([message]),onPhase:kind=>{if(kind==='begin')combatSounds.play('fight');if(map==='axis'&&kind&&!introAmbience)introAmbience=combatSounds.loop('axis-ambience',{gain:.8});if(!kind&&introAmbience){introAmbience();introAmbience=null;}}}):null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
@@ -1257,7 +1257,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if (isArena && wasSpectator !== !!health.spectator) { camera=health.spectator?flightCamera:walkingCamera;pitch=health.spectator?.25:CAMERA_PITCH;zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
       movementAllowed = (health.spectator||health.canMove !== false)&&!halloweenScene?.active(performance.now());const cat=avatars.get(localId);if(cat)cat.catCling=health.catCling??null;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
-      if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
+      // held keys are kept: once a dash or lock ends, a direction still held carries on
+      if (!movementAllowed) { path=[]; movementTrace=[]; marker.visible=false; }
       const me = avatars.get(localId);
       if (health.hp === 0 || (health.respawn ?? 0) !== respawn) {
         path = [];
