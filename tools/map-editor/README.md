@@ -15,3 +15,8 @@ Le catalogue des jeux indexe les modèles FC/SC/The 3rd et Azure ainsi que leurs
 Ajouter une lumière crée une source d’éclairage dynamique, réglable dans l’inspecteur : couleur, intensité, portée, scintillement. Déplacer son repère change l’éclairage des surfaces en temps réel. Activer « Lumière du jeu » pour juger le résultat dans l’obscurité. Ces sources utilisent le shader natif du jeu web avec atténuation par distance ; elles ne projettent pas encore d’ombres et traversent les murs.
 
 Le nom de chaque objet et son identifiant stable sont conservés dans `layout.json` (`editorObjects`), pour pouvoir ensuite ajouter des interactions sans dépendre du classement des meshes. L’export produit également `assets-required.json` et un dossier contenant uniquement les textures utilisées par les objets placés.
+
+
+Dans **PNG et sols personnalisés**, Importer un PNG conserve ses pixels et son canal alpha, puis propose de poser un quad vertical. Il est possible de le déplacer, pivoter et redimensionner comme les autres objets, notamment de le coucher au sol. L’image reste disponible dans la palette sur les autres projets. Limites de l’import : 16 Mo et 8192 pixels par côté.
+
+**Dessiner un sol** : choisir une texture, une hauteur Z et la taille du motif répété ; cliquer les sommets dans la vue, puis Terminer ou Entrée. Les polygones concaves sont acceptés ; un contour qui se croise est refusé. Retour arrière ou Ctrl+Z retire le dernier sommet pendant le dessin, Échap annule. **Rectangle** : cliquer deux coins opposés. Chaque sol devient un objet déplaçable et nommé, avec un véritable maillage plat ; l’export reconstruit la navigation sur sa forme exacte. Les textures et formes restent stockées localement avant une publication explicite.

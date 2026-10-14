@@ -3,3 +3,5 @@
 #palette{max-height:36vh;overflow:auto}#objects{max-height:36vh;overflow:auto}#fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.fields-heading{grid-column:1/-1}#fields .row{display:flex;flex-direction:column;align-items:stretch;margin:0;gap:3px}#fields .row input{width:100%;min-width:0;padding:6px}#fields .row span{font-size:12px}#fields .row[data-axis="0"] span{color:#ff8e89}#fields .row[data-axis="1"] span{color:#99d694}#fields .row[data-axis="2"] span{color:#85baff}
 
 #library-list,#library-parts{max-height:24vh;overflow:auto;display:grid;gap:4px}#library-list button,#library-parts button{text-align:left;font-size:12px}#object-id{font-size:11px;color:#9bacbf;word-break:break-all}#light-fields input{max-width:100%}#library-game{width:100%;margin:5px 0}
+
+details{margin:4px 0 14px}summary{cursor:pointer;font-weight:600;margin-bottom:10px}details label{display:block;font-size:12px;margin:8px 0}details select,details input{width:100%;margin-top:3px}.floor-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}.floor-buttons button{font-size:12px;padding:6px}.small{font-size:11px;color:#a7b9cf}canvas:focus{outline:none}
