@@ -11,7 +11,7 @@ export function installSkyGlow(model){
   const glowing=[];
   model.traverse(object=>{if(!object.isMesh)return;for(const material of [].concat(object.material)){const kind=material.userData?.skyGlow;if(!kind)continue;
     // additive, unaffected by the day/night tint: it is a light, not a surface
-    Object.assign(material,{transparent:true,depthWrite:false,alphaTest:0,blending:2});material.userData.skyEmissive=true;material.needsUpdate=true;object.renderOrder=4;object.raycast=()=>{};glowing.push({material,kind});}});
+    Object.assign(material,{transparent:true,depthWrite:false,alphaTest:0,blending:2});material.userData.skyEmissive=true;material.needsUpdate=true;object.renderOrder=4;glowing.push({material,kind});}});
   return {update(time=Date.now()){for(const {material,kind} of glowing){const k=kind==='pulse'?.7+2*axisPulse(time):1.5;material.color.setRGB(k,k*.88,k*.55);}}};
 }
 // The native generic sky cube (skybox._x3): drawn behind everything, centred on the camera.
