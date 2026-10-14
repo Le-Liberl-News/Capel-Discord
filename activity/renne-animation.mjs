@@ -24,6 +24,7 @@ import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {createEarthWave,prepareEarthWave} from './earth-wave.mjs';
 import {createBlackFangTrail} from './black-fang-effects.mjs';
 import dashMechanics from './combat-motion.cjs';
+import {shareTexture} from './shared-texture.mjs';
 const {combatMotion}=dashMechanics;
 import {loadNativeEffects,nativeEffectSprite,nativeCastingHalo,nativeWorldEffect} from './native-effects.mjs';
 import mechanics from './native-combat.cjs';
@@ -76,7 +77,7 @@ export async function createRenneCombat(THREE,scene,assets) {
   function makeEffect(event){const support=combatSpec(event.character??'Renne',event.kind)?.effect;const group=new THREE.Group();scene.add(group);
     const ring=new THREE.Mesh(new THREE.PlaneGeometry(4.2,4.2),new THREE.MeshBasicMaterial({map:ringTexture,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,color:support==='heal'?0x64ffa2:support==='shield'?0x72caff:event.kind==='art'?0xffab59:0xff81ba}));ring.rotation.x=-Math.PI/2;group.add(ring);
     const vortex=new THREE.Sprite(new THREE.SpriteMaterial({map:vortexTexture,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:support==='heal'?0x64ffa2:support==='shield'?0x72caff:event.kind==='art'?0xffb04c:0xffb0d9}));vortex.scale.set(3.2,3.2,1);vortex.position.y=.7;group.add(vortex);
-    const boltMap=fireTexture.clone();boltMap.repeat.set(.25,1);const bolt=new THREE.Sprite(new THREE.SpriteMaterial({map:boltMap,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffffff:0xf78bd5}));bolt.scale.setScalar(1.3);scene.add(bolt);
+    const boltMap=shareTexture(fireTexture);boltMap.repeat.set(.25,1);const bolt=new THREE.Sprite(new THREE.SpriteMaterial({map:boltMap,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:event.kind==='art'?0xffffff:0xf78bd5}));bolt.scale.setScalar(1.3);scene.add(bolt);
     const spec=combatSpec(event.character??'Renne',event.kind),player=spec.nativeEffect&&native.get(spec.nativeEffect.toLowerCase());
     const baked=heroBanks.get(spec.nativeEffect?.toLowerCase());
     const worldAssembly=player&&(spec.tornado||['heal','guard','powerBuff'].includes(spec.effect))?nativeWorldEffect(THREE,player):null;if(worldAssembly){if(spec.effect==='powerBuff')worldAssembly.group.scale.setScalar(.65);scene.add(worldAssembly.group);}

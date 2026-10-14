@@ -1,3 +1,4 @@
+import {shareTexture} from './shared-texture.mjs';
 export async function createPomEffects(THREE, scene, canvas, assets) {
   const loader = new THREE.TextureLoader();
   const [boltTexture, frameTexture] = await Promise.all([
@@ -11,7 +12,7 @@ export async function createPomEffects(THREE, scene, canvas, assets) {
   const material = new THREE.SpriteMaterial({ map: boltTexture, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const bolt = new THREE.Sprite(material); bolt.scale.set(3.2, 0.8, 1); bolt.visible = false; scene.add(bolt);
   const flames = Array.from({ length: 3 }, (_, i) => {
-    const texture = frameTexture.clone(); texture.repeat.set(0.25, 1);
+    const texture = shareTexture(frameTexture); texture.repeat.set(0.25, 1);
     const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 1 - i * 0.23 }));
     flame.scale.setScalar(1.15 - i * 0.2); flame.visible = false; scene.add(flame); return flame;
   });

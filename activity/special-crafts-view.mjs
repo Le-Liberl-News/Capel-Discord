@@ -1,6 +1,7 @@
 import motion from './special-crafts.cjs';
 import {bakedEffectSprite} from './baked-effects.mjs';
 import {nativeWorldEffect} from './native-effects.mjs';
+import {shareTexture} from './shared-texture.mjs';
 export async function createSpecialCraftView(THREE,scene,assets,banks,fireTexture,native=new Map()){
  const ice=await new THREE.TextureLoader().loadAsync(new URL('effects/frozen-crystal.png',assets).href);ice.colorSpace=THREE.SRGBColorSpace;const frozen=new Map(),shatters=[];
  const loader=new THREE.TextureLoader(),[scythe,salt,model]=await Promise.all([loader.loadAsync(new URL('effects/renne-scythe.png',assets).href),loader.loadAsync(new URL('combat/campanella-spire/salt.png',assets).href),fetch(new URL('combat/campanella-spire/model.json',assets)).then(r=>{if(!r.ok)throw Error('Pilier introuvable');return r.json();})]);
@@ -10,7 +11,7 @@ export async function createSpecialCraftView(THREE,scene,assets,banks,fireTextur
  function create(a,s){const group=new THREE.Group();scene.add(group);let projectile=null,assembly=null;
   if(s.special==='spire'){projectile=new THREE.Group();for(const g of geometries)projectile.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:salt,side:THREE.DoubleSide,transparent:true})));group.add(projectile);}
   if(s.special==='boomerang'){projectile=new THREE.Sprite(new THREE.SpriteMaterial({map:scythe,transparent:true,depthWrite:false}));projectile.scale.set(1.8,1.2,1);group.add(projectile);}
-  if(s.special==='fireball'){const map=fireTexture.clone();map.repeat.set(.25,1);projectile=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));projectile.scale.setScalar(.8);group.add(projectile);}
+  if(s.special==='fireball'){const map=shareTexture(fireTexture);map.repeat.set(.25,1);projectile=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));projectile.scale.setScalar(.8);group.add(projectile);}
   if(s.special==='crescent'){const player=native.get('third/sc009_05._ef');if(player){assembly=nativeWorldEffect(THREE,player);projectile=new THREE.Group();projectile.add(assembly.group);projectile.scale.setScalar(.5);group.add(projectile);}}
   const bomb=banks.get(s.special==='spire'?'sc/sc480_03._ef':s.special==='crescent'?s.explosionEffect.toLowerCase():'third/btbomb00._ef'),explosion=bomb?bakedEffectSprite(THREE,bomb,s.special==='spire'?5:s.special==='crescent'?2.8:4):null;if(explosion)group.add(explosion.sprite);
   const frost=banks.get('sc/mg022_0._ef'),fog=s.special==='spire'&&frost?bakedEffectSprite(THREE,frost,5):null;if(fog)group.add(fog.sprite);

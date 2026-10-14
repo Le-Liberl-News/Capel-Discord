@@ -67,6 +67,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { createDialogues } from "./dialogue.mjs";
 import { needsCorrection } from "./reconciliation.mjs";
 import { advance, route, nearestCell, pointAt, facing } from "./movement.mjs";
+import {shareTexture} from './shared-texture.mjs';
 export const ASSETS = new URL(
   new URLSearchParams(location.search).has("frame_id")
     ? "/.proxy/assets/sky/"
@@ -551,7 +552,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       foodStock:player.foodStock??[],cooking:player.cooking??null,walking: !!player.moving,
       speed: player.speed ?? 0.8,
       initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,craftTexture,craftInfo:baseInfo.craft,
-      battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=base.clone();clone.needsUpdate=true;renderer.initTexture(clone);return [bank,clone];})):null,
+      battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=shareTexture(base);renderer.initTexture(clone);return [bank,clone];})):null,
       fallbackDeath: dead && !baseInfo.death && (!battle||!battle.banks["4"]),
       info,
       position: {

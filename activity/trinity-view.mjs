@@ -1,11 +1,12 @@
 import {bakedEffectSprite} from './baked-effects.mjs';
 
 // One instanced draw call per trail; native particles are baked offline.
+import {shareTexture} from './shared-texture.mjs';
 export function createTrinityView(THREE,scene,banks){
  const views=new Map(),matrix=new THREE.Matrix4(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3(),point=new THREE.Vector3();
  const blue=material=>{material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace(/#include <map_(?:particle_)?fragment>/,'$&\n diffuseColor.rgb = vec3(max(max(diffuseColor.r,diffuseColor.g),diffuseColor.b)) * vec3(0.2,0.55,1.0);');};material.customProgramCacheKey=()=>"trinity-blue";};
  function plane(bank,instances){
-  const map=bank.map.clone();map.repeat.set(1/bank.columns,1/bank.rows);
+  const map=shareTexture(bank.map);map.repeat.set(1/bank.columns,1/bank.rows);
   const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});blue(material);
   const geometry=new THREE.PlaneGeometry(1,1),mesh=instances?new THREE.InstancedMesh(geometry,material,instances):new THREE.Mesh(geometry,material);
   mesh.frustumCulled=false;mesh.renderOrder=4;

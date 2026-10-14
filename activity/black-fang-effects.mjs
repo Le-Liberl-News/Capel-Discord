@@ -1,4 +1,5 @@
 import mechanics from './black-fang.cjs';
+import {shareTexture} from './shared-texture.mjs';
 const {dashPosition}=mechanics;
 export function createBlackFangTrail(THREE,scene,event,spec,assembly,player){
  const group=new THREE.Group(),ghosts=new Map();scene.add(group);
@@ -18,7 +19,7 @@ export function createBlackFangTrail(THREE,scene,event,spec,assembly,player){
   if(avatar?.mesh)for(let i=0;i<8;i++){
    const fraction=i/8;if(progress<=fraction)continue;
    let ghost=ghosts.get(i);
-   if(!ghost){const material=avatar.mesh.material.clone();material.map=material.map.clone();material.map.needsUpdate=true;material.depthWrite=false;material.opacity=.4;material.color.set(0xaacfff);const mesh=new THREE.Mesh(avatar.mesh.geometry.clone(),material);mesh.scale.copy(avatar.mesh.scale);group.add(mesh);ghost={mesh,born:spec.windup+fraction*spec.dashDuration};ghosts.set(i,ghost);}
+   if(!ghost){const material=avatar.mesh.material.clone();material.map=shareTexture(material.map);material.depthWrite=false;material.opacity=.4;material.color.set(0xaacfff);const mesh=new THREE.Mesh(avatar.mesh.geometry.clone(),material);mesh.scale.copy(avatar.mesh.scale);group.add(mesh);ghost={mesh,born:spec.windup+fraction*spec.dashDuration};ghosts.set(i,ghost);}
    ghost.mesh.position.set(event.origin.x+dx*fraction,event.origin.y+(event.aim.y-event.origin.y)*fraction,event.origin.z+dz*fraction);ghost.mesh.quaternion.copy(avatar.mesh.quaternion);ghost.mesh.material.opacity=.4*Math.max(0,1-(time-ghost.born)/350);ghost.mesh.visible=ghost.mesh.material.opacity>0;
   }
  }
