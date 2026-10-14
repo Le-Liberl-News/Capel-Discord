@@ -11,6 +11,7 @@ import {keyboardLayout,createBindingOptions} from "./controls.mjs";
 import { fetchJson, retryConnection } from "./network.mjs";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { createMapMusic } from "./music.mjs";
+import { createCaptureTheFlag, ctfOpponents } from "./ctf.mjs";
 import { effectsVolume, setEffectsVolume } from "./combat-sounds.mjs";
 import { createSkyScene, prepareTrainingArena, ASSETS } from "./sky-scene.mjs";
 const CLIENT_ID = window.__CLIENT_ID__ || "__CLIENT_ID__";
@@ -34,16 +35,42 @@ const etat = {
 let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
- action:body=>body.action==='training'?startTraining():apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
+ action:body=>body.action==='training'?startTraining():body.action==='ctf'?startCaptureTheFlag():apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
  changed:()=>wakePoll()
 });
 function bindScene(){scene.onAction(()=>{if(training){if(['leave_map','leave_duel'].includes(scene.action()?.type))void stopTraining();return;}if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onRematch(async id=>{try{const result=await fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify({action:"rematch",invitation:id,request:crypto.randomUUID()})});scene?.captureNotice(result.message);wakePoll();}catch(error){scene?.captureNotice(error.message);throw error;}});scene.onCraftCapture(event=>void publishCraftCapture(event));}
 
 const trainingResult=document.createElement('div');trainingResult.hidden=true;trainingResult.style.cssText='position:fixed;top:35%;left:50%;transform:translateX(-50%);z-index:35;background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;padding:20px;text-align:center;font:22px AveriaSky,sans-serif';
 const trainingWinner=document.createElement('p'),trainingAgain=document.createElement('button'),trainingExit=document.createElement('button');trainingAgain.textContent='Rejouer';trainingExit.textContent='Retour';for(const b of [trainingAgain,trainingExit])b.style.cssText='font:inherit;padding:8px;margin:5px;background:#ead29c;color:#241b15;border:1px solid #b49760;border-radius:4px';trainingResult.append(trainingWinner,trainingAgain,trainingExit);document.body.append(trainingResult);
-trainingAgain.onclick=()=>void startTraining();trainingExit.onclick=()=>void stopTraining();
+trainingAgain.onclick=()=>void (trainingMode==='ctf'?startCaptureTheFlag():startTraining());trainingExit.onclick=()=>void stopTraining();
+// Capture the flag: same local loop as the training (ctf.mjs), three a side, flag in the middle.
+const CTF_VENUES={arena:{red:{x:-1,z:3.25},blue:{x:-1,z:-16.25},centre:{x:-1,z:-6.5}},axis:{red:{x:0,z:-9.5},blue:{x:0,z:9.5},centre:{x:0,z:0}}};
+let trainingMode='duel';
+function chooseTeam(){return new Promise(resolve=>{
+ const box=document.createElement('div');box.style.cssText='position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:#0008';
+ const panel=document.createElement('div');panel.style.cssText='background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;border-radius:6px;padding:18px 22px;text-align:center;font:20px Cinzel,Georgia,serif';
+ const title=document.createElement('p');title.textContent='Capture du drapeau · choisissez votre équipe';title.style.margin='0 0 12px';panel.append(title);
+ const done=value=>{box.remove();resolve(value);};
+ for(const [team,label,color] of [['red','Équipe rouge','#e0483e'],['blue','Équipe bleue','#3f7ee8']]){const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText=`font:inherit;margin:6px;padding:10px 16px;border-radius:4px;border:2px solid ${color};background:${color}33;color:#fff;cursor:pointer`;b.onclick=()=>done(team);panel.append(b);}
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Annuler';cancel.style.cssText='display:block;margin:10px auto 0;font:14px Cinzel,Georgia,serif;background:none;border:0;color:#d8c49a;cursor:pointer';cancel.onclick=()=>done(null);panel.append(cancel);
+ box.append(panel);document.body.append(box);
+});}
+async function startCaptureTheFlag(){
+ if(trainingBusy)return;const team=await chooseTeam();if(!team||trainingBusy)return;
+ trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;trainingMode='ctf';
+ if(trainingStep)await trainingStep;
+ if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
+ const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=Math.random()<.5?'axis':'arena';}
+ try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}
+  const game=createCaptureTheFlag({...scene.trainingGeometry(),character:trainingReturn.player.character,team,venue:CTF_VENUES[trainingVenue],candidates:ctfOpponents(scene.catalogue)});
+  scene.retainCombatCharacters([trainingReturn.player.character,...game.characters]);training=game;bindScene();
+  await Promise.all([scene.me(game.player),...[...new Set(game.characters)].map(c=>scene.prepareCombat(c))]);
+  scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Capture du drapeau';music.setTrack(musicUrl(trainingVenue));}
+ catch(error){trainingBusy=false;await stopTraining();throw error;}
+ trainingBusy=false;await tickTraining();
+}
 async function startTraining(){
- if(trainingBusy)return;const trainingLoadStarted=performance.now();trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
+ if(trainingBusy)return;trainingMode='duel';const trainingLoadStarted=performance.now();trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
  let titles={},entrances={};try{if(!apercuLocal){const config=await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});titles=config.titles;entrances=config.entrances;}}catch(error){trainingBusy=false;throw error;}
@@ -56,8 +83,8 @@ function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
 async function runTrainingTick(){
  const active=training,current=scene;if(!active||trainingBusy)return;
  try{const submitted=current.movement(),command=current.action(),result=active.tick(submitted,command);
- current.acknowledgeMovement(submitted.sequence);await current.world(result);await current.sync([...result.joueurs,...result.enemies,...result.poms.map(p=>({character:'Pom',npc:true,...p}))]);current.messages(result.messages);
- if(result.finish){trainingResult.hidden=false;trainingWinner.textContent='Victoire de '+result.finish.winner;}
+ current.acknowledgeMovement(submitted.sequence);await current.world(result);await current.sync([...result.joueurs,...result.enemies,...result.poms.map(p=>({character:'Pom',npc:true,...p}))]);current.messages(result.messages);current.setCaptureTheFlag?.(result.ctf??null);
+ if(result.finish){trainingResult.hidden=false;trainingWinner.textContent=result.finish.text??('Victoire de '+result.finish.winner);}
  }catch(error){recordDiagnostic('training-error',{message:error.message},true);current.captureNotice(error.message);}
  if(training===active&&scene===current)trainingTimer=setTimeout(tickTraining,33);
 }
@@ -288,7 +315,7 @@ async function publier() {
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
-  if(requestedTraining&&result.map!=='arena'&&result.map!=='axis')await startTraining();
+  if(requestedTraining&&result.map!=='arena'&&result.map!=='axis')await (result.trainingMode==='ctf'?startCaptureTheFlag():startTraining());
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
     bandeau.textContent = "Votre personnage du jour : " + result.character;
@@ -338,7 +365,7 @@ async function start() {
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
     if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
-    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester entraînement IA';trainingTest.onclick=()=>void startTraining();dialogueTest.append(trainingTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
+    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester entraînement IA';trainingTest.onclick=()=>void startTraining();dialogueTest.append(trainingTest);const ctfTest=document.createElement('button');ctfTest.type='button';ctfTest.textContent='Tester capture du drapeau';ctfTest.onclick=()=>void startCaptureTheFlag();dialogueTest.append(ctfTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );

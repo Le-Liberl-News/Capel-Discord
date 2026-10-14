@@ -20,6 +20,10 @@ Règles communes dans `combat-moves.cjs`, appliquées par le serveur, l'entraîn
 
 Les bruitages du jeu (FC, SC, 3rd) sont extraits dans `E:/dev/sky-activity-tools/sons` (`ecouter.html` pour les écouter, `extraire-sons.py` pour régénérer).
 
+## Capture du drapeau
+
+Mode local comme l'entraînement (`ctf.mjs`, règles dans `ctf-mechanics.cjs`) : 3 contre 3, le joueur choisit l'équipe rouge ou bleue, les 5 autres places sont des IA. Carte tirée au sort entre Grancel et le Pilier Axis. Le drapeau part du centre ; on le ramasse en marchant dessus ; chaque équipe marque le temps pendant lequel un de ses membres le porte ; s'il meurt, le drapeau tombe sur place. On réapparaît à son camp 10 s après sa mort. La partie dure 5 min, l'équipe qui a tenu le drapeau le plus longtemps gagne. Les IA vont chercher le drapeau libre, escortent un allié porteur, chassent le porteur adverse et fuient quand elles le portent. Lancement : terminal de Capel ou bouton « Capture du drapeau » du tableau de l'arène.
+
 ## Réglages
 
 `assets/sky/combat/catalogue.json` contient, par personnage, `actions`, `sequences`, `banks` et `source`. Modifier `actions` pour les dégâts, portée, récupération et `projectile` ; `sequences` pour les poses `{bank, pose, ms}` ; conserver `source` pour identifier la routine AS.

@@ -125,7 +125,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       }}));
       locations.set(user,"halloween");
     },
-    requestTraining(user){trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),expires:now()+120000});},
+    requestTraining(user,mode='duel'){trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
     cancelTraining(user){trainingRequests.delete(user);},
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
@@ -260,7 +260,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       if(duel?.result)publishResult(duelId,duel);
       const introduction=isArena(target.map)&&duel&&(venueConfig(duel).introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,venue:venueOf(duel),startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],titles:duel.players.map((user,i)=>require('./characters').characterTitle(duel.names?.[i]??result.joueurs.find(p=>p.id===user)?.character)),phrases:(duel.names??[]).map((name,i)=>require('./characters').characterEntrance(name,duel.names[1-i])),streaks:duel.players.map(getArenaStreak),result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
       if(isArena(target.map))trainingRequests.delete(session.id);
-      return {...sanitize(result),halloween:target.map==='halloween'?{started:playback?.started,duration:playback?.duration}:undefined,trainingRequest:trainingRequests.get(session.id)?.id,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
+      return {...sanitize(result),halloween:target.map==='halloween'?{started:playback?.started,duration:playback?.duration}:undefined,trainingRequest:trainingRequests.get(session.id)?.id,trainingMode:trainingRequests.get(session.id)?.mode,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
         actionResult:boardingError?{id:point.action.id,error:boardingError}:['flight_board','hangar_enter'].includes(point?.action?.type)?{id:point.action.id}:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },
   };

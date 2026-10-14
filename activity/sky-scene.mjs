@@ -62,6 +62,7 @@ import { versionAsset } from "./scene-visibility.mjs";
 import { createXRayPass } from "./xray-pass.mjs";
 import { createCombatFeedback } from "./combat-feedback.mjs";
 import { createCombatSounds } from "./combat-sounds.mjs";
+import { createCtfView } from "./ctf-view.mjs";
 import combatMoves from "./combat-moves.cjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
 import collisionModule from "./surface-collision.cjs";
@@ -382,7 +383,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   status.id = "sky-combat";
   const style = document.createElement("style");
   style.textContent =
-    "#sky-labels{position:fixed;inset:0;pointer-events:none;z-index:8}.sky-nameplate{position:absolute;transform:translate(-50%,-100%);color:#ffe8b5;font:16px AveriaSky,sans-serif;text-shadow:1px 1px 2px #000;background:#211c2a9c;border-radius:3px;padding:2px 6px;white-space:nowrap}.sky-hp{height:4px;background:#4c2222;margin-top:3px}.sky-hp i{display:block;height:100%;background:#94d375}#sky-actions{position:fixed;z-index:30;padding:6px;background:#211c2aee;border:2px solid #d9c28d;border-radius:5px;color:white;font:18px AveriaSky,sans-serif}#sky-actions button{display:block;width:100%;text-align:left;padding:8px 12px;background:transparent;color:#fff;border:0;cursor:pointer;font:inherit}#sky-actions button:hover{background:#61537f}#sky-combat{position:fixed;bottom:16px;left:16px;z-index:12;background:#211c2ade;color:#ffe7b0;padding:10px 14px;border:1px solid #c6b27d;border-radius:5px;font:18px AveriaSky,sans-serif;pointer-events:none;white-space:pre-line;max-width:calc(100vw - 64px)}";
+    "#sky-labels{position:fixed;inset:0;pointer-events:none;z-index:8}.sky-nameplate[data-team=red]{color:#ff8f80}.sky-nameplate[data-team=blue]{color:#8fb8ff}.sky-nameplate{position:absolute;transform:translate(-50%,-100%);color:#ffe8b5;font:16px AveriaSky,sans-serif;text-shadow:1px 1px 2px #000;background:#211c2a9c;border-radius:3px;padding:2px 6px;white-space:nowrap}.sky-hp{height:4px;background:#4c2222;margin-top:3px}.sky-hp i{display:block;height:100%;background:#94d375}#sky-actions{position:fixed;z-index:30;padding:6px;background:#211c2aee;border:2px solid #d9c28d;border-radius:5px;color:white;font:18px AveriaSky,sans-serif}#sky-actions button{display:block;width:100%;text-align:left;padding:8px 12px;background:transparent;color:#fff;border:0;cursor:pointer;font:inherit}#sky-actions button:hover{background:#61537f}#sky-combat{position:fixed;bottom:16px;left:16px;z-index:12;background:#211c2ade;color:#ffe7b0;padding:10px 14px;border:1px solid #c6b27d;border-radius:5px;font:18px AveriaSky,sans-serif;pointer-events:none;white-space:pre-line;max-width:calc(100vw - 64px)}";
   document.head.append(style);
   document.body.append(menu, status, labels);
   const touchButton=document.createElement("button");
@@ -517,7 +518,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     menu.style.top = Math.min(event.clientY, innerHeight - 180) + "px";
   }
   const damageEffects=await createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading);
-  const combatSounds=createCombatSounds(ASSETS);
+  const combatSounds=createCombatSounds(ASSETS);let ctfView=null;
   const combatFeedback=combatPreparation?await createCombatFeedback(THREE,scene,ASSETS,labels,combatSounds):null;
   const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
@@ -553,7 +554,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       // another fighter raised their guard: play their basic attack pose
       if(player.parry?.at&&player.parry.at!==avatar.parryAt){avatar.parryAt=player.parry.at;if(player.id!==localId)avatar.parryPose={kind:'basic',character:player.character,localStart:performance.now()};}
       if(player.jump?.id&&player.jump.id!==avatar.jumpSoundId){avatar.jumpSoundId=player.jump.id;if(player.id!==localId)combatSounds.play('jump',{gain:.7});}
-      avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.dimensionLift=player.dimensionLift??null;avatar.fallAnimation=player.fallAnimation??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
+      avatar.team=player.team??null;avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.dimensionLift=player.dimensionLift??null;avatar.fallAnimation=player.fallAnimation??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
       avatar.npc = !!player.npc;
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
       avatar.frozenUntil=player.stoneUntil;avatar.downUntil=player.downUntil;avatar.speed = player.speed ?? 0.8;avatar.spawnedAt=player.spawnedAt;avatar.summoned=player.summoned;avatar.deathAt=player.deathAt;
@@ -634,6 +635,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       dead,deathStarted:performance.now(),
       spectator:!!player.spectator,teamId:player.teamId??null,
       hp: player.hp ?? 100,damageSequence:player.damageSequence??0,damageEvents:player.damageEvents,
+      team:player.team??null,
       towerArrival:inTower&&!player.enemy&&!player.npc&&!String(player.id).startsWith("world:")?performance.now():null,platformId:player.platformId,platformOffset:player.platformOffset,shield:player.shield??null,guard:player.guard??null,guardHold:player.guardHold??null,maxHp:player.maxHp??playerHealth.PLAYER_MAX_HP,enemy:!!player.enemy,enemyAttack:player.attack,jump:player.jump,knockback:player.knockback??null,dimensionLift:player.dimensionLift??null,fallAnimation:player.fallAnimation??null,siegDive:player.siegDive??null,catCling:player.catCling??null,
       frozenUntil:player.stoneUntil,downUntil:player.downUntil,spawnedAt:player.spawnedAt,summoned:player.summoned,deathAt:player.deathAt,npc: !!player.npc,
       foodStock:player.foodStock??[],cooking:player.cooking??null,walking: !!player.moving,
@@ -1068,6 +1070,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
     if(guardHeld){guardDirection=combatMoves.cameraFacing(yaw);if(!connected||!movementAllowed||me?.dead||health.hp<=0||health.spectator)guardInput('end');else if(performance.now()>=guardRefreshAt&&queueAction('parry',undefined,undefined,undefined,{phase:'keep',direction:{x:guardDirection.dx,z:guardDirection.dz}}))guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;}
+    if(ctfView)guarded('ctf',()=>ctfView.update(avatars,camera,performance.now()));
     if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);});
     if (me&&!freeSpectator)
       follow.lerp(
@@ -1123,7 +1126,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       label.style.left = ((p.x + 1) * viewport.width) / 2 + "px";
       label.style.top = ((1 - p.y) * viewport.height) / 2 + "px";
       label.style.opacity=String(1-.98*(a.smokeVeil??0));
-      label.style.outline=id===mobileTargetId?'2px solid #ffcf65':'';
+      label.style.outline=id===mobileTargetId?'2px solid #ffcf65':'';if((label.dataset.team??'')!==(a.team??''))label.dataset.team=a.team??'';
       label.hidden = p.z > 1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1;
       if (
         label.dataset.hp !== String(a.hp) ||
@@ -1171,6 +1174,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     spawn,
     prepareCombat:character=>renneCombat?.load(character),
     retainCombatCharacters:characters=>renneCombat?.retainCharacters(characters),
+    // capture the flag (ctf.mjs): flag and scoreboard, null to clear
+    setCaptureTheFlag(state){if(!state){ctfView?.receive(null);return;}ctfView??=createCtfView(THREE,scene,document.body);ctfView.receive(state);},
     resetTraining(){renneCombat?.reset();for(const a of avatars.values())removeAvatar(a);avatars.clear();path=[];movementTrace=[];localJump=null;actionQueue.length=0;},
     trainingGeometry:()=>({grid,geometry:collision}),
     playerCharacter:()=>avatars.get(localId)?.character,
@@ -1414,7 +1419,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       labels.remove();
       style.remove();
       dialogues.dispose();
-      damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();
+      damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();ctfView?.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();
       scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
