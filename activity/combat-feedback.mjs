@@ -8,7 +8,7 @@ export async function createCombatFeedback(THREE,scene,assets,container){
  const bank=name=>loadBakedEffect(THREE,assets,name,90);
  const [hitBank,missBank,counterBank,dustBank]=await Promise.all(['sc-ms00271b','sc-ms04532','sc-mp094_00','sc-ms30001c'].map(bank));
  const lifetime={hit:400,miss:700,counter:900,dust:PUFF_MS};
- const bursts=[],shakes=new Map(),shown=new Set(),trails=new Map(),parries=new Map();
+ const bursts=[],shakes=new Map(),shown=new Map(),trails=new Map(),parries=new Map();
  function burst(kind,point,size,delay=0,follow=null){const source={hit:hitBank,miss:missBank,counter:counterBank,dust:dustBank}[kind],fx=bakedEffectSprite(THREE,source,size);fx.sprite.visible=false;fx.sprite.renderOrder=6;scene.add(fx.sprite);bursts.push({fx,kind,point:point?{...point}:null,follow,started:performance.now()+delay*1000});return fx;}
  const counter=document.createElement('div');counter.id='sky-combo';counter.hidden=true;
  counter.style.cssText='position:fixed;right:24px;bottom:96px;z-index:24;pointer-events:none;font:700 34px AveriaSky,serif;color:#ffe08a;text-shadow:0 0 6px #b2560f,0 2px 0 #4a2306;text-align:right;transition:transform .08s';
@@ -32,15 +32,17 @@ export async function createCombatFeedback(THREE,scene,assets,container){
    const now=performance.now();
    for(const [id,event]of actions){
     // a swing that touched nobody
-    if(event.missed&&!shown.has(id+':miss')){shown.add(id+':miss');burst('miss',event.missed.point,1.4);}
-    for(const hit of event.hits??[])if(hit.parried&&!shown.has(id+':parry:'+hit.id)){shown.add(id+':parry:'+hit.id);labels.push({el:callout('Parade !','#9fe8ff'),id:hit.id,started:now});}
+    // what was already shown, per attack (ids may contain ':', e.g. the training AI's)
+    let done=shown.get(id);if(!done)shown.set(id,done=new Set());
+    if(event.missed&&!done.has('miss')){done.add('miss');burst('miss',event.missed.point,1.4);}
+    for(const hit of event.hits??[])if(hit.parried&&!done.has('parry:'+hit.id)){done.add('parry:'+hit.id);labels.push({el:callout('Parade !','#9fe8ff'),id:hit.id,started:now});}
     // dodge: puffs of dust left on the ground along the way
     const owner=avatars.get(event.actor);
     if(isDodge(event)&&owner&&!event.cancelled){let trail=trails.get(id);if(!trail){trail={next:0};trails.set(id,trail);}
      const age=now-event.localStart;if(age<moves.DODGE.dashDuration+40&&now>=trail.next){trail.next=now+DUST_EVERY;burst('dust',{x:owner.position.x,y:owner.position.y+.15,z:owner.position.z},1.3);}}
    }
    for(const id of trails.keys())if(!actions.has(id))trails.delete(id);
-   for(const key of shown)if(!actions.has(key.split(':')[0]))shown.delete(key);
+   for(const id of shown.keys())if(!actions.has(id))shown.delete(id);
    for(let i=bursts.length-1;i>=0;i--){const b=bursts[i],age=now-b.started;if(age>=lifetime[b.kind]){scene.remove(b.fx.sprite);b.fx.dispose();bursts.splice(i,1);continue;}
     const target=b.follow&&avatars.get(b.follow),point=b.point??(target&&{x:target.position.x,y:target.position.y+Math.min(target.info?.bodyHeight??target.info?.height??1.6,1.8)*.55,z:target.position.z});
     b.fx.sprite.visible=age>=0&&!!point;if(!b.fx.sprite.visible)continue;b.fx.sprite.position.set(point.x,point.y,point.z);

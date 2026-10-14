@@ -93,6 +93,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(inTower?0x06080b:map==='axis'?0x8db9df:0x201b18);   // Axis: open sky above the sea of clouds
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  canvas.addEventListener('webglcontextlost',()=>recordDiagnostic('webgl-context-lost',{map},true));
   const scene = new THREE.Scene(),
     walkingCamera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, map === "rolent" ? 350 : 150),
     avatars = new Map(),
@@ -782,7 +783,25 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   addEventListener("blur", blur);
   addEventListener("resize", resize);
   resize();
+  // An error in one frame must not freeze the game: it is recorded for the diagnostic export
+  // (once per message every few seconds) and the next frame is still scheduled.
+  let renderErrors=new Map();
+  function reportFrameError(part,error){
+    const message=part+': '+String(error?.message??error),last=renderErrors.get(message)??0;
+    if(performance.now()-last>5000){renderErrors.set(message,performance.now());recordDiagnostic('render-error',{map,part,message,stack:String(error?.stack??'').slice(0,2000)},true);console.error(error);}
+  }
+  // the newer per-frame layers run guarded: a failure there leaves the rest of the frame untouched
+  function guarded(part,run){try{return run();}catch(error){reportFrameError(part,error);return undefined;}}
   function render(time) {
+    try{renderFrame(time);}
+    catch(error){
+      reportFrameError('frame',error);
+      // still show the world as it is, so the game never looks frozen
+      try{renderer.render(scene,camera);}catch{}
+      if(!disposed)requestAnimationFrame(render);
+    }
+  }
+  function renderFrame(time) {
     if (disposed) return;
     if (time - lastTime < 33) {
       requestAnimationFrame(render);
@@ -890,7 +909,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           : introPlaying
             ? {moving:!!avatar.introWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}
           : id === localId
-            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??(steering?(p,input,...rest)=>steer(walkingGrid,p,input,...rest):(p,_input,...rest)=>advance(p,path,...rest))(avatar.position, steering, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
+            ? !movementAllowed ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??(steering?(p,input,...rest)=>guarded('steer',()=>steer(walkingGrid,p,input,...rest))??{moving:false,dx:0,dz:0}:(p,_input,...rest)=>advance(p,path,...rest))(avatar.position, steering, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
             : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
@@ -969,7 +988,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
-    if(combatFeedback){combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);combatFeedback.setCombo(combatMoves.comboOf({combo:localCombo},Date.now()+jumpClockOffset));}
+    if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);combatFeedback.setCombo(combatMoves.comboOf({combo:localCombo},Date.now()+jumpClockOffset));});
     if (me&&!freeSpectator)
       follow.lerp(
         new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),
@@ -1057,7 +1076,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     drinkingTable?.update(time,avatars);
     dialogues.update(time, avatars, camera);
     renderer.render(scene, camera);
-    xray?.render(renderer, scene, camera);
+    if(xray)guarded('xray',()=>xray.render(renderer, scene, camera));
     craftCapture?.update(time);
     duelFinish?.update(time,avatars,camera);
     requestAnimationFrame(render);
@@ -1148,7 +1167,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         const lost=damageAmount(before,player);
         // smoke ticks would give away where the hidden players are: only the player being hurt sees them
         const events=newDamageEvents(before,player).filter(e=>!e.smoke||player.id===localId);
-        if(events.length)for(const event of events){const delay=Math.min(.8,(event.at-events[0].at)/1000),own=combatFeedback?.impact(player.id,event,delay);damageEffects.hit(player.id,event.amount,false,delay,own?{...event,quiet:true}:event);}
+        if(events.length)for(const event of events){const delay=Math.min(.8,(event.at-events[0].at)/1000),own=combatFeedback&&guarded('impact',()=>combatFeedback.impact(player.id,event,delay));damageEffects.hit(player.id,event.amount,false,delay,own?{...event,quiet:true}:event);}
         else if(lost&&!player.damageEvents)damageEffects.hit(player.id,lost);
         if (player.id === localId) {
           localCombo=player.combo??null;
