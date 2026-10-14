@@ -200,7 +200,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   if(halloweenScene)dayNight.setTime(60000);
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
-  const previewRoom=__ACTIVITY_PREVIEW__&&inDungeon?towerLayout.platforms.find(p=>p.id==='room:'+new URLSearchParams(location.search).get('room')):null;
+  const previewRoom=__ACTIVITY_PREVIEW__&&inDungeon?towerLayout.rooms[Number(new URLSearchParams(location.search).get('room'))]:null;
   const spawn = previewRoom?{x:previewRoom.x,y:previewRoom.y,z:previewRoom.z}:grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=await combatPreparation;
   renneCombat?.warmup(renderer,camera);
