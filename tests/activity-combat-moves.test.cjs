@@ -79,3 +79,84 @@ test('a guard facing a basic attack blocks it with a spark; from behind the hit 
 test('the basic attack reaches full speed after three landed hits',()=>{
  assert.deepEqual([0,1,2,3,6].map(moves.comboFactor),[1,.8,.6,.4,.4]);
 });
+
+test('held guard blocks repeated frontal basics beyond the parry window, including all four Walter impacts',()=>{
+ const a=fighter('a','Walter',0),b=fighter('b','Joshua',1.5),w=arena(a,b);
+ w.combat.parry(b,w.room,{phase:'begin',direction:{x:-1,z:0}});
+ for(let n=0;n<4;n++){
+  w.combat.parry(b,w.room,{phase:'keep'});
+  assert.ok(w.combat.action(a,{id:'punch'+n,kind:'basic',aim:{x:b.x,y:0,z:0}},w.room).combatId);
+  w.step(Math.max(combatSpec('Walter','basic').cooldown,combatSpec('Walter','basic').duration)+20);
+ }
+ assert.equal(b.hp,500);assert.ok(w.combat.snapshot().attacks.some(a=>a.hits.filter(h=>h.blocked).length===4));
+});
+
+test('held guard allows rear attacks and stops immediately on release or after a lost connection',()=>{
+ for(const mode of ['rear','release','expired']){
+  const a=fighter('a','Estelle',0),b=fighter('b','Joshua',1.5),w=arena(a,b);
+  w.combat.parry(b,w.room,{phase:'begin',direction:{x:mode==='rear'?1:-1,z:0}});
+  if(mode==='release')w.combat.parry(b,w.room,{phase:'end'});
+  if(mode==='expired')w.step(moves.PARRY.holdLease+1);
+  w.combat.action(a,{id:mode,kind:'basic',aim:{x:b.x,y:0,z:0}},w.room);w.step(600);
+  assert.ok(b.hp<500,mode);
+ }
+});
+
+test('renewing a held guard never renews its timed craft parry',()=>{
+ const a=fighter('a','Walter',0),b=fighter('b','Joshua',2),w=arena(a,b);
+ w.combat.parry(b,w.room,{phase:'begin',direction:{x:-1,z:0}});
+ for(let i=0;i<5;i++){w.step(400);w.combat.parry(b,w.room,{phase:'keep'});}
+ w.combat.action(a,{id:'late-kick',kind:'craft',aim:{x:2,y:0,z:0}},w.room);w.step(700);
+ assert.ok(b.hp<500);assert.equal(a.hp,500);
+});
+
+test('guard may be raised during parry cooldown, but cannot create another craft-counter window',()=>{
+ const a=fighter('a','Estelle',0),b=fighter('b','Joshua',1.5),w=arena(a,b);
+ w.combat.parry(b,w.room,{phase:'begin',direction:{x:-1,z:0}});w.step(400);w.combat.parry(b,w.room,{phase:'end'});
+ assert.ok(w.combat.parry(b,w.room,{phase:'begin',direction:{x:-1,z:0}}).guarding);
+ assert.equal(moves.parryActive(b,w.time()),false);
+ w.combat.action(a,{id:'blocked-during-cooldown',kind:'basic',aim:{x:b.x,y:0,z:0}},w.room);w.step(600);assert.equal(b.hp,500);
+});
+
+test('held guard also blocks a frontal projectile but not one from behind or outside its cone',()=>{
+ const b=fighter('b','Joshua',0),w=arena(b);w.combat.parry(b,w.room,{phase:'begin',direction:{x:1,z:0}});
+ assert.equal(moves.blocksBasic(b,{x:10,z:0},w.time()),true);
+ assert.equal(moves.blocksBasic(b,{x:-10,z:0},w.time()),false);
+ assert.equal(moves.blocksBasic(b,{x:0,z:10},w.time()),false);
+ b.stunUntil=w.time()+100;assert.equal(moves.blocksBasic(b,{x:10,z:0},w.time()),false);
+});
+
+
+test('a held guard blocks the actual ranged basic attack on its impact',()=>{
+ const a=fighter('a','Olivier',0),b=fighter('b','Joshua',5),w=arena(a,b);
+ w.combat.parry(b,w.room,{phase:'begin',direction:{x:-1,z:0}});
+ assert.ok(w.combat.action(a,{id:'bullet',kind:'basic',aim:{x:5,y:0,z:0}},w.room).combatId);w.step(1200);
+ assert.equal(b.hp,500);assert.ok(w.combat.snapshot().attacks.find(x=>x.id==='bullet').hits.some(h=>h.blocked));
+});
+
+test('the touch guard starts on press and ends on release or pointer cancellation, even during cooldown',async()=>{
+ class Element{
+  constructor(tag){this.tag=tag;this.children=[];this.dataset={};this.style={};this.listeners={};this.firstChild={nodeValue:''};}
+  append(...children){this.children.push(...children);}addEventListener(type,fn){this.listeners[type]=fn;}
+  setAttribute(){}toggleAttribute(){}remove(){}querySelector(tag){return this.children.find(c=>c.tag===tag);}
+  setPointerCapture(id){this.pointer=id;}hasPointerCapture(id){return this.pointer===id;}releasePointerCapture(){this.pointer=null;this.listeners.lostpointercapture?.();}
+  dispatch(type){this.listeners[type]?.({pointerId:1,clientX:0,clientY:0,preventDefault(){}});}
+ }
+ const previous=global.document,body=new Element('body');global.document={body,head:new Element('head'),createElement:tag=>new Element(tag)};
+ try{
+  const {createCombatControls}=await import('../activity/combat-controls.mjs'),calls=[],attacks=[],controls=createCombatControls(k=>attacks.push(k),()=>false,phase=>(calls.push(phase),true));
+  const button=body.children[0].children.find(b=>b.dataset.kind==='parry');
+  const update=()=>controls.update({arena:true,character:'Joshua',connected:true,alive:true,spectator:false,busy:false,health:{}});
+  controls.started('parry','Joshua');update();assert.equal(button.disabled,false);
+  button.dispatch('pointerdown');assert.deepEqual(calls,['begin']);button.dispatch('pointerup');assert.deepEqual(calls,['begin','end']);
+  button.dispatch('pointerdown');button.dispatch('pointercancel');assert.deepEqual(calls,['begin','end','begin','end']);assert.deepEqual(attacks,[]);
+  controls.dispose();
+ }finally{global.document=previous;}
+});
+
+
+test('releasing a held guard stops basic blocking even inside its initial parry window',()=>{
+ const b=fighter('b','Joshua',0),w=arena(b);w.combat.parry(b,w.room,{phase:'begin',direction:{x:1,z:0}});
+ assert.ok(moves.blocksBasic(b,{x:1,z:0},w.time()));w.combat.parry(b,w.room,{phase:'end'});
+ assert.equal(moves.blocksBasic(b,{x:1,z:0},w.time()),false);assert.ok(moves.parryActive(b,w.time()),'the separate craft-parry timing is preserved');
+});

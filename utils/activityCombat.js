@@ -198,12 +198,24 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     return {combatId:attack.id};
   }
   // Parry: live for PARRY.window after the key; pressing again is refused for PARRY.cooldown.
-  function parry(player,room){
+  function parry(player,room,command={}){
     players=room;const time=now();
+    if(command.phase==='end'){player.guardHold=null;return {guarding:false};}
     if(player.hp<=0||player.spectator||player.catCling)return {error:'Parade indisponible.'};
+    if(command.phase==='keep'){
+      if(player.guardHold?.until>time)player.guardHold.until=time+moves.PARRY.holdLease;
+      return {guarding:player.guardHold?.until>time};
+    }
+    if(command.phase==='begin'){
+      if(player.guardHold?.until>time)return {guarding:true};
+      const direction=command.direction??{x:player.heading?.dx??0,z:player.heading?.dz??-1},length=Math.hypot(direction.x,direction.z);
+      if(!Number.isFinite(length)||length<.001)return {error:'Direction de garde invalide.'};
+      player.guardHold={dx:direction.x/length,dz:direction.z/length,until:time+moves.PARRY.holdLease};
+      if(time<(cooldowns.get(player.id)?.parry??0))return {guarding:true};
+    }
     if(time<(cooldowns.get(player.id)?.parry??0))return {error:'Parade en récupération.'};
     const cooldown=cooldowns.get(player.id)??{};cooldown.parry=time+moves.PARRY.cooldown;cooldowns.set(player.id,cooldown);
-    player.parry={at:time};
+    player.parry={at:time,held:command.phase==='begin'};
     return {parry:true};
   }
   // A craft landing on a fighter whose parry is live is blocked; its caster takes the counter.
@@ -222,7 +234,13 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     }
     return true;
   }
+  function blockedBasic(attack,attacker,player,time){
+    if(attack.kind!=='basic'||!moves.blocksBasic(player,attack.ray?.origin??attack.origin??attacker,time))return false;
+    attack.hits.push({id:player.id,at:time,blocked:true,damage:0,point:{x:player.x,y:(player.y??0)+.9,z:player.z}});
+    return true;
+  }
   function hurt(attack,attacker,player,amount,time,impact){
+    if(blockedBasic(attack,attacker,player,time))return {damage:0,absorbed:0,blocked:true};
     if(parried(attack,player,time))return {damage:0,absorbed:0,parried:true};
 
     const dealt=applyDamage(player,amount*attackFactor(attacker,time),time,impact);
@@ -475,8 +493,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
         if(wall && Math.hypot(wall.point.x-from.x,wall.point.y-from.y,wall.point.z-from.z)<Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z)-.15)continue;
         if(parried(attack,player,time))break;
-        // a guard facing a basic attack stops it outright; from the side or behind it lands
-        if(attack.kind==='basic'&&moves.parryActive(player,time)&&moves.fromFront(player,spec.projectile?attack.origin:attacker)){attack.hits.push({id:player.id,at:time,blocked:true,damage:0,point:{x:player.x,y:(player.y??0)+.9,z:player.z}});blocked=true;continue;}
+        if(blockedBasic(attack,attacker,player,time)){blocked=true;continue;}
 
         const dealt=applyDamage(player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)*attackFactor(attacker,time)/(spec.wave||spec.sweepShots?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex],precise?{point:precise.point,headshot:precise.headshot}:spec.hitEffect?{nativeEffect:spec.hitEffect,hitIndex,...(comboNext?{combo:comboNext,comboHold,from:{x:source.x,z:source.z}}:{})}:comboNext?{nativeEffect:moves.COMBO.hitEffect,combo:comboNext,comboHold,from:{x:source.x,z:source.z}}:undefined);if(dealt.damage||dealt.absorbed)landed=true;if(dealt.damage)applyStatus(player,spec.status==='stun'?{...spec,statusDuration:Math.max(0,attack.started+spec.duration-time)}:spec,time);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+hitOffsets[hitIndex],endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
 

@@ -4,7 +4,7 @@
 // - dodge: replaces the art (except Kloe's): a short dash in the direction of movement;
 // - basic-attack combo: each landed hit speeds the next ones up, a miss resets it.
 // The authoritative world, the local training and the renderer all read these rules.
-const PARRY={key:'v',window:350,cooldown:1200,counterDamage:20,knockback:2,knockbackDuration:300,effect:'SC/mp094_00._ef',blockEffect:'SC/mp008_01._ef',frontCos:.5};
+const PARRY={key:'v',holdLease:1800,holdRefresh:450,window:350,cooldown:1200,counterDamage:20,knockback:2,knockbackDuration:300,effect:'SC/mp094_00._ef',blockEffect:'SC/mp008_01._ef',frontCos:.5};
 const DODGE={name:'Esquive',key:'c',dodge:true,dash:true,easeOut:true,windup:0,dashDuration:160,duration:160,cooldown:7000,range:2,radius:0,damage:0,projectile:false,trailEffect:'SC/ms30001c._ef'};
 const COMBO={window:2500,speedStep:.2,minFactor:.4,hitEffect:'SC/ms00271b._ef',missEffect:'SC/ms04532._ef'};
 const KEEPS_ART=new Set(['Kloe']);
@@ -39,4 +39,12 @@ function fromFront(defender,source){
  const hx=defender?.heading?.dx??0,hz=defender?.heading?.dz??-1,dx=source.x-defender.x,dz=source.z-defender.z,h=Math.hypot(hx,hz),d=Math.hypot(dx,dz);
  return d<1e-6||h<1e-6||(hx*dx+hz*dz)/(h*d)>=PARRY.frontCos;
 }
-module.exports={fromFront,PARRY,DODGE,COMBO,keepsArt,comboOf,comboFactor,tempoSpec,parryActive,dodgeEndpoint};
+// A maintained guard blocks basics only inside its fixed forward cone. Heartbeats
+// keep it alive without reopening the timed craft-parry window.
+function blocksBasic(player,source,time){
+ const hold=player?.guardHold;if(player.hp<=0||player.spectator||player.catCling||player.stunUntil>time||player.stoneUntil>time||player.frozenUntil>time||player.downUntil>time)return false;
+ if(!hold||hold.until<=time)return !player.parry?.held&&parryActive(player,time)&&fromFront(player,source);
+ const dx=source.x-player.x,dz=source.z-player.z,d=Math.hypot(dx,dz);
+ return d<.05||(dx*hold.dx+dz*hold.dz)/d>=PARRY.frontCos;
+}
+module.exports={blocksBasic,fromFront,PARRY,DODGE,COMBO,keepsArt,comboOf,comboFactor,tempoSpec,parryActive,dodgeEndpoint};

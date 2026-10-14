@@ -45,3 +45,5 @@ La case RP des reglages est desactivee par defaut et conservee sur l'appareil. S
 Une chope est placee sur la table de l'etage de l'Anterose. Clic droit pres de la table puis Boire une biere, ou interaction mobile/espace. Trois bieres en dix minutes appliquent le statut RPG `alcoolise`, pour six tours selon les regles existantes de Capel. Il faut attendre quatre secondes entre deux consommations. Une annonce systeme est envoyee au salon RP lors de l'acquisition du statut. Les messages publies utilisent le meme ajout de hic/hips que la commande anonyme ; le texte en jeu reste intact.
 
 Etude de la tour PVE : [DUNGEON.md](DUNGEON.md).
+
+Garde : maintenir V (ou le bouton bouclier) bloque les attaques normales dans un cône de 120° devant le personnage, orienté au début de l’appui. Les crafts gardent leur parade de 350 ms au début de l’appui, avec récupération de 1,2 s ; le maintien ne renouvelle pas cette fenêtre. Relâcher ou quitter la fenêtre termine la garde. Une garde sans renouvellement réseau expire après 1,8 s.
