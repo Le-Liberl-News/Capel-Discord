@@ -1,8 +1,8 @@
 {
-  "duration": 14300,
+  "duration": 16300,
   "title": "Pilier Axis - Sommet",
   "source": {"game": "Trails in the Sky SC", "scenario": "c5313._sn", "model": "C5313.x", "battle": "battle[1126]", "music": "bgm[43] = ED6403"},
-  "phases": {"tower": 4500, "fighter": 3500, "orbit": 2000, "begin": 800},
+  "phases": {"tower": 4500, "fighter": 3500, "orbit": 4000, "begin": 800},
   "tower": {"from": {"position": [0, 16, -150], "target": [0, -14, 0]}, "to": {"position": [0, 9, -112], "target": [0, -8, 0]}, "fov": 40},
   "orbit": {"radius": 14, "height": 1.6, "turns": 0.6, "fov": 50}
 }

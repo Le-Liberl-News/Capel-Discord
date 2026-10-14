@@ -25,6 +25,7 @@ import diveMechanics from './sieg-dive.cjs';
 import {createSiegDiveView} from './sieg-dive-view.mjs';
 import {createTavernTables} from './tavern-tables.mjs';
 import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
+import {AXIS_LIGHTS,createAxisSky,installSkyGlow} from "./axis-sky.mjs";
 import {createAirshipScene} from './airship-scene.mjs';
 import hangarWorld from './hangar-world.cjs';
 import {loadLynx} from './lynx-model.mjs';
@@ -108,12 +109,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   loading.setURLModifier(url => versionAsset(url, version));
   const cutaway = isArena ? createArenaCutaway() : null;
   renderer.localClippingEnabled = !!cutaway;
-  const loaded = map==="hangar"?{scene:new THREE.Group()}:map==="arena"?await loadArenaModel(ASSETS,version):await new GLTFLoader(loading).loadAsync(
+  const loaded = map==="hangar"?{scene:new THREE.Group()}:isArena?await loadArenaModel(ASSETS,version,map):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = new THREE.Group();model.add(loaded.scene);
   if(map==="tower4")removeNativeBackdrop(model);
-  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):null;
+  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):map==="axis"?await createAxisSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
   const teamPanel=inTower&&!inDungeon?createTowerTeam(ASSETS,catalogue):null;
   const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
@@ -158,12 +159,13 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }
     }
   });
+  const skyGlow=map==="axis"?installSkyGlow(model):null;
   const tavernBeer=map==="anterose"?createTavernBeer(THREE,scene):null;
   const tavernTables=map==='anterose'?await createTavernTables(THREE,model,collision,ASSETS):null;
   const horrorMembranes=inDungeon?await createHorrorMembranes(model,ASSETS,towerLayout.membranes):null;
   const halloweenDecor=inDungeon?await createHalloweenDungeonView(model,ASSETS,towerLayout):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
-  const dayNight=createDayNight(THREE,model,map,mapShadows,tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]);
+  const dayNight=createDayNight(THREE,model,map,mapShadows,map==='axis'?AXIS_LIGHTS:tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]);
   halloweenDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
   const dungeonEffects=inTower&&!inDungeon?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
@@ -1016,7 +1018,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     horrorMembranes?.update(Date.now()+jumpClockOffset);
     halloweenDecor?.update(camera,avatars.get(localId)?.position);
     const lightState=dayNight.update();dayNight.photo(renneCombat?.photoFlashes()??[]);
-    rooftopSky?.update(camera,lightState);
+    rooftopSky?.update(camera,lightState);skyGlow?.update();
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     if(previewDrinkingClock){previewDrinkingClock.tick(environment.npcs);dialogues.receive(environment.npcs.filter(n=>n.utterance).map(n=>({...n.utterance,author:n.id})));}
     drinkingTable?.update(time,avatars);

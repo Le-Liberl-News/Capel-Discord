@@ -7,6 +7,8 @@ export function skyTime(time=Date.now()) {
   const dusk=Math.max(0,1-Math.abs(sun-.16)/.16)*Math.abs(Math.sin(phase*Math.PI*2));
   return {phase,hour:phase*24,daylight,lamps:1-daylight,tint:[.075+.925*daylight+.13*dusk,.105+.895*daylight+.035*dusk,.19+.81*daylight]};
 }
+// Open sky above the sea of clouds: the top of the Axis Pillar never gets as dark as a street.
+const AXIS_NIGHT=[.24,.27,.38];
 export const MAP_LIGHTS={
   anterose:[{id:'capel',position:[-4.4,1.25,-3.2],color:[.35,.7,1],radius:4,strength:.8}],
   arena:[],rolent:[],
@@ -36,6 +38,6 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
     material.customProgramCacheKey=()=>cache+'|sky-cycle-photo-1|'+sources.length;material.needsUpdate=true;
   }});}
   apply(model);
-  return {apply,photo(flashes){for(let i=0;i<4;i++){const f=flashes[i];uniforms['skyPhoto'+i].value.set(f?.origin.x??0,f?.origin.y??0,f?.origin.z??0,f?.strength??0);uniforms['skyPhotoDir'+i].value.set(f?.direction.x??0,f?.direction.z??0);}},update(time=Date.now()) {state=skyTime(map==='arena'?DAY_DURATION/2:horror?0:override??(time+clockOffset));uniforms.skyTint.value.set(...(horror?horrorTint:(map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:state.tint));uniforms.skyLamps.value=horror?1:(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;
-    if(extraSources.length) sources.forEach((source,i)=>{uniforms['skyLight'+i].value.set(...source.position,source.radius);uniforms["skyColor"+i].value.set(...source.color).multiplyScalar(source.strength*(source.flicker===false?1:.88+.09*Math.sin(time*.013+i*2.1)+.06*Math.sin(time*.027+i)));});if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
+  return {apply,photo(flashes){for(let i=0;i<4;i++){const f=flashes[i];uniforms['skyPhoto'+i].value.set(f?.origin.x??0,f?.origin.y??0,f?.origin.z??0,f?.strength??0);uniforms['skyPhotoDir'+i].value.set(f?.direction.x??0,f?.direction.z??0);}},update(time=Date.now()) {state=skyTime(map==='arena'?DAY_DURATION/2:horror?0:override??(time+clockOffset));uniforms.skyTint.value.set(...(horror?horrorTint:(map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:map==='axis'?state.tint.map((v,i)=>Math.max(v,AXIS_NIGHT[i])):state.tint));uniforms.skyLamps.value=horror?1:(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;
+    if(extraSources.length) sources.forEach((source,i)=>{uniforms['skyLight'+i].value.set(...source.position,source.radius);uniforms["skyColor"+i].value.set(...source.color).multiplyScalar(source.strength*(source.pulse?source.pulse(time):source.flicker===false?1:.88+.09*Math.sin(time*.013+i*2.1)+.06*Math.sin(time*.027+i)));});if(shadows)for(const overlay of shadows.overlays)overlay.material.opacity=.24*state.daylight;return state;},state:()=>({...state}),sync(time){if(Number.isFinite(time))clockOffset=time-Date.now();},setTime(time){override=time;},dispose(){materials.clear();}};
 }
