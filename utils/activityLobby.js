@@ -1,7 +1,7 @@
 const { randomBytes } = require("node:crypto");
 const { createActivityService, ActivityError } = require("./activityService");
 // Real Discord IDs stay inside the server. Every scene exposes random avatar IDs.
-function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>false, tower = [], halloweenDungeon=[], isDungeonAdmin=isHalloweenAdmin, rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
+function createActivityLobby({ arena, axis=null, random=Math.random, halloween=null, isHalloweenAdmin=async()=>false, tower = [], halloweenDungeon=[], isDungeonAdmin=isHalloweenAdmin, rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
   const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
   const halloweenScenes=new Map(),halloweenPlayback=new Map();
@@ -11,19 +11,26 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
   const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
   const skies=airship&&require('./activityAirship').createActivityAirship({...airship,now,resolveCharacter:options.resolveCharacter,onSay:options.onSay,store:worldStores.liberl});
   const hangar=airship&&createActivityService({...options,grid:require('../activity/hangar-world.cjs').grid,residents:{npcs:[],disablePoms:true},geometry:null,onSay:event=>options.onSay?.({...event,map:'hangar'}),now,persistent:true,store:worldStores.hangar});
-  const stadium = arena && createActivityService({ ...options, ...arena, jumpEnabled:true, now, persistent: true, store: worldStores.arena,
-    spawnFor: user => spectators.has(user) ? (arena.spectatorGrid?.spawn ?? arena.grid.spawn) : arena.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? arena.grid.spawn,
+  // Duel venues: Grancel (client map "arena") and the top of the Axis Pillar (client map "axis").
+  // Both keep the "arena" location and publication channel; each duel draws its venue once.
+  const venueConfig=duel=>duel?.venue==='axis'&&axis?axis:arena;
+  const venueOf=duel=>duel?.venue==='axis'&&axis?'axis':'arena';
+  const isArena=map=>map==='arena'||map==='axis';
+  const makeStadium=(venue,config)=>config&&createActivityService({ ...options, ...config, jumpEnabled:true, now, persistent: true, store: worldStores[venue],
+    spawnFor: user => spectators.has(user) ? (config.spectatorGrid?.spawn ?? config.grid.spawn) : config.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? config.grid.spawn,
     onDefeat: finishDuel,
     onSay:event=>options.onSay?.({...event,map:"arena"}),
-    navigationFor: user => spectators.has(user) ? (arena.spectatorGrid ?? arena.grid) : arena.grid,
-    playerPolicy: user => {const duel=duels.get(assignments.get(user)),protectedNow=!!arena.introDuration&&!!duel&&(duel.readyAt===undefined||now()<duel.readyAt);const ended=!!duel?.result;return {spectator:spectators.has(user),canMove:!protectedNow&&!ended,duelProtected:protectedNow||ended,duelFinished:ended,noRespawn:ended,...(ended&&duel.result.loser===user?{hp:0,deadUntil:duel.result.at+10000}:{})};} });
+    navigationFor: user => spectators.has(user) ? (config.spectatorGrid ?? config.grid) : config.grid,
+    playerPolicy: user => {const duel=duels.get(assignments.get(user)),protectedNow=!!config.introDuration&&!!duel&&(duel.readyAt===undefined||now()<duel.readyAt);const ended=!!duel?.result;return {spectator:spectators.has(user),canMove:!protectedNow&&!ended,duelProtected:protectedNow||ended,duelFinished:ended,noRespawn:ended,...(ended&&duel.result.loser===user?{hp:0,deadUntil:duel.result.at+10000}:{})};} });
+  const stadiums={arena:makeStadium('arena',arena),axis:makeStadium('axis',axis)};
+  const stadium=stadiums.arena,stadiumOf=duel=>stadiums[venueOf(duel)];
   const city = rolent && createActivityService({ ...options,...rolent,now,persistent:true,store:worldStores.rolent,
     onSay:event=>options.onSay?.({...event,map:"rolent"}),
     playerPolicy:user=>huntGame?.policy(user)??{} });
   const towerArrivals=new Map(),towerTeam=new Map();
   const towers=tower.map((floor,i)=>createActivityService({...options,...floor,dungeon:floor.layout,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:(_actor,target)=>target.enemy===true,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
   const dungeonArrivals=new Map();const dungeons=halloweenDungeon.map((floor,i)=>createActivityService({...options,...floor,dungeon:floor.layout,now,persistent:true,store:worldStores['hallow'+(i+1)],combatEnabled:false,enemySpawns:[],canDamage:()=>false,onDrink:null,onCraft:()=>{},onSay:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>dungeonArrivals.get(user)??floor.grid.spawn}));
-  const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(arena?.introDuration??0);}return data;};
+  const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(venueConfig(data)?.introDuration??0);}return data;};
   const saved=store?.load();
   for(const [id,replay]of saved?.completedCaptures??[])if(now()-replay.at<600000)completedCaptures.set(id,replay);
   for (const [id,data] of saved?.duels ?? []) if (data.expires>now()) duels.set(id,makeDuel(data));
@@ -63,7 +70,7 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
     for (const [user, match] of assignments) if (match === id) detach(user);
     for (const [user, match] of spectators) if (match === id) { spectators.delete(user); detach(user); }
     const completed=duels.get(id);if(completed?.result)completedCaptures.set(completed.result.captureId,{id,...completed.result,actors:completed.players});
-    stadium?.closeRoom("map:arena:"+id);
+    stadiumOf(completed)?.closeRoom("map:"+venueOf(completed)+":"+id);
     duels.delete(id); resultAttempts.delete(id);
   }
   function release(user, returnHome = true, cancel = true) {
@@ -90,7 +97,7 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
     const floor=/^tower([1-4])$/.exec(locations.get(user)??"");if(floor&&towers[Number(floor[1])-1]){const map="tower"+floor[1];return {key:map,service:towers[Number(floor[1])-1],map,channel:"map:"+map,match:null};}
     if (city && locations.get(user) === "rolent") return {key:"rolent",service:city,map:"rolent",channel:"map:rolent",match:huntGame?.summary()?.id??null};
     const arenaId=spectators.get(user) ?? (duel ? id : null);
-    return stadium && locations.get(user) === "arena" && duels.has(arenaId) ? { key:"arena:"+arenaId, service:stadium, map:"arena", channel:"map:arena:"+arenaId, match:spectators.has(user) ? "watch:"+arenaId : arenaId } : { key:"tavern", service:tavern, map:"anterose", channel:"map:anterose", match:null };
+    return stadium && locations.get(user) === "arena" && duels.has(arenaId) ? { key:"arena:"+arenaId, service:stadiumOf(duels.get(arenaId)), map:venueOf(duels.get(arenaId)), channel:"map:"+venueOf(duels.get(arenaId))+":"+arenaId, match:spectators.has(user) ? "watch:"+arenaId : arenaId } : { key:"tavern", service:tavern, map:"anterose", channel:"map:anterose", match:null };
   }
   function sanitize(result) {
     const pom = p => p && ({ ...p, owner: alias(p.owner), thrownBy: alias(p.thrownBy) });
@@ -123,9 +130,9 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
-    refreshCharacter(user) { for(const service of [tavern,hangar,stadium,city,skies,...towers])service?.refreshCharacter(user); },
+    refreshCharacter(user) { for(const service of [tavern,hangar,stadium,stadiums.axis,city,skies,...towers])service?.refreshCharacter(user); },
     duelCaptureFor(user,captureId){const completed=captureId&&completedCaptures.get(captureId);if(completed?.actors.includes(user)&&now()-completed.at<600000)return completed;const id=captureId?[...duels].find(([,d])=>d.result?.captureId===captureId&&d.players.includes(user))?.[0]:assignments.get(user),duel=duels.get(id);return duel?.players.includes(user)&&duel.result&&now()-duel.result.at<600000?{id,...duel.result,actors:duel.players}:null;},
-    matchFor(user) { const target=destination(user),id=target.match?.replace(/^watch:/,'');const d=duels.get(id);return target.map==='arena'&&d?.players.every(p=>d.accepted?.includes(p))?id:null; },
+    matchFor(user) { const target=destination(user),id=target.match?.replace(/^watch:/,'');const d=duels.get(id);return isArena(target.map)&&d?.players.every(p=>d.accepted?.includes(p))?id:null; },
     setDuelThread(id,thread) { const d=duels.get(id);if(d){d.thread=thread;persist();} },
     rematchOpponent(id,user){const d=duels.get(id);if(!d?.result||!d.players.includes(user))throw new ActivityError("Revanche indisponible.",403);const name=d.names[1-d.players.indexOf(user)];closeDuel(id);persist();return name;},
     duelStatus(id,user) {const d=duels.get(id);return d?.players.includes(user)?{accepted:d.accepted?.includes(user)??false}:null;},
@@ -149,20 +156,20 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
     createDuel({ id, channel, players, names = [] }) {
       prune(); if (!arena) throw new ActivityError("Arène indisponible.");
       for (const user of players) if (assignments.has(user)) throw new ActivityError("Un des personnages est déjà en duel.");
-      duels.set(id,makeDuel({channel,players,names,accepted:[],expires:now()+30*60*1000})); persist();
+      duels.set(id,makeDuel({channel,players,names,venue:axis&&random()<.5?'axis':'arena',accepted:[],expires:now()+30*60*1000})); persist();
     },
     joinDuel(id, user) {
       prune(); const duel=duels.get(id);
       if (!duel || !duel.players.includes(user)) throw new ActivityError("Invitation expirée ou inaccessible.",403);
-      if (assignments.get(user) !== id) { release(user); stadium.resetPlayer(user); }
+      if (assignments.get(user) !== id) { release(user); stadiumOf(duel).resetPlayer(user); }
       huntGame?.leave(user); spectators.delete(user);
       assignments.set(user,id); locations.set(user,"arena"); lastSeen.set(user,now()); persist();
     },
-    acceptDuel(id,user) { prune();const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){stadium.resetBalls("map:arena:"+id);duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(arena.introDuration??0);}persist(); return ready; },
+    acceptDuel(id,user) { prune();const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){stadiumOf(duel).resetBalls("map:"+venueOf(duel)+":"+id);duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(venueConfig(duel).introDuration??0);}persist(); return ready; },
     validateSpectate(id) { prune();const duel=duels.get(id);if(!duel||!duel.players.every(p=>duel.accepted?.includes(p)))throw new ActivityError("Ce duel n'est pas disponible.",403); },
     spectateDuel(id,user) { prune(); const duel=duels.get(id); if (!duel||!duel.players.every(p=>duel.accepted?.includes(p))) throw new ActivityError("Ce duel n'est pas disponible.",403);
       if (duel.players.includes(user)) return;
-      huntGame?.leave(user); release(user); spectators.set(user,id); stadium.resetPlayer(user); locations.set(user,"arena"); persist();
+      huntGame?.leave(user); release(user); spectators.set(user,id); stadiumOf(duel).resetPlayer(user); locations.set(user,"arena"); persist();
     },
     createHunt(user,duration) { if(!city||!huntGame)throw new ActivityError("Rolent indisponible.");return huntGame.create(user,duration); },
     cancelHunt(id,user) { huntGame.cancel(id,user); },
@@ -251,8 +258,8 @@ function createActivityLobby({ arena, halloween=null, isHalloweenAdmin=async()=>
       }
       const duelId=target.match?.replace(/^watch:/,""),duel=duels.get(duelId);
       if(duel?.result)publishResult(duelId,duel);
-      const introduction=target.map==="arena"&&duel&&(arena.introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],titles:duel.players.map((user,i)=>require('./characters').characterTitle(duel.names?.[i]??result.joueurs.find(p=>p.id===user)?.character)),phrases:(duel.names??[]).map((name,i)=>require('./characters').characterEntrance(name,duel.names[1-i])),streaks:duel.players.map(getArenaStreak),result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
-      if(target.map==='arena')trainingRequests.delete(session.id);
+      const introduction=isArena(target.map)&&duel&&(venueConfig(duel).introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,venue:venueOf(duel),startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],titles:duel.players.map((user,i)=>require('./characters').characterTitle(duel.names?.[i]??result.joueurs.find(p=>p.id===user)?.character)),phrases:(duel.names??[]).map((name,i)=>require('./characters').characterEntrance(name,duel.names[1-i])),streaks:duel.players.map(getArenaStreak),result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
+      if(isArena(target.map))trainingRequests.delete(session.id);
       return {...sanitize(result),halloween:target.map==='halloween'?{started:playback?.started,duration:playback?.duration}:undefined,trainingRequest:trainingRequests.get(session.id)?.id,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
         actionResult:boardingError?{id:point.action.id,error:boardingError}:['flight_board','hangar_enter'].includes(point?.action?.type)?{id:point.action.id}:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },

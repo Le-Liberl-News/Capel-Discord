@@ -1,0 +1,13 @@
+{
+  "game": "Trails in the Sky SC",
+  "model": "ED6_DT2A/c5313._x3",
+  "textures": "ED6_DT35",
+  "scenario": "c5313._sn (Loewe, Lame impériale)",
+  "musicTableId": 43,
+  "music": "BGM/ED6403.ogg",
+  "navigation": {
+    "settings": "activity/tools/axis-navigation.json",
+    "fighters": "radius 30 m around the centre",
+    "spectators": "outer ring 32-40 m"
+  }
+}

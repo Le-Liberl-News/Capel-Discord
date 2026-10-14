@@ -15,6 +15,7 @@ import {createDrinkingTable} from './drinking-table.mjs';
 import spriteScale from './assets/sky/sprite-scale.json';
 import {createArenaAudience} from './arena-audience.mjs';
 import arenaIntroDefinition from './assets/sky/arena/intro.json';
+import axisIntroDefinition from './assets/sky/axis/intro.json';
 import {createTowerGates} from './tower-gates.mjs';
 import {recordCorrection,recordDiagnostic} from './diagnostics.mjs';
 import playerHealth from './player-health.cjs';
@@ -74,7 +75,9 @@ export function prepareTrainingArena(){const version=new URL(import.meta.url).se
 export async function createSkyScene(canvas, map = "anterose", {localTraining=false}={}) {
   installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inDungeon=/^hallow[1-5]$/.test(map),floorNumber=Number(map.slice(inDungeon?6:5)),inTower=/^tower[1-4]$/.test(map)||inDungeon;
-  const canJump=inTower||map==='arena';
+  // the two duel venues: Grancel ("arena") and the top of the Axis Pillar ("axis")
+  const isArena=map==='arena'||map==='axis';
+  const canJump=inTower||isArena;
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -82,7 +85,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     alpha: false,
   });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setClearColor(inTower?0x06080b:0x201b18);
+  renderer.setClearColor(inTower?0x06080b:map==='axis'?0x8db9df:0x201b18);   // Axis: open sky above the sea of clouds
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene(),
     walkingCamera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, map === "rolent" ? 350 : 150),
@@ -90,9 +93,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     catalogue = await fetch(new URL("characters.json", ASSETS),{cache:"no-store"}).then((r) =>
       r.json(),
     );
-  if(inTower||map==="arena"||map==='halloween')Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
+  if(inTower||isArena||map==='halloween')Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
   if(map==="halloween")Object.assign(catalogue,await fetch(new URL("halloween/catalogue.json",ASSETS)).then(r=>r.json()));
-  const combatPreparation=(map==='arena'||inTower&&!inDungeon)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
+  const combatPreparation=(isArena||inTower&&!inDungeon)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
   const supportEffects=createSupportEffects(THREE,scene);
   const photoWhite=document.createElement('div');photoWhite.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:18;background:#fff;opacity:0';document.body.append(photoWhite);const photoGhosts=new Map();
   const blindness=document.createElement('div');blindness.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;background:radial-gradient(ellipse at center,transparent 5%,rgba(0,0,0,.85) 48%,#000 80%);transition:opacity .15s;opacity:0';document.body.append(blindness);
@@ -103,7 +106,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
-  const cutaway = map === "arena" ? createArenaCutaway() : null;
+  const cutaway = isArena ? createArenaCutaway() : null;
   renderer.localClippingEnabled = !!cutaway;
   const loaded = map==="hangar"?{scene:new THREE.Group()}:map==="arena"?await loadArenaModel(ASSETS,version):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
@@ -164,16 +167,16 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   halloweenDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
   const dungeonEffects=inTower&&!inDungeon?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
-  const duelIntro=map==="arena"?createDuelIntro({assets:ASSETS,onSpeech:message=>dialogues.receive([message])}):null;
+  const duelIntro=isArena?createDuelIntro({assets:ASSETS,venue:map,onSpeech:message=>dialogues.receive([message])}):null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
   if(map==="hangar")grid=hangarWorld.grid;
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
-  const spectatorGrid = map === "arena" ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
+  const spectatorGrid = isArena ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
   const arenaAudience=map==='arena'?await createArenaAudience(THREE,scene,ASSETS,catalogue,arenaIntroDefinition,cutaway):null;
-  const introCamera=map==='arena'?new THREE.PerspectiveCamera(53.2,innerWidth/innerHeight,.08,250):null;
+  const introCamera=isArena?new THREE.PerspectiveCamera(53.2,innerWidth/innerHeight,.08,250):null;
   const airBounds=flight.flightBounds(grid);
   let walkingGrid = grid, movementAllowed = true;
   const propCatalogue = map === "rolent" ? await fetch(new URL("props.json", mapAssets)).then(r => r.json()) : {};
@@ -205,7 +208,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const renneCombat=await combatPreparation;
   renneCombat?.warmup(renderer,camera);
   let notifyCapture=()=>{};
-  const duelFinish=map==="arena"?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
+  const duelFinish=isArena?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
@@ -789,7 +792,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const airForward=forward.clone(),airRight=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
     forward.y = 0;
     forward.normalize();
-    combatControls.update({arena:map==="arena"||inTower&&!inDungeon,character:inDungeon?undefined:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
+    combatControls.update({arena:isArena||inTower&&!inDungeon,character:inDungeon?undefined:me?.character,connected,alive:health.hp>0,spectator:health.spectator,busy:!!renneCombat?.current(localId)||!movementAllowed,health:{...health,cooldowns:{}}});
     const stick=combatControls.vector();
     if(freeSpectator){const controls=movementKeys(keyboardLayout()),h=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+stick.x,v=Number(keys.has('arrowup')||keys.has(controls.up))-Number(keys.has('arrowdown')||keys.has(controls.down))-stick.y,lift=Number(keys.has(' '))-Number(keys.has('control'));const motion=airForward.clone().multiplyScalar(v).addScaledVector(airRight,h);motion.y+=lift;if(motion.length()>1)motion.normalize();follow.addScaledVector(motion,seconds*8);}
     const patEvent=renneCombat?.inertia(localId);if(!patEvent||!connected||!movementAllowed||health.hp<=0){patDrive=null;patDriveId=null;}else if(patEvent.id!==patDriveId){patDrive=patDriveMechanics.createPatDrive(me.heading);patDriveId=patEvent.id;}
@@ -1065,7 +1068,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     async demoPhoto(){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Dorothy',...origin,hp:500});const started=Date.now()-520;renneCombat.receive([{id:crypto.randomUUID(),actor:localId,character:'Dorothy',kind:'craft',origin,aim:{x:-1,y:0,z:13.25},started,impactAt:started+500,endsAt:started+1250,hits:[]}],Date.now());},
     async demoLoewe(){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Loewe',...origin,hp:500});Object.assign(avatars.get(localId).position,origin);const targets=[{id:'preview-collapse-1',character:'Estelle',x:-4,y:0,z:3.25},{id:'preview-collapse-2',character:'Joshua',x:2,y:0,z:3.25}];for(const p of targets)await setAvatar({...p,hp:500});const started=Date.now(),hits=targets.map(p=>({id:p.id,collapse:true,at:started+585,point:{x:p.x,y:p.y+.8,z:p.z}}));previewCollapse={started,targets:hits};renneCombat.receive([{id:crypto.randomUUID(),actor:localId,character:'Loewe',kind:'craft',special:'loewe',origin,aim:origin,started,impactAt:started+585,endsAt:started+2780,hits}],started);},
     async demoDimension(empty=false){if(!__ACTIVITY_PREVIEW__||!renneCombat)return;const origin={x:-1,y:0,z:3.25};await setAvatar({id:localId,character:'Weissmann',...origin,hp:500});Object.assign(avatars.get(localId).position,origin);const targets=empty?[]:[{id:'preview-dimension-1',character:'Estelle',x:-2.25,y:0,z:4.25},{id:'preview-dimension-2',character:'Joshua',x:.25,y:0,z:4.25}];for(const p of targets)await setAvatar({...p,hp:500});const started=Date.now(),hits=targets.map(p=>({id:p.id,trapped:true,at:started,point:{x:p.x,y:p.y,z:p.z}})),event={id:crypto.randomUUID(),actor:localId,character:'Weissmann',kind:'craft',technique:'Another Dimension',special:'dimension',origin,aim:{x:-1,y:0,z:4.25},started,impactAt:started+2600,endsAt:started+4000,hits};previewDimension={started,targets:hits};renneCombat.receive([event],started);},
-    async demoIntro(){if(!__ACTIVITY_PREVIEW__||!duelIntro)return;const own=avatars.get(localId),other={id:'preview-arena-foe',character:own.character==='Joshua'?'Renne':'Joshua',x:-1,y:0,z:-16.25,hp:500};Object.assign(own.position,{x:-1,y:0,z:3.25});await setAvatar(other);const now=Date.now();duelIntro.receive({id:crypto.randomUUID(),startsAt:now,readyAt:now+arenaIntroDefinition.duration,players:[localId,other.id],names:[own.character,other.character],titles:['Titre à renseigner','Titre à renseigner'],phrases:['Que le meilleur gagne !','À nous deux !'],streaks:[2,1]},now);},
+    async demoIntro(){if(!__ACTIVITY_PREVIEW__||!duelIntro)return;const own=avatars.get(localId),axisVenue=map==='axis',other={id:'preview-arena-foe',character:own.character==='Joshua'?'Renne':'Joshua',x:axisVenue?0:-1,y:0,z:axisVenue?9.5:-16.25,hp:500};Object.assign(own.position,axisVenue?{x:0,y:0,z:-9.5}:{x:-1,y:0,z:3.25});await setAvatar(other);const now=Date.now();duelIntro.receive({id:crypto.randomUUID(),startsAt:now,readyAt:now+(axisVenue?axisIntroDefinition:arenaIntroDefinition).duration,venue:map,players:[localId,other.id],names:[own.character,other.character],titles:['Titre à renseigner','Titre à renseigner'],phrases:['Que le meilleur gagne !','À nous deux !'],streaks:[2,1]},now);},
     async demoConversation() {
       if (!__ACTIVITY_PREVIEW__) return;
       const me = avatars.get(localId);
@@ -1158,7 +1161,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         receivedAt: performance.now(),
       };
       if(result.actionResult?.error){const event=renneCombat?.actions.get(result.actionResult.id);if(event){renneCombat.reject(event.id);combatControls.rejected(event.kind);if(event.character==='Julia'&&event.kind==='craft'){juliaCombo=null;craftTarget=false;combatControls.targeting(null);}if(renneMechanics.combatSpec(event.character,event.kind)?.dash){const me=avatars.get(localId);if(me)Object.assign(me.position,result.position);path=[];movementTrace=[];}}}
-      combatControls.update({arena:map==="arena"||inTower&&!inDungeon,character:inDungeon?undefined:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
+      combatControls.update({arena:isArena||inTower&&!inDungeon,character:inDungeon?undefined:avatars.get(localId)?.character,connected,alive:result.health?.hp>0,spectator:result.health?.spectator,busy:!!renneCombat?.current(localId),health:result.health});
       for (const ball of environment.poms) {
         if (!projectiles.has(ball.id)) {
           projectiles.set(ball.id,createProjectilePlayback());
@@ -1178,7 +1181,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(touchButton.disabled)disarmTouch();
       const wasSpectator = !!health.spectator;
       health = { ...result.health, received: performance.now() };
-      if (map === "arena" && wasSpectator !== !!health.spectator) { camera=health.spectator?flightCamera:walkingCamera;pitch=health.spectator?.25:CAMERA_PITCH;zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
+      if (isArena && wasSpectator !== !!health.spectator) { camera=health.spectator?flightCamera:walkingCamera;pitch=health.spectator?.25:CAMERA_PITCH;zoom=health.spectator?6.9565217391:CAMERA_ZOOM;resize(); }
       walkingGrid = health.spectator && spectatorGrid ? spectatorGrid : grid;
       movementAllowed = (health.spectator||health.canMove !== false)&&!halloweenScene?.active(performance.now());const cat=avatars.get(localId);if(cat)cat.catCling=health.catCling??null;blindness.style.opacity=health.blindUntil>health.serverTime?'1':'0';
       if (!movementAllowed) { path=[]; keys.clear(); movementTrace=[]; marker.visible=false; }
@@ -1192,7 +1195,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }
       respawn = health.respawn ?? 0;
       if (health.hp > 0) status.textContent = health.hp + " / "+(health.maxHp??playerHealth.PLAYER_MAX_HP)+" PV";
-      if (health.spectator && map === "arena") status.textContent = "Tribunes : spectateur";
+      if (health.spectator && isArena) status.textContent = map==="axis"?"Bord du sommet : spectateur":"Tribunes : spectateur";
       if (environment.game) status.textContent = result.notice ?? "";
       if (result.actionResult?.error)
         status.textContent = result.actionResult.error;

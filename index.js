@@ -271,6 +271,7 @@ const activiteService = createActivityLobby({
       rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
       anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
       arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),
+      axis: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-axis.json")),
     },
     store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
     arena: {
@@ -281,6 +282,16 @@ const activiteService = createActivityLobby({
       grid: require('./activity/assets/sky/arena/navigation.json'),
       residents: require('./activity/assets/sky/arena/residents.json'),
       geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/arena/anterose.gltf'), 'utf8'))),
+    },
+    // second duel venue, drawn one time in two: the top of the Axis Pillar, where Loewe is fought in SC
+    axis: {
+      combatEnabled: true,
+      spectatorGrid: require("./activity/assets/sky/axis/spectator-navigation.json"),
+      introDuration:require("./activity/assets/sky/axis/intro.json").duration,
+      spawns: [{x:0,y:0,z:-9.5},{x:0,y:0,z:9.5}],
+      grid: require('./activity/assets/sky/axis/navigation.json'),
+      residents: require('./activity/assets/sky/axis/residents.json'),
+      geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/axis/anterose.gltf'), 'utf8'))),
     },
     grid: require("./activity/terminal-world.cjs").terminalNavigation(require("./activity/assets/sky/navigation.json"),capelModel),
     residents: require('./activity/assets/sky/residents.json'),

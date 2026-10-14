@@ -66,6 +66,8 @@ Les accusÃ©s de position sont comparÃ©s Ã  la copie envoyÃ©e dans la req
 
 La navigation de Grancel se régénère avec `node activity/tools/build-navigation.mjs <chemin-absolu-vers-activity/assets/sky/arena> activity/tools/arena-navigation.json`. Cette grille couvre le terrain complet ; les gradins isolés ne sont pas des sols de combat.
 
+Un duel sur deux a lieu au sommet du Pilier Axis (SC, `c5313`, où se combat Loewe ; carte client `axis`, même salon de publication et même classement que Grancel). Le tirage est fait à la création du duel et enregistré avec lui. Décor : `python activity/tools/export_sky_assets.py --model c5313._x3 --textures <._ds de ED6_DT35> --only-map --output activity/assets/sky/axis`, puis `node activity/tools/build-navigation.mjs <chemin-absolu-vers-activity/assets/sky/axis> activity/tools/axis-navigation.json` ; la grille des combattants est ensuite limitée à 30 m du centre, celle des spectateurs à l'anneau extérieur (32 à 40 m). Musique : `bgm[43]` du scénario, soit `ED6403.ogg`. L'intro (`axis/intro.json`) montre la tour de loin avec son nom, l'entrée des deux combattants comme à Grancel, une orbite rapide autour du centre puis le départ.
+
 Les textures du modèle portent la version du bundle pour éviter les anciens PNG opaques en cache. La découpe des murs suit la caméra et le personnage, sans modifier les collisions physiques ; les clics ignorent les fragments masqués.
 
 L'Antérose et l'arène sont chacune un monde unique partagé par tous les joueurs, indépendamment du salon ou du MP de lancement. Les duels donnent accès à cette même arène : les autres combattants et les Poms sont communs. Revenir à l'Antérose retrouve tous les joueurs qui y sont présents.
