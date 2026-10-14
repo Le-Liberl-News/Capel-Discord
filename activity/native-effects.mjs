@@ -9,7 +9,7 @@ async function loadBank(assets) {
  const base=new URL('effects/native/',assets),revision=new URL(import.meta.url).searchParams.get('v')??'native-20261012-phoenix-rig',url=path=>{const u=new URL(path,base);u.searchParams.set('v',revision);return u.href;},entries=await fetch(url('catalogue.json'),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Effets introuvables');return r.json();});
  for(const entry of entries)entry.animation=url(entry.animation);
  const images=new Map(),players=new Map();
- const image=path=>{if(!images.has(path))images.set(path,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url(path);}));return images.get(path);};
+ const image=path=>{if(!images.has(path))images.set(path,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>(img.decode?img.decode().catch(()=>{}):Promise.resolve()).then(()=>resolve(img));img.onerror=reject;img.src=url(path);}));return images.get(path);};
  const jobs=new Map(),lookup=new Map(entries.map(entry=>[entry.id.toLowerCase(),entry]));
  players.ensure=async ids=>{await Promise.all([...new Set(ids.map(id=>id.toLowerCase()))].map(async id=>{const entry=lookup.get(id);if(!entry)return;if(!jobs.has(id))jobs.set(id,new NativeEffectPlayer(entries,image).load(entry).then(player=>players.set(id,player)).catch(error=>{jobs.delete(id);throw error;}));await jobs.get(id);}));};
  await players.ensure(['third/cr151_00._ef','sc/mp050_00._ef']);

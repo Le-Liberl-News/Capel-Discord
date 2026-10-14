@@ -56,7 +56,8 @@ import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize,remapK
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
 import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
-import { createArenaCutaway, versionAsset } from "./scene-visibility.mjs";
+import { versionAsset } from "./scene-visibility.mjs";
+import { createXRayPass } from "./xray-pass.mjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
 import collisionModule from "./surface-collision.cjs";
 import { createProjectilePlayback } from "./projectile.mjs";
@@ -107,12 +108,13 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
-  const cutaway = isArena ? createArenaCutaway() : null;
+  // Walls are no longer cut away around the action: fighters and effects show through them instead (xray-pass.mjs).
+  const cutaway = null, xray = isArena ? createXRayPass(THREE) : null;
   renderer.localClippingEnabled = !!cutaway;
   const loaded = map==="hangar"?{scene:new THREE.Group()}:isArena?await loadArenaModel(ASSETS,version,map):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
-  const model = new THREE.Group();model.add(loaded.scene);
+  const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;
   if(map==="tower4")removeNativeBackdrop(model);
   const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):map==="axis"?await createAxisSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
@@ -191,7 +193,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function attachShadow(avatar,id) {
     if (id.startsWith("world:pom"))return avatar;
     dayNight.apply(avatar.mesh);
-    avatar.shadow=avatar.prop?createContactShadow(THREE,shadowTexture):createAvatarShadow(THREE,avatar,collision,map);scene.add(avatar.shadow);return avatar;
+    avatar.shadow=avatar.prop?createContactShadow(THREE,shadowTexture):createAvatarShadow(THREE,avatar,collision,map);avatar.shadow.userData.noXRay=true;scene.add(avatar.shadow);return avatar;
   }
   function removeAvatar(avatar) {
     scene.remove(avatar.mesh);
@@ -446,7 +448,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       transparent: true,
       opacity: 0.8,
     }),
-  );
+  );marker.userData.noXRay=true;
   marker.rotation.x = -Math.PI / 2;
   marker.visible = false;
   scene.add(marker);
@@ -549,7 +551,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       foodStock:player.foodStock??[],cooking:player.cooking??null,walking: !!player.moving,
       speed: player.speed ?? 0.8,
       initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,craftTexture,craftInfo:baseInfo.craft,
-      battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=base.clone();clone.needsUpdate=true;return [bank,clone];})):null,
+      battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=base.clone();clone.needsUpdate=true;renderer.initTexture(clone);return [bank,clone];})):null,
       fallbackDeath: dead && !baseInfo.death && (!battle||!battle.banks["4"]),
       info,
       position: {
@@ -1024,6 +1026,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     drinkingTable?.update(time,avatars);
     dialogues.update(time, avatars, camera);
     renderer.render(scene, camera);
+    xray?.render(renderer, scene, camera);
     craftCapture?.update(time);
     duelFinish?.update(time,avatars,camera);
     requestAnimationFrame(render);

@@ -1,7 +1,7 @@
 import {facing} from './movement.mjs';
 export async function createArenaAudience(THREE,scene,assets,catalogue,definition,cutaway=null){
  // cut by the same planes as the stands, so the crowd and the duke never float where the camera has cut the scenery away
- const clip=material=>{if(cutaway){material.clippingPlanes=cutaway.planes;material.clipIntersection=true;}return material;};
+ const clip=material=>{material.userData.noXRay=true;if(cutaway){material.clippingPlanes=cutaway.planes;material.clipIntersection=true;}return material;};
  const loader=new THREE.TextureLoader(),maps=new Map(),people=[];
  const logoMap=await loader.loadAsync(new URL('arena/ln.png',assets).href);logoMap.colorSpace=THREE.SRGBColorSpace;const logo=new THREE.Mesh(new THREE.PlaneGeometry(8,1.8),clip(new THREE.MeshBasicMaterial({map:logoMap,side:THREE.DoubleSide})));logo.position.set(-9.6,1.35,-6.5);logo.rotation.y=Math.PI/2;scene.add(logo);
  const entries=[...definition.crowd.map(n=>({...n,info:definition.banks[n.bank]})),{...definition.duke,id:'duke',info:catalogue[definition.duke.character]}];
