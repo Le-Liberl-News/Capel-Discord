@@ -1,7 +1,7 @@
 const FLIGHT_SPEED=4,FLIGHT_RADIUS=.15,FLIGHT_CENTER=.4;
 function flightBounds(grid) {
  let low=Infinity,high=-Infinity;for(const y of grid.cells)if(Number.isFinite(y)){low=Math.min(low,y);high=Math.max(high,y);}
- return {minX:grid.origin.x-grid.step/2,maxX:grid.origin.x+(grid.width-.5)*grid.step,minZ:grid.origin.z-grid.step/2,maxZ:grid.origin.z+(grid.height-.5)*grid.step,minY:(Number.isFinite(low)?low:0)+.08,maxY:(Number.isFinite(high)?high:0)+25};
+ return {minX:grid.origin.x-grid.step/2,maxX:grid.origin.x+(grid.width-.5)*grid.step,minZ:grid.origin.z-grid.step/2,maxZ:grid.origin.z+(grid.height-.5)*grid.step,minY:(Number.isFinite(low)?low:0)+.08,maxY:(Number.isFinite(high)?high:0)+25,...grid.combatBounds};
 }
 function insideFlight(p,b){return ['x','y','z'].every(k=>Number.isFinite(p[k]))&&p.x>=b.minX&&p.x<=b.maxX&&p.y>=b.minY&&p.y<=b.maxY&&p.z>=b.minZ&&p.z<=b.maxZ;}
 const center=p=>({...p,y:p.y+FLIGHT_CENTER});

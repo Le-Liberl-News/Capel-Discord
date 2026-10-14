@@ -204,6 +204,13 @@ function createActivityService({
       const requestedJump=(dungeon||jumpEnabled)&&point?.action?.type==="jump";
       for(const member of room.values())Object.assign(member,playerPolicy(member.id));
       world.tick(room);
+      if(walkingGrid.combatBounds&&!player.spectator){const b=walkingGrid.combatBounds;player.x=Math.max(b.minX,Math.min(b.maxX,player.x));player.z=Math.max(b.minZ,Math.min(b.maxZ,player.z));}
+      // A knockback / landing can stop between grid cells at a platform edge.
+      // Repair the server's own invalid origin, otherwise every future trace is rejected.
+      if(player.hp>0&&player.character!=='Sieg'&&!player.spectator&&!player.jump&&!player.knockback&&!player.combatDash&&!player.catCling&&!player.dimensionLift){
+        const recovered=require('../activity/navigation-recovery.cjs').recoverGround(walkingGrid,player);
+        if(recovered)Object.assign(player,recovered);
+      }
       const justRespawned = (player.respawn ?? 0) !== previousRespawn;
       if (point && !(wasScriptedDashPending&&!player.trinityDashPending&&!player.phoenixDashPending) && (!player.combatDash||point.combatDash===player.combatDash) && !player.jump && (!wasJumping||point.jumpLanding===player.lastLandedJump) && !(requestedJump&&session.actionIds?.has(point.action.id)) && !characterChanged && player.hp > 0 && !justRespawned && player.canMove !== false && !(player.guardHold?.until>now()) && !immobilized(player,now()) && now() >= (player.combatLockedUntil ?? 0)) {
         const flying=session.character==="Sieg"&&!player.prop;
