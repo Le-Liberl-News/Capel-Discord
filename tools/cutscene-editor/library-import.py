@@ -24,7 +24,7 @@ if len(sys.argv)==1:
  sounds=[];characters={};models=[]
  for g,entries in indexes.items():
   for n in entries:
-   if n.endswith('._x3'):models.append({'id':f'/cache/scene-models/{g}/{n}/model.gltf','name':f'{g}/{n}'})
+   if n.endswith(('._x3','._x2')):models.append({'id':f'/cache/scene-models/{g}/{n}/model.gltf','name':f'{g}/{n}'})
    if n.endswith('.wav'):sounds.append({'id':f'/cache/sounds/{g}/{n}','name':f'{g}/{n}'})
    if n.endswith('._ch') and n.replace('._ch','p._cp') in entries:characters[f'{g}/{n}']={'raw':True,'game':g,'source':n}
  print(json.dumps({'sounds':sounds,'characters':characters,'models':models}))
@@ -33,7 +33,7 @@ else:
  if game not in GAMES or name not in indexes[game]:raise ValueError('Asset absent')
  if name.endswith('.wav'):
   p=CACHE/'sounds'/game/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(read(game,name));print(json.dumps({'file':str(p)}))
- elif name.endswith('._x3'):
+ elif name.endswith(('._x3','._x2')):
   import importlib.util,tempfile
   sys.path.insert(0,str(ROOT/'activity/tools'))
   from export_sky_assets import decode_model_texture
