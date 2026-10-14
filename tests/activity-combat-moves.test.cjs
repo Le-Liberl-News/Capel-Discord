@@ -11,11 +11,11 @@ test('the art key dodges for everyone except Kloe, who keeps her healing art',()
  assert.equal(combatSpec('Kloe','art').effect,'heal');
 });
 
-test('a dodge dashes about four metres along the movement direction, then waits seven seconds',()=>{
+test('a dodge dashes about two metres along the movement direction, then waits seven seconds',()=>{
  const a=fighter('a','Joshua',0),{room,combat,step}=arena(a);
  assert.ok(combat.action(a,{id:'d1',type:'attack',kind:'art',direction:{x:0,z:1}},room).combatId);
  step(moves.DODGE.dashDuration+40);
- assert.ok(Math.abs(a.x)<.01&&a.z>3.5,`landed at ${a.x},${a.z}`);
+ assert.ok(Math.abs(a.x)<.01&&a.z>1.7&&a.z<2.1,`landed at ${a.x},${a.z}`);
  assert.match(combat.action(a,{id:'d2',type:'attack',kind:'art',direction:{x:1,z:0}},room).error,/récupération/);
  step(moves.DODGE.cooldown);assert.ok(combat.action(a,{id:'d3',type:'attack',kind:'art',direction:{x:1,z:0}},room).combatId);
 });
@@ -63,4 +63,19 @@ test('basic attacks build a combo that speeds them up, and a miss resets it with
  assert.ok(moves.comboFactor(3)<1);
  combat.action(a,{id:'miss',type:'attack',kind:'basic',aim:{x:-1.5,y:0,z:0}},room);step(normal.duration+20);
  assert.equal(moves.comboOf(a,time()),0);assert.ok(combat.snapshot().attacks.find(x=>x.id==='miss').missed);
+});
+
+test('a guard facing a basic attack blocks it with a spark; from behind the hit lands',()=>{
+ const a=fighter('a','Estelle',0),b=fighter('b','Joshua',1.5),{room,combat,step}=arena(a,b);
+ b.heading={dx:-1,dz:0};assert.ok(combat.parry(b,room).parry);
+ combat.action(a,{id:'front',type:'attack',kind:'basic',aim:{x:1.5,y:0,z:0}},room);step(300);
+ assert.equal(b.hp,500);assert.ok(combat.snapshot().attacks.find(x=>x.id==='front').hits.some(h=>h.blocked&&h.id==='b'));
+ assert.equal(a.combo,null,'a blocked hit breaks the combo');
+ step(moves.PARRY.cooldown);b.heading={dx:1,dz:0};assert.ok(combat.parry(b,room).parry);
+ combat.action(a,{id:'back',type:'attack',kind:'basic',aim:{x:1.5,y:0,z:0}},room);step(300);
+ assert.ok(b.hp<500,'hit from behind lands');
+});
+
+test('the basic attack reaches full speed after three landed hits',()=>{
+ assert.deepEqual([0,1,2,3,6].map(moves.comboFactor),[1,.8,.6,.4,.4]);
 });

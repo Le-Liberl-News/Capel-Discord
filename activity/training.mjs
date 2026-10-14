@@ -10,8 +10,8 @@ import {bodyHeight} from './fps-combat.cjs';
 // The AI is meant to feel like a human opponent, not a perfect one: it reacts late, aims loosely,
 // hesitates before using a ready technique, takes short breathers and rarely goes for the Poms
 // unless it has no craft of its own.
-// Parry: tried on about a third of the crafts aimed at it, pressed with a human timing error (often a bit early, sometimes late).
-const PARRY_CHANCE=.35,PARRY_LEAD=[-80,320],DODGE_CHANCE=.5;
+// Parry on crafts is off for the AI (too strong); the planning code stays for a future tuning.
+const PARRY_CHANCE=0,PARRY_LEAD=[-80,320],DODGE_CHANCE=.5;
 const PERCEPTION=[200,350],THINK=[300,650],HESITATION=[250,1150],BREATHER_EVERY=[6000,11000],BREATHER=[1200,2400],HOLD=[500,1200],AI_SPEED=.9;
 export function createTraining({grid,geometry,character,opponent,now=Date.now,random=Math.random,ballSpawns=residents.ballSpawns,titles={},entrances={},introDuration=0,spawns=[{x:-1,z:3.25},{x:-1,z:-16.25}],ballChance=combat.combatSpec(opponent,'craft')?.1:.6}) {
  const between=([a,b])=>a+random()*(b-a);

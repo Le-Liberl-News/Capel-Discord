@@ -250,6 +250,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(Math.hypot(dx,dz)<1e-6){dx=me.heading?.dx??0;dz=me.heading?.dz??-1;}
     return {x:dx,z:dz};
   }
+  // farthest point straight ahead (up to `range`) that still has ground the server will accept
+  function straightAhead(me,range){
+    const dx=me.heading?.dx??0,dz=me.heading?.dz??-1,length=Math.hypot(dx,dz)||1;
+    for(let d=range;d>=1;d-=.5){const x=me.position.x+dx/length*d,z=me.position.z+dz/length*d,y=collision.floor(x,z,me.position.y+2);if(y!==null&&Math.abs(y-me.position.y)<1.2)return {x,y,z};}
+    return null;
+  }
   function startDodge(){
     const me=avatars.get(localId);if(!renneCombat||!connected||!me||me.dead||health.hp<=0||health.spectator||!movementAllowed||!combatControls.ready('art'))return false;
     if(renneCombat.current(localId)?.kind==='craft'||localJump||me.siegDive)return false;
@@ -264,7 +270,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function startParry(){
     const me=avatars.get(localId);if(!connected||!me||me.dead||health.hp<=0||health.spectator||!combatControls.ready('parry'))return false;
     if(!queueAction('parry'))return false;
-    combatControls.started('parry',me.character);combatFeedback?.parryPressed(localId);return true;
+    combatControls.started('parry',me.character);combatFeedback?.parryPressed(localId);me.parryPose={kind:'basic',character:me.character,localStart:performance.now()};return true;
   }
   function startAttack(kind,event=cursor,confirmed=false) {
     if(kind==='parry')return startParry();
@@ -280,12 +286,15 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
     const me=avatars.get(localId);const continuing=kind==='craft'&&me?.character==='Julia'&&juliaCombo&&juliaCombo.stage<3&&performance.now()<juliaCombo.until;if(!renneCombat||!connected||!me||!renneMechanics.combatSpec(me.character,kind)||me.dead||health.hp===0||health.spectator||renneCombat.current(localId)||(!continuing&&!combatControls.ready(kind)))return false;
     const spec=renneMechanics.combatSpec(me.character,kind);let target;
+    // phones: straight-line ground techniques go straight ahead of the fighter, no aiming step
+    const lineAhead=document.body.hasAttribute('data-sky-touch')&&spec.groundTarget&&(spec.shape==='line'||spec.dash)&&!confirmed?straightAhead(me,spec.range):null;
+    if(lineAhead)confirmed=true;
     if((spec.groundTarget||spec.targetRequired)&&!confirmed&&!(spec.chargeStun&&pickCombatTarget(event,spec))){craftTarget=kind;combatControls.targeting(kind);marker.visible=true;return true;}
     if(spec.targetRequired){target=pickCombatTarget(event,spec);if(!target)return false;}
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
     let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
     const photoHeading=me.heading??{dx:0,dz:-1};
-    const aim=spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
+    const aim=lineAhead?lineAhead:spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
     const stage=spec.special==='trinity'?(continuing?juliaCombo.stage+1:1):1;
     const action=queueAction("attack",undefined,aim,undefined,{kind,target,ray});if(!action)return false;
@@ -340,15 +349,15 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   document.head.append(style);
   document.body.append(menu, status, labels);
   const touchButton=document.createElement("button");
-  touchButton.id="sky-touch-action";touchButton.type="button";touchButton.textContent="Actions";
+  touchButton.id="sky-touch-action";touchButton.type="button";touchButton.textContent="✋";touchButton.title="Actions";touchButton.setAttribute("aria-label","Actions");
   touchButton.setAttribute("aria-pressed","false");
   touchButton.title="Actions";
   if(matchMedia("(any-pointer:coarse)").matches)document.body.dataset.skyTouch="true";
   let touchArmed=false;
-  function disarmTouch(){touchArmed=false;touchButton.setAttribute("aria-pressed","false");touchButton.textContent="Actions";}
-  touchButton.addEventListener("click",()=>{touchArmed=!touchArmed;touchButton.setAttribute("aria-pressed",String(touchArmed));touchButton.textContent=touchArmed?"Touchez la cible":"Actions";});
+  function disarmTouch(){touchArmed=false;touchButton.setAttribute("aria-pressed","false");touchButton.textContent="✋";touchButton.title="Actions";touchButton.setAttribute("aria-label","Actions");}
+  touchButton.addEventListener("click",()=>{touchArmed=!touchArmed;touchButton.setAttribute("aria-pressed",String(touchArmed));touchButton.textContent=touchArmed?"🎯":"✋";touchButton.title=touchArmed?"Touchez la cible":"Actions";});
   const touchStyle=document.createElement("style");
-  touchStyle.textContent="#sky-touch-action{display:none;position:fixed;right:12px;bottom:80px;z-index:25;min-height:48px;min-width:104px;padding:10px 14px;background:#ead29c;color:#241b15;border:2px solid #b49760;border-radius:6px;font:17px AveriaSky,sans-serif;touch-action:manipulation}#sky-touch-action[aria-pressed=true]{background:#ffc569}#sky-touch-action:disabled{opacity:.45}body[data-sky-touch] #sky-touch-action{display:block}@media(any-pointer:coarse){#sky-touch-action{display:block}}@media(max-width:600px){#hud{top:8px!important;left:8px!important;max-width:calc(100vw - 160px)!important;padding:6px 8px!important;font-size:11px!important}#hud h1{font-size:15px!important}#sky-prophunt{top:66px!important;right:8px!important;max-width:calc(100vw - 40px)!important;font-size:13px!important;padding:8px!important}#sky-combat{bottom:70px;left:8px;max-width:calc(100vw - 145px);font-size:13px;padding:6px 8px}#sky-actions button{min-height:44px}.sky-nameplate{font-size:13px}}";
+  touchStyle.textContent="#sky-touch-action{display:none;position:fixed;right:12px;bottom:80px;z-index:25;min-height:48px;min-width:104px;padding:10px 14px;background:#ead29c;color:#241b15;border:2px solid #b49760;border-radius:6px;font:17px AveriaSky,sans-serif;touch-action:manipulation}#sky-touch-action[aria-pressed=true]{background:#ffc569}#sky-touch-action:disabled{opacity:.45}body[data-sky-touch] #sky-touch-action{display:block}@media(any-pointer:coarse){#sky-touch-action{display:block}}@media(max-width:600px){#hud{top:8px!important;left:8px!important;max-width:calc(100vw - 160px)!important;padding:6px 8px!important;font-size:11px!important}#hud h1{font-size:15px!important}#sky-prophunt{top:66px!important;right:8px!important;max-width:calc(100vw - 40px)!important;font-size:13px!important;padding:8px!important}#sky-combat{bottom:70px;left:8px;max-width:calc(100vw - 145px);font-size:13px;padding:6px 8px}#sky-actions button{min-height:44px}.sky-nameplate{font-size:13px}}#sky-touch-action{min-width:42px!important;min-height:42px!important;width:42px;height:42px;padding:0!important;border-radius:50%!important;font-size:20px!important;line-height:1}";
   document.head.append(touchStyle);document.body.append(touchButton);
   const touches=createTouchControls({
     tap:event=>{if(!connected)return;if(touchArmed){disarmTouch();interaction(event);}else click(event);},
@@ -500,6 +509,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.displayName = player.nom ?? player.name ?? player.character;
       avatar.hp = player.hp ?? 100;
       avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;avatar.guard=player.guard??null;
+      // another fighter raised their guard: play their basic attack pose
+      if(player.parry?.at&&player.parry.at!==avatar.parryAt){avatar.parryAt=player.parry.at;if(player.id!==localId)avatar.parryPose={kind:'basic',character:player.character,localStart:performance.now()};}
       avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.dimensionLift=player.dimensionLift??null;avatar.fallAnimation=player.fallAnimation??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
       avatar.npc = !!player.npc;
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
@@ -939,7 +950,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(!avatar.battleTextures&&avatar.walkingTexture){info=motion.moving?avatar.walkingInfo:avatar.info;avatar.mesh.material.map=motion.moving?avatar.walkingTexture:avatar.initialTexture;}
       // Nial's cigarette drag: front-facing sheet for the gesture, then back to his usual sprite
       if(!avatar.battleTextures&&avatar.craftTexture){const drag=attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special==='smoke'?smokeMechanics.cigarettePose(avatar.craftInfo,performance.now()-attack.localStart):null;if(drag){info=avatar.craftInfo;avatar.mesh.material.map=avatar.craftTexture;selectedPose=drag.pose;selectedDirection=0;}else if(avatar.mesh.material.map===avatar.craftTexture)avatar.mesh.material.map=avatar.initialTexture;}
-      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):{bank:avatar.dead||down&&!falling?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down&&!falling?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
+      const guard=!attack&&avatar.parryPose&&performance.now()-avatar.parryPose.localStart<(renneMechanics.combatSpec(avatar.character,'basic')?.duration??0)?avatar.parryPose:null;
+      if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):guard?renneCombat.pose(guard,avatar.direction):{bank:avatar.dead||down&&!falling?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down&&!falling?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
       if(avatar.character==="Sieg"&&time>=(avatar.floorCheckedAt??0)){avatar.flightFloor=collision.floor(avatar.position.x,avatar.position.z,avatar.position.y+.1);avatar.floorCheckedAt=time+100;}
       const beating=avatar.character==="Sieg"&&!avatar.dead&&flight.wingbeats(motion.moving||avatar.walking||!!avatar.siegDive,avatar.position.y,avatar.flightFloor);
       const poses=avatar.enemyAttack&&!avatar.dead?info.attack??info.run:motion.moving||avatar.walking||beating?info.run:info.idle;
@@ -988,7 +1000,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
-    if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);combatFeedback.setCombo(combatMoves.comboOf({combo:localCombo},Date.now()+jumpClockOffset));});
+    if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);});
     if (me&&!freeSpectator)
       follow.lerp(
         new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),

@@ -423,7 +423,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(spec.selfTarget){attack.origin={x:attacker.x,y:attacker.y??0,z:attacker.z};attack.aim={...attack.origin};}
 
       if(attack.kind==='basic'&&!spec.projectile){const dx=attack.aim.x-attack.origin.x,dz=attack.aim.z-attack.origin.z;attack.origin={x:attacker.x,y:attacker.y??0,z:attacker.z};attack.aim={x:attacker.x+dx,y:attacker.y??0,z:attacker.z+dz};}
-      const comboNext=attack.kind==='basic'?moves.comboOf(attacker,time)+1:0;let landed=false;
+      const comboNext=attack.kind==='basic'?moves.comboOf(attacker,time)+1:0,comboHold=2*(combatSpec(attack.character,'basic')?.cooldown??700);let landed=false,blocked=false;
 
       for(const player of room.values()) {
 
@@ -475,8 +475,10 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
         if(wall && Math.hypot(wall.point.x-from.x,wall.point.y-from.y,wall.point.z-from.z)<Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z)-.15)continue;
         if(parried(attack,player,time))break;
+        // a guard facing a basic attack stops it outright; from the side or behind it lands
+        if(attack.kind==='basic'&&moves.parryActive(player,time)&&moves.fromFront(player,spec.projectile?attack.origin:attacker)){attack.hits.push({id:player.id,at:time,blocked:true,damage:0,point:{x:player.x,y:(player.y??0)+.9,z:player.z}});blocked=true;continue;}
 
-        const dealt=applyDamage(player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)*attackFactor(attacker,time)/(spec.wave||spec.sweepShots?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex],precise?{point:precise.point,headshot:precise.headshot}:spec.hitEffect?{nativeEffect:spec.hitEffect,hitIndex,...(comboNext?{combo:comboNext}:{})}:comboNext?{nativeEffect:moves.COMBO.hitEffect,combo:comboNext}:undefined);if(dealt.damage||dealt.absorbed)landed=true;if(dealt.damage)applyStatus(player,spec.status==='stun'?{...spec,statusDuration:Math.max(0,attack.started+spec.duration-time)}:spec,time);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+hitOffsets[hitIndex],endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
+        const dealt=applyDamage(player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)*attackFactor(attacker,time)/(spec.wave||spec.sweepShots?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex],precise?{point:precise.point,headshot:precise.headshot}:spec.hitEffect?{nativeEffect:spec.hitEffect,hitIndex,...(comboNext?{combo:comboNext,comboHold,from:{x:source.x,z:source.z}}:{})}:comboNext?{nativeEffect:moves.COMBO.hitEffect,combo:comboNext,comboHold,from:{x:source.x,z:source.z}}:undefined);if(dealt.damage||dealt.absorbed)landed=true;if(dealt.damage)applyStatus(player,spec.status==='stun'?{...spec,statusDuration:Math.max(0,attack.started+spec.duration-time)}:spec,time);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+hitOffsets[hitIndex],endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
 
         attack.hits.push({id:player.id,hitIndex,at:attack.impactAt+hitOffsets[hitIndex],...dealt});
 
@@ -485,7 +487,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       }
       if(attack.cancelled)break;
       // a landed basic attack feeds the combo, a missed one resets it
-      if(comboNext){if(landed)attacker.combo={count:comboNext,until:time+moves.COMBO.window};else{attacker.combo=null;attack.missed={at:time,point:{x:attack.aim.x,y:(attack.aim.y??0)+.9,z:attack.aim.z}};}}
+      if(comboNext){if(landed)attacker.combo={count:comboNext,until:time+moves.COMBO.window};else{attacker.combo=null;if(!blocked)attack.missed={at:time,point:{x:attack.aim.x,y:(attack.aim.y??0)+.9,z:attack.aim.z}};}}
 
     }
 
