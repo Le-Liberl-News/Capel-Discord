@@ -33,7 +33,8 @@ export function axisTowerCamera(progress){const {from,to,fov}=axis.tower,p=ease(
 // Level with the fighters, sweeping round the centre and ending side-on, both fighters face to face
 export function axisOrbit(centre,from,to,progress){const {radius,height,turns,fov}=axis.orbit,side=Math.atan2(to.x-from.x,to.z-from.z)+Math.PI/2,angle=side-turns*2*Math.PI*(1-ease(Math.max(0,Math.min(1,progress))));return {target:{x:centre.x,y:centre.y+.9,z:centre.z},position:{x:centre.x+Math.sin(angle)*radius,y:centre.y+height,z:centre.z+Math.cos(angle)*radius},fov,zoom:1};}
 export function fighterOrbit(from,to,progress){const dx=to.x-from.x,dz=to.z-from.z,heading=Math.atan2(dx,dz),angle=heading+(progress-.5)*Math.PI/6,radius=4.2;return {target:{x:from.x,y:from.y+.95,z:from.z},position:{x:from.x+Math.sin(angle)*radius,y:from.y+1.65,z:from.z+Math.cos(angle)*radius},fov:38,zoom:1};}
-export function createDuelIntro({assets=null,onSpeech=()=>{},venue='arena'}={}){
+export function createDuelIntro({assets=null,onSpeech=()=>{},onPhase=()=>{},venue='arena'}={}){
+ let lastPhase=null;
  const place=VENUES[venueOf(venue)];
  const overlay=document.createElement('div');overlay.id='sky-duel-intro';overlay.style.cssText='position:fixed;inset:0;z-index:25;pointer-events:none;display:none;border-top:8vh solid #09070df0;border-bottom:8vh solid #09070df0;box-sizing:border-box';
  const caption=document.createElement('div');caption.style.cssText="position:absolute;bottom:-8vh;left:0;right:0;text-align:center;color:white;font-family:AveriaSky,'Averia Sans Libre',sans-serif;paint-order:stroke fill;-webkit-text-stroke:2px #000;text-shadow:0 2px 3px #000,0 0 12px #000;line-height:1.05;background:#09070d70;padding:16px 24px;border-radius:4px";
@@ -49,7 +50,10 @@ export function createDuelIntro({assets=null,onSpeech=()=>{},venue='arena'}={}){
  return {
   active(time){return !!duelPhase(duel,time+offset,venue);},
   receive(value,serverTime){const changed=value?.id!==duel?.id;duel=value;offset=(serverTime??Date.now())-performance.now();if(changed){announced=null;spoken.clear();for(const sound of [opening,fighters])if(sound){sound.pause();sound.currentTime=0;}}},
-  update(time,avatars,camera,fallback){for(const avatar of avatars.values()){avatar.introOffset=null;avatar.introWalking=false;}const phase=duelPhase(duel,time+offset,venue);overlay.style.display=phase?'block':'none';document.body.toggleAttribute?.('data-sky-intro',!!phase);if(!phase){for(const sound of [opening,fighters])sound?.pause();return;}
+  update(time,avatars,camera,fallback){for(const avatar of avatars.values()){avatar.introOffset=null;avatar.introWalking=false;}const phase=duelPhase(duel,time+offset,venue);
+  // tells the scene when the intro moves on (sounds), null once it is over
+  if((phase?.kind??null)!==lastPhase){lastPhase=phase?.kind??null;onPhase(lastPhase);}
+ overlay.style.display=phase?'block':'none';document.body.toggleAttribute?.('data-sky-intro',!!phase);if(!phase){for(const sound of [opening,fighters])sound?.pause();return;}
    const players=duel.players.map(id=>avatars.get(id)),positions=players.map(p=>p?.position??fallback);for(let i=0;i<players.length;i++)if(players[i]&&players[1-i])players[i].heading=duelHeading(positions[i],positions[1-i]);
    for(let i=0;i<players.length;i++){const actor=players[i];if(!actor)continue;const walk=phase.kind==='fighter'?(phase.side>i?1:phase.side<i?0:Math.min(1,phase.progress/.6)):['versus','begin','orbit'].includes(phase.kind)?1:0,dx=positions[1-i].x-positions[i].x,dz=positions[1-i].z-positions[i].z,len=Math.hypot(dx,dz)||1;actor.introOffset={x:-dx/len*2*(1-walk),z:-dz/len*2*(1-walk)};actor.introWalking=phase.kind==='fighter'&&phase.side===i&&walk<1;if(phase.kind==='fighter'&&phase.side===i&&walk>=1&&!spoken.has(i)){spoken.add(i);if(duel.phrases?.[i])onSpeech({id:duel.id+':entrance:'+i,author:duel.players[i],character:actor.character,text:duel.phrases[i]});}}
    const centre={x:(positions[0].x+positions[1].x)/2,y:(positions[0].y+positions[1].y)/2,z:(positions[0].z+positions[1].z)/2};

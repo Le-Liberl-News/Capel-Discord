@@ -7,7 +7,9 @@ const SHAKE_MS=260,PUFF_MS=600,DUST_EVERY=22,FLASH_MS=90;
 // combo count drawn like the damage numbers, outlined in yellow
 let comboLabelId=0;
 function comboMarkup(count){const text=count+(count>1?' HITS':' HIT'),width=text.length*34+36,id='combo-glow-'+(++comboLabelId);return {width,markup:`<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 ${width} 100" style="overflow:visible"><defs><filter id="${id}" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" font-style="italic" fill="#ffc400" stroke="#ffc400" stroke-width="5" filter="url(#${id})">${text}</text><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" font-style="italic" fill="white" stroke="#e0a800" stroke-width="2" paint-order="stroke fill">${text}</text></svg>`};}
-export async function createCombatFeedback(THREE,scene,assets,container){
+// game sounds of the moves (combat-sounds.mjs)
+const HIT_SOUNDS=['hit1','hit2','hit3','hit4'],CRAFT_SOUNDS={Olivier:'olivier',Antoine:'antoine',Joshua:'joshua'};
+export async function createCombatFeedback(THREE,scene,assets,container,sounds=null){
  const bank=name=>loadBakedEffect(THREE,assets,name,90);
  const [hitBank,missBank,counterBank,dustBank,sparkBank]=await Promise.all(['sc-ms00271b','sc-ms04532','sc-mp094_00','sc-ms30001c','sc-mp008_01'].map(bank));
  const lifetime={hit:400,miss:700,counter:900,dust:PUFF_MS,spark:450};
@@ -19,7 +21,7 @@ export async function createCombatFeedback(THREE,scene,assets,container){
   // a damage event of the server: combo hits and parry counters get their own impact and a shake
   impact(id,event,delay=0){
    if(event.amount>0)this.hurt(id,delay);
-   if(event.combo!=null)this.comboCount(id,event.combo,event.comboHold,delay);
+   if(event.combo!=null){this.comboCount(id,event.combo,event.comboHold,delay);setTimeout(()=>sounds?.playAny(HIT_SOUNDS),delay*1000);}
    if(event.combo==null&&!event.parry)return false;
    shakes.set(id,{started:performance.now()+delay*1000,strength:event.parry?.16:Math.min(.14,.06+.012*event.combo)});
    const own=!event.parry&&event.nativeEffect&&event.nativeEffect!==moves.COMBO.hitEffect;if(own)return false;
@@ -42,10 +44,13 @@ export async function createCombatFeedback(THREE,scene,assets,container){
     // a swing that touched nobody
     // what was already shown, per attack (ids may contain ':', e.g. the training AI's)
     let done=shown.get(id);if(!done)shown.set(id,done=new Set());
+    const fresh=now-event.localStart<1000;
+    if(event.missed&&!done.has('miss')){done.add('miss');if(fresh)sounds?.play('miss');}
+    if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))sounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])sounds?.play(CRAFT_SOUNDS[event.character]);}
     for(const hit of event.hits??[]){
      if(hit.parried&&!done.has('parry:'+hit.id)){done.add('parry:'+hit.id);labels.push({el:callout('Parade !','#9fe8ff'),id:hit.id,started:now});}
      // a basic attack stopped by a guard facing it
-     if(hit.blocked&&!done.has('block:'+hit.id+':'+hit.at)){done.add('block:'+hit.id+':'+hit.at);burst('spark',hit.point,1.4,0,hit.point?null:hit.id);}
+     if(hit.blocked&&!done.has('block:'+hit.id+':'+hit.at)){done.add('block:'+hit.id+':'+hit.at);burst('spark',hit.point,1.4,0,hit.point?null:hit.id);sounds?.play('block');}
     }
     // dodge: puffs of dust left on the ground along the way
     const owner=avatars.get(event.actor);

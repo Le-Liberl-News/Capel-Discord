@@ -59,6 +59,7 @@ import { cameraDistance, configureSkyMaterial, createMapShadows, createContactSh
 import { versionAsset } from "./scene-visibility.mjs";
 import { createXRayPass } from "./xray-pass.mjs";
 import { createCombatFeedback } from "./combat-feedback.mjs";
+import { createCombatSounds } from "./combat-sounds.mjs";
 import combatMoves from "./combat-moves.cjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
 import collisionModule from "./surface-collision.cjs";
@@ -176,7 +177,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   halloweenDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
   const dungeonEffects=inTower&&!inDungeon?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
-  const duelIntro=isArena?createDuelIntro({assets:ASSETS,venue:map,onSpeech:message=>dialogues.receive([message])}):null;
+  // "Combat !" sound, and the wind of the Axis Pillar looping through its introduction
+  let introAmbience=null;
+  const duelIntro=isArena?createDuelIntro({assets:ASSETS,venue:map,onSpeech:message=>dialogues.receive([message]),onPhase:kind=>{if(kind==='begin')combatSounds.play('fight');if(map==='axis'&&kind&&!introAmbience)introAmbience=combatSounds.loop('axis-ambience',{gain:.8});if(!kind&&introAmbience){introAmbience();introAmbience=null;}}}):null;
   let grid = await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
@@ -380,7 +383,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
     let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
     if(!horizontal&&!vertical&&path.length){dx=path[0].x-me.position.x;dz=path[0].z-me.position.z;}const length=Math.hypot(dx,dz);const direction={dx:length?dx/length:0,dz:length?dz/length:0};
-    landedJump=null;const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
+    combatSounds.play('jump');landedJump=null;const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
   }
   const jumpButton=document.createElement("button");jumpButton.id="sky-jump";jumpButton.type="button";jumpButton.textContent="↥";jumpButton.title=jumpButton.ariaLabel="Sauter";jumpButton.hidden=!canJump;jumpButton.addEventListener("click",()=>{startJump();jumpButton.blur();});document.body.append(jumpButton);
   touchStyle.textContent+="#sky-jump{position:fixed;right:12px;bottom:145px;width:54px;height:54px;border-radius:50%;border:1px solid #d5bc84;background:#292137;color:#ffe7b0;font:30px system-ui;z-index:27;touch-action:manipulation}#sky-jump[hidden]{display:none}#sky-jump:disabled{opacity:.45}body[data-sky-editing] #sky-jump{display:none}body[data-sky-touch] #sky-jump{left:136px;right:auto;bottom:146px}@media(any-pointer:coarse),(max-width:600px){#sky-jump{left:136px;right:auto;bottom:146px}}";
@@ -479,7 +482,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     menu.style.top = Math.min(event.clientY, innerHeight - 180) + "px";
   }
   const damageEffects=await createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading);
-  const combatFeedback=combatPreparation?await createCombatFeedback(THREE,scene,ASSETS,labels):null;
+  const combatSounds=createCombatSounds(ASSETS);
+  const combatFeedback=combatPreparation?await createCombatFeedback(THREE,scene,ASSETS,labels,combatSounds):null;
   const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
   const muellerTarget=new THREE.Mesh(new THREE.RingGeometry(.98,1,64),new THREE.MeshBasicMaterial({color:0xc58aff,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide}));muellerTarget.rotation.x=-Math.PI/2;muellerTarget.visible=false;scene.add(muellerTarget);
@@ -511,6 +515,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.platformRenderOffset=avatar.platformId===player.platformId?avatar.platformRenderOffset:null;avatar.platformId=player.platformId;avatar.platformOffset=player.platformOffset;avatar.shield=player.shield??null;avatar.guard=player.guard??null;
       // another fighter raised their guard: play their basic attack pose
       if(player.parry?.at&&player.parry.at!==avatar.parryAt){avatar.parryAt=player.parry.at;if(player.id!==localId)avatar.parryPose={kind:'basic',character:player.character,localStart:performance.now()};}
+      if(player.jump?.id&&player.jump.id!==avatar.jumpSoundId){avatar.jumpSoundId=player.jump.id;if(player.id!==localId)combatSounds.play('jump',{gain:.7});}
       avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.dimensionLift=player.dimensionLift??null;avatar.fallAnimation=player.fallAnimation??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;
       avatar.npc = !!player.npc;
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
@@ -1339,7 +1344,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       labels.remove();
       style.remove();
       dialogues.dispose();
-      damageEffects.dispose();combatFeedback?.dispose();
+      damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();
       scene.traverse(object => { if (object.geometry) object.geometry.dispose(); for (const material of [].concat(object.material ?? [])) { materials.add(material); if (material.map) maps.add(material.map); } });
