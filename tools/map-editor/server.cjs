@@ -18,7 +18,8 @@ http.createServer(async(req,res)=>{try{const url=new URL(req.url,'http://127.0.0
  if(url.pathname==='/api/health')return json({kind:'capel-map-editor'});
  if(url.pathname==='/api/maps')return json({sources:fs.readdirSync(sources).filter(n=>n.endsWith('.json')).map(n=>n.slice(0,-5)),projects:fs.readdirSync(projects).filter(n=>n.endsWith('.json')).map(n=>n.slice(0,-5))});
  if(url.pathname==='/api/library')return json(await library.catalogue());
- if(url.pathname==='/api/library/model'){const a=await library.model(url.searchParams.get('id'));return json(a.map(({id,label,bounds})=>({id,label,bounds})));}
+ if(url.pathname==='/api/library/preview')return json((await library.model(url.searchParams.get('id'))).filter(a=>!a.group));
+ if(url.pathname==='/api/library/model'){const a=await library.model(url.searchParams.get('id'));return json(a.map(({id,label,bounds,group,sourcePivot})=>({id,label,bounds,group,sourcePivot})));}
  if(url.pathname==='/api/library/asset'){const id=url.searchParams.get('id'),model=id?.split(':node:')[0],a=(await library.model(model)).find(a=>a.id===id);if(!a)throw Error('Élément absent');return json(a);}
  if(url.pathname==='/api/palette'){const result={},types=new Set();for(const file of fs.readdirSync(sources).filter(n=>n.endsWith('.json'))){const p=JSON.parse(fs.readFileSync(path.join(sources,file),'utf8'));for(const a of Object.values(p.assets))if(!types.has(a.type)){types.add(a.type);result[a.id]=a;}}const custom=path.join(cache,'custom-assets.json');if(fs.existsSync(custom))Object.assign(result,JSON.parse(fs.readFileSync(custom,'utf8')));return json(result);}
  if(url.pathname==='/api/project'){const name=safe(url.searchParams.get('name'));if(req.method==='POST'){projectTools.validate(data);fs.writeFileSync(path.join(projects,name+'.json'),JSON.stringify(data));return json({saved:path.join(projects,name+'.json')});}return json(load(name));}
