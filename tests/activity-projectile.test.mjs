@@ -42,3 +42,10 @@ test("a launch snapshot with no travelled segment has no stationary fire trail",
  const playback=createProjectilePlayback(),p={x:0,y:.9,z:0};
  playback.receive({shotId:1,mode:"flight",trajectory:[{t:0,...p}]});assert.equal(playback.update(.016,p),false);
 });
+
+
+test('an authoritative body rebound overrides local straight-flight prediction without a new launch sound',()=>{
+ const playback=createProjectilePlayback(),p={x:0,y:.9,z:0};playback.predict(createShotPrediction(grid,null,{x:0,y:0,z:0},{x:20,y:.9,z:0}));playback.update(.2,p);
+ assert.equal(playback.receive({shotId:1,mode:'flight',rebounding:true,reboundAt:.1,x:1,y:1.3,z:1,trajectory:[{t:0,x:0,y:.9,z:0},{t:.1,x:2,y:.9,z:0},{t:.3,x:1,y:1.3,z:1}]}),false);
+ playback.update(.1,p);assert.ok(p.x<2);assert.ok(p.z>0);assert.ok(p.y>.9);
+});

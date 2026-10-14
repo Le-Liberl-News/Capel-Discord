@@ -51,3 +51,5 @@ Garde : maintenir V (ou le bouton bouclier) bloque les attaques normales dans un
 Dans les arènes et donjons, la rotation horizontale de la caméra oriente le personnage. Dans les zones de repos, il reste orienté selon son déplacement (clic ou maintien gauche suivi du curseur). Sur mobile, un glissement à un doigt sur le décor tourne la caméra ; un tap déplace ou sélectionne une cible. Les attaques normales partent dans cette direction (la visée des crafts reste distincte). Le clic gauche peut confirmer une cible pendant le maintien du clic droit pour la caméra.
 
 Esquive : récupération de 3,5 s. Marcher sur un Pom déclenche son ramassage (validation atomique serveur). Une fois porté, clic gauche PC ou tap mobile lance le Pom vers la cible avant toute attaque ou déplacement au clic. La garde active teinte le sprite en bleu clair.
+
+Un lancer de Pom inflige 40 dégâts au premier impact sur un adversaire, puis rebondit en cloche sur le côté sans infliger de nouveaux dégâts avant de retomber.

@@ -6,10 +6,12 @@ export function createProjectilePlayback() {
     cancelPrediction() { prediction = null; predicted = null; },
     receive(next) {
       const changed = next?.shotId != null && next.shotId !== shot;
-      const launched = changed && next.mode === "flight";
+      const launched = changed && next.mode === "flight",wasPredicting=!!prediction;
       if (changed) { shot = next.shotId; if (!prediction) time = 0; settled = null; }
+      // Local straight-flight prediction must yield as soon as a body impact rebounds it.
+      if(next?.rebounding&&prediction){prediction=null;predicted=null;settled=null;time=next.reboundAt??time;}
       state = next;
-      return launched && !prediction;
+      return launched && !wasPredicting;
     },
     update(dt, position) {
       if (prediction) {

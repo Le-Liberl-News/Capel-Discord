@@ -2,7 +2,7 @@ const {createDrinkingDialogue}=require('../activity/drinking-contest.cjs');
 const {applyDamage}=require('./activityDamage');
 // Authoritative room simulation. Coordinates and HP are never supplied by clients.
 const MAX_HP = require('../activity/player-health.cjs').PLAYER_MAX_HP,
-  DAMAGE = 100,
+  DAMAGE = 40,
   RESPAWN_MS = 10000;
 function createSingleActivityWorld({
   grid,
@@ -129,6 +129,7 @@ function createSingleActivityWorld({
       shotId: null,
       trajectory: [],
       mode: "rest",
+      rebounding: false,
       owner: null,
       vx: 0,
       vz: 0,
@@ -138,7 +139,7 @@ function createSingleActivityWorld({
     });
   const stop = () => {
     sample();
-    ball.mode = "rest";
+    ball.mode = "rest";ball.rebounding=false;
     ball.owner = null;
     ball.vx = ball.vy = ball.vz = 0;
     const ground = geometry
@@ -214,18 +215,24 @@ function createSingleActivityWorld({
       }
       if (ball.mode !== "flight") continue;
       ball.flight += dt;
-      if (ball.flight > 2.5 || (ball.stopAt && ball.flight >= ball.stopAt)) {
+      if ((!ball.rebounding&&ball.flight > 2.5) || (ball.stopAt && ball.flight >= ball.stopAt)) {
         stop();
         continue;
       }
+      if(ball.rebounding)ball.vy-=10*dt;
       const x = ball.x + ball.vx * dt,
         z = ball.z + ball.vz * dt,
         y = ball.y + ball.vy * dt;
       const free = (a, b) => {
         const h = height(a, b);
-        return h !== null && Math.abs(h - (ball.y - 0.9)) < 0.65;
+        return h !== null && (ball.rebounding||Math.abs(h - (ball.y - 0.9)) < 0.65);
       };
+      if(ball.rebounding&&ball.vy<0){
+        const ground=geometry?geometry.floor(x,z,ball.y+.5):height(x,z);
+        if(Number.isFinite(ground)&&y<=ground+.375){Object.assign(ball,{x,y:ground+.375,z});stop();continue;}
+      }
       const contact = geometry?.sweep(ball, { x, y, z }, 0.22);
+      if(ball.rebounding&&contact?.normal.y>.65){Object.assign(ball,contact.point);stop();continue;}
       if (contact || (!geometry && !free(x, z))) {
         if (ball.ricochets >= 2) {
           stop();
@@ -257,7 +264,7 @@ function createSingleActivityWorld({
         }
         continue;
       }
-      for (const p of players.values()) {
+      for (const p of ball.rebounding?[]:players.values()) {
         if (p.hp === 0 || p.spectator || p.duelProtected || p.catCling?.target===ball.thrownBy || (p.id === ball.thrownBy && !ball.ricochets)) continue;
         const dx = x - ball.x,
           dy = y - ball.y,
@@ -290,8 +297,12 @@ function createSingleActivityWorld({
           if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId,follow:"projectile",started:ball.launchedAt,releaseAt:ball.launchedAt,impactAt:ball.launchedAt+ball.flight*1000,trajectory:[...ball.trajectory.map(q=>({...q})),{t:ball.flight,x,y,z}]},at:time});}
           ball.x = x;
           ball.z = z;
-          ball.y = y;
-          stop();
+          ball.y = y;sample();
+          // One damaging impact, then a visible upward, sideways rebound away from the victim.
+          const length=Math.hypot(ball.vx,ball.vz)||1,dx=ball.vx/length,dz=ball.vz/length,side=((p.x-ball.x)*dz-(p.z-ball.z)*dx)>=0?1:-1,angle=side*Math.PI/3;
+          ball.vx=(-dx*Math.cos(angle)+dz*Math.sin(angle))*5;
+          ball.vz=(-dx*Math.sin(angle)-dz*Math.cos(angle))*5;
+          ball.vy=3;ball.rebounding=true;ball.reboundAt=ball.flight;ball.stopAt=ball.flight+1.1;ball.ricochets=0;
           break;
         }
       }
@@ -299,6 +310,7 @@ function createSingleActivityWorld({
         ball.x = x;
         ball.z = z;
         ball.y = y;
+        if(ball.rebounding&&ball.flight-(ball.trajectory.at(-1)?.t??0)>=.05)sample();
       }
     }
     if (ball.mode === "flight") sample();
@@ -377,6 +389,7 @@ function createSingleActivityWorld({
         launchedAt: now(),
         trajectory: [{ t: 0, x: player.x, y: (player.y ?? 0) + 0.9, z: player.z }],
         mode: "flight",
+        rebounding:false,reboundAt:null,
         owner: null,
         thrownBy: player.id,
         x: player.x,
