@@ -53,3 +53,5 @@ Dans les arènes et donjons, la rotation horizontale de la caméra oriente le pe
 Esquive : récupération de 3,5 s. Marcher sur un Pom déclenche son ramassage (validation atomique serveur). Une fois porté, clic gauche PC ou tap mobile lance le Pom vers la cible avant toute attaque ou déplacement au clic. La garde active teinte le sprite en bleu clair.
 
 Un lancer de Pom inflige 40 dégâts au premier impact sur un adversaire, puis rebondit en cloche sur le côté sans infliger de nouveaux dégâts avant de retomber.
+
+Sur mobile en combat, un tap sur un adversaire verrouille la caméra sur lui ; un tap sur le décor décible. Le joystick et les boutons conservent la cible. Une cible morte ou disparue est automatiquement retirée. Un Pom porté conserve la priorité au lancer par tap.
