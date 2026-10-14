@@ -78,8 +78,9 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     const h=avatar.info?.bodyHeight??avatar.info?.height??1.6,screen=new THREE.Vector3(avatar.position.x,avatar.position.y+h+.3,avatar.position.z).project(camera),pop=Math.min(1,age/80),scale=.55+.15*(1-pop);
     c.el.hidden=screen.z>1;const tremble=age<1000?4*(1-age/1000):0;
     c.el.style.left=((screen.x+1)*width/2+26+tremble*Math.sin(age*.09))+'px';c.el.style.top=((1-screen.y)*height/2+18+tremble*Math.cos(age*.13))+'px';c.el.style.width=(c.width*scale)+'px';c.el.style.height=(100*scale)+'px';c.el.style.opacity=String(Math.min(1,(c.hold-age)/300));}
-   for(const [id,started]of parries){const avatar=avatars.get(id),age=now-started;if(!avatar||age>moves.PARRY.window){if(avatar)avatar.mesh.material.color.setRGB(1,1,1);parries.delete(id);continue;}
+   for(const [id,started]of parries){const avatar=avatars.get(id),age=now-started;if(!avatar||age>moves.PARRY.window){if(avatar)avatar.mesh.material.color.set(avatar.guarding?0xb8daff:0xffffff);parries.delete(id);continue;}
     const glow=1-age/moves.PARRY.window;avatar.mesh.material.color.setRGB(1-.35*glow,1-.1*glow,1);}
+   for(const [id,avatar] of avatars)if(avatar.guarding&&!flashes.has(id))avatar.mesh.material.color.set(0xb8daff);
    for(let i=labels.length-1;i>=0;i--){const l=labels[i],avatar=avatars.get(l.id),age=(now-l.started)/1000;if(!avatar||age>1.1){l.el.remove();labels.splice(i,1);continue;}
     const h=avatar.info?.bodyHeight??avatar.info?.height??1.6,screen=new THREE.Vector3(avatar.position.x,avatar.position.y+h+.5,avatar.position.z).project(camera);
     l.el.hidden=screen.z>1;l.el.style.left=((screen.x+1)*width/2)+'px';l.el.style.top=((1-screen.y)*height/2-30*age)+'px';l.el.style.opacity=String(Math.min(1,(1.1-age)/.4));}

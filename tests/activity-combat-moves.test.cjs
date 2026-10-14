@@ -11,7 +11,7 @@ test('the art key dodges for everyone except Kloe, who keeps her healing art',()
  assert.equal(combatSpec('Kloe','art').effect,'heal');
 });
 
-test('a dodge dashes about two metres along the movement direction, then waits seven seconds',()=>{
+test('a dodge dashes about two metres along the movement direction, then waits three and a half seconds',()=>{
  const a=fighter('a','Joshua',0),{room,combat,step}=arena(a);
  assert.ok(combat.action(a,{id:'d1',type:'attack',kind:'art',direction:{x:0,z:1}},room).combatId);
  step(moves.DODGE.dashDuration+40);
@@ -206,3 +206,5 @@ test('camera-driven facing applies only in arenas and exploration dungeons',()=>
  for(const map of ['arena','axis','tower1','tower2','tower3','tower4','hallow1','hallow5'])assert.equal(moves.usesCombatFacing(map),true,map);
  for(const map of ['anterose','hangar','rolent','halloween','liberl'])assert.equal(moves.usesCombatFacing(map),false,map);
 });
+
+test('dash cooldown is three and a half seconds',()=>assert.equal(moves.DODGE.cooldown,3500));

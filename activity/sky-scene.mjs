@@ -54,6 +54,7 @@ import terminalWorld from "./terminal-world.cjs";
 import {createDamageEffects,damageAmount,newDamageEvents} from "./damage-effects.mjs";
 import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize,remapKey} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
+import pomInput from './pom-input.cjs';
 import { createTouchControls } from "./touch-controls.mjs";
 import { cameraDistance, configureSkyMaterial, createMapShadows, createContactShadow } from "./sky-rendering.mjs";
 import { versionAsset } from "./scene-visibility.mjs";
@@ -327,6 +328,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2(),
     keys = new Set();
+  let autoPickupAt=0;
   let movementSequence = 0;
   let movementTrace = [];
   let landedJump=null,localJump=null,jumpPending=false,jumpClockOffset=0,jumpReadyAt=0;
@@ -401,7 +403,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   const jumpButton=document.createElement("button");jumpButton.id="sky-jump";jumpButton.type="button";jumpButton.textContent="↥";jumpButton.title=jumpButton.ariaLabel="Sauter";jumpButton.hidden=!canJump;jumpButton.addEventListener("click",()=>{startJump();jumpButton.blur();});document.body.append(jumpButton);
   touchStyle.textContent+="#sky-jump{position:fixed;right:12px;bottom:145px;width:54px;height:54px;border-radius:50%;border:1px solid #d5bc84;background:#292137;color:#ffe7b0;font:30px system-ui;z-index:27;touch-action:manipulation}#sky-jump[hidden]{display:none}#sky-jump:disabled{opacity:.45}body[data-sky-editing] #sky-jump{display:none}body[data-sky-touch] #sky-jump{left:136px;right:auto;bottom:146px}@media(any-pointer:coarse),(max-width:600px){#sky-jump{left:136px;right:auto;bottom:146px}}";
-  function interaction(event) {
+  function interaction(event,throwOnly=false) {
     const me = avatars.get(localId);
     if (!connected || !me || health.hp === 0) return;
     const nearby = (p, r = 2.2) =>
@@ -412,7 +414,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       1 - (event.clientY / viewport.height) * 2,
     );
     raycaster.setFromCamera(pointer, camera);
-    if (environment.game?.role === "hunter" && environment.game.phase === "hunting") {
+    if (!throwOnly && environment.game?.role === "hunter" && environment.game.phase === "hunting") {
       const targets = [...avatars].filter(([id,a]) => id !== localId && a.prop);
       const hit = raycaster.intersectObjects([model,...targets.map(([,a]) => a.mesh)],true).find(h => !cutaway || !model.getObjectById(h.object.id) || cutaway.visible(h.point));
       if (hit) {
@@ -421,7 +423,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }
       return;
     }
-    if(terminal&&terminalWorld.terminalNearby(me.position,terminal)&&raycaster.intersectObject(terminalObject,true).length){menu.hidden=true;path=[];notifyTerminal();return;}
+    if(!throwOnly&&terminal&&terminalWorld.terminalNearby(me.position,terminal)&&raycaster.intersectObject(terminalObject,true).length){menu.hidden=true;path=[];notifyTerminal();return;}
     if (health.spectator) return;
     const ball = environment.poms.find(p => p.owner === localId) ?? environment.poms.filter(p => p.mode === "rest" && nearby(p,2)).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if (ball?.owner === localId) {
@@ -452,7 +454,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           new THREE.Plane(new THREE.Vector3(0, 1, 0), -(me.position.y + 0.9)),
           new THREE.Vector3(),
         );
-      if (aim && !predictedShots.has(ball.id) && !actionQueue.length) {
+      if (aim && !predictedShots.has(ball.id) && !actionQueue.some(a=>a.type==='throw')) {
         const simulation = createShotPrediction(grid, collision, me.position, { x: aim.x, y: aim.y, z: aim.z });
         if (!simulation) return;
         const action = queueAction("throw", undefined, { x: aim.x, y: aim.y, z: aim.z });
@@ -706,6 +708,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function click(event) {
     if (event.button !== 0) return;
     menu.hidden = true;
+    if(environment.poms.some(p=>p.owner===localId)){interaction(event,true);return;}
     if(fpsActive()){startAttack('basic',event,true);return;}
     if(craftTarget){startAttack(craftTarget,event,true);return;}
     if (health.hp === 0 || !movementAllowed || guardHeld) return;
@@ -781,7 +784,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(drag){drag.moved=true;drag.x=event.clientX;drag.y=event.clientY;}
       return;
     }
-    if(restMoveHeld&&!combatCamera&&(event.buttons&1)&&!drag&&performance.now()>=restMoveAt){restMoveAt=performance.now()+100;click({button:0,clientX:event.clientX,clientY:event.clientY});}
+    if(restMoveHeld&&!combatCamera&&(event.buttons&1)&&!drag&&performance.now()>=restMoveAt){restMoveAt=performance.now()+100;if(environment.poms.some(p=>p.owner===localId))restMoveHeld=false;else click({button:0,clientX:event.clientX,clientY:event.clientY});}
     if (!drag || event.pointerId !== drag.id) return;
     if (
       Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5
@@ -987,6 +990,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       // Nial's cigarette drag: front-facing sheet for the gesture, then back to his usual sprite
       if(!avatar.battleTextures&&avatar.craftTexture){const drag=attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special==='smoke'?smokeMechanics.cigarettePose(avatar.craftInfo,performance.now()-attack.localStart):null;if(drag){info=avatar.craftInfo;avatar.mesh.material.map=avatar.craftTexture;selectedPose=drag.pose;selectedDirection=0;}else if(avatar.mesh.material.map===avatar.craftTexture)avatar.mesh.material.map=avatar.initialTexture;}
       const holdingGuard=!avatar.dead&&!down&&(avatar===me?guardHeld:avatar.guardHold?.until>Date.now()+jumpClockOffset),guardDuration=renneMechanics.combatSpec(avatar.character,'basic')?.duration??0;
+      avatar.guarding=holdingGuard;
       if(holdingGuard&&avatar.parryPose&&performance.now()-avatar.parryPose.localStart>guardDuration*.45)avatar.parryPose.localStart=performance.now()-guardDuration*.45;
       const guard=!attack&&avatar.parryPose&&performance.now()-avatar.parryPose.localStart<(renneMechanics.combatSpec(avatar.character,'basic')?.duration??0)?avatar.parryPose:null;
       if(avatar.battleTextures){const selected=attack?renneCombat.pose(attack,avatar.direction):guard?renneCombat.pose(guard,avatar.direction):{bank:avatar.dead||down&&!falling?(avatar.battleTextures.has(4)?4:0):motion.moving?(avatar.battleTextures.has(1)?1:0):0,pose:avatar.dead||down&&!falling?Math.min(Math.max(0,Math.floor((renneCombat.metadataFor(avatar.character).banks[4]?.frames??8)/(renneCombat.metadataFor(avatar.character).banks[4]?.directions??8))-1),down?999:Math.floor((time-avatar.deathStarted)/100)):Math.floor(avatar.time*8)%Math.max(1,Math.floor((renneCombat.metadataFor(avatar.character).banks[motion.moving&&avatar.battleTextures.has(1)?1:0]??avatar.info).frames/8))};if(selected.firing){const angle=selected.heading*Math.PI/180;avatar.direction=facing(Math.sin(angle),-Math.cos(angle),right,forward);selected.pose=[12,11,10,4,5,6,7,8][avatar.direction%8];}info=renneCombat.metadataFor(avatar.character).banks[selected.bank]??avatar.info;avatar.mesh.material.map=avatar.battleTextures.get(selected.bank);selectedPose=selected.pose;selectedDirection=selected.direction;craftHidden=!!selected.hidden;craftFlip=!!selected.flipX;craftTilt=selected.tiltDirection;}
@@ -997,7 +1001,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(avatar.geometryInfo!==info){avatar.mesh.geometry.dispose();avatar.mesh.geometry=new THREE.PlaneGeometry(info.height*info.frameWidth/info.frameHeight,info.height);avatar.mesh.geometry.translate(info.centerX??0,info.centerY??info.height/2,0);avatar.nativeAnchor=null;avatar.geometryInfo=info;}
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
       if(avatar.summoned){const scale=Math.max(0,Math.min(1,(Date.now()+jumpClockOffset-avatar.spawnedAt)/700));avatar.mesh.scale.setScalar(avatar.deathAt?0:scale);}
-      avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:0xffffff);
+      avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:holdingGuard?0xb8daff:0xffffff);
       avatar.deathLift=avatar.dead||down?(info.groundOffsets?.[frame]??0):0;
       if(avatar.character==="Cassius"||avatar.character==="Mueller")avatar.mesh.scale.x=craftFlip?-1:1;
       avatar.renderFrame={pose,info};avatar.mesh.visible=!craftHidden&&!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
@@ -1049,6 +1053,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     aimLine.visible=false;
     if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){if(aimLine.visible)marker.visible=false;marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(spec.special==='dimension'?spec.radius/.22:2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,combatGround.lineMarkerHeight(me.position,target),(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
     muellerTarget.visible=!!craftTarget&&renneMechanics.combatSpec(me?.character,craftTarget)?.special==='mueller'&&marker.visible;if(muellerTarget.visible){muellerTarget.position.copy(marker.position);muellerTarget.scale.setScalar(renneMechanics.combatSpec(me.character,craftTarget).radius);marker.visible=false;}
+    if(connected&&movementAllowed&&me&&!me.dead&&!health.spectator&&health.hp>0&&!actionQueue.length&&performance.now()>=autoPickupAt){
+      const ball=pomInput.pickupCandidate(environment.poms,{...me.position,hp:health.hp,duelProtected:me.duelProtected},localId);
+      if(ball&&queueAction('pickup',ball.id))autoPickupAt=performance.now()+1000;
+    }
     for (const ball of environment.poms) {
       const pomAvatar = avatars.get(ball.id);
       if (!pomAvatar) continue;
