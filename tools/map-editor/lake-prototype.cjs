@@ -42,15 +42,17 @@ function makePrototype(source){
  // Native railing below knee height, with gaps around the central island.
  for(const [lo,hi]of [[-11.8,-4.2],[4.2,11.8]])for(const x of [-1.32,1.32])edge([x,lo],[x,hi],.03,.65,'Parapet bas du pont');
  for(const variant of ['blanc','violet']){
-  const leafTris=[];for(let i=0;i<2;i++){const a=Math.PI*i/2,dx=.7*Math.cos(a),dy=.7*Math.sin(a),v=[{p:[-dx,-dy,0],uv:[0,1]},{p:[dx,dy,0],uv:[1,1]},{p:[dx,dy,.78],uv:[1,0]},{p:[-dx,-dy,.78],uv:[0,0]}];leafTris.push([v[0],v[1],v[2]],[v[0],v[2],v[3]]);}
+  const leafTris=[];for(let i=0;i<3;i++){const a=Math.PI*i/3,dx=1.03*Math.cos(a),dy=1.03*Math.sin(a),v=[{p:[-dx,-dy,0],uv:[0,1]},{p:[dx,dy,0],uv:[1,1]},{p:[dx,dy,1.04],uv:[1,0]},{p:[-dx,-dy,1.04],uv:[0,0]}];leafTris.push([v[0],v[1],v[2]],[v[0],v[2],v[3]]);}
   const base=packed(flowers.parts[0],leafTris);base.texture='/assets/sky/'+NAME+'/hortensias-feuillage.png';base.material.alphaMode='MASK';base.material.alphaCutoff=.12;base.material.extras={};
   const heads=[],halos=[];
   // Hand-assembled faceted mopheads: unlike crossed plant panels these remain
   // round from above and from the game's isometric camera. 48 triangles/head.
-  for(const [cx,cy,cz,r]of [[-.32,.03,.88,.34],[.3,.07,.96,.32],[0,-.25,.7,.31]]){
-   const ring=(i,j)=>{const lat=Math.PI*j/4,a=TAU*i/8;return {p:[cx+r*Math.sin(lat)*Math.cos(a),cy+r*Math.sin(lat)*Math.sin(a),cz+r*.72*Math.cos(lat)],uv:[.5+.46*Math.sin(lat)*Math.cos(a),.5+.46*Math.sin(lat)*Math.sin(a)]};};
+  let headIndex=0;for(const [cx,cy,cz,baseRadius]of [[-.32,.03,.88,.34],[.3,.07,.96,.32],[0,-.25,.7,.31]]){
+   const r=baseRadius*.75,tilt=(45+15*(.5+.5*Math.sin(headIndex*2.37+.8)))*Math.PI/180,azimuth=Math.atan2(cy,cx)+headIndex++*.31;
+   const orient=(x,y,z)=>{const xx=x*Math.cos(tilt)+z*Math.sin(tilt),zz=-x*Math.sin(tilt)+z*Math.cos(tilt);return [cx+xx*Math.cos(azimuth)-y*Math.sin(azimuth),cy+xx*Math.sin(azimuth)+y*Math.cos(azimuth),cz+zz];};
+   const ring=(i,j)=>{const lat=Math.PI*j/4,a=TAU*i/8;return {p:orient(r*Math.sin(lat)*Math.cos(a),r*Math.sin(lat)*Math.sin(a),r*.72*Math.cos(lat)),uv:[.5+.46*Math.sin(lat)*Math.cos(a),.5+.46*Math.sin(lat)*Math.sin(a)]};};
    for(let j=0;j<4;j++)for(let i=0;i<8;i++){const a=ring(i,j),b=ring(i+1,j),c=ring(i+1,j+1),d=ring(i,j+1);if(j>0)heads.push([a,b,d]);if(j<3)heads.push([b,c,d]);}
-   const vs=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>({p:[cx+x*.82,cy+y*.82,cz],uv:[(x+1)/2,(y+1)/2]}));halos.push([vs[0],vs[1],vs[2]],[vs[0],vs[2],vs[3]]);
+   const vs=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>({p:[cx+x*.615,cy+y*.615,cz],uv:[(x+1)/2,(y+1)/2]}));halos.push([vs[0],vs[1],vs[2]],[vs[0],vs[2],vs[3]]);
   }
   const petals=packed(base,heads);petals.texture='/assets/sky/'+NAME+'/bouquet-'+variant+'.png';petals.material.alphaMode='OPAQUE';petals.material.extras={};
   // Native vertex-colour shading keeps the simple volume readable in daylight.

@@ -18,6 +18,7 @@ http.createServer(async(req,res)=>{try{const url=new URL(req.url,'http://127.0.0
  if(url.pathname==='/api/import-png'&&req.method==='POST')return json(await require('./png-import.cjs').importPng(data,cache));
  if(url.pathname==='/api/health')return json({kind:'capel-map-editor'});
  if(url.pathname==='/api/maps')return json({sources:fs.readdirSync(sources).filter(n=>n.endsWith('.json')).map(n=>n.slice(0,-5)),projects:fs.readdirSync(projects).filter(n=>n.endsWith('.json')).map(n=>n.slice(0,-5))});
+ if(url.pathname==='/api/project-palette'){const name=safe(url.searchParams.get('name'));load(name);const store=require('./palette-store.cjs'),dir=path.join(cache,'palettes');return json(req.method==='POST'?store.add(dir,name,data.asset):store.read(dir,name));}
  if(url.pathname==='/api/library')return json(await library.catalogue());
  if(url.pathname==='/api/library/preview')return json((await library.model(url.searchParams.get('id'))).filter(a=>!a.group));
  if(url.pathname==='/api/library/model'){const a=await library.model(url.searchParams.get('id'));return json(a.map(({id,label,bounds,group,sourcePivot})=>({id,label,bounds,group,sourcePivot})));}
