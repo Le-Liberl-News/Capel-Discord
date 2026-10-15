@@ -42,12 +42,21 @@ function makePrototype(source){
  // Native railing below knee height, with gaps around the central island.
  for(const [lo,hi]of [[-11.8,-4.2],[4.2,11.8]])for(const x of [-1.32,1.32])edge([x,lo],[x,hi],.03,.65,'Parapet bas du pont');
  for(const variant of ['blanc','violet']){
-  // Reassemble the native cutout as crossed full panels. Its original folded,
-  // half-texture planes would shear the newly pasted round flower heads.
-  const flora=[];for(let i=0;i<3;i++){const a=Math.PI*i/3,dx=.85*Math.cos(a),dy=.85*Math.sin(a),vs=[{p:[-dx,-dy,0],uv:[0,1]},{p:[dx,dy,0],uv:[1,1]},{p:[dx,dy,1.35],uv:[1,0]},{p:[-dx,-dy,1.35],uv:[0,0]}];flora.push([vs[0],vs[1],vs[2]],[vs[0],vs[2],vs[3]]);}
-  const base=packed(flowers.parts[0],flora);base.texture='/assets/sky/'+NAME+'/hortensias-'+variant+'.png';base.material.alphaMode='MASK';base.material.alphaCutoff=.12;base.material.extras.skyBackdrop=false;base.material.extras.horrorDecal=false;
-  const glow=structuredClone(base);glow.texture='/assets/sky/'+NAME+'/hortensias-'+variant+'-halo.png';glow.material.alphaMode='BLEND';glow.material.extras={dungeonFloralGlow:true};glow.material.pbrMetallicRoughness.baseColorFactor=[1,1,1,.8];
-  asset('flowers-'+variant,'Hortensias '+(variant==='blanc'?'blancs':'violets'),'lake:flowers-'+variant,'decoration',[base,glow]);
+  const leafTris=[];for(let i=0;i<2;i++){const a=Math.PI*i/2,dx=.7*Math.cos(a),dy=.7*Math.sin(a),v=[{p:[-dx,-dy,0],uv:[0,1]},{p:[dx,dy,0],uv:[1,1]},{p:[dx,dy,.78],uv:[1,0]},{p:[-dx,-dy,.78],uv:[0,0]}];leafTris.push([v[0],v[1],v[2]],[v[0],v[2],v[3]]);}
+  const base=packed(flowers.parts[0],leafTris);base.texture='/assets/sky/'+NAME+'/hortensias-feuillage.png';base.material.alphaMode='MASK';base.material.alphaCutoff=.12;base.material.extras={};
+  const heads=[],halos=[];
+  // Hand-assembled faceted mopheads: unlike crossed plant panels these remain
+  // round from above and from the game's isometric camera. 48 triangles/head.
+  for(const [cx,cy,cz,r]of [[-.32,.03,.88,.34],[.3,.07,.96,.32],[0,-.25,.7,.31]]){
+   const ring=(i,j)=>{const lat=Math.PI*j/4,a=TAU*i/8;return {p:[cx+r*Math.sin(lat)*Math.cos(a),cy+r*Math.sin(lat)*Math.sin(a),cz+r*.72*Math.cos(lat)],uv:[.5+.46*Math.sin(lat)*Math.cos(a),.5+.46*Math.sin(lat)*Math.sin(a)]};};
+   for(let j=0;j<4;j++)for(let i=0;i<8;i++){const a=ring(i,j),b=ring(i+1,j),c=ring(i+1,j+1),d=ring(i,j+1);if(j>0)heads.push([a,b,d]);if(j<3)heads.push([b,c,d]);}
+   const vs=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>({p:[cx+x*.82,cy+y*.82,cz],uv:[(x+1)/2,(y+1)/2]}));halos.push([vs[0],vs[1],vs[2]],[vs[0],vs[2],vs[3]]);
+  }
+  const petals=packed(base,heads);petals.texture='/assets/sky/'+NAME+'/bouquet-'+variant+'.png';petals.material.alphaMode='OPAQUE';petals.material.extras={};
+  // Native vertex-colour shading keeps the simple volume readable in daylight.
+  petals.colors=heads.flat().flatMap(v=>{const shade=.7+.3*Math.max(0,Math.min(1,v.p[2]/1.2));return [shade,shade,shade,1];});
+  const glow=packed(base,halos);glow.texture='/assets/sky/'+NAME+'/bouquet-halo-blanc.png';glow.material.alphaMode='BLEND';glow.material.extras={dungeonFloralGlow:true};glow.material.pbrMetallicRoughness.baseColorFactor=[1,1,1,.85];
+  asset('flowers-'+variant,'Hortensias '+(variant==='blanc'?'blancs':'violets'),'lake:flowers-'+variant,'decoration',[base,petals,glow]);
  }
  for(let i=0;i<76;i++){const a=TAU*i/76;if(Math.abs(Math.cos(a))<.12)continue;const k=Math.round(i*N/76)%N,r=1.035+.025*Math.sin(i*5),x=16*Math.cos(a)*r,y=11.8*Math.sin(a)*r,v=i%5<2?'blanc':'violet',s=.87+.16*Math.sin(i*2.3);put(assets['flowers-'+v],'Hortensias · rive · '+i,x,y,.02,a,[s,s,.83*s]);}
  for(let i=0;i<18;i++){const a=TAU*i/18;if(Math.abs(Math.cos(a))<.33)continue;const v=i%3?'blanc':'violet';put(assets['flowers-'+v],'Hortensias · îlot · '+i,3.9*Math.cos(a),3.25*Math.sin(a),.02,a,[.77,.77,.66]);}
