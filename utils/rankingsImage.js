@@ -22,6 +22,7 @@ async function loadPieces(){
  const frieze=createCanvas(256,40);frieze.getContext('2d').drawImage(wall,0,0,256,40,0,0,256,40);
  return pieces={circle,centre:{x:half,y:centreY},frieze};
 }
+const mix=(a,b,t)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const x=p(a),y=p(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');};
 const thousands=n=>typeof n==='number'?n.toLocaleString('fr-FR').replace(/\s/g,' '):String(n);
 function drawBoard(c,rows,avatars,height,{circle,frieze}){
  const back=c.createRadialGradient(W/2,height*.46,40,W/2,height*.46,W*.75);back.addColorStop(0,'#2a1606');back.addColorStop(.55,'#120904');back.addColorStop(1,'#040201');
@@ -29,39 +30,42 @@ function drawBoard(c,rows,avatars,height,{circle,frieze}){
  // the circle lies still behind the board
  c.globalAlpha=.28;c.drawImage(circle,W/2-330,height*.46-320,660,640);c.globalAlpha=1;
  for(let x=0;x<W;x+=256){c.drawImage(frieze,x,0);c.save();c.translate(x,height);c.scale(1,-1);c.drawImage(frieze,0,0);c.restore();}
- const rule=(y,alpha=1)=>{const g=c.createLinearGradient(40,0,W-40,0);g.addColorStop(0,'rgba(243,196,90,0)');g.addColorStop(.5,`rgba(243,196,90,${alpha})`);g.addColorStop(1,'rgba(243,196,90,0)');c.fillStyle=g;c.fillRect(40,y,W-80,1.5);};
+ const rule=(y,alpha=1)=>{const g=c.createLinearGradient(20,0,W-20,0);g.addColorStop(0,'rgba(243,196,90,0)');g.addColorStop(.5,`rgba(243,196,90,${alpha})`);g.addColorStop(1,'rgba(243,196,90,0)');c.fillStyle=g;c.fillRect(20,y,W-40,1.5);};
  c.textBaseline='middle';c.textAlign='center';
  const title=c.createLinearGradient(0,92,0,138);title.addColorStop(0,'#fff1c4');title.addColorStop(.55,GOLD);title.addColorStop(1,'#b8701e');
  c.shadowColor=EMBER;c.shadowBlur=18;c.fillStyle=title;c.font=FONT(50,'bold');c.fillText('CLASSEMENT',W/2,114);c.shadowBlur=0;
  rule(166,.8);
- const col={rank:78,avatar:148,name:182,rank2:476,pb:740,trads:938};
- c.fillStyle='#d9b26a';c.font=FONT(16,'bold');c.fillText('RG',col.rank,186);c.textAlign='left';c.fillText('BRACER',col.name,186);c.fillText('CLASSE',col.rank2-20,186);c.textAlign='center';c.fillText('PB',col.pb,186);c.fillText('TRADS',col.trads,186);
+ const col={bar:24,rank:50,change:70,avatar:122,name:152,klass:392,pb:610,trads:798,arena:944};
+ c.fillStyle='#d9b26a';c.font=FONT(16,'bold');c.fillText('RG',col.rank,186);c.textAlign='left';c.fillText('BRACER',col.name,186);c.fillText('CLASSE',col.klass,186);c.textAlign='center';c.fillText('PB',col.pb,186);c.fillText('TRADS',col.trads,186);c.fillText('VICT. ARÈNE',col.arena,186);
  const medals=['#ffd66b','#dfe6ee','#e0965a'];
+ // a number, then in small green what the previous day added
+ const withGain=(value,gain,x,y,size,colour)=>{const extra=gain?` (+${thousands(gain)})`:'';c.font=FONT(size,'bold');const w=c.measureText(value).width;c.font=FONT(Math.round(size*.68),'bold');const g=extra?c.measureText(extra).width:0;
+  c.textAlign='left';const start=x-(w+g)/2;c.font=FONT(size,'bold');c.fillStyle=colour;c.fillText(value,start,y);if(extra){c.font=FONT(Math.round(size*.68),'bold');c.fillStyle='#7fe08a';c.fillText(extra,start+w,y+1);}c.textAlign='center';};
  rows.forEach((row,i)=>{
   const y=TOP+i*ROW,mid=y+ROW/2,colour=row.couleurHex??'#ffffff';
-  const panel=c.createLinearGradient(40,0,W-40,0);panel.addColorStop(0,'rgba(60,32,10,0)');panel.addColorStop(.12,i%2?'rgba(60,32,10,.42)':'rgba(84,46,14,.5)');panel.addColorStop(.88,i%2?'rgba(60,32,10,.42)':'rgba(84,46,14,.5)');panel.addColorStop(1,'rgba(60,32,10,0)');
-  c.fillStyle=panel;c.fillRect(40,y+4,W-80,ROW-8);
-  c.fillStyle=colour;c.fillRect(52,y+10,3,ROW-20);
-  c.font=FONT(24,'bold');c.fillStyle=medals[i]??'#c9a679';c.shadowColor=medals[i]?EMBER:'transparent';c.shadowBlur=medals[i]?10:0;c.fillText(String(i+1).padStart(2,'0'),col.rank-6,mid+1);c.shadowBlur=0;
+  const panel=c.createLinearGradient(14,0,W-14,0);panel.addColorStop(0,'rgba(60,32,10,0)');panel.addColorStop(.08,i%2?'rgba(60,32,10,.42)':'rgba(84,46,14,.5)');panel.addColorStop(.92,i%2?'rgba(60,32,10,.42)':'rgba(84,46,14,.5)');panel.addColorStop(1,'rgba(60,32,10,0)');
+  c.fillStyle=panel;c.fillRect(14,y+4,W-28,ROW-8);
+  c.fillStyle=colour;c.fillRect(col.bar,y+10,3,ROW-20);
+  c.font=FONT(24,'bold');c.fillStyle=medals[i]??'#c9a679';c.shadowColor=medals[i]?EMBER:'transparent';c.shadowBlur=medals[i]?10:0;c.fillText(String(i+1).padStart(2,'0'),col.rank,mid+1);c.shadowBlur=0;
   // places won or lost since the day before
-  if(row.placeChange){c.textAlign='left';c.font=FONT(14,'bold');c.fillStyle=row.placeChange>0?'#7fe08a':'#ff6b5e';c.fillText(`(${row.placeChange>0?'+':''}${row.placeChange})`,col.rank+12,mid+2);c.textAlign='center';}
+  if(row.placeChange){c.textAlign='left';c.font=FONT(14,'bold');c.fillStyle=row.placeChange>0?'#7fe08a':'#ff6b5e';c.fillText(`(${row.placeChange>0?'+':''}${row.placeChange})`,col.change,mid+2);c.textAlign='center';}
   // the profile picture in a ring of the rank's colour
   c.save();c.beginPath();c.arc(col.avatar,mid,20,0,Math.PI*2);c.closePath();c.fillStyle='#1c120a';c.fill();c.clip();
   if(avatars[i])c.drawImage(avatars[i],col.avatar-20,mid-20,40,40);else{c.fillStyle=colour;c.font=FONT(20,'bold');c.fillText((row.pseudo?.[0]??'?').toUpperCase(),col.avatar,mid+1);}
   c.restore();c.strokeStyle=colour;c.lineWidth=2;c.shadowColor=colour;c.shadowBlur=8;c.beginPath();c.arc(col.avatar,mid,21,0,Math.PI*2);c.stroke();c.shadowBlur=0;
-  c.textAlign='left';c.font=FONT(23,'bold');let name=row.pseudo??'Inconnu';while(c.measureText(name).width>270&&name.length>2)name=name.slice(0,-2)+'…';
+  c.textAlign='left';c.font=FONT(23,'bold');let name=row.pseudo??'Inconnu';while(c.measureText(name).width>226&&name.length>2)name=name.slice(0,-2)+'…';
   c.fillStyle='#fff3dc';c.shadowColor='rgba(255,140,40,.55)';c.shadowBlur=6;c.fillText(name,col.name,mid+1);c.shadowBlur=0;
-  // no glow on the rank: a dark outline and a drop shadow keep it apart from the background
-  c.font=FONT(21,'bold');c.lineJoin='round';c.lineWidth=4;c.strokeStyle='#120803';c.shadowColor='rgba(0,0,0,.9)';c.shadowBlur=4;c.shadowOffsetY=2;c.strokeText(row.nomRang??'',col.rank2-20,mid+1);c.shadowBlur=0;c.shadowOffsetY=0;c.fillStyle=colour;c.fillText(row.nomRang??'',col.rank2-20,mid+1);
-  // points and the way to the next rank
-  // the total, then what the previous day brought
-  const total=row.seuilSuivant==='MAX'?`${thousands(row.pb)} · MAX`:`${thousands(row.pb)} / ${thousands(row.seuilSuivant)}`,gain=row.pbGain?` (+${thousands(row.pbGain)})`:'';
-  c.font=FONT(19,'bold');const totalWidth=c.measureText(total).width;c.font=FONT(15,'bold');const gainWidth=gain?c.measureText(gain).width:0;
-  c.textAlign='left';const start=col.pb-(totalWidth+gainWidth)/2;c.font=FONT(19,'bold');c.fillStyle='#ffe2a3';c.fillText(total,start,mid-6);
-  if(gain){c.font=FONT(15,'bold');c.fillStyle='#7fe08a';c.fillText(gain,start+totalWidth,mid-5);}c.textAlign='center';
+  // the rank in the game's menu lettering: light top half, a sharp dark band at the middle fading back to light at the bottom
+  c.font=FONT(23,'bold');c.lineJoin='round';c.lineWidth=5;c.strokeStyle='#0d0602';c.shadowColor='rgba(0,0,0,.9)';c.shadowBlur=4;c.shadowOffsetY=2;c.strokeText(row.nomRang??'',col.klass,mid+1);c.shadowBlur=0;c.shadowOffsetY=0;
+  const box=c.measureText(row.nomRang??''),top=mid+1-box.actualBoundingBoxAscent,bottom=mid+1+box.actualBoundingBoxDescent,letters=c.createLinearGradient(0,top,0,bottom);
+  letters.addColorStop(0,mix(colour,'#ffffff',.88));letters.addColorStop(.5,mix(colour,'#ffffff',.6));letters.addColorStop(.52,mix(colour,'#000000',.12));letters.addColorStop(1,mix(colour,'#ffffff',.65));
+  c.fillStyle=letters;c.fillText(row.nomRang??'',col.klass,mid+1);c.textAlign='center';
+  // points, what the previous day brought and the way to the next rank
+  withGain(row.seuilSuivant==='MAX'?`${thousands(row.pb)} · MAX`:`${thousands(row.pb)} / ${thousands(row.seuilSuivant)}`,row.pbGain,col.pb,mid-6,19,'#ffe2a3');
   const progress=row.seuilSuivant==='MAX'?1:Math.max(0,Math.min(1,(row.pb-(row.seuil??0))/((row.seuilSuivant-(row.seuil??0))||1)));
-  c.fillStyle='rgba(0,0,0,.55)';c.fillRect(col.pb-90,mid+12,180,5);c.fillStyle=colour;c.shadowColor=colour;c.shadowBlur=6;c.fillRect(col.pb-90,mid+12,180*progress,5);c.shadowBlur=0;
-  c.font=FONT(24,'bold');c.fillStyle='#fff3dc';c.fillText(String(row.trads??0),col.trads,mid+1);
+  c.fillStyle='rgba(0,0,0,.55)';c.fillRect(col.pb-85,mid+12,170,5);c.fillStyle=colour;c.shadowColor=colour;c.shadowBlur=6;c.fillRect(col.pb-85,mid+12,170*progress,5);c.shadowBlur=0;
+  withGain(String(row.trads??0),row.tradsGain,col.trads,mid+1,24,'#fff3dc');
+  withGain(String(row.arenaWins??0),row.arenaGain,col.arena,mid+1,24,'#fff3dc');
  });
  if(!rows.length){c.font=FONT(24);c.fillStyle='#d9b26a';c.fillText('Aucun bracer classé.',W/2,TOP+40);}
  rule(TOP+Math.max(rows.length,1)*ROW+6,.6);
@@ -71,11 +75,11 @@ function drawFrame(c,f,height,rows){
  const t=f/FRAMES;
  c.save();c.globalCompositeOperation='lighter';
  for(const [y,dir] of [[20,1],[height-20,-1]]){const x=dir>0?-150+(W+300)*t:W+150-(W+300)*t,g=c.createRadialGradient(x,y,0,x,y,140);g.addColorStop(0,'rgba(255,190,80,.55)');g.addColorStop(1,'rgba(255,120,30,0)');c.fillStyle=g;c.fillRect(x-140,y-20,280,40);}
- if(rows.length&&f<10){const x=40+(W-80)*f/9,g=c.createLinearGradient(x-80,0,x+80,0);g.addColorStop(0,'rgba(255,220,140,0)');g.addColorStop(.5,'rgba(255,220,140,.16)');g.addColorStop(1,'rgba(255,220,140,0)');c.fillStyle=g;c.fillRect(Math.max(40,x-80),TOP+4,160,ROW-8);}
+ if(rows.length&&f<10){const x=14+(W-28)*f/9,g=c.createLinearGradient(x-80,0,x+80,0);g.addColorStop(0,'rgba(255,220,140,0)');g.addColorStop(.5,'rgba(255,220,140,.16)');g.addColorStop(1,'rgba(255,220,140,0)');c.fillStyle=g;c.fillRect(Math.max(14,x-80),TOP+4,160,ROW-8);}
  c.restore();
 }
 // rows: {pseudo, avatar (an image, a buffer or null), pb, seuil, seuilSuivant (a number or 'MAX'), nomRang, trads, couleurHex,
-// pbGain (points earned the day before), placeChange (places won, negative when lost)}
+// pbGain and tradsGain (what the day before brought), placeChange (places won, negative when lost), arenaWins and arenaGain}
 async function renderRankings(rows){
  const parts=await loadPieces(),height=TOP+Math.max(rows.length,1)*ROW+70;
  const avatars=await Promise.all(rows.map(r=>r.avatar?(Buffer.isBuffer(r.avatar)||typeof r.avatar==='string'?loadImage(r.avatar).catch(()=>null):r.avatar):null));
