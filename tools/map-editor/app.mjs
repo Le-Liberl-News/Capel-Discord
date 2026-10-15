@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import objectTools from './object-tools.cjs';
+import saveState from './save-state.cjs';
 import splitTools from './split-assets.cjs';
 import platformTools from '../../activity/moving-platforms.cjs';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
@@ -21,7 +22,7 @@ const route=new THREE.Group();scene.add(route);
 const assets=new URL('/assets/sky/',location.href),degrees=180/Math.PI;
 async function api(path,body){const response=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}),data=await response.json();if(!response.ok||data.error)throw Error(data.error??'Requête impossible');return data;}
 function status(text,error=false){$('status').textContent=text;$('status').style.color=error?'#ffb0a8':'';}
-function snapshot(){return JSON.stringify({objects:project.objects,layout:project.layout,assets:project.assets});}
+function snapshot(){return saveState.snapshot(project);}
 function changed(){const state=snapshot();if(history[cursor]!==state){history.splice(cursor+1);history.push(state);if(history.length>60)history.shift();cursor=history.length-1;}$('dirty').textContent=state===saveVersion?'':'Modifications non sauvegardées';$('undo').disabled=cursor<=0;$('redo').disabled=cursor>=history.length-1;}
 function selectedObject(){return project?.objects.find(o=>o.id===selected);}
 function pose(root,o){root.name=o.name;root.position.set(o.position[0],o.position[2],-o.position[1]);root.quaternion.copy(Binv).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(...o.rotation)));root.scale.fromArray(o.scale);root.visible=o.visible&&($('walls').checked||o.role!=='wall');root.updateMatrixWorld(true);}
@@ -69,8 +70,16 @@ async function paste(){if(busy||!project)return;busy=true;try{const o=objectTool
 function copy(){try{clipboard=objectTools.copyObject(project,selectedObject());status('Asset copié · Ctrl+V pour coller');return true;}catch(e){status(e.message,true);return false;}}
 $('duplicate').onclick=()=>{if(copy())paste();};
 $('delete').onclick=async()=>{const o=selectedObject();if(!o)return;if(o.binding&&o.binding.kind!=='light'){status('Ce repère définit la map : déplacez-le plutôt que de le supprimer.',true);return;}if(o.binding?.kind==='light'){project.layout.lights.splice(o.binding.index,1);for(const other of project.objects)if(other.binding?.kind==='light'&&other.binding.index>o.binding.index)other.binding.index--;}disposeRoot(roots.get(o.id));roots.delete(o.id);project.objects=project.objects.filter(x=>x.id!==o.id);if(o.binding?.kind==='light'){await effects();trackShaders();}select(null);changed();renderLists();};
-async function historyAt(index){if(index<0||index>=history.length||busy)return;busy=true;try{cursor=index;Object.assign(project,JSON.parse(history[index]));await rebuild();trackShaders();changed();}finally{busy=false;}}$('undo').onclick=()=>historyAt(cursor-1);$('redo').onclick=()=>historyAt(cursor+1);
-$('maps').oninput=async()=>{try{if(project&&snapshot()!==saveVersion)await api('/api/project?name='+encodeURIComponent($('name').value),project);await load($('maps').value);}catch(e){status(e.message,true);}};$('save').onclick=async()=>{try{const name=$('name').value;const r=await api('/api/project?name='+encodeURIComponent(name),project);saveVersion=snapshot();changed();status('Sauvegardé : '+r.saved);}catch(e){status(e.message,true);}};
+async function historyAt(index){if(index<0||index>=history.length||busy)return;busy=true;try{cursor=index;Object.assign(project,JSON.parse(history[index]));project.assets={...palette,...project.assets};await rebuild();trackShaders();changed();}finally{busy=false;}}$('undo').onclick=()=>historyAt(cursor-1);$('redo').onclick=()=>historyAt(cursor+1);
+async function saveProject(){
+ if(!project||$('save').disabled)return false;
+ const name=$('name').value,sent=snapshot(),body=saveState.payload(project,sent);$('save').disabled=true;$('dirty').textContent='Sauvegarde en cours…';
+ try{const r=await api('/api/project?name='+encodeURIComponent(name),body);saveVersion=sent;changed();status((snapshot()===sent?'Sauvegardé : ':'Version sauvegardée ; nouvelles modifications à sauvegarder : ')+r.saved);return true;}
+ catch(e){$('dirty').textContent='Échec de sauvegarde : '+e.message;status('Sauvegarde impossible : '+e.message,true);return false;}
+ finally{$('save').disabled=false;}
+}
+$('maps').oninput=async()=>{const name=$('maps').value;if(project&&snapshot()!==saveVersion&&!await saveProject()){ $('maps').value=$('name').value;return;}await load(name);};$('save').onclick=saveProject;
+
 async function output(action){if(busy||!project)return;busy=true;for(const id of ['export','apply','test'])$(id).disabled=true;try{status('Reconstruction du sol et des collisions…');const name=$('name').value;if(action==='test')await api('/api/project?name='+encodeURIComponent(name),project);const r=await api('/api/'+(action==='apply'?'apply':'export')+'?name='+encodeURIComponent(name),project);status((r.applied?'Appliqué localement : '+r.applied:r.directory)+' · '+r.stats.walkable+' cases jouables'+(r.warnings?.length?' · '+r.warnings.join(' '):''));if(action==='test')window.open('/game?map='+project.map+'&inspect=1&project='+encodeURIComponent(name),'_blank');}catch(e){status(e.message,true);}finally{busy=false;for(const id of ['export','apply','test'])$(id).disabled=false;}}$('export').onclick=()=>output('export');$('apply').onclick=()=>output('apply');$('test').onclick=()=>output('test');
 $('add-light').onclick=async()=>{if(busy||!project)return;if(project.layout.lights.length>=32)return status('Maximum 32 lumières par étage',true);const index=project.layout.lights.length,p=orbit.target;project.layout.lights.push({id:crypto.randomUUID(),position:[p.x,p.y+1.5,p.z],color:[1,.5,.2],radius:6,strength:1.5,flicker:false});const o={id:crypto.randomUUID(),name:'Lumière '+(index+1),asset:null,role:'marker',binding:{kind:'light',index},position:[p.x,-p.z,p.y+1.5],rotation:[0,0,0],scale:[1,1,1],visible:true};project.objects.push(o);await makeRoot(o);await effects();trackShaders();$('lighting').checked=true;select(o.id);changed();renderLists();};
 for(const id of ['light-color','light-strength','light-radius','light-flicker'])$(id).oninput=()=>{const o=selectedObject();if(o?.binding?.kind!=='light')return;const l=project.layout.lights[o.binding.index];l.color=new THREE.Color($('light-color').value).toArray();l.strength=Math.max(0,Math.min(10,Number($('light-strength').value)));l.radius=Math.max(.1,Math.min(50,Number($('light-radius').value)));l.flicker=$('light-flicker').checked;changed();};
