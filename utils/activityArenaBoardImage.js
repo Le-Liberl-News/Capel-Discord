@@ -17,16 +17,12 @@ const FONT=size=>`${size}px ArenaTerminal`;
 function drawBoard(c,{rows,page,pages,queueSize},images,height){
  const width=WIDTH,box=(x,y,w,h,r,fill)=>{c.fillStyle=fill;c.beginPath();c.roundRect(x,y,w,h,r);c.fill();};
  const text=(value,x,y,font,color,glow=8)=>{c.font=font;c.fillStyle=color;c.shadowColor=GLOW;c.shadowBlur=glow;c.fillText(value,x,y);c.shadowBlur=0;};
- // a plain vertical brushed metal: a diagonal sheen bands badly once reduced to the GIF palette
- const metal=c.createLinearGradient(0,0,0,height);metal.addColorStop(0,'#8a7e5f');metal.addColorStop(1,'#3e3a30');
- box(0,0,width,height,30,'#171918');box(9,9,width-18,height-18,27,metal);
- for(const x of [28,width-28])for(const y of [28,height-28]){c.fillStyle='#242722';c.beginPath();c.arc(x,y,7,0,Math.PI*2);c.fill();c.strokeStyle='#a39878';c.beginPath();c.moveTo(x-3,y+3);c.lineTo(x+3,y-3);c.stroke();}
- box(38,42,width-76,height-96,22,'#111513');box(48,52,width-96,height-116,17,'#263b32');
- const screen=c.createLinearGradient(0,65,0,height-65);screen.addColorStop(0,'#123029');screen.addColorStop(1,'#051a17');box(57,61,width-114,height-134,13,screen);
+  // the whole picture is the screen, no bezel around it
+ const screen=c.createLinearGradient(0,0,0,height);screen.addColorStop(0,'#123029');screen.addColorStop(1,'#051a17');box(0,0,width,height,18,screen);
  c.textBaseline='middle';
  text('THE ORBAL CALCULATOR / C.T.Z.',90,95,FONT(26),'#93bea4',4);
  text('CAPEL',90,141,FONT(58),'#d6ffe3',16);
- c.textAlign='right';text('SYSTEM Ver.7.0',width-90,100,FONT(26),'#bfc4a0',4);text('ARÈNE DE GRANCEL',width-90,143,FONT(44),'#88ecb2',12);c.textAlign='left';
+ c.textAlign='right';text('SYSTEM Ver.7.0',width-90,141,FONT(26),'#bfc4a0',4);c.textAlign='left';
  c.strokeStyle='#568771';c.lineWidth=1;c.shadowColor=GLOW;c.shadowBlur=6;c.beginPath();c.moveTo(90,181);c.lineTo(width-90,181);c.stroke();c.shadowBlur=0;
  text('COMBATTANTS DU JOUR',90,211,FONT(28),'#8aa99a',5);c.textAlign='center';for(const [label,x] of [['VICTOIRES',695],['SÉRIE',843],['PB',1020]])text(label,x,211,FONT(28),'#8aa99a',5);c.textAlign='left';
  rows.forEach((row,i)=>{
@@ -41,18 +37,17 @@ function drawBoard(c,{rows,page,pages,queueSize},images,height){
  if(!rows.length)text('AUCUN COMBATTANT ATTRIBUÉ.',100,294,FONT(40),'#accab6');
  text('PB VERSÉS À MINUIT · PARIS',90,height-115,FONT(26),'#9db8a6',4);c.textAlign='right';text(`${queueSize} EN ATTENTE   /   PAGE ${page+1} SUR ${pages}`,width-90,height-115,FONT(26),'#9db8a6',4);c.textAlign='left';
  // static CRT texture: scanlines over the screen and a darker rim
- c.fillStyle='rgba(0,0,0,.22)';for(let y=62;y<height-74;y+=4)c.fillRect(58,y,width-116,2);
- const vignette=c.createRadialGradient(width/2,height/2,height*.25,width/2,height/2,width*.62);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,0,0,.42)');c.fillStyle=vignette;c.beginPath();c.roundRect(57,61,width-114,height-134,13);c.fill();
- for(let i=0;i<10;i++){c.fillStyle='#282b26';c.fillRect(width-223+i*12,height-39,6,15);}
- c.fillStyle='#b6ae91';c.font=FONT(20);c.fillText('ONLINE',90,height-33);
+ c.fillStyle='rgba(0,0,0,.22)';for(let y=2;y<height;y+=4)c.fillRect(0,y,width,2);
+ const vignette=c.createRadialGradient(width/2,height/2,height*.25,width/2,height/2,width*.62);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,0,0,.42)');c.fillStyle=vignette;c.fillRect(0,0,width,height);
+ text('ONLINE',90,height-60,FONT(22),'#9db8a6',4);
 }
 // What moves on the screen at frame f: a soft bright band rolling down, the ONLINE led and a cursor blinking,
 // and the title flickering now and then.
 function drawFrame(c,f,height){
- const top=61,bottom=height-73,band=90,y=top-band+(bottom-top+band)*f/FRAMES;
+ const top=0,bottom=height,band=90,y=top-band+(bottom-top+band)*f/FRAMES;
  const g=c.createLinearGradient(0,y,0,y+band);g.addColorStop(0,'rgba(120,255,180,0)');g.addColorStop(.5,'rgba(120,255,180,.07)');g.addColorStop(1,'rgba(120,255,180,0)');
- c.save();c.beginPath();c.roundRect(57,61,WIDTH-114,height-134,13);c.clip();c.fillStyle=g;c.fillRect(57,y,WIDTH-114,band);c.restore();
- const on=f%8<5;c.fillStyle=on?'#89d997':'#2c4a33';c.shadowColor='#50ff81';c.shadowBlur=on?12:0;c.beginPath();c.arc(75,height-34,5,0,Math.PI*2);c.fill();c.shadowBlur=0;
+ c.fillStyle=g;c.fillRect(0,y,WIDTH,band);
+ const on=f%8<5;c.fillStyle=on?'#89d997':'#2c4a33';c.shadowColor='#50ff81';c.shadowBlur=on?12:0;c.beginPath();c.arc(76,height-60,5,0,Math.PI*2);c.fill();c.shadowBlur=0;
  c.font=FONT(58);const cursor=90+c.measureText('CAPEL').width+10;
  if(f%4<2){c.fillStyle='#d6ffe3';c.shadowColor=GLOW;c.shadowBlur=10;c.fillRect(cursor,124,18,34);c.shadowBlur=0;}
  if(f===5||f===12){c.fillStyle='rgba(214,255,227,.16)';c.fillRect(86,114,cursor-90,56);}
