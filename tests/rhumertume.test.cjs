@@ -41,3 +41,12 @@ test('in the activity a sick character is shown as a pom-tiron and cannot attack
  for(const kind of ['basic','art','craft']){clock+=5000;r=await service.state(a.activity_token,{x:2,z:2,action:{id:'k'+kind,type:'attack',kind,aim:{x:4,y:0,z:2}}});assert.equal(r.actionResult.error,'Pom ?');}
  sick.clear();clock+=5000;r=await service.state(a.activity_token,{x:2,z:2,action:{id:'ok',type:'attack',kind:'basic',aim:{x:4,y:0,z:2}}});assert.equal(r.actionResult.error,undefined);assert.equal(r.joueurs.find(p=>p.id==='a').pumpkin,undefined);
 });
+test('from October 15 two characters fall ill each day; a day under way gets its second case later on',async()=>{
+ let now=at('2026-10-15T10:00:00Z');const said=[],store=memory();
+ store.save({schedule:{'2026-10-15':600},drawn:{'2026-10-15':'Nial'},infected:{Nial:at('2026-10-15T08:00:00Z')}});
+ const r=createRhumertume({store,now:()=>now,random:()=>.5,charactersOfTheDay:async()=>['Nial','Tita','Kloe'],announce:async t=>said.push(t)});
+ await r.tick();assert.deepEqual(said,[]);
+ const second=store.load().schedule['2026-10-15'][1];assert.ok(second>12*60&&second<=23*60+30);
+ now=at('2026-10-15T21:00:00Z');await r.tick();assert.equal(said.length,1);assert.deepEqual(store.load().drawn['2026-10-15'],['Nial','Kloe']);
+ now=at('2026-10-16T21:30:00Z');await r.tick();await r.tick();assert.equal(said.length,2);assert.deepEqual(store.load().drawn['2026-10-16'],['Tita',null]);
+});

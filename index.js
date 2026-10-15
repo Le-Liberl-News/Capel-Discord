@@ -490,6 +490,8 @@ cron.schedule('0 0 * * *', async () => {
     await arenaRanking.settle();
     // the ranking's picture of the day, once the arena's points are paid
     try { await photographierJour(); } catch (error) { console.error("Erreur historique classement :", error); }
+    // the ranking is refreshed every night, missions or not
+    try { await updateRanking(client); } catch (errTop) { console.error("[XP-DEBUG] ❌ Erreur classement :", errTop.message); }
     await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
@@ -547,8 +549,6 @@ cron.schedule('0 0 * * *', async () => {
 
         } catch (error) { console.error("❌ Erreur lors du Cron de minuit :", error); }
 
-        try { await updateRanking(client);
-        } catch (errTop) { console.error("[XP-DEBUG] ❌ Erreur classement :", errTop.message); }
     } else {
         const targetChannel = await client.channels.fetch(SALON_READONLY_ID);
         const [missions] = await db.query(`SELECT sheet_id, ligne FROM mission_actuelle WHERE id = 1`);
