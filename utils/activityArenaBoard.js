@@ -2,7 +2,7 @@ const CHANNEL='1558125759682576475';
 function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveCharacter=null,now=Date.now,render=require("./activityArenaBoardImage").renderArenaBoard}) {
  const saved=store.load()??{};const queue=new Map();lobby.attachQueue?.(queue);
  // queued players whose activity answers (polled within 15 s) are the ones a duel can start with
- const readyCount=()=>[...queue.keys()].filter(id=>lobby.isConnected(id)).length;let page=0,busy=false,ticking=false,lastSignature=null;
+ const readyCount=()=>[...queue.keys()].filter(id=>lobby.isConnected(id)).length;let page=0,busy=false,ticking=false,lastSignature=null,lastImage=null;
  const notices=new Map(saved.queueNotices??[]);
  const saveNotices=()=>{saved.queueNotices=[...notices];store.save(saved);};
  async function removeNotice(user){const id=notices.get(user);if(!id)return;try{const channel=await client.channels.fetch(CHANNEL);await channel.messages.delete(id);}catch(e){if(e.code!==10008&&e.code!==10003)throw e;}notices.delete(user);saveNotices();}
@@ -20,10 +20,13 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
    if(pages>1)components.push({type:1,components:[{...button('previous','\u25c0'),disabled:page===0},{...button('next','\u25b6'),disabled:page===pages-1}]});
    const visual={rows:slice,page,pages,queueSize:queue.size,ready:readyCount()};const signature=JSON.stringify(visual);
    if(signature===lastSignature)return;
-   const image=await render(visual);
-   const payload={embeds:[{color:0x68baa0,image:{url:'attachment://arena.png'}}],attachments:[],files:[{attachment:image,name:'arena.png'}],components,allowedMentions:{parse:[]}};
+   // the animated screen is a plain attached GIF; when only the buttons changed (ready count) it is kept as is
+   const {ready,...screen}=visual,imageSignature=JSON.stringify(screen);
    let message;if(saved.message)try{message=await channel.messages.fetch(saved.message);}catch(e){if(e.code!==10008)throw e;}
-   if(message)await message.edit(payload);else{message=await channel.send(payload);saved.message=message.id;store.save(saved);}lastSignature=signature;
+   if(message&&imageSignature===lastImage){await message.edit({components});lastSignature=signature;return;}
+   const image=await render(visual);
+   const payload={content:'',embeds:[],attachments:[],files:[{attachment:image,name:'arena.gif'}],components,allowedMentions:{parse:[]}};
+   if(message)await message.edit(payload);else{message=await channel.send(payload);saved.message=message.id;store.save(saved);}lastSignature=signature;lastImage=imageSignature;
   }finally{busy=false;}
  }
  return {refresh,

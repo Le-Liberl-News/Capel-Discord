@@ -41,9 +41,9 @@ test('challenge modal lists all opponents without account IDs and sends chosen c
  challenged=null;await board.handle({...submit,deferred:true,fields:{getStringSelectValues:()=>['Hero 2']}});assert.equal(challenged,null);assert.match(replies.at(-1).content,/seul personnage/);
  challenged=null;await board.handle({...submit,deferred:true,fields:{getStringSelectValues:id=>id==='opponent:0'?['Unknown']:[]}});assert.equal(challenged,null);assert.match(replies.at(-1).content,/indisponible/);
 });
-test('console image renders portraits and scoreboard to PNG',async()=>{
+test('console screen renders portraits and scoreboard to an animated GIF',async()=>{
  const buffer=await require('../utils/activityArenaBoardImage').renderArenaBoard({rows:[{name:'Estelle',wins:4,streak:2,lastWin:false,pb:8,delta:-6}],page:0,pages:1,queueSize:0});
- assert.equal(buffer.subarray(1,4).toString(),'PNG');assert.equal(buffer.readUInt32BE(16),1200);assert.ok(buffer.length>10000);
+ assert.equal(buffer.subarray(0,6).toString(),'GIF89a');assert.equal(buffer.readUInt16LE(6),900);assert.ok(buffer.includes(Buffer.from('NETSCAPE2.0')));assert.ok(buffer.length>10000&&buffer.length<2e6);
 });
 
 test('queue notifications show only the character, deduplicate clicks and disappear on leaving or matching',async()=>{

@@ -1,7 +1,9 @@
 const path=require('node:path');
 const {createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas');
+const {GIFEncoder,quantize,applyPalette}=require('gifenc');
 const catalogue=require('../activity/assets/sky/characters.json');
-GlobalFonts.registerFromPath(path.join(__dirname,'../AveriaSansLibre-Regular.ttf'),'ArenaAveria');
+// VT323 (SIL OFL, resources/fonts/VT323-OFL.txt): a terminal face for the orbal calculator screen
+GlobalFonts.registerFromPath(path.join(__dirname,'../resources/fonts/VT323-Regular.ttf'),'ArenaTerminal');
 const faces=require('../resources/arena-portraits/catalogue.json');
 const portraits=new Map();
 async function portrait(name){
@@ -9,34 +11,72 @@ async function portrait(name){
  if(!portraits.has(file))portraits.set(file,loadImage(file).catch(()=>null));
  return portraits.get(file);
 }
-async function renderArenaBoard({rows,page,pages,queueSize}) {
- const width=1200,height=400+Math.max(3,rows.length)*86,canvas=createCanvas(width,height),c=canvas.getContext('2d');
- const box=(x,y,w,h,r,fill)=>{c.fillStyle=fill;c.beginPath();c.roundRect(x,y,w,h,r);c.fill();};
- const metal=c.createLinearGradient(0,0,width,height);metal.addColorStop(0,'#b6a579');metal.addColorStop(.16,'#51493a');metal.addColorStop(.5,'#776d55');metal.addColorStop(1,'#282825');
+const WIDTH=1200,SCALE=.75,FRAMES=16,DELAY=90,GLOW='#5dffa6';
+const FONT=size=>`${size}px ArenaTerminal`;
+// The screen of Capel's orbal calculator: the board laid out as before, in a terminal font where every text glows.
+function drawBoard(c,{rows,page,pages,queueSize},images,height){
+ const width=WIDTH,box=(x,y,w,h,r,fill)=>{c.fillStyle=fill;c.beginPath();c.roundRect(x,y,w,h,r);c.fill();};
+ const text=(value,x,y,font,color,glow=8)=>{c.font=font;c.fillStyle=color;c.shadowColor=GLOW;c.shadowBlur=glow;c.fillText(value,x,y);c.shadowBlur=0;};
+ // a plain vertical brushed metal: a diagonal sheen bands badly once reduced to the GIF palette
+ const metal=c.createLinearGradient(0,0,0,height);metal.addColorStop(0,'#8a7e5f');metal.addColorStop(1,'#3e3a30');
  box(0,0,width,height,30,'#171918');box(9,9,width-18,height-18,27,metal);
  for(const x of [28,width-28])for(const y of [28,height-28]){c.fillStyle='#242722';c.beginPath();c.arc(x,y,7,0,Math.PI*2);c.fill();c.strokeStyle='#a39878';c.beginPath();c.moveTo(x-3,y+3);c.lineTo(x+3,y-3);c.stroke();}
  box(38,42,width-76,height-96,22,'#111513');box(48,52,width-96,height-116,17,'#263b32');
- const screen=c.createLinearGradient(0,65,0,height-65);screen.addColorStop(0,'#152e29');screen.addColorStop(1,'#071b19');box(57,61,width-114,height-134,13,screen);
- c.strokeStyle='#34594b';c.lineWidth=1;for(let y=64;y<height-75;y+=4){c.globalAlpha=.14;c.beginPath();c.moveTo(62,y);c.lineTo(width-62,y);c.stroke();}c.globalAlpha=1;
- c.textBaseline='middle';c.fillStyle='#93bea4';c.font='18px monospace';c.fillText('THE ORBAL CALCULATOR / C.T.Z.',90,95);
- c.shadowColor='#68f4ac';c.shadowBlur=12;c.fillStyle='#cdf7da';c.font='bold 39px ArenaAveria';c.fillText('CAPEL',90,139);c.shadowBlur=0;
- c.textAlign='right';c.font='19px monospace';c.fillStyle='#bfc4a0';c.fillText('SYSTEM Ver.7.0',width-90,100);c.fillStyle='#88ecb2';c.font='bold 29px ArenaAveria';c.fillText('ARÈNE DE GRANCEL',width-90,143);c.textAlign='left';
- c.strokeStyle='#568771';c.beginPath();c.moveTo(90,181);c.lineTo(width-90,181);c.stroke();
- c.font='20px ArenaAveria';c.fillStyle='#8aa99a';c.fillText('COMBATTANTS DU JOUR',90,211);c.textAlign='center';c.fillText('VICTOIRES',695,211);c.fillText('SÉRIE',843,211);c.fillText('PB',1020,211);c.textAlign='left';
- const images=await Promise.all(rows.map(r=>portrait(r.name)));
+ const screen=c.createLinearGradient(0,65,0,height-65);screen.addColorStop(0,'#123029');screen.addColorStop(1,'#051a17');box(57,61,width-114,height-134,13,screen);
+ c.textBaseline='middle';
+ text('THE ORBAL CALCULATOR / C.T.Z.',90,95,FONT(26),'#93bea4',4);
+ text('CAPEL',90,141,FONT(58),'#d6ffe3',16);
+ c.textAlign='right';text('SYSTEM Ver.7.0',width-90,100,FONT(26),'#bfc4a0',4);text('ARÈNE DE GRANCEL',width-90,143,FONT(44),'#88ecb2',12);c.textAlign='left';
+ c.strokeStyle='#568771';c.lineWidth=1;c.shadowColor=GLOW;c.shadowBlur=6;c.beginPath();c.moveTo(90,181);c.lineTo(width-90,181);c.stroke();c.shadowBlur=0;
+ text('COMBATTANTS DU JOUR',90,211,FONT(28),'#8aa99a',5);c.textAlign='center';for(const [label,x] of [['VICTOIRES',695],['SÉRIE',843],['PB',1020]])text(label,x,211,FONT(28),'#8aa99a',5);c.textAlign='left';
  rows.forEach((row,i)=>{
-  const y=248+i*86;box(82,y,1036,76,7,i%2?'#142e29':'#1b3730');
-  c.font='21px monospace';c.fillStyle='#88a69a';c.fillText(String(page*12+i+1).padStart(2,'0'),100,y+38);
-  box(150,y+5,66,66,5,'#0a1c19');if(images[i]){const img=images[i],scale=Math.min(62/img.width,62/img.height);c.drawImage(img,183-img.width*scale/2,y+38-img.height*scale/2,img.width*scale,img.height*scale);}else{c.font='28px ArenaAveria';c.fillStyle='#8fbb9c';c.fillText(row.name[0]??'?',174,y+38);}
-  c.fillStyle='#e2efda';c.font='30px ArenaAveria';let name=row.name;while(c.measureText(name).width>400)name=name.slice(0,-2)+'…';c.fillText(name,235,y+38);
-  c.textAlign='center';c.font='bold 31px ArenaAveria';c.fillStyle='#dcecd8';c.fillText(String(row.wins??0),695,y+38);
-  c.fillStyle=row.lastWin===undefined?'#93aaa0':row.lastWin?'#8af4ad':'#ff8d8a';c.fillText(String(row.streak??0),843,y+38);
-  c.fillStyle='#ffe7a4';c.fillText(String(row.pb??0),994,y+31);c.font='20px ArenaAveria';c.fillStyle=(row.delta??0)<0?'#ff9b93':'#8acda2';c.fillText(`(${(row.delta??0)>=0?'+':''}${row.delta??0})`,1053,y+34);c.textAlign='left';
+  const y=248+i*86;box(82,y,1036,76,7,i%2?'#122d27':'#18352d');
+  text(String(page*12+i+1).padStart(2,'0'),100,y+38,FONT(32),'#88a69a',4);
+  box(150,y+5,66,66,5,'#0a1c19');if(images[i]){const img=images[i],s=Math.min(62/img.width,62/img.height);c.drawImage(img,183-img.width*s/2,y+38-img.height*s/2,img.width*s,img.height*s);}else text(row.name[0]??'?',172,y+38,FONT(40),'#8fbb9c');
+  c.font=FONT(44);let name=row.name.toUpperCase();while(c.measureText(name).width>400)name=name.slice(0,-2)+'…';text(name,235,y+38,FONT(44),'#e2ffe9',9);
+  c.textAlign='center';text(String(row.wins??0),695,y+38,FONT(46),'#dcffe4',9);
+  text(String(row.streak??0),843,y+38,FONT(46),row.lastWin===undefined?'#93aaa0':row.lastWin?'#8af4ad':'#ff8d8a',9);
+  c.textAlign='right';text(String(row.pb??0),1012,y+36,FONT(46),'#ffe7a4',9);c.textAlign='left';text(`(${(row.delta??0)>=0?'+':''}${row.delta??0})`,1020,y+38,FONT(28),(row.delta??0)<0?'#ff9b93':'#8acda2',5);
  });
- if(!rows.length){c.font='28px ArenaAveria';c.fillStyle='#accab6';c.fillText('Aucun combattant attribué.',100,294);}
- c.font='18px ArenaAveria';c.fillStyle='#9db8a6';c.fillText('PB versés à minuit · Paris',90,height-115);c.textAlign='right';c.fillText(`${queueSize} en attente   /   Page ${page+1} sur ${pages}`,width-90,height-115);c.textAlign='left';
- c.fillStyle='#89d997';c.shadowColor='#50ff81';c.shadowBlur=10;c.beginPath();c.arc(75,height-34,5,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#b6ae91';c.font='14px monospace';c.fillText('ONLINE',90,height-33);
+ if(!rows.length)text('AUCUN COMBATTANT ATTRIBUÉ.',100,294,FONT(40),'#accab6');
+ text('PB VERSÉS À MINUIT · PARIS',90,height-115,FONT(26),'#9db8a6',4);c.textAlign='right';text(`${queueSize} EN ATTENTE   /   PAGE ${page+1} SUR ${pages}`,width-90,height-115,FONT(26),'#9db8a6',4);c.textAlign='left';
+ // static CRT texture: scanlines over the screen and a darker rim
+ c.fillStyle='rgba(0,0,0,.22)';for(let y=62;y<height-74;y+=4)c.fillRect(58,y,width-116,2);
+ const vignette=c.createRadialGradient(width/2,height/2,height*.25,width/2,height/2,width*.62);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,0,0,.42)');c.fillStyle=vignette;c.beginPath();c.roundRect(57,61,width-114,height-134,13);c.fill();
  for(let i=0;i<10;i++){c.fillStyle='#282b26';c.fillRect(width-223+i*12,height-39,6,15);}
- return canvas.toBuffer('image/png');
+ c.fillStyle='#b6ae91';c.font=FONT(20);c.fillText('ONLINE',90,height-33);
+}
+// What moves on the screen at frame f: a soft bright band rolling down, the ONLINE led and a cursor blinking,
+// and the title flickering now and then.
+function drawFrame(c,f,height){
+ const top=61,bottom=height-73,band=90,y=top-band+(bottom-top+band)*f/FRAMES;
+ const g=c.createLinearGradient(0,y,0,y+band);g.addColorStop(0,'rgba(120,255,180,0)');g.addColorStop(.5,'rgba(120,255,180,.07)');g.addColorStop(1,'rgba(120,255,180,0)');
+ c.save();c.beginPath();c.roundRect(57,61,WIDTH-114,height-134,13);c.clip();c.fillStyle=g;c.fillRect(57,y,WIDTH-114,band);c.restore();
+ const on=f%8<5;c.fillStyle=on?'#89d997':'#2c4a33';c.shadowColor='#50ff81';c.shadowBlur=on?12:0;c.beginPath();c.arc(75,height-34,5,0,Math.PI*2);c.fill();c.shadowBlur=0;
+ c.font=FONT(58);const cursor=90+c.measureText('CAPEL').width+10;
+ if(f%4<2){c.fillStyle='#d6ffe3';c.shadowColor=GLOW;c.shadowBlur=10;c.fillRect(cursor,124,18,34);c.shadowBlur=0;}
+ if(f===5||f===12){c.fillStyle='rgba(214,255,227,.16)';c.fillRect(86,114,cursor-90,56);}
+}
+async function renderArenaBoard(visual){
+ const height=400+Math.max(3,visual.rows.length)*86,images=await Promise.all(visual.rows.map(r=>portrait(r.name)));
+ const W=Math.round(WIDTH*SCALE),H=Math.round(height*SCALE);
+ const base=createCanvas(W,H),b=base.getContext('2d');b.scale(SCALE,SCALE);drawBoard(b,visual,images,height);
+ const baseData=b.getImageData(0,0,W,H).data;
+ // one palette for the whole loop; the last entry is kept for "unchanged since the previous frame"
+ const palette=quantize(baseData,255),transparentIndex=palette.length,fullPalette=[...palette,[0,0,0]];
+ const baseIndex=applyPalette(baseData,palette);
+ const gif=GIFEncoder(),frame=createCanvas(W,H),c=frame.getContext('2d');let previous=null;
+ for(let f=0;f<FRAMES;f++){
+  await new Promise(setImmediate);// ~50 ms per frame: let the bot answer interactions in between
+  c.setTransform(1,0,0,1,0,0);c.drawImage(base,0,0);c.scale(SCALE,SCALE);drawFrame(c,f,height);
+  const data=c.getImageData(0,0,W,H).data,index=baseIndex.slice();
+  // only the rows the animation touched are matched against the palette again
+  const words=new Uint32Array(data.buffer,data.byteOffset,W*H),baseWords=new Uint32Array(baseData.buffer,baseData.byteOffset,W*H),changed=[];
+  for(let y=0;y<H;y++)for(let x=y*W,end=x+W;x<end;x++)if(words[x]!==baseWords[x]){changed.push(y);break;}
+  if(changed.length){const rowsData=new Uint8ClampedArray(changed.length*W*4);changed.forEach((y,n)=>rowsData.set(data.subarray(y*W*4,(y+1)*W*4),n*W*4));const rowsIndex=applyPalette(rowsData,palette);changed.forEach((y,n)=>index.set(rowsIndex.subarray(n*W,(n+1)*W),y*W));}
+  let out=index;if(previous){out=new Uint8Array(index.length);for(let i=0;i<index.length;i++)out[i]=index[i]===previous[i]?transparentIndex:index[i];}
+  gif.writeFrame(out,W,H,f===0?{palette:fullPalette,delay:DELAY,repeat:0}:{delay:DELAY,transparent:true,transparentIndex,dispose:1});previous=index;
+ }
+ gif.finish();return Buffer.from(gif.bytes());
 }
 module.exports={renderArenaBoard};
