@@ -1,0 +1,5967 @@
+{
+  "schema": 1,
+  "sources": {
+    "FC": "TABLE FC.xlsx",
+    "SC": "TABLE SC.xlsx",
+    "Third": "TABLE 3RD (3).xlsx",
+    "Azure": "TABLE ZERO.xlsx"
+  },
+  "games": {
+    "FC": {
+      "r0201": {
+        "name": "Milch Main Road",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 19"
+      },
+      "r0302": {
+        "name": "Malga Trail",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 24"
+      },
+      "t0100": {
+        "name": "Centre-ville",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 27"
+      },
+      "t0120": {
+        "name": "Atelier Melders",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 31"
+      },
+      "t0121": {
+        "name": "Guilde + autres bâtiments",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 33"
+      },
+      "t0130": {
+        "name": "Chapelle",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 35"
+      },
+      "t0500": {
+        "name": "Pont Verte (extérieur)",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 50"
+      },
+      "t0510": {
+        "name": "Pont Verte (intérieur)",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 52"
+      },
+      "c1211": {
+        "name": "Tour Amberl",
+        "source": "TABLE FC.xlsx · BOSE · ligne 4"
+      },
+      "c1500": {
+        "name": "Col de Krone",
+        "source": "TABLE FC.xlsx · BOSE · ligne 18"
+      },
+      "r1402": {
+        "name": "Tour Amberl (sauvetage d'Alba)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 33"
+      },
+      "r1502": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · BOSE · ligne 38"
+      },
+      "t1101": {
+        "name": "Quartier Nord - Rues",
+        "source": "TABLE FC.xlsx · BOSE · ligne 43"
+      },
+      "t1121": {
+        "name": "Guilde",
+        "source": "TABLE FC.xlsx · BOSE · ligne 49"
+      },
+      "t1122": {
+        "name": "Marché",
+        "source": "TABLE FC.xlsx · BOSE · ligne 51"
+      },
+      "t1130": {
+        "name": "Église",
+        "source": "TABLE FC.xlsx · BOSE · ligne 53"
+      },
+      "t1131": {
+        "name": "Anterose et Bar Kirsche",
+        "source": "TABLE FC.xlsx · BOSE · ligne 55"
+      },
+      "t1132": {
+        "name": "Hôtel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 57"
+      },
+      "t1210": {
+        "name": "Village Ravennue",
+        "source": "TABLE FC.xlsx · BOSE · ligne 60"
+      },
+      "t1300": {
+        "name": "Col de Krone - Point de passage",
+        "source": "TABLE FC.xlsx · BOSE · ligne 64"
+      },
+      "c1501": {
+        "name": "Col de Krone",
+        "source": "TABLE FC.xlsx · BOSE · ligne 19"
+      },
+      "c2209": {
+        "name": "Phare Varenne",
+        "source": "TABLE FC.xlsx · RUAN · ligne 9"
+      },
+      "c2219": {
+        "name": "Phare Varenne",
+        "source": "TABLE FC.xlsx · RUAN · ligne 12"
+      },
+      "r2201": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 17"
+      },
+      "r2202": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 19"
+      },
+      "t2100": {
+        "name": "Centre-ville",
+        "source": "TABLE FC.xlsx · RUAN · ligne 27"
+      },
+      "t2101": {
+        "name": "Ruan Sud",
+        "source": "TABLE FC.xlsx · RUAN · ligne 29"
+      },
+      "t2102": {
+        "name": "Aérogare",
+        "source": "TABLE FC.xlsx · RUAN · ligne 31"
+      },
+      "t2120": {
+        "name": "Guilde + Commerces",
+        "source": "TABLE FC.xlsx · RUAN · ligne 36"
+      },
+      "t2130": {
+        "name": "Chapelle + QG du Gang Raven",
+        "source": "TABLE FC.xlsx · RUAN · ligne 38"
+      },
+      "t2131": {
+        "name": "Restaurants de Ruan",
+        "source": "TABLE FC.xlsx · RUAN · ligne 40"
+      },
+      "t2200": {
+        "name": "Maison de Dalmore (extérieur)",
+        "source": "TABLE FC.xlsx · RUAN · ligne 43"
+      },
+      "t2210": {
+        "name": "Maison de Dalmore (intérieur)",
+        "source": "TABLE FC.xlsx · RUAN · ligne 45"
+      },
+      "t2300": {
+        "name": "Manoria - Extérieur",
+        "source": "TABLE FC.xlsx · RUAN · ligne 47"
+      },
+      "t2500": {
+        "name": "Académie Jenis Festival, sur le campus",
+        "source": "TABLE FC.xlsx · RUAN · ligne 61"
+      },
+      "t2521": {
+        "name": "Académie Jenis Clubhouse 2/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 69"
+      },
+      "t2600": {
+        "name": "Old Schoolhouse",
+        "source": "TABLE FC.xlsx · RUAN · ligne 74"
+      },
+      "t2610": {
+        "name": "Old Schoolhouse",
+        "source": "TABLE FC.xlsx · RUAN · ligne 76"
+      },
+      "t2700": {
+        "name": "Air-Letten",
+        "source": "TABLE FC.xlsx · RUAN · ligne 78"
+      },
+      "t2710": {
+        "name": "Air-Letten",
+        "source": "TABLE FC.xlsx · RUAN · ligne 80"
+      },
+      "e0012": {
+        "name": "Airliner, Cecilia",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 26"
+      },
+      "r3102": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 37"
+      },
+      "r3403": {
+        "name": "Tunnel de Kaldia / Entrée Zeiss",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 49"
+      },
+      "t3111": {
+        "name": "CTZ - RDC CTZ - B1",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 58"
+      },
+      "t3114": {
+        "name": "CTZ - Couloirs",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 62"
+      },
+      "t3115": {
+        "name": "CTZ - Salle de conception + Bibliothèque",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 64"
+      },
+      "t3117": {
+        "name": "CTZ - 2ème étage",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 67"
+      },
+      "t3118": {
+        "name": "CTZ - Infirmerie (3ème étage)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 69"
+      },
+      "t3119": {
+        "name": "CTZ - 4ème étage et toit",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 71"
+      },
+      "t3120": {
+        "name": "Commerces + Guilde",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 73"
+      },
+      "t3131": {
+        "name": "Bar Vogel",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 76"
+      },
+      "t3170": {
+        "name": "Bar Vogel",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 83"
+      },
+      "t3300": {
+        "name": "Fort Wolf",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 98"
+      },
+      "t4101": {
+        "name": "Grancel même et intérieur des bâtiments Scène du banc",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 34"
+      },
+      "t4104": {
+        "name": "Grand Arena",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 39"
+      },
+      "t4121": {
+        "name": "Grancel Guilde / Étages supérieurs",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 48"
+      },
+      "t4130": {
+        "name": "Centre éditorial du Liberl News Restaurants de Grancel Doublon de T4137 et T4137_1",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 52"
+      },
+      "t4136": {
+        "name": "Grand Arena (Salle d'attente/couloirs/accueil)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 59"
+      },
+      "t4137": {
+        "name": "Grancel même et intérieur des bâtiments Doublon (partiel) de T4130",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 61"
+      },
+      "c0100": {
+        "name": "Mine Malga",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 3"
+      },
+      "c0300": {
+        "name": "Mistwald",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 4"
+      },
+      "c0301": {
+        "name": "Mistwald",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 5"
+      },
+      "c0302": {
+        "name": "Mistwald",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 6"
+      },
+      "c0403": {
+        "name": "Tour Esmelas",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 7"
+      },
+      "c0411": {
+        "name": "Tour Esmelas",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 8"
+      },
+      "c0412": {
+        "name": "Tour Esmelas",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 9"
+      },
+      "c0413": {
+        "name": "Tour Esmelas",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 10"
+      },
+      "c0414": {
+        "name": "Tour Esmelas",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 11"
+      },
+      "c0415": {
+        "name": "Tour Esmelas",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 12"
+      },
+      "c0500": {
+        "name": "Égouts Tutoriel combats Mission [Find the Shiny Rock]",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 13"
+      },
+      "r0100": {
+        "name": "Elize Highway",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 14"
+      },
+      "r0101": {
+        "name": "Elize Highway",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 15"
+      },
+      "r0102": {
+        "name": "Elize Highway",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 16"
+      },
+      "r0200": {
+        "name": "Milch Main Road",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 17"
+      },
+      "r0202": {
+        "name": "Milch Main Road",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 20"
+      },
+      "r0300": {
+        "name": "Malga Trail",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 21"
+      },
+      "r0301": {
+        "name": "Malga Trail",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 22"
+      },
+      "r0303": {
+        "name": "Mine Malga (extérieur) Tour Esmelas (extérieur)",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 25"
+      },
+      "t0110": {
+        "name": "Maison de Luke et Pat",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 28"
+      },
+      "t0111": {
+        "name": "Maison de PNJ",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 29"
+      },
+      "t0131": {
+        "name": "Bar Abend",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 36"
+      },
+      "t0132": {
+        "name": "Hôtel",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 37"
+      },
+      "t0133": {
+        "name": "Tour Horloge Rue de Rolent",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 38"
+      },
+      "t0200": {
+        "name": "Résidence du Maire (extérieur)",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 39"
+      },
+      "t0210": {
+        "name": "Résidence du Maire (intérieur)",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 40"
+      },
+      "t0300": {
+        "name": "Maison des Bright Aubade de Joshua sur le balcon",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 41"
+      },
+      "t0301": {
+        "name": "Maison des Bright Discussion nocturne entre Joshua et Cassius",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 42"
+      },
+      "t0310": {
+        "name": "Maison des Bright Réveil d'Estelle Petit déjeuner avec Cassius Remise de la lettre à Cassius Dîner avant le départ pour Ruan",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 43"
+      },
+      "t0311": {
+        "name": "Maison des Bright Début du jeu Dîner avant le départ de Cassius",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 44"
+      },
+      "t0400": {
+        "name": "Ferme des Perzel",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 45"
+      },
+      "t0401": {
+        "name": "Ferme des Perzel",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 46"
+      },
+      "t0410": {
+        "name": "Ferme des Perzel",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 47"
+      },
+      "t0411": {
+        "name": "Ferme des Perzel",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 48"
+      },
+      "t0600": {
+        "name": "Porte de Gurune",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 53"
+      },
+      "t0601": {
+        "name": "Porte de Gurune",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 54"
+      },
+      "t0700": {
+        "name": "Aérogare",
+        "source": "TABLE FC.xlsx · ROLENT · ligne 55"
+      },
+      "c1101": {
+        "name": "Mine abandonnée",
+        "source": "TABLE FC.xlsx · BOSE · ligne 3"
+      },
+      "c1212": {
+        "name": "Tour Amberl",
+        "source": "TABLE FC.xlsx · BOSE · ligne 5"
+      },
+      "c1214": {
+        "name": "Tour Amberl",
+        "source": "TABLE FC.xlsx · BOSE · ligne 6"
+      },
+      "c1215": {
+        "name": "Tour Amberl",
+        "source": "TABLE FC.xlsx · BOSE · ligne 7"
+      },
+      "c1301": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 8"
+      },
+      "c1302": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 9"
+      },
+      "c1303": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 10"
+      },
+      "c1304": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 11"
+      },
+      "c1305": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 12"
+      },
+      "c1306": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 13"
+      },
+      "c1400": {
+        "name": "Gorges Nebel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 14"
+      },
+      "c1401": {
+        "name": "Gorges Nebel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 15"
+      },
+      "c1410": {
+        "name": "Gorges Nebel",
+        "source": "TABLE FC.xlsx · BOSE · ligne 16"
+      },
+      "e0000": {
+        "name": "Linde, Caverne Abandonnée Aéronef vers Rolent (Schera, Olivier)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 20"
+      },
+      "e0010": {
+        "name": "Mine de Ravennue",
+        "source": "TABLE FC.xlsx · BOSE · ligne 21"
+      },
+      "e0111": {
+        "name": "Bobcat",
+        "source": "TABLE FC.xlsx · BOSE · ligne 22"
+      },
+      "e0110": {
+        "name": "Bobcat",
+        "source": "TABLE FC.xlsx · BOSE · ligne 23"
+      },
+      "r1100": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · BOSE · ligne 24"
+      },
+      "r1101": {
+        "name": "Entre Rolent et Bose (rencontre avec Grant)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 25"
+      },
+      "r1103": {
+        "name": "Entre Rolent et Bose (panneau de direction)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 26"
+      },
+      "r1200": {
+        "name": "Entre Bose et Ruan (panneau de direction)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 27"
+      },
+      "r1201": {
+        "name": "Entre Bose et Ruan (avec Hardt + panneau de direction)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 28"
+      },
+      "r1202": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · BOSE · ligne 29"
+      },
+      "r1300": {
+        "name": "Haken Gate - Barrage",
+        "source": "TABLE FC.xlsx · BOSE · ligne 30"
+      },
+      "r1400": {
+        "name": "Entre Bose et Ruan (panneau de direction)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 31"
+      },
+      "r1401": {
+        "name": "Entre Bose et Ruan (monstre + panneau de direction)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 32"
+      },
+      "r1403": {
+        "name": "Tour Amberl (espionnage des pirates)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 34"
+      },
+      "r1500": {
+        "name": "Ravennue (rencontre avec Agate)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 35"
+      },
+      "r1501": {
+        "name": "Ravennue (vers la mine abandonnée)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 36"
+      },
+      "r1503": {
+        "name": "Mine abandonnée",
+        "source": "TABLE FC.xlsx · BOSE · ligne 39"
+      },
+      "t1100": {
+        "name": "Bose - Quartier Sud - Rues",
+        "source": "TABLE FC.xlsx · BOSE · ligne 41"
+      },
+      "t1102": {
+        "name": "Aérogare",
+        "source": "TABLE FC.xlsx · BOSE · ligne 44"
+      },
+      "t1110": {
+        "name": "Quartier Sud - Habitations",
+        "source": "TABLE FC.xlsx · BOSE · ligne 45"
+      },
+      "t1111": {
+        "name": "Résidence de Maybelle",
+        "source": "TABLE FC.xlsx · BOSE · ligne 46"
+      },
+      "t1120": {
+        "name": "Quartier Sud - Commerces",
+        "source": "TABLE FC.xlsx · BOSE · ligne 47"
+      },
+      "t1200": {
+        "name": "Village Ravennue",
+        "source": "TABLE FC.xlsx · BOSE · ligne 58"
+      },
+      "t1220": {
+        "name": "Village Ravennue",
+        "source": "TABLE FC.xlsx · BOSE · ligne 61"
+      },
+      "t1230": {
+        "name": "Village Ravennue",
+        "source": "TABLE FC.xlsx · BOSE · ligne 62"
+      },
+      "t1301": {
+        "name": "Col de Krone - Point de passage (nuit)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 65"
+      },
+      "t1310": {
+        "name": "Col de Krone - Point de passage",
+        "source": "TABLE FC.xlsx · BOSE · ligne 66"
+      },
+      "t1311": {
+        "name": "Col de Krone - Point de passage (nuit)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 67"
+      },
+      "t1400": {
+        "name": "Porte de Haken",
+        "source": "TABLE FC.xlsx · BOSE · ligne 68"
+      },
+      "t1410": {
+        "name": "Porte de Haken",
+        "source": "TABLE FC.xlsx · BOSE · ligne 69"
+      },
+      "t1500": {
+        "name": "Lac Valleria",
+        "source": "TABLE FC.xlsx · BOSE · ligne 70"
+      },
+      "t1501": {
+        "name": "Lac Valleria (arrivée de Kyle et Josette)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 71"
+      },
+      "t1510": {
+        "name": "Lac Valleria - Auberge",
+        "source": "TABLE FC.xlsx · BOSE · ligne 72"
+      },
+      "t1511": {
+        "name": "Lac Valleria - Auberge (nuit)",
+        "source": "TABLE FC.xlsx · BOSE · ligne 73"
+      },
+      "c2112": {
+        "name": "Tour Sapphirl",
+        "source": "TABLE FC.xlsx · RUAN · ligne 4"
+      },
+      "c2113": {
+        "name": "Tour Sapphirl",
+        "source": "TABLE FC.xlsx · RUAN · ligne 5"
+      },
+      "c2114": {
+        "name": "Tour Sapphirl",
+        "source": "TABLE FC.xlsx · RUAN · ligne 6"
+      },
+      "c2115": {
+        "name": "Tour Sapphirl",
+        "source": "TABLE FC.xlsx · RUAN · ligne 7"
+      },
+      "c2200": {
+        "name": "Phare Varenne",
+        "source": "TABLE FC.xlsx · RUAN · ligne 8"
+      },
+      "c2210": {
+        "name": "Phare Varenne",
+        "source": "TABLE FC.xlsx · RUAN · ligne 11"
+      },
+      "r2100": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 13"
+      },
+      "r2101": {
+        "name": "Entre Manoria et le Phare Varenne",
+        "source": "TABLE FC.xlsx · RUAN · ligne 14"
+      },
+      "r2111": {
+        "name": "Entre Manoria et le Phare Varenne",
+        "source": "TABLE FC.xlsx · RUAN · ligne 15"
+      },
+      "r2200": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 16"
+      },
+      "r2300": {
+        "name": "Indication routière",
+        "source": "TABLE FC.xlsx · RUAN · ligne 21"
+      },
+      "r2301": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 22"
+      },
+      "r2400": {
+        "name": "Aurian Causeway",
+        "source": "TABLE FC.xlsx · RUAN · ligne 23"
+      },
+      "r2401": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 24"
+      },
+      "r2402": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · RUAN · ligne 25"
+      },
+      "r2412": {
+        "name": "Routes (Course-poursuite d'Agate)",
+        "source": "TABLE FC.xlsx · RUAN · ligne 26"
+      },
+      "t2103": {
+        "name": "Fuite de Dalmore (course-poursuite en mer)",
+        "source": "TABLE FC.xlsx · RUAN · ligne 33"
+      },
+      "t2104": {
+        "name": "Arrestation de Dalmore (arrivée de l'Arseille)",
+        "source": "TABLE FC.xlsx · RUAN · ligne 34"
+      },
+      "t2110": {
+        "name": "Maisons des PNJ",
+        "source": "TABLE FC.xlsx · RUAN · ligne 35"
+      },
+      "t2132": {
+        "name": "Hôtel Blanche",
+        "source": "TABLE FC.xlsx · RUAN · ligne 42"
+      },
+      "t2301": {
+        "name": "Manoria - Extérieur",
+        "source": "TABLE FC.xlsx · RUAN · ligne 49"
+      },
+      "t2310": {
+        "name": "Manoria - Maisons des PNJ",
+        "source": "TABLE FC.xlsx · RUAN · ligne 50"
+      },
+      "t2311": {
+        "name": "Manoria - Maisons des PNJ",
+        "source": "TABLE FC.xlsx · RUAN · ligne 51"
+      },
+      "t2320": {
+        "name": "Manoria Épicerie Fiore 1/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 52"
+      },
+      "t2321": {
+        "name": "Manoria Épicerie Fiore 2/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 53"
+      },
+      "t2330": {
+        "name": "Manoria Auberge Magnolia Blanc 1/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 54"
+      },
+      "t2331": {
+        "name": "Manoria Auberge Magnolia Blanc 2/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 55"
+      },
+      "t2400": {
+        "name": "Orphelinat Mercia 1/4 [Première arrivée]",
+        "source": "TABLE FC.xlsx · RUAN · ligne 56"
+      },
+      "t2401": {
+        "name": "Orphelinat Mercia 2/4 [Incendie - Enquête]",
+        "source": "TABLE FC.xlsx · RUAN · ligne 57"
+      },
+      "t2402": {
+        "name": "Indication routière",
+        "source": "TABLE FC.xlsx · RUAN · ligne 58"
+      },
+      "t2410": {
+        "name": "Orphelinat Mercia 3/4 [Goûter + Début de l'indendie]",
+        "source": "TABLE FC.xlsx · RUAN · ligne 59"
+      },
+      "t2411": {
+        "name": "Orphelinat Mercia 4/4 [Incendie - Fuite des enfants]",
+        "source": "TABLE FC.xlsx · RUAN · ligne 60"
+      },
+      "t2501": {
+        "name": "Académie Jenis (indication routière)",
+        "source": "TABLE FC.xlsx · RUAN · ligne 63"
+      },
+      "t2510": {
+        "name": "Académie Jenis Couloirs et Classes 1/3",
+        "source": "TABLE FC.xlsx · RUAN · ligne 64"
+      },
+      "t2511": {
+        "name": "Académie Jenis Clubhouse 1/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 65"
+      },
+      "t2512": {
+        "name": "Académie Jenis Dortoirs",
+        "source": "TABLE FC.xlsx · RUAN · ligne 66"
+      },
+      "t2513": {
+        "name": "Académie Jenis",
+        "source": "TABLE FC.xlsx · RUAN · ligne 67"
+      },
+      "t2520": {
+        "name": "Académie Jenis Couloirs et Classes 2/3",
+        "source": "TABLE FC.xlsx · RUAN · ligne 68"
+      },
+      "t2523": {
+        "name": "Académie Jenis Auditorium 1/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 71"
+      },
+      "t2530": {
+        "name": "Académie Jenis Couloirs et Classes 3/3",
+        "source": "TABLE FC.xlsx · RUAN · ligne 72"
+      },
+      "t2533": {
+        "name": "Académie Jenis Auditorium 2/2",
+        "source": "TABLE FC.xlsx · RUAN · ligne 73"
+      },
+      "c3100": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 3"
+      },
+      "c3102": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 4"
+      },
+      "c3104": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 5"
+      },
+      "c3105": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 6"
+      },
+      "c3106": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 7"
+      },
+      "c3107": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 8"
+      },
+      "c3113": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 9"
+      },
+      "c3114": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 10"
+      },
+      "c3115": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 11"
+      },
+      "c3116": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 12"
+      },
+      "c3300": {
+        "name": "Grotte Calcaire de Kaldia",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 13"
+      },
+      "c3301": {
+        "name": "Grotte Calcaire de Kaldia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 14"
+      },
+      "c3302": {
+        "name": "Grotte Calcaire de Kaldia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 15"
+      },
+      "c3303": {
+        "name": "Grotte Calcaire de Kaldia (Combat Pingouin Géant. Quête :Panique à l'UPZ 2)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 16"
+      },
+      "c3502": {
+        "name": "Tour Carnelia (Sommet de la tour. Kidnapping Russell)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 17"
+      },
+      "c3511": {
+        "name": "Tour Carnelia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 18"
+      },
+      "c3512": {
+        "name": "Tour Carnelia",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 19"
+      },
+      "c3513": {
+        "name": "Tour Carnelia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 20"
+      },
+      "c3514": {
+        "name": "Tour Carnelia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 21"
+      },
+      "c3515": {
+        "name": "Tour Carnelia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 22"
+      },
+      "e0001": {
+        "name": "Linde, Caverne Abandonnée Aéronef vers Rolent (Schera, Olivier)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 23"
+      },
+      "e0002": {
+        "name": "Leibnitz",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 24"
+      },
+      "e0011": {
+        "name": "Linde, Caverne Abandonnée Aéronef vers Rolent (Schera, Olivier)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 25"
+      },
+      "r3100": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 35"
+      },
+      "r3101": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 36"
+      },
+      "r3103": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 39"
+      },
+      "r3104": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 40"
+      },
+      "r3200": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 41"
+      },
+      "r3201": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 42"
+      },
+      "r3202": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 43"
+      },
+      "r3300": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 44"
+      },
+      "r3301": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 45"
+      },
+      "r3400": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 46"
+      },
+      "r3401": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 47"
+      },
+      "r3402": {
+        "name": "Tunnel de Kaldia (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 48"
+      },
+      "t3100": {
+        "name": "Zeiss - Centre-ville",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 51"
+      },
+      "t3101": {
+        "name": "Zeiss - Quartier du CTZ",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 52"
+      },
+      "t3102": {
+        "name": "Aérogare de Zeiss",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 53"
+      },
+      "t3103": {
+        "name": "Zeiss - Centre-ville",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 54"
+      },
+      "t3104": {
+        "name": "Zeiss - Quartier du CTZ Doublon de T3101",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 55"
+      },
+      "t3105": {
+        "name": "Aerogare de Zeiss Doublon de T3102, probablement une version beta de la map",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 56"
+      },
+      "t3110": {
+        "name": "Zeiss - Résidences privées",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 57"
+      },
+      "t3112": {
+        "name": "CTZ - Ascenseur",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 60"
+      },
+      "t3113": {
+        "name": "CTZ - Escaliers",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 61"
+      },
+      "t3116": {
+        "name": "CTZ - Atelier (3ème étage)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 66"
+      },
+      "t3130": {
+        "name": "Chapelle de Zeiss",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 75"
+      },
+      "t3132": {
+        "name": "Hôtel Zahnrad",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 78"
+      },
+      "t3133": {
+        "name": "Labo de Russell",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 79"
+      },
+      "t3140": {
+        "name": "Zeiss - Résidences privées Doublon de T3110",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 80"
+      },
+      "t3150": {
+        "name": "Commerces + Guilde Doublon de T3120",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 81"
+      },
+      "t3160": {
+        "name": "Chapelle de Zeiss",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 82"
+      },
+      "t3171": {
+        "name": "Hôtel Zahnrad Doublon de T3132",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 85"
+      },
+      "t3172": {
+        "name": "Labo de Russell",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 86"
+      },
+      "t3200": {
+        "name": "Elmo",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 87"
+      },
+      "t3201": {
+        "name": "Elmo",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 88"
+      },
+      "t3210": {
+        "name": "Elmo Maison de PNJ",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 89"
+      },
+      "t3211": {
+        "name": "Elmo Maison de PNJ",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 90"
+      },
+      "t3220": {
+        "name": "Elmo Boutique Hazuki",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 91"
+      },
+      "t3221": {
+        "name": "Elmo",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 92"
+      },
+      "t3222": {
+        "name": "Elmo Boutique Hazuki (Doublon de T3220)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 93"
+      },
+      "t3223": {
+        "name": "Elmo (Doublon de T3221)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 94"
+      },
+      "t3230": {
+        "name": "Elmo (Local de maintenance)",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 95"
+      },
+      "t3231": {
+        "name": "Elmo",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 96"
+      },
+      "t3233": {
+        "name": "Elmo",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 97"
+      },
+      "t3310": {
+        "name": "Fort Wolf",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 100"
+      },
+      "t3400": {
+        "name": "Porte de Sanktheim",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 101"
+      },
+      "t3410": {
+        "name": "Porte de Sanktheim",
+        "source": "TABLE FC.xlsx · ZEISS · ligne 102"
+      },
+      "c4100": {
+        "name": "Route Touristique d'Erbe (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 3"
+      },
+      "c4101": {
+        "name": "Route Touristique d'Erbe",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 4"
+      },
+      "c4102": {
+        "name": "Route Touristique d'Erbe (Contient phrases coffres)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 5"
+      },
+      "c4103": {
+        "name": "Route Touristique d'Erbe Doublon de C4113",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 6"
+      },
+      "c4111": {
+        "name": "Route Touristique d'Erbe",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 7"
+      },
+      "c4113": {
+        "name": "Route Touristique d'Erbe Doublon de C4103",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 8"
+      },
+      "c4200": {
+        "name": "Égouts",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 9"
+      },
+      "c4201": {
+        "name": "Égouts Quartier Ouest",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 10"
+      },
+      "c4202": {
+        "name": "Égouts",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 11"
+      },
+      "c4203": {
+        "name": "Égouts",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 12"
+      },
+      "c4204": {
+        "name": "Égouts",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 13"
+      },
+      "c4205": {
+        "name": "Égouts",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 14"
+      },
+      "c4300": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 15"
+      },
+      "c4301": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 16"
+      },
+      "c4302": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 17"
+      },
+      "c4303": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 18"
+      },
+      "c4304": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 19"
+      },
+      "c4305": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 20"
+      },
+      "c4306": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 21"
+      },
+      "c4307": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 22"
+      },
+      "c4308": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 23"
+      },
+      "c4309": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 24"
+      },
+      "c4310": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 25"
+      },
+      "c4311": {
+        "name": "Sealed Area",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 26"
+      },
+      "r4100": {
+        "name": "Erbe Scenic Route Fuite de Julia et Kloe",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 27"
+      },
+      "r4101": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 28"
+      },
+      "r4102": {
+        "name": "Routes",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 29"
+      },
+      "t0610": {
+        "name": "Porte de Gurune",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 32"
+      },
+      "t4100": {
+        "name": "Grancel (quartier sud) Doublon de 4150 Jour",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 33"
+      },
+      "t4102": {
+        "name": "Grancel West Block",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 37"
+      },
+      "t4103": {
+        "name": "Grancel (quartier nord ?)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 38"
+      },
+      "t4105": {
+        "name": "Aérogare",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 42"
+      },
+      "t4107": {
+        "name": "Grand Arena Tribunes",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 43"
+      },
+      "t4110": {
+        "name": "Habitations Quartier ouest Quartier sud",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 44"
+      },
+      "t4111": {
+        "name": "Grancel Quartier nord",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 45"
+      },
+      "t4112": {
+        "name": "Grancel même et intérieur des bâtiments",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 46"
+      },
+      "t4120": {
+        "name": "Grancel même et intérieur des bâtiments",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 47"
+      },
+      "t4122": {
+        "name": "Centre commercial Edel Liberl Airlines",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 50"
+      },
+      "t4123": {
+        "name": "Grancel même et intérieur des bâtiments Doublon de T4122",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 51"
+      },
+      "t4131": {
+        "name": "Cathédrale de Grancel",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 54"
+      },
+      "t4132": {
+        "name": "Grancel même et intérieur des bâtiments Hôtel Doublon de T4133 Jour",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 55"
+      },
+      "t4133": {
+        "name": "Grancel même et intérieur des bâtiments Hôtel Doublon de T4132 Nuit",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 56"
+      },
+      "t4134": {
+        "name": "Cathédrale Réunion secrète avec Julia",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 57"
+      },
+      "t4135": {
+        "name": "Musée de Grancel",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 58"
+      },
+      "t4150": {
+        "name": "Grancel même et intérieur des bâtiments Doublon de T4100 Nuit",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 63"
+      },
+      "t4151": {
+        "name": "Grancel même et intérieur des bâtiments Doublon de T4101 Nuit",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 64"
+      },
+      "t4152": {
+        "name": "Grancel Barral Coffee et Rues \"Doublon\" de T4102 Nuit",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 65"
+      },
+      "t4153": {
+        "name": "Place du château Doublon de T4200 Nuit (infiltration de l'église)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 66"
+      },
+      "t4155": {
+        "name": "Landing Port Nuit (infiltration de l'église)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 67"
+      },
+      "t4200": {
+        "name": "Place du château",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 68"
+      },
+      "t4201": {
+        "name": "Château de Grancel (y compris la map devant le château)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 69"
+      },
+      "t4202": {
+        "name": "VS Lorence (Palais royal)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 70"
+      },
+      "t4203": {
+        "name": "Château de Grancel (y compris la map devant le château) Doublon de T4200",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 71"
+      },
+      "t4204": {
+        "name": "Château de Grancel (y compris la map devant le château) Fin du jeu",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 72"
+      },
+      "t4205": {
+        "name": "VS Lorence (Palais royal)",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 73"
+      },
+      "t4210": {
+        "name": "Château Hall d'entrée Doublon de T4250",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 74"
+      },
+      "t4211": {
+        "name": "Château Salle du banquet Doublon de T4251",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 75"
+      },
+      "t4212": {
+        "name": "Château de Grancel Salle d'administration Doublon de T4252",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 76"
+      },
+      "t4213": {
+        "name": "Château de Grancel Salle des gardes Doublon de T4253",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 77"
+      },
+      "t4214": {
+        "name": "Château Maid Room Doublon de T4254",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 78"
+      },
+      "t4215": {
+        "name": "Château de Grancel Cuisine Doublon de T4255",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 79"
+      },
+      "t4220": {
+        "name": "Château Salle du Trône",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 80"
+      },
+      "t4221": {
+        "name": "Château de Grancel (y compris la map devant le château) Doublon de T4261",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 81"
+      },
+      "t4222": {
+        "name": "Château Aile gauche Doublon de T4262",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 82"
+      },
+      "t4230": {
+        "name": "Royal Keep Doublon (ou presque) de T4270",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 83"
+      },
+      "t4240": {
+        "name": "Château Cellier Doublon de T4280",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 84"
+      },
+      "t4241": {
+        "name": "Château Ascenseur Doublon de T4281",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 85"
+      },
+      "t4250": {
+        "name": "Château Hall d'entrée Doublon de T4210",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 86"
+      },
+      "t4251": {
+        "name": "Château Salle du banquet Doublon de T4211",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 87"
+      },
+      "t4252": {
+        "name": "Château Salle d'administration Doublon de T4212",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 88"
+      },
+      "t4253": {
+        "name": "Château Salle des gardes Doublon de T4213",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 89"
+      },
+      "t4254": {
+        "name": "Château Maid Room Doublon de T4214",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 90"
+      },
+      "t4255": {
+        "name": "Château Cuisine Doublon de T4215",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 91"
+      },
+      "t4260": {
+        "name": "Château Salle du Trône",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 92"
+      },
+      "t4261": {
+        "name": "Château de Grancel (y compris la map devant le château) Doublon de T4221",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 93"
+      },
+      "t4262": {
+        "name": "Château Aile gauche Doublon de T4222",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 94"
+      },
+      "t4270": {
+        "name": "Royal Keep Doublon (ou presque) de T4230",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 95"
+      },
+      "t4280": {
+        "name": "Château Cellier Doublon de T4240",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 96"
+      },
+      "t4281": {
+        "name": "Château Ascenseur Doublon de T4241",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 97"
+      },
+      "t4300": {
+        "name": "Villa Royale d'Erbe Doublon de T4302",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 98"
+      },
+      "t4301": {
+        "name": "Villa Royale d'Erbe - Porte fermée (mission de sauvetage) Doublon de T4303",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 99"
+      },
+      "t4302": {
+        "name": "Villa Royale d'Erbe Doublon de T4300",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 100"
+      },
+      "t4303": {
+        "name": "Villa Royale d'Erbe (repérés par les soldats) Doublon de T4301",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 101"
+      },
+      "t4310": {
+        "name": "Villa Royale d'Erbe Doublon de T4312",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 102"
+      },
+      "t4311": {
+        "name": "Villa Royale d'Erbe",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 103"
+      },
+      "t4312": {
+        "name": "Villa Royale d'Erbe Doublon de T4310",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 104"
+      },
+      "t4313": {
+        "name": "Villa Royale d'Erbe",
+        "source": "TABLE FC.xlsx · GRANCEL · ligne 105"
+      }
+    },
+    "SC": {
+      "t5110": {
+        "name": "Centre d'entraînement - Auberge",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 20"
+      },
+      "c2102": {
+        "name": "Tour Saphirl - Toit",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 4"
+      },
+      "c2219": {
+        "name": "Phare Varenne",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 10"
+      },
+      "c2400": {
+        "name": "Sous-sol de l'école désaffectée",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 12"
+      },
+      "t2100": {
+        "name": "Ruan - Quartier Nord",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 29"
+      },
+      "t2120": {
+        "name": "Guilde de Ruan Commerces",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 35"
+      },
+      "t2130": {
+        "name": "Ruan - Entrepôt / Eglise",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 37"
+      },
+      "t2131": {
+        "name": "Lavantar / Aqua Rossa",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 39"
+      },
+      "t2132": {
+        "name": "Hôtel Blanche",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 42"
+      },
+      "t2330": {
+        "name": "Manoria - Le Magnolia Blanc",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 50"
+      },
+      "c3100": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 3"
+      },
+      "c3101": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 5"
+      },
+      "c3303": {
+        "name": "Grotte calcaire de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 12"
+      },
+      "e0011": {
+        "name": "Aéronef Cecilia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 24"
+      },
+      "r3101": {
+        "name": "Plaines Tratt",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 27"
+      },
+      "t3100": {
+        "name": "Zeiss",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 40"
+      },
+      "t3111": {
+        "name": "CTZ - RDC & SS",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 45"
+      },
+      "t3116": {
+        "name": "CTZ - Atelier",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 49"
+      },
+      "t3117": {
+        "name": "CTZ - 2e",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 51"
+      },
+      "t3118": {
+        "name": "CTZ - Infirmerie",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 53"
+      },
+      "t3119": {
+        "name": "CTZ - 4e et toit",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 55"
+      },
+      "t3120": {
+        "name": "Guilde de Zeiss / Commerces",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 57"
+      },
+      "t3132": {
+        "name": "Hôtel Zahnrad",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 61"
+      },
+      "t3200": {
+        "name": "Elmo",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 64"
+      },
+      "t3221": {
+        "name": "Auberge Momiji",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 68"
+      },
+      "t0610": {
+        "name": "Porte de Gurune",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 20"
+      },
+      "t4100": {
+        "name": "Grancel - Quartier Sud",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 22"
+      },
+      "t4101": {
+        "name": "Grancel - Quartier Est",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 24"
+      },
+      "t4111": {
+        "name": "Grancel - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 32"
+      },
+      "t4121": {
+        "name": "Guilde / Guilde des pêcheurs",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 35"
+      },
+      "t4135": {
+        "name": "Musée historique",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 44"
+      },
+      "t4139": {
+        "name": "Ambassade de Calvard",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 49"
+      },
+      "c0403": {
+        "name": "Tour Esmelas - Toit (quête de la bague)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 10"
+      },
+      "c0500": {
+        "name": "Egouts de Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 15"
+      },
+      "c0600": {
+        "name": "Egouts de Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 17"
+      },
+      "e0013": {
+        "name": "Aéronef Cecilia (quête des chats)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 28"
+      },
+      "t0100": {
+        "name": "Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 43"
+      },
+      "t0101": {
+        "name": "Rolent (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 45"
+      },
+      "t0110": {
+        "name": "Rolent - Résidence (ouest)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 47"
+      },
+      "t0111": {
+        "name": "Rolent - Résidence (nord-est)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 49"
+      },
+      "t0120": {
+        "name": "Armurerie Elger / Atelier Melders",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 53"
+      },
+      "t0121": {
+        "name": "Rolent - Guilde / Épicerie Rinon",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 55"
+      },
+      "t0122": {
+        "name": "Armurerie / Atelier (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 57"
+      },
+      "t0123": {
+        "name": "Rolent - Guilde / Épicerie Rinon (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 59"
+      },
+      "t0130": {
+        "name": "Chapelle de Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 61"
+      },
+      "t0131": {
+        "name": "Bar Abend",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 63"
+      },
+      "t0133": {
+        "name": "Rolent - Tour Horloge",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 67"
+      },
+      "t0134": {
+        "name": "Chapelle de Rolent (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 69"
+      },
+      "t0136": {
+        "name": "Hôtel Rolent (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 72"
+      },
+      "t0200": {
+        "name": "Rolent - Résidence du maire",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 75"
+      },
+      "t0210": {
+        "name": "Rolent - Résidence du maire",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 78"
+      },
+      "t0701": {
+        "name": "Aérogare de Rolent (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 90"
+      },
+      "c1102": {
+        "name": "Mine abandonnée",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 4"
+      },
+      "e0310": {
+        "name": "Arseille - Intérieur",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 21"
+      },
+      "e0311": {
+        "name": "Arseille - Intérieur",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 23"
+      },
+      "e0810": {
+        "name": "Dragon (Weissmann, Loewe)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 28"
+      },
+      "r1503": {
+        "name": "Mine abandonnée",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 46"
+      },
+      "t1100": {
+        "name": "Bose - Quartier Sud",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 48"
+      },
+      "t1101": {
+        "name": "Bose - Quartier Nord",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 50"
+      },
+      "t1102": {
+        "name": "Bose - Aérogare internationale",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 52"
+      },
+      "t1103": {
+        "name": "Bose - Quartier nord brûlé",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 54"
+      },
+      "t1110": {
+        "name": "Bose - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 57"
+      },
+      "t1111": {
+        "name": "Bose - Résidence de la maire",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 59"
+      },
+      "t1121": {
+        "name": "Guilde de Bose",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 62"
+      },
+      "t1130": {
+        "name": "Chapelle de Bose",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 67"
+      },
+      "t1131": {
+        "name": "Anterose / Bar",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 69"
+      },
+      "t1132": {
+        "name": "Hôtel Frieden",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 72"
+      },
+      "t1202": {
+        "name": "Ravennue (verger brûlé)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 76"
+      },
+      "t1310": {
+        "name": "Col de Krone - Point de passage",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 83"
+      },
+      "c3605": {
+        "name": "Tour Carnelia - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 28"
+      },
+      "t1402": {
+        "name": "Porte de Haken - côté érébonien",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 38"
+      },
+      "c5313": {
+        "name": "Pilier Axis - Sommet (Loewe)",
+        "source": "TABLE SC.xlsx · Final · ligne 25"
+      },
+      "c5317": {
+        "name": "Boss final",
+        "source": "TABLE SC.xlsx · Final · ligne 30"
+      },
+      "e0312": {
+        "name": "Arseille",
+        "source": "TABLE SC.xlsx · Final · ligne 46"
+      },
+      "c5500": {
+        "name": "Canalisations de Balstar",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 3"
+      },
+      "c5501": {
+        "name": "Canalisations de Balstar",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 4"
+      },
+      "c5502": {
+        "name": "Canalisations de Balstar",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 5"
+      },
+      "c5503": {
+        "name": "Canalisations de Balstar",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 6"
+      },
+      "c5504": {
+        "name": "Forêt de Sainte-Croix",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 7"
+      },
+      "c5505": {
+        "name": "Forêt de Sainte-Croix",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 8"
+      },
+      "c5506": {
+        "name": "Forêt de Sainte-Croix",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 9"
+      },
+      "c5507": {
+        "name": "Forêt de Sainte-Croix",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 10"
+      },
+      "c5508": {
+        "name": "Fort Grimsel",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 11"
+      },
+      "c5509": {
+        "name": "Fort Grimsel",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 12"
+      },
+      "c5510": {
+        "name": "Fort Grimsel",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 13"
+      },
+      "c5511": {
+        "name": "Fort Grimsel",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 14"
+      },
+      "c5512": {
+        "name": "Forêt de Sainte-Croix",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 15"
+      },
+      "t0001": {
+        "name": "Debug",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 17"
+      },
+      "t5100": {
+        "name": "Le Locle - Centre d'entraînement",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 18"
+      },
+      "t5101": {
+        "name": "Le Locle - Centre d'entraînement",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 19"
+      },
+      "t5111": {
+        "name": "Centre d'entraînement - Auberge",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 22"
+      },
+      "t5112": {
+        "name": "Centre d'entraînement - Auberge",
+        "source": "TABLE SC.xlsx · Prolog. · ligne 23"
+      },
+      "c1501": {
+        "name": "Col de Krone",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 3"
+      },
+      "c2112": {
+        "name": "Tour Saphirl - 1er",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 5"
+      },
+      "c2113": {
+        "name": "Tour Saphirl - 2e",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 6"
+      },
+      "c2114": {
+        "name": "Tour Saphirl - 3e",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 7"
+      },
+      "c2115": {
+        "name": "Tour Saphirl - 4e",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 8"
+      },
+      "c2209": {
+        "name": "Phare Varenne",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 9"
+      },
+      "c4300": {
+        "name": "Zone scellée - SS1",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 14"
+      },
+      "c4301": {
+        "name": "Zone scellée - SS3",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 15"
+      },
+      "c4302": {
+        "name": "Zone scellée - Dernier sous-sol",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 16"
+      },
+      "c4303": {
+        "name": "Zone scellée - Dernier sous-sol",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 17"
+      },
+      "e0000": {
+        "name": "Aéronef Linde",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 18"
+      },
+      "e0010": {
+        "name": "Aéronef Linde",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 19"
+      },
+      "r2100": {
+        "name": "Route de Manoria",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 20"
+      },
+      "r2101": {
+        "name": "Route de Manoria",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 21"
+      },
+      "r2111": {
+        "name": "Route de Manoria",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 22"
+      },
+      "r2200": {
+        "name": "Côte Möwe",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 23"
+      },
+      "r2202": {
+        "name": "Côte Möwe",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 24"
+      },
+      "r2203": {
+        "name": "Côte Möwe",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 25"
+      },
+      "r2400": {
+        "name": "Route Aina",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 26"
+      },
+      "r2402": {
+        "name": "Route Aina",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 27"
+      },
+      "r2412": {
+        "name": "Route Aina",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 28"
+      },
+      "t2101": {
+        "name": "Ruan - Quartier Sud",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 31"
+      },
+      "t2102": {
+        "name": "Aérogare de Ruan",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 32"
+      },
+      "t2105": {
+        "name": "Ruan - Quartier Sud",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 33"
+      },
+      "t2110": {
+        "name": "Ruan - Résidences",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 34"
+      },
+      "t2200": {
+        "name": "Ruan - Villa du maire",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 45"
+      },
+      "t2210": {
+        "name": "Ruan - Villa du maire",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 46"
+      },
+      "t2300": {
+        "name": "Manoria",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 47"
+      },
+      "t2310": {
+        "name": "Manoria - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 48"
+      },
+      "t2320": {
+        "name": "Manoria - Epicerie Fiore",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 49"
+      },
+      "t2400": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 52"
+      },
+      "t2402": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 53"
+      },
+      "t2412": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 54"
+      },
+      "t2500": {
+        "name": "Académie royale Jenis",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 55"
+      },
+      "t2501": {
+        "name": "Académie - Route secondaire",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 56"
+      },
+      "t2510": {
+        "name": "Académie - Bâtiment principal",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 57"
+      },
+      "t2511": {
+        "name": "Académie - Maison des clubs",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 58"
+      },
+      "t2512": {
+        "name": "Académie - Dortoirs",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 59"
+      },
+      "t2513": {
+        "name": "Academie - Auditorium",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 60"
+      },
+      "t2601": {
+        "name": "Academie - Ecole désaffectée",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 61"
+      },
+      "t2611": {
+        "name": "Academie - Ecole désaffectée",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 62"
+      },
+      "t2700": {
+        "name": "Air-Letten",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 63"
+      },
+      "t2710": {
+        "name": "Air-Letten",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 64"
+      },
+      "t2800": {
+        "name": "Académie royale Jenis",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 65"
+      },
+      "t2801": {
+        "name": "Academie - Route secondaire",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 66"
+      },
+      "t2810": {
+        "name": "Académie - Bâtiment principal",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 67"
+      },
+      "t2811": {
+        "name": "Académie - Maison des clubs",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 68"
+      },
+      "t2812": {
+        "name": "Académie - Dortoirs",
+        "source": "TABLE SC.xlsx · Ch. 1 · ligne 69"
+      },
+      "c3108": {
+        "name": "Leiston - Aérodrôme",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 7"
+      },
+      "c3110": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 8"
+      },
+      "c3300": {
+        "name": "Grotte calcaire de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 9"
+      },
+      "c3301": {
+        "name": "Grotte calcaire de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 10"
+      },
+      "c3302": {
+        "name": "Grotte calcaire de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 11"
+      },
+      "c3401": {
+        "name": "Grotte des sources chaudes",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 14"
+      },
+      "c3402": {
+        "name": "Grotte des sources chaudes",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 15"
+      },
+      "c3403": {
+        "name": "Grotte des sources chaudes",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 16"
+      },
+      "c3404": {
+        "name": "Grotte des sources chaudes",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 17"
+      },
+      "c3511": {
+        "name": "Tour Carnelia - RDC",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 18"
+      },
+      "c3512": {
+        "name": "Tour Carnelia - 1er",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 19"
+      },
+      "c3513": {
+        "name": "Tour Carnelia - 2e",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 20"
+      },
+      "c3514": {
+        "name": "Tour Carnelia - 3e",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 21"
+      },
+      "c3515": {
+        "name": "Tour Carnelia - 4e",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 22"
+      },
+      "e0001": {
+        "name": "Aéronef Cecilia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 23"
+      },
+      "r3100": {
+        "name": "Plaines Tratt",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 26"
+      },
+      "r3102": {
+        "name": "Plaines Tratt",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 29"
+      },
+      "r3103": {
+        "name": "Plaines Tratt",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 30"
+      },
+      "r3200": {
+        "name": "Route Ritter",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 31"
+      },
+      "r3201": {
+        "name": "Route Ritter",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 32"
+      },
+      "r3202": {
+        "name": "Route Ritter",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 33"
+      },
+      "r3300": {
+        "name": "Route du Soldat",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 34"
+      },
+      "r3301": {
+        "name": "Route du Soldat",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 35"
+      },
+      "r3400": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 36"
+      },
+      "r3401": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 37"
+      },
+      "r3402": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 38"
+      },
+      "r3403": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 39"
+      },
+      "t3101": {
+        "name": "Zeiss - Quartier du CTZ",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 42"
+      },
+      "t3102": {
+        "name": "Aérogare de Zeiss",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 43"
+      },
+      "t3110": {
+        "name": "Zeiss - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 44"
+      },
+      "t3112": {
+        "name": "CTZ - Ascenseur",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 47"
+      },
+      "t3115": {
+        "name": "CTZ - Salle de conception, Bibliothèque",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 48"
+      },
+      "t3130": {
+        "name": "Chapelle de Zeiss",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 59"
+      },
+      "t3131": {
+        "name": "Bar Vogel",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 60"
+      },
+      "t3133": {
+        "name": "Maison des Russell",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 63"
+      },
+      "t3210": {
+        "name": "Elmo - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 66"
+      },
+      "t3220": {
+        "name": "Epicerie Hazuki",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 67"
+      },
+      "t3230": {
+        "name": "Elmo - Local de la pompe",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 70"
+      },
+      "t3231": {
+        "name": "Auberge Momiji",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 71"
+      },
+      "t3300": {
+        "name": "Fort Wolf - Frontière calvardaise",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 72"
+      },
+      "t3310": {
+        "name": "Fort Wolf - Frontière calvardaise",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 73"
+      },
+      "t3400": {
+        "name": "Porte de Sanktheim",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 74"
+      },
+      "t3401": {
+        "name": "Porte de Sanktheim",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 75"
+      },
+      "t3410": {
+        "name": "Porte de Sanktheim",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 76"
+      },
+      "t3411": {
+        "name": "Porte de Sanktheim",
+        "source": "TABLE SC.xlsx · Ch. 2 · ligne 77"
+      },
+      "c1104": {
+        "name": "Mine abandonnée",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 3"
+      },
+      "c4100": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 4"
+      },
+      "c4101": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 5"
+      },
+      "c4102": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 6"
+      },
+      "c4103": {
+        "name": "Route d'Erbe - Lac Romal",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 7"
+      },
+      "c4200": {
+        "name": "Egouts de Grancel - Ouest",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 8"
+      },
+      "c4201": {
+        "name": "Egouts de Grancel - Ouest",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 9"
+      },
+      "c4202": {
+        "name": "Egouts de Grancel - Est",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 10"
+      },
+      "c4203": {
+        "name": "Egouts de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 11"
+      },
+      "c4204": {
+        "name": "Egouts de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 12"
+      },
+      "c4205": {
+        "name": "Egouts de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 13"
+      },
+      "r1504": {
+        "name": "Mine abandonnée",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 14"
+      },
+      "r4100": {
+        "name": "Avenue Kirsche",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 15"
+      },
+      "r4101": {
+        "name": "Avenue Kirsche",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 16"
+      },
+      "r4102": {
+        "name": "Avenue Kirsche",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 17"
+      },
+      "t0600": {
+        "name": "Porte de Gurune",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 18"
+      },
+      "t0601": {
+        "name": "Porte de Gurune",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 19"
+      },
+      "t4102": {
+        "name": "Grancel - Quartier Ouest",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 26"
+      },
+      "t4103": {
+        "name": "Grancel - Quartier Nord",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 27"
+      },
+      "t4104": {
+        "name": "Arène royale",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 28"
+      },
+      "t4105": {
+        "name": "Aérogare de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 29"
+      },
+      "t4106": {
+        "name": "Aérogare de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 30"
+      },
+      "t4110": {
+        "name": "Grancel - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 31"
+      },
+      "t4120": {
+        "name": "Atelier Wingard / Armurerie Weis",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 34"
+      },
+      "t4122": {
+        "name": "Centre commercial Edel / Liberl Airlines",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 37"
+      },
+      "t4123": {
+        "name": "Guilde de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 38"
+      },
+      "t4130": {
+        "name": "Bureaux du Liberl News / Restaurants",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 39"
+      },
+      "t4131": {
+        "name": "Cathédrale de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 40"
+      },
+      "t4132": {
+        "name": "Hôtel Roenbaum",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 41"
+      },
+      "t4133": {
+        "name": "Hôtel Roenbaum",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 42"
+      },
+      "t4134": {
+        "name": "Cathédrale de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 43"
+      },
+      "t4136": {
+        "name": "Arène royale",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 46"
+      },
+      "t4137": {
+        "name": "Café Baral",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 47"
+      },
+      "t4138": {
+        "name": "Ambassade d'Érébonia",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 48"
+      },
+      "t4140": {
+        "name": "Commerces - Quartier Sud",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 51"
+      },
+      "t4142": {
+        "name": "Bureaux du Liberl News / Restaurants",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 52"
+      },
+      "t4150": {
+        "name": "Grancel - Quartier Sud",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 53"
+      },
+      "t4151": {
+        "name": "Grancel - Quartier Est",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 54"
+      },
+      "t4152": {
+        "name": "Grancel - Quartier Ouest",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 55"
+      },
+      "t4153": {
+        "name": "Grancel - Quartier Nord",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 56"
+      },
+      "t4155": {
+        "name": "Aérogare de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 57"
+      },
+      "t4156": {
+        "name": "Aérogare de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 58"
+      },
+      "t4200": {
+        "name": "Château de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 59"
+      },
+      "t4201": {
+        "name": "Château - Jardins suspendus",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 60"
+      },
+      "t4202": {
+        "name": "Château - Palais royal",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 61"
+      },
+      "t4203": {
+        "name": "Château de Grancel",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 62"
+      },
+      "t4204": {
+        "name": "Château - Jardins suspendus",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 63"
+      },
+      "t4210": {
+        "name": "Château - Vestibule",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 64"
+      },
+      "t4211": {
+        "name": "Château - Salle de réception",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 65"
+      },
+      "t4212": {
+        "name": "Château - Administration",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 66"
+      },
+      "t4213": {
+        "name": "Château - QG de la Garde Royale",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 67"
+      },
+      "t4215": {
+        "name": "Château - Cuisine",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 68"
+      },
+      "t4220": {
+        "name": "Château - Salle du trône",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 69"
+      },
+      "t4221": {
+        "name": "Château - Chambres, Salon-bar",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 70"
+      },
+      "t4222": {
+        "name": "Château - Bibliothèque, Chambres",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 71"
+      },
+      "t4230": {
+        "name": "Château - Palais royal",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 72"
+      },
+      "t4240": {
+        "name": "Château - Cellier",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 73"
+      },
+      "t4302": {
+        "name": "Villa royale d'Erbe - Entrée",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 74"
+      },
+      "t4303": {
+        "name": "Villa royale d'Erbe",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 75"
+      },
+      "t4310": {
+        "name": "Villa royale d'Erbe - Intérieurs",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 76"
+      },
+      "t4312": {
+        "name": "Villa royale d'Erbe - Intérieurs",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 77"
+      },
+      "t4313": {
+        "name": "Villa royale d'Erbe - Intérieurs",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 78"
+      },
+      "t4400": {
+        "name": "Grancel - Port (sud)",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 79"
+      },
+      "t4401": {
+        "name": "Grancel - Port (nord)",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 80"
+      },
+      "t4402": {
+        "name": "Grancel - Port",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 81"
+      },
+      "t4403": {
+        "name": "Grancel - Port",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 82"
+      },
+      "t4404": {
+        "name": "Grancel - Port",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 83"
+      },
+      "t4405": {
+        "name": "Grancel - Port",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 84"
+      },
+      "t5200": {
+        "name": "Sud de l'Érébonia",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 85"
+      },
+      "t5201": {
+        "name": "Sud de l'Érébonia Fin du prologue/Ending",
+        "source": "TABLE SC.xlsx · Ch. 3 · ligne 86"
+      },
+      "c0100": {
+        "name": "Mine Malga",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 3"
+      },
+      "c0300": {
+        "name": "Mistwald",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 4"
+      },
+      "c0301": {
+        "name": "Mistwald",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 5"
+      },
+      "c0302": {
+        "name": "Mistwald",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 6"
+      },
+      "c0303": {
+        "name": "Mistwald",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 7"
+      },
+      "c0304": {
+        "name": "Mistwald",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 8"
+      },
+      "c0305": {
+        "name": "Mistwald",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 9"
+      },
+      "c0412": {
+        "name": "Tour Esmelas - 1er",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 11"
+      },
+      "c0413": {
+        "name": "Tour Esmelas - 2e",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 12"
+      },
+      "c0414": {
+        "name": "Tour Esmelas - 3e",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 13"
+      },
+      "c0415": {
+        "name": "Tour Esmelas - 4e",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 14"
+      },
+      "c0601": {
+        "name": "Egouts de Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 19"
+      },
+      "c0602": {
+        "name": "Egouts de Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 20"
+      },
+      "c1300": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 21"
+      },
+      "c1301": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 22"
+      },
+      "c1303": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 23"
+      },
+      "c1304": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 24"
+      },
+      "c1305": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 25"
+      },
+      "c1306": {
+        "name": "Repaire des pirates du ciel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 26"
+      },
+      "c1402": {
+        "name": "Gorges Nebel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 27"
+      },
+      "e0101": {
+        "name": "Lynx",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 29"
+      },
+      "e0110": {
+        "name": "Lynx",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 30"
+      },
+      "e0111": {
+        "name": "Lynx",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 31"
+      },
+      "r0100": {
+        "name": "Chemin Elize",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 32"
+      },
+      "r0101": {
+        "name": "Chemin Elize (limite du brouillard)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 33"
+      },
+      "r0102": {
+        "name": "Chemin Elize",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 34"
+      },
+      "r0200": {
+        "name": "Route Milch",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 35"
+      },
+      "r0201": {
+        "name": "Route Milch (limite du brouillard)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 36"
+      },
+      "r0202": {
+        "name": "Route Milch",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 37"
+      },
+      "r0203": {
+        "name": "Route Milch",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 38"
+      },
+      "r0300": {
+        "name": "Sentier Malga",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 39"
+      },
+      "r0301": {
+        "name": "Sentier Malga",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 40"
+      },
+      "r0302": {
+        "name": "Sentier Malga (limite du brouillard)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 41"
+      },
+      "r0303": {
+        "name": "Pied de la tour Esmelas / Mine Malga",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 42"
+      },
+      "t0112": {
+        "name": "Rolent - Résidence (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 51"
+      },
+      "t0113": {
+        "name": "Rolent - Résidence (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 52"
+      },
+      "t0132": {
+        "name": "Hôtel Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 66"
+      },
+      "t0135": {
+        "name": "Bar Abend (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 71"
+      },
+      "t0137": {
+        "name": "Rolent - Tour Horloge (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 74"
+      },
+      "t0201": {
+        "name": "Rolent - Résidence du maire (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 77"
+      },
+      "t0211": {
+        "name": "Rolent - Résidence du maire (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 80"
+      },
+      "t0300": {
+        "name": "Maison des Bright",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 81"
+      },
+      "t0301": {
+        "name": "Maison des Bright (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 82"
+      },
+      "t0310": {
+        "name": "Maison des Bright",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 83"
+      },
+      "t0311": {
+        "name": "Maison des Bright (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 84"
+      },
+      "t0400": {
+        "name": "Ferme Perzel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 85"
+      },
+      "t0410": {
+        "name": "Ferme Perzel",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 86"
+      },
+      "t0500": {
+        "name": "Pont de Verte",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 87"
+      },
+      "t0510": {
+        "name": "Pont de Verte",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 88"
+      },
+      "t0700": {
+        "name": "Aérogare de Rolent",
+        "source": "TABLE SC.xlsx · Ch. 4 · ligne 89"
+      },
+      "c1100": {
+        "name": "Mine abandonnée",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 3"
+      },
+      "c1103": {
+        "name": "Mine abandonnée",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 6"
+      },
+      "c1203": {
+        "name": "Tour Amberl - Toit",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 7"
+      },
+      "c1211": {
+        "name": "Tour Amberl - RDC",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 8"
+      },
+      "c1212": {
+        "name": "Tour Amberl - 1e",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 9"
+      },
+      "c1213": {
+        "name": "Tour Amberl - 2e",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 10"
+      },
+      "c1214": {
+        "name": "Tour Amberl - 3e",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 11"
+      },
+      "c1215": {
+        "name": "Tour Amberl - 4e",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 12"
+      },
+      "c1400": {
+        "name": "Gorges Nebel",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 13"
+      },
+      "c1401": {
+        "name": "Gorges Nebel",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 14"
+      },
+      "c1410": {
+        "name": "Gorges Nebel (chalet de Whemler)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 15"
+      },
+      "c1500": {
+        "name": "Col de Krone",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 16"
+      },
+      "c1601": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 17"
+      },
+      "c1602": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 18"
+      },
+      "c1603": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 19"
+      },
+      "e0301": {
+        "name": "Arseille",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 20"
+      },
+      "e0313": {
+        "name": "Arseille - Soutes",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 25"
+      },
+      "e0610": {
+        "name": "Ouroboros",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 26"
+      },
+      "e0800": {
+        "name": "Arseille en vol, avant le dragon",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 27"
+      },
+      "e0900": {
+        "name": "Dragon - Lac Valleria",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 30"
+      },
+      "r1100": {
+        "name": "Bose - Route Est",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 31"
+      },
+      "r1101": {
+        "name": "Bose - Route Est",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 32"
+      },
+      "r1102": {
+        "name": "Bose - Route Est",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 33"
+      },
+      "r1103": {
+        "name": "Bose - Route Est",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 34"
+      },
+      "r1200": {
+        "name": "Bose - Route Ouest",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 35"
+      },
+      "r1201": {
+        "name": "Bose - Route Ouest",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 36"
+      },
+      "r1202": {
+        "name": "Bose - Route Ouest",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 37"
+      },
+      "r1203": {
+        "name": "Bose - Route Ouest",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 38"
+      },
+      "r1300": {
+        "name": "Route d'Eisen",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 39"
+      },
+      "r1301": {
+        "name": "Route d'Eisen",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 40"
+      },
+      "r1400": {
+        "name": "Nouvelle route d'Ansel",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 41"
+      },
+      "r1401": {
+        "name": "Nouvelle route d'Ansel",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 42"
+      },
+      "r1500": {
+        "name": "Sentier de Ravennue",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 43"
+      },
+      "r1501": {
+        "name": "Sentier de Ravennue",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 44"
+      },
+      "r1502": {
+        "name": "Sentier de Ravennue",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 45"
+      },
+      "t1104": {
+        "name": "Bâtiments de Bose",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 56"
+      },
+      "t1120": {
+        "name": "Atelier Lucir / Armurerie Zein",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 61"
+      },
+      "t1122": {
+        "name": "Marché de Bose",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 64"
+      },
+      "t1123": {
+        "name": "Marché de Bose",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 65"
+      },
+      "t1124": {
+        "name": "Guilde de Bose",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 66"
+      },
+      "t1200": {
+        "name": "Ravennue",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 74"
+      },
+      "t1201": {
+        "name": "Ravennue (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 75"
+      },
+      "t1210": {
+        "name": "Ravennue - Résidence",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 78"
+      },
+      "t1211": {
+        "name": "Ravennue - Résidence (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 79"
+      },
+      "t1220": {
+        "name": "Épicerie Emile",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 80"
+      },
+      "t1230": {
+        "name": "Le Clair de Lune",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 81"
+      },
+      "t1300": {
+        "name": "Col de Krone - Point de passage",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 82"
+      },
+      "t1400": {
+        "name": "Porte de Haken",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 85"
+      },
+      "t1410": {
+        "name": "Porte de Haken",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 86"
+      },
+      "t1500": {
+        "name": "Lac Valleria",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 87"
+      },
+      "t1501": {
+        "name": "Lac Valleria (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 88"
+      },
+      "t1510": {
+        "name": "Auberge du Martin-pêcheur",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 89"
+      },
+      "t1511": {
+        "name": "Auberge du Martin-pêcheur (nuit)",
+        "source": "TABLE SC.xlsx · Ch. 5 · ligne 90"
+      },
+      "c5400": {
+        "name": "Glorieux - Prison",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 3"
+      },
+      "c5401": {
+        "name": "Glorieux - Chapelle",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 4"
+      },
+      "c5402": {
+        "name": "Glorieux - Proue 1",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 5"
+      },
+      "c5403": {
+        "name": "Glorieux - Poupe 1",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 6"
+      },
+      "c5404": {
+        "name": "Glorieux",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 7"
+      },
+      "c5405": {
+        "name": "Glorieux - Hangar",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 8"
+      },
+      "c5406": {
+        "name": "Glorieux - Hangar",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 9"
+      },
+      "c5407": {
+        "name": "Glorieux",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 10"
+      },
+      "c5408": {
+        "name": "Glorieux - Pont",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 11"
+      },
+      "c5409": {
+        "name": "Glorieux - Pont",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 12"
+      },
+      "c5410": {
+        "name": "Glorieux - Poupe 2",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 13"
+      },
+      "c5411": {
+        "name": "Glorieux - Hangar",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 14"
+      },
+      "c5412": {
+        "name": "Glorieux - Hangar",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 15"
+      },
+      "c5413": {
+        "name": "Glorieux",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 16"
+      },
+      "c5415": {
+        "name": "Glorieux",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 17"
+      },
+      "c5600": {
+        "name": "Laboratoire du lac",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 18"
+      },
+      "c5601": {
+        "name": "Laboratoire du lac",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 19"
+      },
+      "c5610": {
+        "name": "Laboratoire RDC",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 20"
+      },
+      "c5611": {
+        "name": "Laboratoire 1er",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 21"
+      },
+      "c5612": {
+        "name": "Laboratoire 2e",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 22"
+      },
+      "c5613": {
+        "name": "Laboratoire 3e",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 23"
+      },
+      "c5615": {
+        "name": "Laboratoire 4e",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 24"
+      },
+      "r2201": {
+        "name": "Côte Möwe Après fuite du Glorieux",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 25"
+      },
+      "t4214": {
+        "name": "Château - Salle des domestiques",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 26"
+      },
+      "e0901": {
+        "name": "En vol / en bateau",
+        "source": "TABLE SC.xlsx · Ch. 6 · ligne 27"
+      },
+      "c0700": {
+        "name": "Esmelas - Dimension parallèle 1",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 3"
+      },
+      "c0701": {
+        "name": "Esmelas - Dimension parallèle 2",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 4"
+      },
+      "c0702": {
+        "name": "Esmelas - Dimension parallèle 3",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 5"
+      },
+      "c0703": {
+        "name": "Esmelas - Dimension parallèle 4",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 6"
+      },
+      "c0704": {
+        "name": "Esmelas - Dimension parallèle 5",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 7"
+      },
+      "c0705": {
+        "name": "Tour Esmelas - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 8"
+      },
+      "c0706": {
+        "name": "Tour Esmelas - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 9"
+      },
+      "c0707": {
+        "name": "Tour Esmelas - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 10"
+      },
+      "c1700": {
+        "name": "Amberl - Dimension parallèle 1",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 11"
+      },
+      "c1701": {
+        "name": "Amberl - Dimension parallèle 2",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 12"
+      },
+      "c1702": {
+        "name": "Amberl - Dimension parallèle 3",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 13"
+      },
+      "c1703": {
+        "name": "Amberl - Dimension parallèle 4",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 14"
+      },
+      "c1704": {
+        "name": "Amberl - Dimension parallèle 5",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 15"
+      },
+      "c1705": {
+        "name": "Tour Amberl - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 16"
+      },
+      "c1707": {
+        "name": "Tour Amberl - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 17"
+      },
+      "c2301": {
+        "name": "Saphirl - Dimension parallèle 2",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 18"
+      },
+      "c2302": {
+        "name": "Saphirl - Dimension parallèle 3",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 19"
+      },
+      "c2303": {
+        "name": "Saphirl - Dimension parallèle 4",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 20"
+      },
+      "c2304": {
+        "name": "Saphirl - Dimension parallèle 5",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 21"
+      },
+      "c2305": {
+        "name": "Tour Saphirl - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 22"
+      },
+      "c2307": {
+        "name": "Tour Saphirl - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 23"
+      },
+      "c3600": {
+        "name": "Carnelia - Dimension parallèle 1",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 24"
+      },
+      "c3601": {
+        "name": "Carnelia - Dimension parallèle 2",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 25"
+      },
+      "c3602": {
+        "name": "Carnelia - Dimension parallèle 3",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 26"
+      },
+      "c3604": {
+        "name": "Carnelia - Dimension parallèle 5",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 27"
+      },
+      "c3607": {
+        "name": "Tour Carnelia - Toit",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 30"
+      },
+      "r1402": {
+        "name": "Pied de la tour Amberl",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 31"
+      },
+      "r2300": {
+        "name": "Bois Vista",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 32"
+      },
+      "r2301": {
+        "name": "Bois Vista",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 33"
+      },
+      "r2401": {
+        "name": "Pied de la tour Saphirl",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 34"
+      },
+      "r3104": {
+        "name": "Pied de la tour Carnelia",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 35"
+      },
+      "r3105": {
+        "name": "Plaines Tratt",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 36"
+      },
+      "c0101": {
+        "name": "Mine Malga",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 37"
+      },
+      "t2600": {
+        "name": "Academie - Ecole désaffectée",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 40"
+      },
+      "t2610": {
+        "name": "Academie - Ecole désaffectée",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 41"
+      },
+      "t4143": {
+        "name": "Firme Dalmore",
+        "source": "TABLE SC.xlsx · Ch. 7 · ligne 42"
+      },
+      "c5100": {
+        "name": "Tour centrale - Pilier Axis",
+        "source": "TABLE SC.xlsx · Final · ligne 3"
+      },
+      "c5101": {
+        "name": "Tour centrale - Pilier Axis",
+        "source": "TABLE SC.xlsx · Final · ligne 4"
+      },
+      "c5200": {
+        "name": "Liber Ark",
+        "source": "TABLE SC.xlsx · Final · ligne 5"
+      },
+      "c5201": {
+        "name": "Liber Ark - Tunnels - 1",
+        "source": "TABLE SC.xlsx · Final · ligne 6"
+      },
+      "c5202": {
+        "name": "Liber Ark - Tunnels - 2",
+        "source": "TABLE SC.xlsx · Final · ligne 7"
+      },
+      "c5203": {
+        "name": "Liber Ark - Tunnels - 2",
+        "source": "TABLE SC.xlsx · Final · ligne 8"
+      },
+      "c5204": {
+        "name": "Liber Ark - Tunnels - 3",
+        "source": "TABLE SC.xlsx · Final · ligne 9"
+      },
+      "c5205": {
+        "name": "Liber Ark - Tunnels - 3",
+        "source": "TABLE SC.xlsx · Final · ligne 10"
+      },
+      "c5207": {
+        "name": "Liber Ark - Tunnels (fin du jeu)",
+        "source": "TABLE SC.xlsx · Final · ligne 11"
+      },
+      "c5208": {
+        "name": "Liber Ark - Tunnels (fin du jeu)",
+        "source": "TABLE SC.xlsx · Final · ligne 12"
+      },
+      "c5300": {
+        "name": "Pilier Axis - Niveau 1",
+        "source": "TABLE SC.xlsx · Final · ligne 13"
+      },
+      "c5302": {
+        "name": "Pilier Axis - Niveau 2",
+        "source": "TABLE SC.xlsx · Final · ligne 14"
+      },
+      "c5303": {
+        "name": "Pilier Axis - Niveau 3",
+        "source": "TABLE SC.xlsx · Final · ligne 15"
+      },
+      "c5304": {
+        "name": "Pilier Axis - Niveau 4",
+        "source": "TABLE SC.xlsx · Final · ligne 16"
+      },
+      "c5305": {
+        "name": "Pilier Axis - Niveau 4",
+        "source": "TABLE SC.xlsx · Final · ligne 17"
+      },
+      "c5306": {
+        "name": "Pilier Axis - Niveau 5",
+        "source": "TABLE SC.xlsx · Final · ligne 18"
+      },
+      "c5307": {
+        "name": "Pilier Axis - Niveau 6",
+        "source": "TABLE SC.xlsx · Final · ligne 19"
+      },
+      "c5308": {
+        "name": "Pilier Axis - Niveau 2 (Bleublanc)",
+        "source": "TABLE SC.xlsx · Final · ligne 20"
+      },
+      "c5309": {
+        "name": "Pilier Axis - Niveau 3 (Walter)",
+        "source": "TABLE SC.xlsx · Final · ligne 21"
+      },
+      "c5310": {
+        "name": "Pilier Axis - Niveau 4 (Luciola)",
+        "source": "TABLE SC.xlsx · Final · ligne 22"
+      },
+      "c5311": {
+        "name": "Pilier Axis - Niveau 5 (Renne)",
+        "source": "TABLE SC.xlsx · Final · ligne 23"
+      },
+      "c5312": {
+        "name": "Pilier Axis - Niveau 4",
+        "source": "TABLE SC.xlsx · Final · ligne 24"
+      },
+      "c5314": {
+        "name": "Final : Secteur souche, Themelios",
+        "source": "TABLE SC.xlsx · Final · ligne 27"
+      },
+      "c5315": {
+        "name": "Final : Secteur souche, Themelios",
+        "source": "TABLE SC.xlsx · Final · ligne 28"
+      },
+      "c5316": {
+        "name": "Final : Secteur souche, Themelios",
+        "source": "TABLE SC.xlsx · Final · ligne 29"
+      },
+      "c5318": {
+        "name": "Boss final 2",
+        "source": "TABLE SC.xlsx · Final · ligne 32"
+      },
+      "c5700": {
+        "name": "Secteur industriel, Factoria",
+        "source": "TABLE SC.xlsx · Final · ligne 33"
+      },
+      "c5701": {
+        "name": "Secteur industriel, Factoria",
+        "source": "TABLE SC.xlsx · Final · ligne 34"
+      },
+      "c5702": {
+        "name": "Secteur industriel, Factoria",
+        "source": "TABLE SC.xlsx · Final · ligne 35"
+      },
+      "c5800": {
+        "name": "Secteur résidentiel, Cradle",
+        "source": "TABLE SC.xlsx · Final · ligne 36"
+      },
+      "c5801": {
+        "name": "Secteur résidentiel, Cradle",
+        "source": "TABLE SC.xlsx · Final · ligne 37"
+      },
+      "c5810": {
+        "name": "Secteur résidentiel, Cradle",
+        "source": "TABLE SC.xlsx · Final · ligne 38"
+      },
+      "c5811": {
+        "name": "Secteur résidentiel, Cradle",
+        "source": "TABLE SC.xlsx · Final · ligne 39"
+      },
+      "c5900": {
+        "name": "Secteur végétalisé, Calmare",
+        "source": "TABLE SC.xlsx · Final · ligne 40"
+      },
+      "c5901": {
+        "name": "Secteur végétalisé, Calmare",
+        "source": "TABLE SC.xlsx · Final · ligne 41"
+      },
+      "c6000": {
+        "name": "Station Calmare Ouest",
+        "source": "TABLE SC.xlsx · Final · ligne 42"
+      },
+      "c6001": {
+        "name": "Station Cradle 35",
+        "source": "TABLE SC.xlsx · Final · ligne 43"
+      },
+      "c6002": {
+        "name": "Station Factoria 7",
+        "source": "TABLE SC.xlsx · Final · ligne 44"
+      },
+      "c6003": {
+        "name": "Station Pilier Axis",
+        "source": "TABLE SC.xlsx · Final · ligne 45"
+      },
+      "e0811": {
+        "name": "Aureole depuis le ciel",
+        "source": "TABLE SC.xlsx · Final · ligne 48"
+      },
+      "t4141": {
+        "name": "Euh ?",
+        "source": "TABLE SC.xlsx · ALL · ligne 495"
+      },
+      "t4241": {
+        "name": "Château - Ascenseur",
+        "source": "TABLE SC.xlsx · ALL · ligne 520"
+      }
+    },
+    "Third": {
+      "u7000": {
+        "name": "Jardin de l'ermite",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 13"
+      },
+      "u7002": {
+        "name": "Jardin de l'ermite",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 42"
+      },
+      "u7003": {
+        "name": "Jardin de l'ermite",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 44"
+      },
+      "u7001": {
+        "name": "Jardin de l'ermite",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 40"
+      },
+      "m7408": {
+        "name": "Phantasmagoria - Destination finale",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 18"
+      },
+      "e1000": {
+        "name": "Quiz de Campanella",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 5"
+      },
+      "t4206": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 127"
+      },
+      "t0001": {
+        "name": "Trails in the Sky SC - END",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 26"
+      },
+      "e0700": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 3"
+      },
+      "e0710": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 4"
+      },
+      "e1100": {
+        "name": "Aéronef de plaisance \"Lusitania\"",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 5"
+      },
+      "e1110": {
+        "name": "Lusitania (salle de bal)",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 6"
+      },
+      "e1111": {
+        "name": "Lusitania (espaces privés)",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 7"
+      },
+      "t4143": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 8"
+      },
+      "t4144": {
+        "name": "Terre première",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 9"
+      },
+      "t4151": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 10"
+      },
+      "t4152": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 11"
+      },
+      "t4404": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 12"
+      },
+      "u7004": {
+        "name": "Jardin de l'ermite",
+        "source": "TABLE 3RD (3).xlsx · Prolog. · ligne 13"
+      },
+      "e0900": {
+        "name": "Zone sur l'eau",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 3"
+      },
+      "m7001": {
+        "name": "Couloirs d'Esmelas [Coffres : 3]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 4"
+      },
+      "m7002": {
+        "name": "Couloirs d'Esmelas [Coffres : 6]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 5"
+      },
+      "m7003": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 6"
+      },
+      "m7004": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 7"
+      },
+      "m7007": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 8"
+      },
+      "p0310": {
+        "name": "Arseille - Couloir du pont",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 9"
+      },
+      "p0311": {
+        "name": "Arseille - Couloirs 1 [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 10"
+      },
+      "p0312": {
+        "name": "Arseille - Couloirs 2 [Coffres : 2]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 11"
+      },
+      "p0313": {
+        "name": "Arseille - Soutes",
+        "source": "TABLE 3RD (3).xlsx · Ch. 1 · ligne 12"
+      },
+      "c4203": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 3"
+      },
+      "e0110": {
+        "name": "Aéronef (pirates, nuit)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 4"
+      },
+      "e1001": {
+        "name": "Arène royale (nuit)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 6"
+      },
+      "m4300": {
+        "name": "Zone scellée",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 7"
+      },
+      "m4302": {
+        "name": "Zone scellée - Dernier sous-sol",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 8"
+      },
+      "m4303": {
+        "name": "Zone scellée - Dernier sous-sol",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 9"
+      },
+      "m4308": {
+        "name": "Zone scellée - SS3",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 10"
+      },
+      "m7005": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 11"
+      },
+      "r2201": {
+        "name": "Ruan",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 12"
+      },
+      "t1500": {
+        "name": "Bose",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 13"
+      },
+      "t4142": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 14"
+      },
+      "t4201": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 15"
+      },
+      "t4221": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 16"
+      },
+      "u4100": {
+        "name": "Grancel - Quartier sud",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 17"
+      },
+      "u4102": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 18"
+      },
+      "u4121": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 19"
+      },
+      "u4123": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 20"
+      },
+      "u4150": {
+        "name": "Grancel - Quartier nord",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 21"
+      },
+      "u4151": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 22"
+      },
+      "u4152": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 23"
+      },
+      "u4156": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 24"
+      },
+      "u4162": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 25"
+      },
+      "u4165": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 26"
+      },
+      "u4166": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 27"
+      },
+      "u4169": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 28"
+      },
+      "u4200": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 29"
+      },
+      "u4203": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 30"
+      },
+      "u4204": {
+        "name": "Grancel [Coffres : 2]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 31"
+      },
+      "u4205": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 32"
+      },
+      "u4241": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 33"
+      },
+      "u4250": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 34"
+      },
+      "u4251": {
+        "name": "Grancel [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 35"
+      },
+      "u4252": {
+        "name": "Grancel [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 36"
+      },
+      "u4255": {
+        "name": "Grancel [Coffres : 2]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 37"
+      },
+      "u4260": {
+        "name": "Grancel [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 38"
+      },
+      "u4261": {
+        "name": "Grancel [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 39"
+      },
+      "u4262": {
+        "name": "Grancel [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 40"
+      },
+      "u4270": {
+        "name": "Grancel [Coffres : 1]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 41"
+      },
+      "u4280": {
+        "name": "Grancel [Coffres : 2]",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 42"
+      },
+      "u4403": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 43"
+      },
+      "u4406": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Ch. 2 · ligne 44"
+      },
+      "m7100": {
+        "name": "Voies d'or et d'argent",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 3"
+      },
+      "m7101": {
+        "name": "Voie d'argent",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 4"
+      },
+      "m7102": {
+        "name": "Voie d'or",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 5"
+      },
+      "m7103": {
+        "name": "Voie d'argent",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 6"
+      },
+      "m7104": {
+        "name": "Voie d'or",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 7"
+      },
+      "m7105": {
+        "name": "Voies d'or et d'argent",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 8"
+      },
+      "m7106": {
+        "name": "Voies d'or et d'argent",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 9"
+      },
+      "m7107": {
+        "name": "Voies d'or et d'argent",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 10"
+      },
+      "u4101": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 11"
+      },
+      "u4106": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 12"
+      },
+      "u4110": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 13"
+      },
+      "u4111": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 14"
+      },
+      "u4120": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 15"
+      },
+      "u4122": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 16"
+      },
+      "u4130": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 17"
+      },
+      "u4131": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 18"
+      },
+      "u4132": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 19"
+      },
+      "u4133": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 20"
+      },
+      "u4134": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 21"
+      },
+      "u4135": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 22"
+      },
+      "u4137": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 23"
+      },
+      "u4138": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 24"
+      },
+      "u4140": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 25"
+      },
+      "u4141": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 26"
+      },
+      "u4142": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 27"
+      },
+      "u4160": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 28"
+      },
+      "u4161": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 29"
+      },
+      "u4163": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 30"
+      },
+      "u4168": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 31"
+      },
+      "u4401": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 32"
+      },
+      "u4402": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 33"
+      },
+      "u4404": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 34"
+      },
+      "u4405": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · Ch. 3 · ligne 35"
+      },
+      "m5500": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 3"
+      },
+      "m5501": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 4"
+      },
+      "m5502": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 5"
+      },
+      "m5503": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 6"
+      },
+      "m5504": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 7"
+      },
+      "m5505": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 8"
+      },
+      "m5506": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 9"
+      },
+      "m5507": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 10"
+      },
+      "m5508": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 11"
+      },
+      "m5509": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 12"
+      },
+      "m5510": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 13"
+      },
+      "m5511": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 14"
+      },
+      "m5512": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 15"
+      },
+      "m5513": {
+        "name": "Fort Grimsel",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 16"
+      },
+      "u5100": {
+        "name": "C. d'entraînement - Le Locle",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 17"
+      },
+      "u5102": {
+        "name": "C. d'entraînement - Le Locle",
+        "source": "TABLE 3RD (3).xlsx · Ch. 4 · ligne 18"
+      },
+      "m7200": {
+        "name": "Labyrinthe de lumière",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 3"
+      },
+      "m7201": {
+        "name": "Labyrinthe de lumière",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 4"
+      },
+      "m7203": {
+        "name": "Labyrinthe de ténèbres",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 5"
+      },
+      "m7204": {
+        "name": "Labyrinthe de lumière 2",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 6"
+      },
+      "m7205": {
+        "name": "Labyrinthe de lumière 2",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 7"
+      },
+      "m7206": {
+        "name": "Labyrinthes de lumière et ténèbres",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 8"
+      },
+      "u5110": {
+        "name": "C. d'entraînement - Le Locle",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 9"
+      },
+      "u5111": {
+        "name": "C. d'entraînement - Le Locle",
+        "source": "TABLE 3RD (3).xlsx · Ch. 5 · ligne 10"
+      },
+      "e0810": {
+        "name": "Skybox (le ciel est un mur)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 3"
+      },
+      "m3100": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 4"
+      },
+      "m3101": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 5"
+      },
+      "m3102": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 6"
+      },
+      "m3103": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 7"
+      },
+      "m3112": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 8"
+      },
+      "m3201": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 9"
+      },
+      "m3203": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 10"
+      },
+      "m3204": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 11"
+      },
+      "m3206": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 12"
+      },
+      "m4110": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 13"
+      },
+      "m4111": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 14"
+      },
+      "m4112": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 15"
+      },
+      "m4113": {
+        "name": "Route touristique d'Erbe",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 16"
+      },
+      "m5400": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 17"
+      },
+      "m5401": {
+        "name": "Arche noire - Chapelle",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 18"
+      },
+      "m5402": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 19"
+      },
+      "m5403": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 20"
+      },
+      "m5404": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 21"
+      },
+      "m5406": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 22"
+      },
+      "m5408": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 23"
+      },
+      "m5410": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 24"
+      },
+      "m5412": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 25"
+      },
+      "m5414": {
+        "name": "Farewell Arena",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 26"
+      },
+      "m5415": {
+        "name": "Arche noire",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 27"
+      },
+      "m5600": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 28"
+      },
+      "m5610": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 29"
+      },
+      "m5611": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 30"
+      },
+      "m5612": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 31"
+      },
+      "m5613": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 32"
+      },
+      "m5615": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 33"
+      },
+      "m7202": {
+        "name": "Labyrinthe de ténèbres",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 34"
+      },
+      "m7207": {
+        "name": "Labyrinthe de lumière 2",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 35"
+      },
+      "u2501": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 36"
+      },
+      "u2600": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 37"
+      },
+      "u2610": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 6 · ligne 38"
+      },
+      "m3110": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 3"
+      },
+      "m3200": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 4"
+      },
+      "m3202": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 5"
+      },
+      "m3205": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 6"
+      },
+      "m7300": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 7"
+      },
+      "m7301": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 8"
+      },
+      "m7302": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 9"
+      },
+      "m7303": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 10"
+      },
+      "m7304": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 11"
+      },
+      "m7305": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 12"
+      },
+      "m7306": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 13"
+      },
+      "m7308": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 14"
+      },
+      "m7309": {
+        "name": "Géhenne",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 15"
+      },
+      "m7310": {
+        "name": "Abysses",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 16"
+      },
+      "m7311": {
+        "name": "Abysses - Zone 1",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 17"
+      },
+      "p7000": {
+        "name": "Maison des asters",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 18"
+      },
+      "p7010": {
+        "name": "Maison des asters (Maison-Déesse des neiges)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 19"
+      },
+      "p7011": {
+        "name": "Maison des asters (Maison-Déesse des neiges)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 20"
+      },
+      "p7012": {
+        "name": "Maison des asters / Escalier tournant, couloir(s)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 21"
+      },
+      "p7013": {
+        "name": "Maison des asters / Terre première (dôme)",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 22"
+      },
+      "u2500": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 23"
+      },
+      "u2510": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 24"
+      },
+      "u2511": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 25"
+      },
+      "u2512": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 26"
+      },
+      "u2513": {
+        "name": "Académie monochrome",
+        "source": "TABLE 3RD (3).xlsx · Ch. 7 · ligne 27"
+      },
+      "c5400": {
+        "name": "Glorieux (Chambre d'Estelle)",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 3"
+      },
+      "c5401": {
+        "name": "Glorieux (Espace de Weissmann)",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 4"
+      },
+      "c5408": {
+        "name": "Glorieux (Pont)",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 5"
+      },
+      "c5416": {
+        "name": "Celestial Globe",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 6"
+      },
+      "e1210": {
+        "name": "Merkabah",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 7"
+      },
+      "m7312": {
+        "name": "Abysses - Zone 1",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 8"
+      },
+      "m7313": {
+        "name": "Abysses",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 9"
+      },
+      "m7400": {
+        "name": "Phantasmagoria - Entrée",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 10"
+      },
+      "m7401": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 11"
+      },
+      "m7402": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 12"
+      },
+      "m7403": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 13"
+      },
+      "m7404": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 14"
+      },
+      "m7405": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 15"
+      },
+      "m7406": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 16"
+      },
+      "m7407": {
+        "name": "Phantasmagoria",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 17"
+      },
+      "m7409": {
+        "name": "Phantasmagoria - Porte droite",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 20"
+      },
+      "m7410": {
+        "name": "Phantasmagoria - Porte droite",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 21"
+      },
+      "m7411": {
+        "name": "Phantasmagoria - Porte droite",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 22"
+      },
+      "m7412": {
+        "name": "Phantasmagoria - Porte droite",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 23"
+      },
+      "m7413": {
+        "name": "Phantasmagoria - Porte gauche",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 24"
+      },
+      "m7414": {
+        "name": "Phantasmagoria - Porte gauche",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 25"
+      },
+      "m7415": {
+        "name": "Phantasmagoria - Porte gauche",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 26"
+      },
+      "m7416": {
+        "name": "Phantasmagoria - Porte gauche",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 27"
+      },
+      "m7417": {
+        "name": "Phantasmagoria - Porte gauche",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 28"
+      },
+      "m7418": {
+        "name": "Phantasmagoria - Porte centrale",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 29"
+      },
+      "m7419": {
+        "name": "Phantasmagoria - Porte centrale",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 30"
+      },
+      "m7420": {
+        "name": "Phantasmagoria - Porte centrale",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 31"
+      },
+      "m7421": {
+        "name": "Phantasmagoria - Porte centrale",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 32"
+      },
+      "m7422": {
+        "name": "Phantasmagoria - Grande porte",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 33"
+      },
+      "m7423": {
+        "name": "Phantasmagoria - Grande porte",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 34"
+      },
+      "m7424": {
+        "name": "Phantasmagoria - Grande porte",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 35"
+      },
+      "m7425": {
+        "name": "Phantasmagoria - Grande porte",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 36"
+      },
+      "m7426": {
+        "name": "Phantasmagoria - Grande porte",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 37"
+      },
+      "m7427": {
+        "name": "Phantasmagoria - Grande porte",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 38"
+      },
+      "m7499": {
+        "name": "Phantasmagoria - Destination finale",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 39"
+      },
+      "p0800": {
+        "name": "Skybox plaines (pour l'Arseille)",
+        "source": "TABLE 3RD (3).xlsx · Final · ligne 40"
+      },
+      "c0301": {
+        "name": "Mistwald",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 3"
+      },
+      "c0302": {
+        "name": "Mistwald",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 4"
+      },
+      "c1400": {
+        "name": "Gorges Nebel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 5"
+      },
+      "c1401": {
+        "name": "Gorges Nebel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 6"
+      },
+      "c1410": {
+        "name": "Gorges Nebel (chalet de Whemler)",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 7"
+      },
+      "c1500": {
+        "name": "Col de Krone",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 8"
+      },
+      "c1501": {
+        "name": "Col de Krone",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 9"
+      },
+      "c1600": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 10"
+      },
+      "c1601": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 11"
+      },
+      "c1602": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 12"
+      },
+      "c1603": {
+        "name": "Tanière du dragon antique",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 13"
+      },
+      "c2209": {
+        "name": "Phare Varenne",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 14"
+      },
+      "c2219": {
+        "name": "Phare Varenne",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 15"
+      },
+      "c3100": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 16"
+      },
+      "c3101": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 17"
+      },
+      "c3110": {
+        "name": "Forteresse Leiston",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 18"
+      },
+      "c4200": {
+        "name": "Egouts de Grancel - Ouest",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 19"
+      },
+      "c4201": {
+        "name": "Egouts de Grancel - Ouest",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 20"
+      },
+      "c4202": {
+        "name": "Egouts de Grancel - Est",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 21"
+      },
+      "c5407": {
+        "name": "Glorieux - Cage d'ascenseur",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 22"
+      },
+      "e0610": {
+        "name": "Aéronef cramoisi à grande vitesse",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 23"
+      },
+      "p9000": {
+        "name": "Chambre de la lune",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 25"
+      },
+      "p9001": {
+        "name": "Chambre des étoiles",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 26"
+      },
+      "p9002": {
+        "name": "Chambre du soleil",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 27"
+      },
+      "r0100": {
+        "name": "Rolent",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 28"
+      },
+      "r0201": {
+        "name": "Rolent",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 29"
+      },
+      "r1204": {
+        "name": "Bose",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 30"
+      },
+      "r2100": {
+        "name": "Route de Manoria",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 31"
+      },
+      "r2101": {
+        "name": "Route de Manoria",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 32"
+      },
+      "r2200": {
+        "name": "Côte Möwe",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 33"
+      },
+      "r2202": {
+        "name": "Côte Möwe",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 34"
+      },
+      "r3403": {
+        "name": "Tunnel de Kaldia",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 35"
+      },
+      "t0100": {
+        "name": "Rolent",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 36"
+      },
+      "t0120": {
+        "name": "Armurerie Elger / Atelier Melders",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 37"
+      },
+      "t0121": {
+        "name": "Rolent - Guilde / Épicerie Rinon",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 38"
+      },
+      "t0131": {
+        "name": "Bar Abend",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 39"
+      },
+      "t0135": {
+        "name": "Bar Abend (nuit)",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 40"
+      },
+      "t0300": {
+        "name": "Maison des Bright",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 41"
+      },
+      "t0301": {
+        "name": "Maison des Bright (nuit)",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 42"
+      },
+      "t0310": {
+        "name": "Maison des Bright",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 43"
+      },
+      "t0311": {
+        "name": "Maison des Bright (nuit)",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 44"
+      },
+      "t0400": {
+        "name": "Ferme Perzel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 45"
+      },
+      "t0700": {
+        "name": "Aérogare de Rolent",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 46"
+      },
+      "t1101": {
+        "name": "Bose - Quartier Nord",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 47"
+      },
+      "t1110": {
+        "name": "Bose - Résidence",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 48"
+      },
+      "t1111": {
+        "name": "Bose - Résidence de la maire",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 49"
+      },
+      "t1121": {
+        "name": "Guilde de Bose",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 50"
+      },
+      "t1131": {
+        "name": "Anterose / Bar",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 51"
+      },
+      "t2100": {
+        "name": "Ruan - Quartier Nord",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 52"
+      },
+      "t2101": {
+        "name": "Ruan - Quartier Sud",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 53"
+      },
+      "t2102": {
+        "name": "Aérogare de Ruan",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 54"
+      },
+      "t2105": {
+        "name": "Ruan - Quartier Sud",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 55"
+      },
+      "t2110": {
+        "name": "Ruan - Résidences",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 56"
+      },
+      "t2120": {
+        "name": "Guilde de Ruan / Commerces",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 57"
+      },
+      "t2131": {
+        "name": "Lavantar / Aqua Rossa",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 58"
+      },
+      "t2200": {
+        "name": "Ruan - Villa du maire",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 59"
+      },
+      "t2210": {
+        "name": "Ruan - Villa du maire",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 60"
+      },
+      "t2300": {
+        "name": "Manoria",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 61"
+      },
+      "t2310": {
+        "name": "Manoria - Résidence",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 62"
+      },
+      "t2320": {
+        "name": "Manoria - Epicerie Fiore",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 63"
+      },
+      "t2330": {
+        "name": "Manoria - Le Magnolia Blanc",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 64"
+      },
+      "t2400": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 65"
+      },
+      "t2402": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 66"
+      },
+      "t2410": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 67"
+      },
+      "t2412": {
+        "name": "Orphelinat Mercia",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 68"
+      },
+      "t2500": {
+        "name": "Académie royale Jenis",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 69"
+      },
+      "t2501": {
+        "name": "Académie - Route secondaire",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 70"
+      },
+      "t2510": {
+        "name": "Académie - Bâtiment principal",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 71"
+      },
+      "t2511": {
+        "name": "Académie - Maison des clubs",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 72"
+      },
+      "t2512": {
+        "name": "Académie - Dortoirs",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 73"
+      },
+      "t2513": {
+        "name": "Académie - Auditorium",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 74"
+      },
+      "t2600": {
+        "name": "Academie - Ecole désaffectée",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 75"
+      },
+      "t2601": {
+        "name": "Academie - Ecole désaffectée",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 76"
+      },
+      "t2800": {
+        "name": "Académie royale Jenis",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 77"
+      },
+      "t2801": {
+        "name": "Academie - Route secondaire",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 78"
+      },
+      "t2810": {
+        "name": "Académie - Bâtiment principal",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 79"
+      },
+      "t2811": {
+        "name": "Académie - Maison des clubs",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 80"
+      },
+      "t2812": {
+        "name": "Académie - Dortoirs",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 81"
+      },
+      "t2813": {
+        "name": "Académie - ?",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 82"
+      },
+      "t3100": {
+        "name": "Zeiss",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 83"
+      },
+      "t3101": {
+        "name": "Zeiss - Quartier du CTZ",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 84"
+      },
+      "t3102": {
+        "name": "Aérogare de Zeiss",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 85"
+      },
+      "t3103": {
+        "name": "Zeiss",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 86"
+      },
+      "t3110": {
+        "name": "Zeiss - Résidence",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 87"
+      },
+      "t3111": {
+        "name": "CTZ - RDC & SS",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 88"
+      },
+      "t3112": {
+        "name": "CTZ - Ascenseur",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 89"
+      },
+      "t3115": {
+        "name": "CTZ - Salle de conception, Bibliothèque",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 90"
+      },
+      "t3116": {
+        "name": "CTZ - Atelier",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 91"
+      },
+      "t3117": {
+        "name": "CTZ - 2e",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 92"
+      },
+      "t3118": {
+        "name": "CTZ - Infirmerie",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 93"
+      },
+      "t3119": {
+        "name": "CTZ - 4e et toit",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 94"
+      },
+      "t3120": {
+        "name": "Guilde de Zeiss / Commerces",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 95"
+      },
+      "t3121": {
+        "name": "Labo souterrain du CTZ",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 96"
+      },
+      "t3130": {
+        "name": "Chapelle de Zeiss",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 97"
+      },
+      "t3131": {
+        "name": "Bar Vogel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 98"
+      },
+      "t3132": {
+        "name": "Hôtel Zahnrad",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 99"
+      },
+      "t3133": {
+        "name": "Maison des Russell",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 100"
+      },
+      "t3172": {
+        "name": "Zeiss",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 101"
+      },
+      "t3200": {
+        "name": "Elmo",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 102"
+      },
+      "t3201": {
+        "name": "Elmo (nuit ?)",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 103"
+      },
+      "t3221": {
+        "name": "Auberge Momiji",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 104"
+      },
+      "t3223": {
+        "name": "Auberge Momiji (nuit ?)",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 105"
+      },
+      "t4100": {
+        "name": "Grancel - Quartier Sud",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 106"
+      },
+      "t4101": {
+        "name": "Grancel - Quartier Est",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 107"
+      },
+      "t4102": {
+        "name": "Grancel - Quartier Ouest",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 108"
+      },
+      "t4103": {
+        "name": "Grancel - Quartier Nord",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 109"
+      },
+      "t4104": {
+        "name": "Arène royale",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 110"
+      },
+      "t4105": {
+        "name": "Aérogare de Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 111"
+      },
+      "t4106": {
+        "name": "Aérogare de Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 112"
+      },
+      "t4110": {
+        "name": "Grancel - Résidence",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 113"
+      },
+      "t4111": {
+        "name": "Grancel - Résidence",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 114"
+      },
+      "t4120": {
+        "name": "Atelier Wingard / Armurerie Weis",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 115"
+      },
+      "t4121": {
+        "name": "Guilde / Guilde des pêcheurs",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 116"
+      },
+      "t4122": {
+        "name": "Centre commercial Edel / Liberl Airlines",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 117"
+      },
+      "t4130": {
+        "name": "Bureaux du Liberl News / Restaurants",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 118"
+      },
+      "t4131": {
+        "name": "Cathédrale de Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 119"
+      },
+      "t4132": {
+        "name": "Hôtel Roenbaum",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 120"
+      },
+      "t4135": {
+        "name": "Musée historique",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 121"
+      },
+      "t4138": {
+        "name": "Ambassade d'Érébonia",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 122"
+      },
+      "t4145": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 123"
+      },
+      "t4150": {
+        "name": "Grancel - Quartier Sud",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 124"
+      },
+      "t4200": {
+        "name": "Château de Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 125"
+      },
+      "t4203": {
+        "name": "Château de Grancel",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 126"
+      },
+      "t4210": {
+        "name": "Château - Vestibule",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 129"
+      },
+      "t4212": {
+        "name": "Château - Administration",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 130"
+      },
+      "t4220": {
+        "name": "Château - Salle du trône",
+        "source": "TABLE 3RD (3).xlsx · Portes · ligne 131"
+      },
+      "a0020": {
+        "name": "Party and Dedicated NPL",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 3"
+      },
+      "a0021": {
+        "name": "Battle Estelle, Joshua, Zin, Agate, Olivier",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 4"
+      },
+      "a0022": {
+        "name": "Battle Scherazard, Tita, Kloe, Kloe Formal",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 5"
+      },
+      "a0023": {
+        "name": "Battle Kevin, Anelace, Josette, Kurt, Ries",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 6"
+      },
+      "a0024": {
+        "name": "Battle Julia, Mueller, Cid, Kanone",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 7"
+      },
+      "a0025": {
+        "name": "Battle Walter, Renne, Lucciola, Bleublanc",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 8"
+      },
+      "a0026": {
+        "name": "Battle Loewe, Weissman, Robo Joshua, Clown",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 9"
+      },
+      "a0027": {
+        "name": "Battle Jaeger A, Jaeger B, Kurt, Carna, Gilbert",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 10"
+      },
+      "a0028": {
+        "name": "Minigame Debug / Playback Test",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 11"
+      },
+      "a0029": {
+        "name": "Rolent",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 12"
+      },
+      "a0039": {
+        "name": "SC Sitting Sprites",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 13"
+      },
+      "a0040": {
+        "name": "Cassius, Kilika, Phillip (Battle)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 14"
+      },
+      "a0041": {
+        "name": "Morgan, Bodyguard, Black Hunter, Black Loewe (Battle)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 15"
+      },
+      "a0042": {
+        "name": "Dedicated NPCs 1",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 16"
+      },
+      "a0043": {
+        "name": "Main Character Costumes",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 17"
+      },
+      "a0044": {
+        "name": "Main Character Costumes (Battle)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 18"
+      },
+      "a0045": {
+        "name": "Dedicated NPCs 2",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 19"
+      },
+      "a0049": {
+        "name": "Dungeon Test Map",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 20"
+      },
+      "e0102": {
+        "name": "（新規）飛行船（空賊用）外側昼",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 21"
+      },
+      "e0811": {
+        "name": "スカイマップ（夜）",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 22"
+      },
+      "e1200": {
+        "name": "メルカバ外部",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 23"
+      },
+      "h3300": {
+        "name": "Fishing Minigame",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 24"
+      },
+      "t0020": {
+        "name": "Test Map 20",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 32"
+      },
+      "t0021": {
+        "name": "Test Map 21",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 33"
+      },
+      "t0040": {
+        "name": "Monster List (14000-14250)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 34"
+      },
+      "t0041": {
+        "name": "Monster List (14260-14500)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 35"
+      },
+      "t0042": {
+        "name": "Monster List (14510-14750)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 36"
+      },
+      "t0043": {
+        "name": "Monster List (14760-14890)",
+        "source": "TABLE 3RD (3).xlsx · Autre · ligne 37"
+      },
+      "m3116": {
+        "name": "Impregnable Fortress",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 69"
+      },
+      "m5405": {
+        "name": "The Black Ark",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 90"
+      },
+      "m5407": {
+        "name": "The Black Ark",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 92"
+      },
+      "m5409": {
+        "name": "The Black Ark",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 94"
+      },
+      "m5411": {
+        "name": "The Black Ark",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 96"
+      },
+      "m5413": {
+        "name": "The Black Ark",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 98"
+      },
+      "m5614": {
+        "name": "The Looking Glass",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 120"
+      },
+      "m7000": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 122"
+      },
+      "m7006": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 128"
+      },
+      "m7008": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 130"
+      },
+      "m7009": {
+        "name": "Couloirs d'Esmelas",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 131"
+      },
+      "m7108": {
+        "name": "Golden and Silver Roads",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 140"
+      },
+      "m7109": {
+        "name": "Golden and Silver Roads",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 141"
+      },
+      "m7208": {
+        "name": "Luminous and Umbral Labyrinths",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 150"
+      },
+      "m7209": {
+        "name": "Luminous and Umbral Labyrinths",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 151"
+      },
+      "m7307": {
+        "name": "Gehenna",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 159"
+      },
+      "t3113": {
+        "name": "Zeiss",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 286"
+      },
+      "t3114": {
+        "name": "Zeiss",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 287"
+      },
+      "u4103": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 349"
+      },
+      "u4104": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 350"
+      },
+      "u4105": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 351"
+      },
+      "u4136": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 365"
+      },
+      "u4139": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 368"
+      },
+      "u4143": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 372"
+      },
+      "u4153": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 376"
+      },
+      "u4164": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 382"
+      },
+      "u4167": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 385"
+      },
+      "u4253": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 396"
+      },
+      "u4254": {
+        "name": "Grancel",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 397"
+      },
+      "u4400": {
+        "name": "Aéronef international \"Gretna\"",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 404"
+      },
+      "u5101": {
+        "name": "Le Locle Training Grounds",
+        "source": "TABLE 3RD (3).xlsx · ALL · ligne 412"
+      }
+    },
+    "Azure": {
+      "c0100": {
+        "name": "Place centrale",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 7"
+      },
+      "c0110": {
+        "name": "SSS",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 11"
+      },
+      "r0000": {
+        "name": "Route Est de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 169"
+      },
+      "t1530": {
+        "name": "Hôpital Ste-Ursula - RDC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 254"
+      },
+      "t1540": {
+        "name": "Hôpital Ste-Ursula - 1E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 257"
+      },
+      "c0000": {
+        "name": "Rue de la gare",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 3"
+      },
+      "c000b": {
+        "name": "Rue de la gare",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 4"
+      },
+      "c000c": {
+        "name": "Rue de la gare",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 5"
+      },
+      "c0010": {
+        "name": "Gare de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 6"
+      },
+      "c010b": {
+        "name": "Place centrale",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 9"
+      },
+      "c010c": {
+        "name": "Place centrale",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 10"
+      },
+      "c011b": {
+        "name": "SSS",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 13"
+      },
+      "c011c": {
+        "name": "SSS",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 14"
+      },
+      "c0140": {
+        "name": "Genten - Boutique orbale",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 15"
+      },
+      "c014c": {
+        "name": "Genten - Boutique orbale",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 16"
+      },
+      "c0150": {
+        "name": "Vingt-sept Café",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 17"
+      },
+      "c015c": {
+        "name": "Vingt-sept Café",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 18"
+      },
+      "c0170": {
+        "name": "Gallerie marchande - Times",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 19"
+      },
+      "c017c": {
+        "name": "Gallerie marchande - Times",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 20"
+      },
+      "c0200": {
+        "name": "Rue ouest",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 21"
+      },
+      "c020b": {
+        "name": "Rue ouest",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 22"
+      },
+      "c020c": {
+        "name": "Rue ouest",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 23"
+      },
+      "c0210": {
+        "name": "Morges",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 24"
+      },
+      "c0220": {
+        "name": "Bureau Grimwood",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 25"
+      },
+      "c0240": {
+        "name": "Villa Raisins",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 26"
+      },
+      "c0250": {
+        "name": "Appartements Belheim",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 27"
+      },
+      "c0300": {
+        "name": "Lotissement",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 28"
+      },
+      "c030c": {
+        "name": "Lotissement",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 29"
+      },
+      "c0310": {
+        "name": "Maison des MacDowell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 30"
+      },
+      "c0320": {
+        "name": "Résidence privée - Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 31"
+      },
+      "c0330": {
+        "name": "Maison des Hayworth",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 32"
+      },
+      "c0340": {
+        "name": "Résidence privée - Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 33"
+      },
+      "c0350": {
+        "name": "Résidence privée - Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 34"
+      },
+      "c0400": {
+        "name": "Quartier des plaisirs",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 35"
+      },
+      "c040b": {
+        "name": "Quartier des plaisirs",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 36"
+      },
+      "c040c": {
+        "name": "Quartier des plaisirs",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 37"
+      },
+      "c0410": {
+        "name": "Arc-en-Ciel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 38"
+      },
+      "c041c": {
+        "name": "Arc-en-Ciel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 39"
+      },
+      "c0420": {
+        "name": "Arc-en-Ciel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 40"
+      },
+      "c042c": {
+        "name": "Arc-en-Ciel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 41"
+      },
+      "c0450": {
+        "name": "Hôtel Millenium",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 42"
+      },
+      "c045b": {
+        "name": "Hôtel Millenium",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 43"
+      },
+      "c045c": {
+        "name": "Hôtel Millenium",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 44"
+      },
+      "c0470": {
+        "name": "Casino Barca",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 45"
+      },
+      "c047b": {
+        "name": "Casino Barca",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 46"
+      },
+      "c047c": {
+        "name": "Casino Barca",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 47"
+      },
+      "c0500": {
+        "name": "Allée sombre",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 48"
+      },
+      "c050b": {
+        "name": "Allée sombre",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 49"
+      },
+      "c050c": {
+        "name": "Allée sombre",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 50"
+      },
+      "c0510": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 51"
+      },
+      "c0570": {
+        "name": "Jazz Bar Garante",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 52"
+      },
+      "c0580": {
+        "name": "Boutique Imelda",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 53"
+      },
+      "c0590": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 54"
+      },
+      "c0591": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 55"
+      },
+      "c0592": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 56"
+      },
+      "c0593": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 57"
+      },
+      "c0594": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 58"
+      },
+      "c0595": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 59"
+      },
+      "c0596": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 60"
+      },
+      "c0597": {
+        "name": "Revache",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 61"
+      },
+      "c0800": {
+        "name": "Gare de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 62"
+      },
+      "c1000": {
+        "name": "Rue est",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 63"
+      },
+      "c100b": {
+        "name": "Rue est",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 64"
+      },
+      "c100c": {
+        "name": "Rue est",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 65"
+      },
+      "c1010": {
+        "name": "Guilde des bracers",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 66"
+      },
+      "c101c": {
+        "name": "Guilde des bracers",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 67"
+      },
+      "c1020": {
+        "name": "Guilde des pêcheurs",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 68"
+      },
+      "c102c": {
+        "name": "Guilde des pêcheurs",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 69"
+      },
+      "c1030": {
+        "name": "Taverne Long Lao",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 70"
+      },
+      "c103c": {
+        "name": "Taverne Long Lao",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 71"
+      },
+      "c1040": {
+        "name": "Appartements Accacia",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 72"
+      },
+      "c1050": {
+        "name": "Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 73"
+      },
+      "c1100": {
+        "name": "Quartier administratif",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 74"
+      },
+      "c110b": {
+        "name": "Quartier administratif",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 75"
+      },
+      "c110c": {
+        "name": "Quartier administratif",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 76"
+      },
+      "c1110": {
+        "name": "Hôtel de ville de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 77"
+      },
+      "c1120": {
+        "name": "Hôtel de ville de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 78"
+      },
+      "c1130": {
+        "name": "Bibliothèque municipale",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 79"
+      },
+      "c1150": {
+        "name": "Police de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 80"
+      },
+      "c115c": {
+        "name": "Police de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 81"
+      },
+      "c1160": {
+        "name": "Police de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 82"
+      },
+      "c1170": {
+        "name": "Ascenseur",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 83"
+      },
+      "c1200": {
+        "name": "Quartier portuaire",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 84"
+      },
+      "c120b": {
+        "name": "Quartier portuaire",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 85"
+      },
+      "c120c": {
+        "name": "Quartier portuaire",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 86"
+      },
+      "c1210": {
+        "name": "Heiyue",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 87"
+      },
+      "c121b": {
+        "name": "Heiyue",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 88"
+      },
+      "c1220": {
+        "name": "Crossbell News",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 89"
+      },
+      "c1300": {
+        "name": "IBC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 90"
+      },
+      "c130b": {
+        "name": "IBC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 91"
+      },
+      "c130c": {
+        "name": "IBC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 92"
+      },
+      "c1310": {
+        "name": "IBC - Réception",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 93"
+      },
+      "c131b": {
+        "name": "IBC - Réception",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 94"
+      },
+      "c1320": {
+        "name": "IBC - Terminal",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 95"
+      },
+      "c1330": {
+        "name": "IBC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 96"
+      },
+      "c133b": {
+        "name": "IBC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 97"
+      },
+      "c1340": {
+        "name": "IBC - 16e étage",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 98"
+      },
+      "c134b": {
+        "name": "IBC - 16e étage",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 99"
+      },
+      "c1400": {
+        "name": "Ville basse",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 100"
+      },
+      "c140b": {
+        "name": "Ville basse",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 101"
+      },
+      "c140c": {
+        "name": "Ville basse",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 102"
+      },
+      "c1410": {
+        "name": "Trinity",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 103"
+      },
+      "c1420": {
+        "name": "Ignis",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 104"
+      },
+      "c1430": {
+        "name": "Armurerie - Guillaume",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 105"
+      },
+      "c1440": {
+        "name": "Neinvalli",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 106"
+      },
+      "c1450": {
+        "name": "Appartements - Lotus Heights",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 107"
+      },
+      "c1460": {
+        "name": "Maison Imelda",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 108"
+      },
+      "e0010": {
+        "name": "Bus",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 110"
+      },
+      "e0110": {
+        "name": "Limousine",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 111"
+      },
+      "e0111": {
+        "name": "Voiture",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 112"
+      },
+      "e0310": {
+        "name": "Voiture",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 113"
+      },
+      "e0410": {
+        "name": "Train",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 114"
+      },
+      "e0510": {
+        "name": "Bateau",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 115"
+      },
+      "e3000": {
+        "name": "Bateau",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 116"
+      },
+      "e3010": {
+        "name": "Bateau",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 117"
+      },
+      "e3500": {
+        "name": "SSS (fin)",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 119"
+      },
+      "m0000": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 120"
+      },
+      "m0001": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 121"
+      },
+      "m0002": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 122"
+      },
+      "m0010": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 123"
+      },
+      "m0011": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 124"
+      },
+      "m0012": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 125"
+      },
+      "m0013": {
+        "name": "Geofront - Secteur A",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 126"
+      },
+      "m0100": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 127"
+      },
+      "m0101": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 128"
+      },
+      "m0102": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 129"
+      },
+      "m0110": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 130"
+      },
+      "m0111": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 131"
+      },
+      "m0112": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 132"
+      },
+      "m0113": {
+        "name": "Geofront - Secteur B",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 133"
+      },
+      "m1000": {
+        "name": "Tour des étoiles",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 134"
+      },
+      "m1020": {
+        "name": "Tour des étoiles - RDC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 135"
+      },
+      "m1030": {
+        "name": "Tour des étoiles - 1E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 136"
+      },
+      "m1060": {
+        "name": "Tour des étoiles - 3E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 137"
+      },
+      "m1070": {
+        "name": "Tour des étoiles - 4E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 138"
+      },
+      "m1080": {
+        "name": "Tour des étoiles - 5E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 139"
+      },
+      "m1090": {
+        "name": "Tour des étoiles - Toit",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 140"
+      },
+      "m1099": {
+        "name": "Tour des étoiles - 6E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 141"
+      },
+      "m1140": {
+        "name": "Tour des étoiles - 2E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 142"
+      },
+      "m2000": {
+        "name": "Temple de la lune - Chapelle",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 143"
+      },
+      "m2010": {
+        "name": "Temple de la lune",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 144"
+      },
+      "m2020": {
+        "name": "Temple de la lune - Cimetierre souterrain",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 145"
+      },
+      "m2030": {
+        "name": "Temple de la lune",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 146"
+      },
+      "m2040": {
+        "name": "Temple de la lune",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 147"
+      },
+      "m2050": {
+        "name": "Temple de la lune - Jardins",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 148"
+      },
+      "m2060": {
+        "name": "Temple de la lune - Toit",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 149"
+      },
+      "m2099": {
+        "name": "Temple de la lune",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 150"
+      },
+      "m3000": {
+        "name": "Forteresse du soleil - Sous-sols 1",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 151"
+      },
+      "m3001": {
+        "name": "Forteresse du soleil - Sous-sols 1",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 152"
+      },
+      "m3002": {
+        "name": "Forteresse du soleil - Sous-sols 1",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 153"
+      },
+      "m3010": {
+        "name": "Forteresse du soleil - Sous-sols 1",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 154"
+      },
+      "m3011": {
+        "name": "Forteresse du soleil - Sous-sols 1",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 155"
+      },
+      "m3012": {
+        "name": "Forteresse du soleil - Sous-sols 2",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 156"
+      },
+      "m3013": {
+        "name": "Forteresse du soleil - Sous-sols 2",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 157"
+      },
+      "m3014": {
+        "name": "Forteresse du soleil - Sous-sols 2",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 158"
+      },
+      "m3020": {
+        "name": "Forteresse du soleil - Sous-sols 3",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 159"
+      },
+      "m3021": {
+        "name": "Forteresse du soleil - Sous-sols 3",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 160"
+      },
+      "m3022": {
+        "name": "Forteresse du soleil - Sous-sols 3",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 161"
+      },
+      "m3023": {
+        "name": "Forteresse du soleil - Sous-sols 3",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 162"
+      },
+      "m3030": {
+        "name": "Forteresse du soleil - Sous-sols 4",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 163"
+      },
+      "m3031": {
+        "name": "Forteresse du soleil - Sous-sols 4",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 164"
+      },
+      "m3032": {
+        "name": "Forteresse du soleil - Sous-sols 4",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 165"
+      },
+      "m3033": {
+        "name": "Forteresse du soleil - Sous-sols 4",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 166"
+      },
+      "m3034": {
+        "name": "Forteresse du soleil - Sous-sols 4",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 167"
+      },
+      "m3099": {
+        "name": "Forteresse du soleil - Berceau",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 168"
+      },
+      "r000b": {
+        "name": "Route Est de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 171"
+      },
+      "r0020": {
+        "name": "Route Est de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 172"
+      },
+      "r0030": {
+        "name": "Route Est de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 173"
+      },
+      "r0040": {
+        "name": "Route Est de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 174"
+      },
+      "r0050": {
+        "name": "Route Est de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 175"
+      },
+      "r0100": {
+        "name": "Chemin d'Armorica",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 176"
+      },
+      "r0110": {
+        "name": "Chemin d'Armorica",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 177"
+      },
+      "r0120": {
+        "name": "Chemin d'Armorica",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 178"
+      },
+      "r1000": {
+        "name": "Route Ouest de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 179"
+      },
+      "r1010": {
+        "name": "Route Ouest de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 180"
+      },
+      "r1020": {
+        "name": "Route Ouest de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 181"
+      },
+      "r1030": {
+        "name": "Route Ouest de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 182"
+      },
+      "r1040": {
+        "name": "Route Ouest de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 183"
+      },
+      "r1500": {
+        "name": "Route Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 184"
+      },
+      "r1520": {
+        "name": "Route Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 185"
+      },
+      "r1530": {
+        "name": "Route Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 186"
+      },
+      "r1540": {
+        "name": "Route Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 187"
+      },
+      "r1580": {
+        "name": "Route Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 188"
+      },
+      "r2000": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 189"
+      },
+      "r2010": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 190"
+      },
+      "r2020": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 191"
+      },
+      "r2030": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 192"
+      },
+      "r2040": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 193"
+      },
+      "r2050": {
+        "name": "Route montagnarde de Mainz Tunnel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 194"
+      },
+      "r2060": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 195"
+      },
+      "r206b": {
+        "name": "Route montagnarde de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 196"
+      },
+      "r2070": {
+        "name": "Temple de la lune",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 197"
+      },
+      "r3000": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 198"
+      },
+      "r3060": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 199"
+      },
+      "r3070": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 200"
+      },
+      "r307b": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 201"
+      },
+      "r3080": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 202"
+      },
+      "r308b": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 203"
+      },
+      "r308e": {
+        "name": "Champ de bataille antique",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 204"
+      },
+      "r3100": {
+        "name": "Champ de bataille antique - Passage souterrain",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 205"
+      },
+      "r3110": {
+        "name": "Champ de bataille antique - Passage souterrain",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 206"
+      },
+      "t0000": {
+        "name": "Armorica",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 207"
+      },
+      "t0010": {
+        "name": "Armorica - Maison du maire",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 208"
+      },
+      "t0020": {
+        "name": "Auberge du Frêne",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 209"
+      },
+      "t0500": {
+        "name": "Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 210"
+      },
+      "t050b": {
+        "name": "Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 211"
+      },
+      "t0510": {
+        "name": "Mainz - Maison du maire",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 212"
+      },
+      "t051b": {
+        "name": "Mainz - Maison du maire",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 213"
+      },
+      "t0520": {
+        "name": "Auberge - Der Ziegel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 214"
+      },
+      "t052b": {
+        "name": "Auberge - Der Ziegel",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 215"
+      },
+      "t0530": {
+        "name": "Boutique Baeckerei",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 216"
+      },
+      "t053b": {
+        "name": "Boutique Baeckerei",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 217"
+      },
+      "t0600": {
+        "name": "Mine de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 218"
+      },
+      "t0610": {
+        "name": "Mine abandonnée de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 219"
+      },
+      "t0620": {
+        "name": "Mine abandonnée de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 220"
+      },
+      "t0630": {
+        "name": "Mine abandonnée de Mainz",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 221"
+      },
+      "t1000": {
+        "name": "Mishelam",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 222"
+      },
+      "t100b": {
+        "name": "Mishelam",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 223"
+      },
+      "t1010": {
+        "name": "Hôtel Delphinia",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 224"
+      },
+      "t101b": {
+        "name": "Hôtel Delphinia",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 225"
+      },
+      "t1020": {
+        "name": "Mishelam - Gallerie marchande",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 226"
+      },
+      "t102b": {
+        "name": "Mishelam - Gallerie marchande",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 227"
+      },
+      "t1030": {
+        "name": "Mishelam",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 228"
+      },
+      "t103b": {
+        "name": "Mishelam",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 229"
+      },
+      "t1040": {
+        "name": "Boutique Colserica",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 230"
+      },
+      "t104b": {
+        "name": "Boutique Colserica",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 231"
+      },
+      "t1050": {
+        "name": "Fortuna",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 232"
+      },
+      "t105b": {
+        "name": "Fortuna",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 233"
+      },
+      "t106b": {
+        "name": "Fortuna",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 234"
+      },
+      "t1100": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 235"
+      },
+      "t110b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 236"
+      },
+      "t111b": {
+        "name": "Villa de Hartmann - Entrée",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 237"
+      },
+      "t112b": {
+        "name": "Villa de Hartmann - Salle des enchères",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 238"
+      },
+      "t113b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 239"
+      },
+      "t114b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 240"
+      },
+      "t115b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 241"
+      },
+      "t116b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 242"
+      },
+      "t117b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 243"
+      },
+      "t118b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 244"
+      },
+      "t119b": {
+        "name": "Villa de Hartmann - Escaliers",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 245"
+      },
+      "t1210": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 246"
+      },
+      "t121b": {
+        "name": "Villa de Hartmann",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 247"
+      },
+      "t1500": {
+        "name": "Hôpital Ste-Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 248"
+      },
+      "t150b": {
+        "name": "Hôpital Ste-Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 249"
+      },
+      "t1510": {
+        "name": "Auberge Lectier",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 250"
+      },
+      "t151b": {
+        "name": "Auberge Lectier",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 251"
+      },
+      "t1520": {
+        "name": "Auberge Lectier",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 252"
+      },
+      "t152b": {
+        "name": "Auberge Lectier",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 253"
+      },
+      "t153b": {
+        "name": "Hôpital Ste-Ursula - RDC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 256"
+      },
+      "t154b": {
+        "name": "Hôpital Ste-Ursula - 1E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 259"
+      },
+      "t1550": {
+        "name": "Hôpital Ste-Ursula - 2E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 260"
+      },
+      "t155b": {
+        "name": "Hôpital Ste-Ursula - 2E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 261"
+      },
+      "t1560": {
+        "name": "Hôpital Ste-Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 262"
+      },
+      "t1600": {
+        "name": "Hôpital Ste-Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 263"
+      },
+      "t160b": {
+        "name": "Hôpital Ste-Ursula",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 264"
+      },
+      "t1610": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - Ascenseur",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 265"
+      },
+      "t161b": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - Ascenseur",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 266"
+      },
+      "t1620": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - RDC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 267"
+      },
+      "t162b": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - RDC",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 268"
+      },
+      "t1630": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - 1E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 269"
+      },
+      "t163b": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - 1E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 270"
+      },
+      "t1640": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - 2E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 271"
+      },
+      "t164b": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - 2E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 272"
+      },
+      "t1650": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - 3E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 273"
+      },
+      "t165b": {
+        "name": "Hôpital Ste-Ursula - Bâtiment de recherche - 3E",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 274"
+      },
+      "t2000": {
+        "name": "Porte de Bellgard",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 275"
+      },
+      "t2010": {
+        "name": "Porte de Bellgard",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 276"
+      },
+      "t2020": {
+        "name": "Porte de Bellgard",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 277"
+      },
+      "t2100": {
+        "name": "Porte de Bellgard",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 278"
+      },
+      "t2500": {
+        "name": "Porte de Tangram",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 279"
+      },
+      "t2510": {
+        "name": "Porte de Tangram",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 280"
+      },
+      "t2520": {
+        "name": "Porte de Tangram",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 281"
+      },
+      "t3000": {
+        "name": "Studio Rosenberg",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 282"
+      },
+      "t3010": {
+        "name": "Studio Rosenberg",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 283"
+      },
+      "t3510": {
+        "name": "Aérogare de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 284"
+      },
+      "t4000": {
+        "name": "Cathédrale de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 285"
+      },
+      "t4010": {
+        "name": "Cathédrale de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 286"
+      },
+      "t4020": {
+        "name": "Cathédrale de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 287"
+      },
+      "t4100": {
+        "name": "Cathédrale de Crossbell",
+        "source": "TABLE ZERO.xlsx · ZERO · ligne 288"
+      }
+    }
+  }
+}
