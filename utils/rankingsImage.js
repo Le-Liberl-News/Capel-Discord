@@ -42,7 +42,9 @@ function drawBoard(c,rows,avatars,height,{circle,frieze}){
   const panel=c.createLinearGradient(40,0,W-40,0);panel.addColorStop(0,'rgba(60,32,10,0)');panel.addColorStop(.12,i%2?'rgba(60,32,10,.42)':'rgba(84,46,14,.5)');panel.addColorStop(.88,i%2?'rgba(60,32,10,.42)':'rgba(84,46,14,.5)');panel.addColorStop(1,'rgba(60,32,10,0)');
   c.fillStyle=panel;c.fillRect(40,y+4,W-80,ROW-8);
   c.fillStyle=colour;c.fillRect(52,y+10,3,ROW-20);
-  c.font=FONT(24,'bold');c.fillStyle=medals[i]??'#c9a679';c.shadowColor=medals[i]?EMBER:'transparent';c.shadowBlur=medals[i]?10:0;c.fillText(String(i+1).padStart(2,'0'),col.rank,mid+1);c.shadowBlur=0;
+  c.font=FONT(24,'bold');c.fillStyle=medals[i]??'#c9a679';c.shadowColor=medals[i]?EMBER:'transparent';c.shadowBlur=medals[i]?10:0;c.fillText(String(i+1).padStart(2,'0'),col.rank-6,mid+1);c.shadowBlur=0;
+  // places won or lost since the day before
+  if(row.placeChange){c.textAlign='left';c.font=FONT(14,'bold');c.fillStyle=row.placeChange>0?'#7fe08a':'#ff6b5e';c.fillText(`(${row.placeChange>0?'+':''}${row.placeChange})`,col.rank+12,mid+2);c.textAlign='center';}
   // the profile picture in a ring of the rank's colour
   c.save();c.beginPath();c.arc(col.avatar,mid,20,0,Math.PI*2);c.closePath();c.fillStyle='#1c120a';c.fill();c.clip();
   if(avatars[i])c.drawImage(avatars[i],col.avatar-20,mid-20,40,40);else{c.fillStyle=colour;c.font=FONT(20,'bold');c.fillText((row.pseudo?.[0]??'?').toUpperCase(),col.avatar,mid+1);}
@@ -52,7 +54,11 @@ function drawBoard(c,rows,avatars,height,{circle,frieze}){
   // no glow on the rank: a dark outline and a drop shadow keep it apart from the background
   c.font=FONT(21,'bold');c.lineJoin='round';c.lineWidth=4;c.strokeStyle='#120803';c.shadowColor='rgba(0,0,0,.9)';c.shadowBlur=4;c.shadowOffsetY=2;c.strokeText(row.nomRang??'',col.rank2-20,mid+1);c.shadowBlur=0;c.shadowOffsetY=0;c.fillStyle=colour;c.fillText(row.nomRang??'',col.rank2-20,mid+1);
   // points and the way to the next rank
-  c.textAlign='center';c.font=FONT(19,'bold');c.fillStyle='#ffe2a3';c.fillText(row.seuilSuivant==='MAX'?`${thousands(row.pb)} · MAX`:`${thousands(row.pb)} / ${thousands(row.seuilSuivant)}`,col.pb,mid-6);
+  // the total, then what the previous day brought
+  const total=row.seuilSuivant==='MAX'?`${thousands(row.pb)} · MAX`:`${thousands(row.pb)} / ${thousands(row.seuilSuivant)}`,gain=row.pbGain?` (+${thousands(row.pbGain)})`:'';
+  c.font=FONT(19,'bold');const totalWidth=c.measureText(total).width;c.font=FONT(15,'bold');const gainWidth=gain?c.measureText(gain).width:0;
+  c.textAlign='left';const start=col.pb-(totalWidth+gainWidth)/2;c.font=FONT(19,'bold');c.fillStyle='#ffe2a3';c.fillText(total,start,mid-6);
+  if(gain){c.font=FONT(15,'bold');c.fillStyle='#7fe08a';c.fillText(gain,start+totalWidth,mid-5);}c.textAlign='center';
   const progress=row.seuilSuivant==='MAX'?1:Math.max(0,Math.min(1,(row.pb-(row.seuil??0))/((row.seuilSuivant-(row.seuil??0))||1)));
   c.fillStyle='rgba(0,0,0,.55)';c.fillRect(col.pb-90,mid+12,180,5);c.fillStyle=colour;c.shadowColor=colour;c.shadowBlur=6;c.fillRect(col.pb-90,mid+12,180*progress,5);c.shadowBlur=0;
   c.font=FONT(24,'bold');c.fillStyle='#fff3dc';c.fillText(String(row.trads??0),col.trads,mid+1);
@@ -68,7 +74,8 @@ function drawFrame(c,f,height,rows){
  if(rows.length&&f<10){const x=40+(W-80)*f/9,g=c.createLinearGradient(x-80,0,x+80,0);g.addColorStop(0,'rgba(255,220,140,0)');g.addColorStop(.5,'rgba(255,220,140,.16)');g.addColorStop(1,'rgba(255,220,140,0)');c.fillStyle=g;c.fillRect(Math.max(40,x-80),TOP+4,160,ROW-8);}
  c.restore();
 }
-// rows: {pseudo, avatar (an image, a buffer or null), pb, seuil, seuilSuivant (a number or 'MAX'), nomRang, trads, couleurHex}
+// rows: {pseudo, avatar (an image, a buffer or null), pb, seuil, seuilSuivant (a number or 'MAX'), nomRang, trads, couleurHex,
+// pbGain (points earned the day before), placeChange (places won, negative when lost)}
 async function renderRankings(rows){
  const parts=await loadPieces(),height=TOP+Math.max(rows.length,1)*ROW+70;
  const avatars=await Promise.all(rows.map(r=>r.avatar?(Buffer.isBuffer(r.avatar)||typeof r.avatar==='string'?loadImage(r.avatar).catch(()=>null):r.avatar):null));

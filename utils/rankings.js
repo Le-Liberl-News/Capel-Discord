@@ -2,6 +2,8 @@ const db = require('./db.js');
 const { RANGS_BRACERS } = require('./xpManager.js');
 const { AttachmentBuilder } = require('discord.js');
 const { renderRankings } = require('./rankingsImage.js');
+const path = require('node:path');
+const historique = require('./activityStateStore.js').createActivityStateStore(path.join(__dirname, '../.runtime/rankings-history.json'));
 
 const couleursDeBase = [
     '#e33464', '#e73326', '#e84329', '#e8532c', '#e9632f', 
@@ -41,11 +43,42 @@ async function actualiserClassement(client, top10) {
     } catch (erreur) { console.error("Erreur maj classement image :", erreur); }
 }
 
+// Each bracer's points and place as the day starts (Paris), kept for a few days: the board shows what the
+// previous day brought (points of this morning minus points of yesterday morning, places likewise).
+const jourParis = (date = new Date()) => date.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+let photoEnCours = null;
+async function photographierJour(maintenant = new Date()) {
+    const jour = jourParis(maintenant), etat = historique.load() ?? { jours: {} };
+    if (etat.jours[jour]) return etat;
+    if (photoEnCours?.jour === jour) return photoEnCours.promesse;
+    const promesse = (async () => {
+        const [lignes] = await db.query('SELECT user_id, xp FROM users_stats ORDER BY xp DESC, user_id');
+        etat.jours[jour] = Object.fromEntries(lignes.map((l, i) => [String(l.user_id), { xp: Number(l.xp), place: i + 1 }]));
+        for (const ancien of Object.keys(etat.jours).sort().slice(0, -4)) delete etat.jours[ancien];
+        historique.save(etat);
+        return etat;
+    })().finally(() => { photoEnCours = null; });
+    photoEnCours = { jour, promesse };
+    return promesse;
+}
+function evolutionVeille(etat, maintenant = new Date()) {
+    const jour = jourParis(maintenant), veille = jourParis(new Date(maintenant.getTime() - 86400000));
+    const aujourdhui = etat.jours[jour], hier = etat.jours[veille];
+    if (!aujourdhui || !hier) return () => ({});
+    return userId => {
+        const a = aujourdhui[userId], h = hier[userId];
+        if (!a) return {};
+        return { pbGain: Math.max(0, a.xp - (h?.xp ?? 0)), placeChange: h ? h.place - a.place : 0 };
+    };
+}
+
 async function updateRanking(client) {
     const guild = client.guilds.cache.get(process.env.GUILD_ID);
     if (!guild) return;
 
-    const [rawTop10] = await db.query('SELECT user_id, xp, victoires AS trads FROM users_stats ORDER BY xp DESC LIMIT 10');
+    let evolution = () => ({});
+    try { evolution = evolutionVeille(await photographierJour()); } catch (e) { console.error("Erreur historique classement :", e); }
+    const [rawTop10] = await db.query('SELECT user_id, xp, victoires AS trads FROM users_stats ORDER BY xp DESC, user_id LIMIT 10');
     let top10Formate = [];
 
     for (const ligne of rawTop10) {
@@ -77,11 +110,12 @@ async function updateRanking(client) {
             seuilSuivant: seuilSuivant,
             nomRang: rangActuel ? rangActuel.nom : "Inconnu",
             trads: ligne.trads || 0,
-            couleurHex: couleurLigne
+            couleurHex: couleurLigne,
+            ...evolution(String(ligne.user_id))
         });
     }
 
     await actualiserClassement(client, top10Formate);
 }
 
-module.exports = { actualiserClassement, updateRanking };
+module.exports = { actualiserClassement, updateRanking, photographierJour, evolutionVeille };

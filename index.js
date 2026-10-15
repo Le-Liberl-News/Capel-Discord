@@ -19,7 +19,7 @@ const { relancerAudioApresCrash } = require('./rpg/audioManager.js');
 
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
-const { updateRanking } = require('./utils/rankings.js')
+const { updateRanking, photographierJour } = require('./utils/rankings.js')
 const { createDebugReportIngress } = require('./utils/debugReportIngress.js');
 const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportService.js');
 const { createPatchReleaseService } = require('./utils/patchReleaseService.js');
@@ -488,6 +488,8 @@ app.listen(3000, () => {
 
 cron.schedule('0 0 * * *', async () => {
     await arenaRanking.settle();
+    // the ranking's picture of the day, once the arena's points are paid
+    try { await photographierJour(); } catch (error) { console.error("Erreur historique classement :", error); }
     await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
