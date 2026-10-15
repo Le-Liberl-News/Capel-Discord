@@ -1,9 +1,7 @@
 const db = require('./db.js');
 const { RANGS_BRACERS } = require('./xpManager.js');
 const { AttachmentBuilder } = require('discord.js');
-const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
-
-GlobalFonts.registerFromPath('./AveriaSansLibre-Regular.ttf', 'Averia');
+const { renderRankings } = require('./rankingsImage.js');
 
 const couleursDeBase = [
     '#e33464', '#e73326', '#e84329', '#e8532c', '#e9632f', 
@@ -31,101 +29,12 @@ async function actualiserClassement(client, top10) {
         const salon = await client.channels.fetch(salonSecretId);
         const message = await salon.messages.fetch(messageMaitreId);
 
-        const background = await loadImage('./bg_rankings.png');
-        const canvas = createCanvas(background.width, background.height);
-        const ctx = canvas.getContext('2d');
-
-        ctx.drawImage(background, 0, 0);
-
-        ctx.strokeStyle = '#000000'; 
-        ctx.lineWidth = 3;           
-        ctx.lineJoin = 'round';      
-
-        const ecrireTexte = (texte, x, y) => {
-            ctx.strokeText(texte, x, y); 
-            ctx.fillText(texte, x, y);   
-        };
-
-        const startY = 230;
-        const lineWeight = 45; 
-        
-        const colRG = 70;
-        const colPseudo = colRG + 100;
-        const colClasse = colPseudo + 270;
-        const colPB = colClasse + 190;
-        const colTrads = colPB + 295;
-        
-        ctx.fillStyle = '#FFFFFF'; 
-        ctx.font = 'bold 37px "Averia"'; 
-        const headerY = startY - lineWeight;
-        const titleY = headerY - 5;
-        
-        ecrireTexte("RG", colRG, titleY);
-        ecrireTexte("BRACER", colPseudo, titleY);
-        ecrireTexte("CLASSE", colClasse, titleY);
-        ecrireTexte("PB", colPB, titleY);
-        ctx.textAlign = 'center';
-        ecrireTexte("TRADS", colTrads, titleY);
-        ctx.textAlign = 'left'; 
-
-        ctx.beginPath();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3; 
-
-        const ligneGaucheX = colRG - 15;
-        const ligneDroiteX = colTrads + 50;
-        ctx.moveTo(ligneGaucheX, headerY + 8); 
-        ctx.lineTo(ligneDroiteX, headerY + 8); 
-
-        const pointHautY = headerY - 35; 
-        const pointBasY = startY + (Math.max(10, top10.length - 1) * lineWeight) - 25;
-
-        const sep1X = colRG + 80;
-        ctx.moveTo(sep1X, pointHautY);
-        ctx.lineTo(sep1X, pointBasY);
-
-        const sep2X = colPseudo + 245;
-        ctx.moveTo(sep2X, pointHautY);
-        ctx.lineTo(sep2X, pointBasY);
-
-        const sep3X = colClasse + 160;
-        ctx.moveTo(sep3X, pointHautY);
-        ctx.lineTo(sep3X, pointBasY);
-
-        const sep4X = colPB + 230;
-        ctx.moveTo(sep4X, pointHautY);
-        ctx.lineTo(sep4X, pointBasY);
-
-        ctx.stroke();
-
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-
-        for (let i = 0; i < top10.length; i++) {
-            const joueur = top10[i];
-            const y = startY + (i * lineWeight);
-
-            ctx.fillStyle = joueur.couleurHex; 
-
-            ctx.font = 'bold 37px "Averia"'; 
-            ecrireTexte(`#${String(i + 1).padStart(2, '0')}`, colRG, y);
-
-            ecrireTexte(joueur.pseudo, colPseudo, y);
-            ecrireTexte(joueur.nomRang, colClasse, y);
-
-            ctx.font = '34px "Averia"'; 
-            ecrireTexte(`${joueur.pb}/${joueur.seuilSuivant}`, colPB, y);
-
-            ctx.textAlign = 'center';
-            ctx.font = 'bold 34px "Averia"'; 
-            ecrireTexte(String(joueur.trads), colTrads, y);
-            ctx.textAlign = 'left'; 
-        }
-        const buffer = await canvas.encode('png');
-        const attachment = new AttachmentBuilder(buffer, { name: 'classement.png' });
+        const buffer = await renderRankings(top10);
+        const attachment = new AttachmentBuilder(buffer, { name: 'classement.gif' });
 
         await message.edit({
             content: null, 
+            attachments: [],
             files: [attachment]
         });
 
@@ -141,9 +50,14 @@ async function updateRanking(client) {
 
     for (const ligne of rawTop10) {
         let pseudoBracer = "Inconnu";
+        let avatar = null;
         try {
-            const user = await client.users.fetch(String(ligne.user_id));
-            pseudoBracer = user.username;
+            // the name and picture they use on the server, the account's when they left it
+            const membre = await guild.members.fetch(String(ligne.user_id)).catch(() => null);
+            const user = membre?.user ?? await client.users.fetch(String(ligne.user_id));
+            pseudoBracer = membre?.displayName ?? user.globalName ?? user.username;
+            const reponse = await fetch((membre ?? user).displayAvatarURL({ extension: 'png', size: 64 }));
+            if (reponse.ok) avatar = Buffer.from(await reponse.arrayBuffer());
         } catch (e) { }
 
         const indexRang = RANGS_BRACERS.findIndex(r => Number(ligne.xp) >= r.seuil);
@@ -157,7 +71,9 @@ async function updateRanking(client) {
 
         top10Formate.push({
             pseudo: pseudoBracer,
-            pb: ligne.xp,
+            avatar: avatar,
+            pb: Number(ligne.xp),
+            seuil: rangActuel ? rangActuel.seuil : 0,
             seuilSuivant: seuilSuivant,
             nomRang: rangActuel ? rangActuel.nom : "Inconnu",
             trads: ligne.trads || 0,

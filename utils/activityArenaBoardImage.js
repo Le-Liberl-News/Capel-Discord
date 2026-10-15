@@ -1,6 +1,6 @@
 const path=require('node:path');
 const {createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas');
-const {GIFEncoder,quantize,applyPalette}=require('gifenc');
+const {encodeLoop}=require('./loopingGif');
 const catalogue=require('../activity/assets/sky/characters.json');
 // VT323 (SIL OFL, resources/fonts/VT323-OFL.txt): a terminal face for the orbal calculator screen
 GlobalFonts.registerFromPath(path.join(__dirname,'../resources/fonts/VT323-Regular.ttf'),'ArenaTerminal');
@@ -56,22 +56,6 @@ async function renderArenaBoard(visual){
  const height=400+Math.max(3,visual.rows.length)*86,images=await Promise.all(visual.rows.map(r=>portrait(r.name)));
  const W=Math.round(WIDTH*SCALE),H=Math.round(height*SCALE);
  const base=createCanvas(W,H),b=base.getContext('2d');b.scale(SCALE,SCALE);drawBoard(b,visual,images,height);
- const baseData=b.getImageData(0,0,W,H).data;
- // one palette for the whole loop; the last entry is kept for "unchanged since the previous frame"
- const palette=quantize(baseData,255),transparentIndex=palette.length,fullPalette=[...palette,[0,0,0]];
- const baseIndex=applyPalette(baseData,palette);
- const gif=GIFEncoder(),frame=createCanvas(W,H),c=frame.getContext('2d');let previous=null;
- for(let f=0;f<FRAMES;f++){
-  await new Promise(setImmediate);// ~50 ms per frame: let the bot answer interactions in between
-  c.setTransform(1,0,0,1,0,0);c.drawImage(base,0,0);c.scale(SCALE,SCALE);drawFrame(c,f,height);
-  const data=c.getImageData(0,0,W,H).data,index=baseIndex.slice();
-  // only the rows the animation touched are matched against the palette again
-  const words=new Uint32Array(data.buffer,data.byteOffset,W*H),baseWords=new Uint32Array(baseData.buffer,baseData.byteOffset,W*H),changed=[];
-  for(let y=0;y<H;y++)for(let x=y*W,end=x+W;x<end;x++)if(words[x]!==baseWords[x]){changed.push(y);break;}
-  if(changed.length){const rowsData=new Uint8ClampedArray(changed.length*W*4);changed.forEach((y,n)=>rowsData.set(data.subarray(y*W*4,(y+1)*W*4),n*W*4));const rowsIndex=applyPalette(rowsData,palette);changed.forEach((y,n)=>index.set(rowsIndex.subarray(n*W,(n+1)*W),y*W));}
-  let out=index;if(previous){out=new Uint8Array(index.length);for(let i=0;i<index.length;i++)out[i]=index[i]===previous[i]?transparentIndex:index[i];}
-  gif.writeFrame(out,W,H,f===0?{palette:fullPalette,delay:DELAY,repeat:0}:{delay:DELAY,transparent:true,transparentIndex,dispose:1});previous=index;
- }
- gif.finish();return Buffer.from(gif.bytes());
+ return encodeLoop(base,{frames:FRAMES,delay:DELAY,draw:(c,f)=>{c.scale(SCALE,SCALE);drawFrame(c,f,height);}});
 }
 module.exports={renderArenaBoard};
