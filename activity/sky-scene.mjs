@@ -1,4 +1,5 @@
-import {frameCombatCamera} from './combat-framing.mjs';
+import {createOffscreenOpponents} from './offscreen-opponents.mjs';
+import {frameCombatCamera,advanceCraftFocus} from './combat-framing.mjs';
 import {createMapInteractions} from './map-interactions.mjs';
 import {createArenaSun} from './arena-sun.mjs';
 import {createMapBloom} from './map-bloom.mjs';
@@ -109,6 +110,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     catalogue = await fetch(new URL("characters.json", ASSETS),{cache:"no-store"}).then((r) =>
       r.json(),
     );
+  const offscreenOpponents=createOffscreenOpponents({assets:ASSETS,catalogue});
   if(inTower||isArena)Object.assign(catalogue,await fetch(new URL("enemies/catalogue.json",ASSETS),{cache:"no-store"}).then(r=>r.json()));
   const combatPreparation=(isArena||inTower&&!inDungeon)?createRenneCombat(THREE,scene,ASSETS):null;combatPreparation?.catch(()=>{});
   const supportEffects=createSupportEffects(THREE,scene);
@@ -117,7 +119,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
   const enemyEffects=inTower&&!inDungeon?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
-  let localCombo=null,steering=null;let cookingHeld=false;let patDrive=null,patDriveId=null;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
+  let localCombo=null,steering=null;let cookingHeld=false;let patDrive=null,patDriveId=null;let craftFocus=0;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
@@ -941,6 +943,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec('Josette',localAttack.kind):null,active:isFPS,time,moving:me?.walking||keys.size>0,yaw})??0;crosshair.hidden=!isFPS||josetteBlend>.05;
+    craftFocus=advanceCraftFocus(craftFocus,seconds,!!localAttack&&localAttack.kind==='craft'&&!craftTarget&&!introPlaying&&!freeSpectator&&!me?.dead);
+    if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true,craftFocus);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
     arenaAudience?.update(time,camera);
@@ -1193,6 +1197,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     if(previewDrinkingClock){previewDrinkingClock.tick(environment.npcs);dialogues.receive(environment.npcs.filter(n=>n.utterance).map(n=>({...n.utterance,author:n.id})));}
     drinkingTable?.update(time,avatars);
+    offscreenOpponents.update({camera,avatars,ownId:localId,inTower,width:viewport.width,height:viewport.height,enabled:combatCamera&&!introPlaying&&!health.spectator&&health.hp>0});
     mapInteractions.update(time,avatars.get(localId));
     dialogues.update(time, avatars, camera);
     mapBloom.render(scene, camera);
@@ -1447,7 +1452,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       status.remove();
       labels.remove();
       style.remove();
-      mapInteractions.dispose();dialogues.dispose();
+      offscreenOpponents.dispose();mapInteractions.dispose();dialogues.dispose();
       damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();gpuWarning?.remove();ctfView?.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();
