@@ -333,8 +333,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     // phones: straight-line ground techniques go straight ahead of the fighter, no aiming step
     const lineAhead=document.body.hasAttribute('data-sky-touch')&&spec.groundTarget&&(spec.shape==='line'||spec.dash)&&!confirmed?straightAhead(me,spec.range):null;
     if(lineAhead)confirmed=true;
+    // phones: a technique that needs an opponent goes straight to the one the camera is locked on, when in reach
+    const locked=document.body.hasAttribute('data-sky-touch')&&spec.targetRequired&&!spec.effect&&!confirmed&&mobileTargetId?avatars.get(mobileTargetId):null,lockedDistance=locked?Math.hypot(locked.position.x-me.position.x,locked.position.z-me.position.z):Infinity;
+    const lockedTarget=locked&&!locked.dead&&lockedDistance<=spec.range&&!(spec.minRange&&lockedDistance<spec.minRange)?mobileTargetId:null;
+    if(lockedTarget)confirmed=true;
     if((spec.groundTarget||spec.targetRequired)&&!confirmed&&!(spec.chargeStun&&pickCombatTarget(event,spec))){craftTarget=kind;combatControls.targeting(kind);marker.visible=true;return true;}
-    if(spec.targetRequired){target=pickCombatTarget(event,spec);if(!target)return false;}
+    if(spec.targetRequired){target=lockedTarget??pickCombatTarget(event,spec);if(!target)return false;}
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
     let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
     const photoHeading=me.heading??{dx:0,dz:-1};
