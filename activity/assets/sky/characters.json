@@ -3934,7 +3934,7 @@
     }
   },
   "Halle": {
-    "texture": "halle-satin-c4b79bc835.png",
+    "texture": "halle-satin-00be8f2852.png",
     "columns": 8,
     "rows": 13,
     "frames": 104,
@@ -3967,7 +3967,7 @@
     "source": {
       "model": "chr5314.glb",
       "clip": "chr5314_m_walk.glb",
-      "look": "v9-satin-leger",
+      "look": "v9-satin-doux",
       "generatedWithAI": false
     },
     "cropBox": [
@@ -3979,7 +3979,7 @@
     "bodyPixelHeight": 86
   },
   "Jack": {
-    "texture": "jack-satin-d8b190e5c7.png",
+    "texture": "jack-satin-7747a7ee5e.png",
     "columns": 8,
     "rows": 13,
     "frames": 104,
@@ -4012,7 +4012,7 @@
     "source": {
       "model": "chr0317.glb",
       "clip": "chr0317_m_walk.glb",
-      "look": "v9-satin-leger",
+      "look": "v9-satin-doux",
       "generatedWithAI": false
     },
     "cropBox": [
