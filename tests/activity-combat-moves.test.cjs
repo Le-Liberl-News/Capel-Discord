@@ -209,11 +209,12 @@ test('camera-driven facing applies only in arenas and exploration dungeons',()=>
 
 test('dash cooldown is three and a half seconds',()=>assert.equal(moves.DODGE.cooldown,3500));
 
-test("Scherazard's whip binds the first opponent caught, then pulls them to stand in front of her",()=>{
- const s=fighter('s','Scherazard',0),j=fighter('j','Joshua',6),{room,combat,step,time}=arena(s,j),spec=combatSpec('Scherazard','craft');
- assert.ok(combat.action(s,{id:'whip',type:'attack',kind:'craft',aim:{x:7,y:0,z:0}},room).combatId);
+test("Scherazard's whip binds the opponent she clicked, not one standing by, then pulls them to stand in front of her",()=>{
+ const s=fighter('s','Scherazard',0),j=fighter('j','Joshua',6),k=fighter('k','Kloe',4,.5),{room,combat,step,time}=arena(s,j,k),spec=combatSpec('Scherazard','craft');
+ assert.ok(combat.action(s,{id:'whip',type:'attack',kind:'craft',target:'j',aim:{x:6,y:0,z:0}},room).combatId);
  step(spec.windup+60);assert.ok(j.hp<500||j.slowUntil>time(),'caught');assert.ok(Math.abs(j.x-6)<.05,'held while bound');
  assert.match(combat.action(j,{id:'j1',type:'attack',kind:'basic',aim:{x:0,y:0,z:0}},room).error??'',/./);
  step(spec.bindDelay+spec.pullDuration+60);
  assert.ok(Math.abs(j.x-spec.pullStop)<.2&&Math.abs(j.z)<.05,`pulled to ${j.x},${j.z}`);
+ assert.equal(k.hp,500);assert.equal(k.x,4);
 });

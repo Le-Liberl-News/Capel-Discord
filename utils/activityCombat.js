@@ -500,7 +500,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         attack.hits.push({id:player.id,hitIndex,at:attack.impactAt+hitOffsets[hitIndex],...dealt});
 
         if(spec.kick&&dealt.damage&&player.hp>0)project(attack,attacker,player,spec,{x:attack.aim.x-attack.origin.x,z:attack.aim.z-attack.origin.z},time);
-        // Scherazard's whip: the first opponent caught is held bound, then pulled back to stand in front of her
+        // Scherazard's whip: the opponent she chose is held bound, then pulled back to stand in front of her
         if(spec.pull&&!attack.pulled&&player.hp>0&&!player.boss){attack.pulled=player.id;const dx=attacker.x-player.x,dz=attacker.z-player.z,distance=Math.hypot(dx,dz)-spec.pullStop,caught=attack.impactAt+hitOffsets[hitIndex];
           if(distance>.2)project(attack,attacker,player,{knockback:distance,knockbackDuration:spec.pullDuration},{x:dx,z:dz},caught+spec.bindDelay);
           player.combatLockedUntil=Math.max(player.combatLockedUntil??0,caught+spec.bindDelay+spec.pullDuration);}
