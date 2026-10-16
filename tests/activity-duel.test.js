@@ -242,17 +242,11 @@ test("finding every prop wins; hunters cannot move or see hiders during preparat
  assert.equal((await lobby.state(b.activity_token,{action:{id:"leave",type:"leave_duel"}})).map,"anterose");
 });
 
-test("Prop Hunt publish failures release the lobby and failed Discord launches do not register players",async()=>{
- const {createActivityPropHunt}=require('../utils/activityPropHunt');const game=createPropHuntGame();
- const lobby=createActivityLobby({grid,resolveCharacter:async()=>"Estelle",huntGame:game,rolent:{grid,residents:{npcs:[],disablePoms:true}},arena:{grid}});
- const manager=createActivityPropHunt({lobby,resolveCharacter:async()=>"Estelle"});let response;
- await manager.handle({isChatInputCommand:()=>true,commandName:'prophunt',user:{id:'a'},options:{getInteger:()=>null},channel:{send:async()=>{throw Error('no permission');}},deferReply:async()=>{},editReply:async x=>response=x});
- assert.equal(lobby.huntSummary().phase,'finished');assert.ok(response);
- const id=lobby.createHunt('a',10).id;
- await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{throw Error('already active');},reply:async x=>response=x});
- assert.equal(lobby.huntSummary().count,0);assert.equal((await lobby.join({id:'b',channel:'dm'})).map,'anterose');
- await manager.handle({isButton:()=>true,customId:'activity:prophunt:'+id,user:{id:'b'},channel:{isDMBased:()=>true},launchActivity:async()=>{throw Error('must reuse the open activity');},reply:async()=>{}});
- assert.equal(lobby.huntSummary().count,1);assert.equal((await lobby.join({id:'b',channel:'dm'})).map,'rolent');
+test("paused Prop Hunt commands and old join buttons never register players",async()=>{
+ const {createActivityPropHunt}=require('../utils/activityPropHunt');let replies=0,launches=0;
+ const manager=createActivityPropHunt({lobby:{},resolveCharacter:async()=>{throw Error('must not resolve');}});
+ for(const request of [{isChatInputCommand:()=>true,commandName:'prophunt'},{isButton:()=>true,customId:'activity:prophunt:old'},{isButton:()=>true,customId:'prophunt:start:old'}])assert.equal(await manager.handle({...request,reply:async()=>replies++,launchActivity:async()=>launches++}),true);
+ assert.equal(replies,3);assert.equal(launches,0);
 });
 
 test("watching from an already open activity teleports without a second Discord launch",async()=>{
@@ -273,11 +267,13 @@ test("Capel challenges notify connected opponents in game and disclose only char
 });
 
 test("Capel enforces proximity, active sessions and idempotent launches",async()=>{
- const {createActivityTerminal}=require("../utils/activityTerminal");let map="anterose",point={x:1,y:0,z:1,hp:100},created=0,joined=0,started=0;
- const lobby={identity:token=>{if(token!=="session")throw Object.assign(Error("Unauthorized"),{status:401});return{id:"private-user",map};},terminalPosition:async()=>point,huntSummary:()=>null,createHunt:()=>{created++;return{id:"hunt:one"};},joinHunt:()=>joined++,cancelHunt:()=>{},startHunt:()=>started++};
- const terminal=createActivityTerminal({lobby,duels:{pending:()=>[]},client:{},resolveCharacter:async()=>"Estelle",assignedCharacters:async()=>["Estelle","Joshua"],terminal:{position:{x:1,y:0,z:1}}});
- assert.deepEqual((await terminal.menu("session")).characters,["Joshua"]);await assert.rejects(()=>terminal.menu("invalid"));point.x=9;await assert.rejects(()=>terminal.menu("session"));point.x=1;map="arena";await assert.rejects(()=>terminal.menu("session"));map="anterose";point.hp=0;await assert.rejects(()=>terminal.menu("session"));point.hp=100;
- const body={action:"hunt_create",request:"request-one",user:"spoofed-account"};await terminal.action("session",body);await terminal.action("session",body);assert.equal(created,1);assert.equal(joined,1);await assert.rejects(()=>terminal.action("session",{...body,action:"duel"}));map="rolent";await terminal.action("session",{action:"hunt_start",request:"request-two",invitation:"hunt:one"});assert.equal(started,1);
+ const {createActivityTerminal}=require('../utils/activityTerminal');let point={x:1,y:0,z:1,hp:100},entered=0;
+ const lobby={identity:token=>{if(token!=='session')throw Error('Unauthorized');return{id:'private-user',map:'anterose'};},terminalPosition:async()=>point,enterTower:()=>entered++,huntSummary:()=>null};
+ const terminal=createActivityTerminal({lobby,duels:{pending:()=>[]},resolveCharacter:async()=> 'Estelle',assignedCharacters:async()=>['Estelle','Joshua'],terminal:{position:{x:1,y:0,z:1}}});
+ assert.deepEqual((await terminal.menu('session')).characters,['Joshua']);await assert.rejects(()=>terminal.menu('invalid'));
+ point.x=100;await assert.rejects(()=>terminal.action('session',{request:'far-away-111',action:'tower'}));point.x=1;
+ const body={request:'enter-tower-111',action:'tower'};await terminal.action('session',body);await terminal.action('session',body);assert.equal(entered,1);
+ await assert.rejects(()=>terminal.action('session',{...body,character:'Joshua'}),e=>e.status===409);
 });
 
 
@@ -292,13 +288,9 @@ test("Capel native footprint blocks movement while its front stays reachable",as
  for(const node of model.nodes){if(node.mesh===undefined)continue;for(const p of model.meshes[node.mesh].primitives){const a=model.accessors[p.attributes.POSITION];assert.ok(a.min[0]>-.8&&a.max[0]<.8);assert.ok(a.min[2]>-.6&&a.max[2]<1.1);}}
 });
 
-test("Capel Prop Hunt owner opens, two users join from their own sessions and start in Rolent",async()=>{
- const {createActivityTerminal}=require("../utils/activityTerminal"),hunt=require("../utils/activityPropHuntGame").createPropHuntGame(),lobby=createActivityLobby({grid,huntGame:hunt,rolent:{grid},resolveCharacter:async id=>id==="one"?"Estelle":"Joshua"});
- const a=await lobby.join({id:"one",channel:"one"}),b=await lobby.join({id:"two",channel:"two"});
- const terminal=createActivityTerminal({lobby,duels:{pending:()=>[]},client:{},resolveCharacter:async id=>id==="one"?"Estelle":"Joshua",assignedCharacters:async()=>["Estelle","Joshua"],terminal:{position:grid.spawn}});
- await terminal.action(a.activity_token,{request:"create-111",action:"hunt_create"});const game=(await terminal.menu(b.activity_token)).hunt;assert.equal(game.count,1);assert.equal(JSON.stringify(game).includes('"owner"'),false);
- await terminal.action(b.activity_token,{request:"join-2222",action:"hunt_join",invitation:game.id});assert.equal((await lobby.state(a.activity_token)).game.canStart,true);assert.equal((await lobby.state(b.activity_token)).game.canStart,false);
- await assert.rejects(()=>terminal.action(b.activity_token,{request:"start-222",action:"hunt_start",invitation:game.id}));await terminal.action(a.activity_token,{request:"start-111",action:"hunt_start",invitation:game.id});assert.equal((await lobby.state(b.activity_token)).game.phase,"preparation");
+test("Capel refuses paused Prop Hunt and capture-the-flag entry points",async()=>{
+ const {createActivityTerminal}=require('../utils/activityTerminal');const terminal=createActivityTerminal({lobby:{identity:()=>({id:'one'})}});
+ for(const action of ['hunt_create','hunt_join','hunt_start','ctf'])await assert.rejects(()=>terminal.action('session',{request:'paused-'+action,action,invitation:'old'}),e=>e.status===403);
 });
 
 
@@ -343,20 +335,10 @@ test('match routing follows participants and spectators, and thread chat stays o
 });
 
 
-test('Capel announces Prop Hunt in general once, without revealing an account, and aborts on failure',async()=>{
- const {createActivityPropHunt}=require('../utils/activityPropHunt'),{createActivityTerminal}=require('../utils/activityTerminal');
- let announced=0,created=0,joined=0,cancelled=0,edited;const lobby={identity:()=>({id:'private-user',map:'anterose'}),terminalPosition:async()=>({...grid.spawn,hp:100}),createHunt:()=>({id:'game-'+(++created),duration:10}),huntSummary:()=>({id:'game-'+created,duration:10}),startHunt:()=>({hunter:'Joshua'}),joinHunt:()=>joined++,cancelHunt:()=>cancelled++};
- const client={channels:{fetch:async id=>{
-  assert.equal(id,'595259248984981516');
-  return {send:async body=>{announced++;assert.doesNotMatch(JSON.stringify(body),/private-user/);assert.match(body.components[0].components[0].custom_id,/prophunt:signup:/);return {id:'announcement',edit:async body=>edited=body};}};
- }}};
- const manager=createActivityPropHunt({lobby,client});
- const terminal=createActivityTerminal({lobby,announceHunt:manager.announce,huntStarted:manager.started,terminal:{position:grid.spawn},resolveCharacter:async()=> 'Estelle'});
- await terminal.action('token',{action:'hunt_create',request:'request-111'});await terminal.action('token',{action:'hunt_create',request:'request-111'});
- assert.equal(announced,1);assert.equal(created,1);assert.equal(joined,1);
- await terminal.action("token",{action:"hunt_start",request:"request-start",invitation:"game-1"});assert.match(edited.content,/Joshua/);assert.deepEqual(edited.components,[]);
- const failing=createActivityTerminal({lobby,announceHunt:async()=>{throw Error('Discord down');},terminal:{position:grid.spawn},resolveCharacter:async()=> 'Estelle'});
- await assert.rejects(()=>failing.action('token',{action:'hunt_create',request:'request-222'}));assert.equal(cancelled,1);assert.equal(joined,1);
+test('paused modes cannot announce games from the Capel',async()=>{
+ const {createActivityTerminal}=require('../utils/activityTerminal');let announcements=0;
+ const terminal=createActivityTerminal({lobby:{identity:()=>({id:'one'})},announceHunt:async()=>announcements++});
+ await assert.rejects(()=>terminal.action('token',{action:'hunt_create',request:'request-111'}));assert.equal(announcements,0);
 });
 
 test('duel intro starts only after both accept, persists once and blocks movement and combat until ready',async()=>{
