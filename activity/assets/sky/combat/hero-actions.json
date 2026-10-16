@@ -28,7 +28,12 @@
       "shape": "line",
       "status": "slow",
       "statusDuration": 4000,
-      "slowFactor": 0.45
+      "slowFactor": 0.45,
+      "whip": true,
+      "pull": true,
+      "bindDelay": 350,
+      "pullDuration": 450,
+      "pullStop": 1.1
     },
     "art": {
       "castEffect": "SC/mgaria0._ef",
