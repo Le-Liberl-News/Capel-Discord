@@ -1,5 +1,5 @@
 """Index installed archives; decode only a selected sound or sprite. Never write to game folders."""
-import json,struct,sys
+import json,struct,sys,hashlib,shutil
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT.parent/'Website/tools'))
@@ -14,7 +14,8 @@ def index(game):
    o=16+i*36;raw=data[o:o+12].decode('ascii','replace');name=(raw[:8].rstrip()+raw[8:].rstrip('\0 ')).lower();size,_,_,_,offset=struct.unpack_from('<5I',data,o+16)
    if size:result.setdefault(name,{'archive':archive,'offset':offset,'size':size})
  return result
-indexes={g:index(g) for g in GAMES}
+requested_game=sys.argv[1] if len(sys.argv)>=3 else None
+indexes={g:index(g) for g in GAMES if requested_game is None or g==requested_game}
 def read(game,name):
  entry=indexes[game][name]
  with (GAMES[game]/f"ED6_DT{entry['archive']:02X}.dat").open('rb') as f:f.seek(entry['offset']);data=f.read(entry['size'])
@@ -41,10 +42,19 @@ else:
   target=CACHE/'scene-models'/game/name;target.mkdir(parents=True,exist_ok=True)
   with tempfile.TemporaryDirectory(prefix='scene-model-') as tmp:
    raw=Path(tmp)/name;raw.write_bytes(read(game,name));parser.read_x_to_gltf(str(raw));model=json.loads(Path(str(raw)+'.gltf').read_text(encoding='utf-8'))
+  texture_names={n.split('.')[0]:n for n in indexes[game] if n.endswith(('._dt','._ds','.dds','.bmp'))}
+  from fast_model_texture import decode_texture
   for image in model.get('images',[]):
-   stem=Path(image['uri'].replace('\\','/')).stem.lower();texture=next((n for n in indexes[game] if n.split('.')[0]==stem and n.endswith(('._dt','._ds','.dds','.bmp'))),None)
+   stem=Path(image['uri'].replace('\\','/')).stem.lower();texture=texture_names.get(stem)
    if texture is None:raise ValueError('Texture absente : '+stem)
-   png=stem+'.png';decode_model_texture(read(game,texture)).save(target/png);image['uri']=png
+   png=stem+'.png'
+   if not (target/png).exists():
+    entry=indexes[game][texture];archive=GAMES[game]/f"ED6_DT{entry['archive']:02X}.dat"
+    stamp=f"{texture}:{entry}:{archive.stat().st_size}:{archive.stat().st_mtime_ns}"
+    shared=CACHE/'scene-textures'/game/(hashlib.sha256(stamp.encode()).hexdigest()+'.png');shared.parent.mkdir(parents=True,exist_ok=True)
+    if not shared.exists():decode_texture(read(game,texture),decode_model_texture).save(shared)
+    shutil.copyfile(shared,target/png)
+   image['uri']=png
   for material in model.get('materials',[]):material['alphaMode']='MASK';material['alphaCutoff']=0.05;material['doubleSided']=True
   (target/'model.gltf').write_text(json.dumps(model),encoding='utf-8');print(json.dumps({'file':str(target/'model.gltf')}))
  else:
