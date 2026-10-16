@@ -13,17 +13,17 @@ function splitAsset(asset){
  if(groups.size<2)return [];
  return [...groups.values()].map((list,index)=>{
   const parts=new Map(),min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
-  for(const {part,start}of list){const src=asset.parts[part];let dst=parts.get(part);if(!dst){dst={...src,positions:[],uv:[],colors:[]};parts.set(part,dst);}const positions=src.positions.slice(start,start+9);dst.positions.push(...positions);dst.uv.push(...src.uv.slice(start/3*2,start/3*2+6));dst.colors.push(...src.colors.slice(start/3*4,start/3*4+12));for(let i=0;i<9;i++){min[i%3]=Math.min(min[i%3],positions[i]);max[i%3]=Math.max(max[i%3],positions[i]);}}
+  for(const {part,start}of list){const src=asset.parts[part];let dst=parts.get(part);if(!dst){dst={...src,positions:[],uv:[],colors:[],...(src.animation?{animation:{...src.animation,frames:src.animation.frames.map(()=>[])}}:{})};parts.set(part,dst);}const positions=src.positions.slice(start,start+9);dst.positions.push(...positions);if(src.animation)src.animation.frames.forEach((frame,i)=>dst.animation.frames[i].push(...frame.slice(start,start+9)));dst.uv.push(...src.uv.slice(start/3*2,start/3*2+6));dst.colors.push(...src.colors.slice(start/3*4,start/3*4+12));for(let i=0;i<9;i++){min[i%3]=Math.min(min[i%3],positions[i]);max[i%3]=Math.max(max[i%3],positions[i]);}}
   const pivot=[(min[0]+max[0])/2,(min[1]+max[1])/2,min[2]];
-  for(const p of parts.values())p.positions=p.positions.map((n,i)=>n-pivot[i%3]);
+  for(const p of parts.values()){p.positions=p.positions.map((n,i)=>n-pivot[i%3]);if(p.animation)p.animation.frames=p.animation.frames.map(frame=>frame.map((n,i)=>n-pivot[i%3]));}
   return {...asset,id:asset.id+':island:'+index,type:asset.type+':island:'+index,label:asset.label+' · objet '+(index+1),parts:[...parts.values()],bounds:min.map((n,i)=>max[i]-n),sourcePivot:pivot.map((n,i)=>n+(asset.sourcePivot?.[i]??0)),group:false};
  });
 }
 function completeModel(assets,id){
- const parts=assets.flatMap(a=>a.parts.map(p=>({...p,positions:p.positions.map((n,i)=>n+(a.sourcePivot?.[i%3]??0))})));
+ const parts=assets.flatMap(a=>a.parts.map(p=>({...p,positions:p.positions.map((n,i)=>n+(a.sourcePivot?.[i%3]??0)),...(p.animation?{animation:{...p.animation,frames:p.animation.frames.map(frame=>frame.map((n,i)=>n+(a.sourcePivot?.[i%3]??0)))}}:{})})));
  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(const p of parts)for(let i=0;i<p.positions.length;i++){min[i%3]=Math.min(min[i%3],p.positions[i]);max[i%3]=Math.max(max[i%3],p.positions[i]);}
- const pivot=[(min[0]+max[0])/2,(min[1]+max[1])/2,min[2]];for(const p of parts)p.positions=p.positions.map((n,i)=>n-pivot[i%3]);
- return {id:id+':node:all',type:'library:'+id+':all',source:id,label:id+' · modèle complet',role:'obstacle',parts,bounds:min.map((n,i)=>max[i]-n),sourcePivot:pivot,group:true};
+ const pivot=[(min[0]+max[0])/2,(min[1]+max[1])/2,min[2]];for(const p of parts){p.positions=p.positions.map((n,i)=>n-pivot[i%3]);if(p.animation)p.animation.frames=p.animation.frames.map(frame=>frame.map((n,i)=>n-pivot[i%3]));}
+ return {id:id+':node:all',type:'library:'+id+':all',source:id,label:id+' · modèle complet',role:'obstacle',parts,animations:parts.some(p=>p.animation)?[{name:parts.find(p=>p.animation).animation.name,duration:parts.find(p=>p.animation).animation.duration}]:[],bounds:min.map((n,i)=>max[i]-n),sourcePivot:pivot,group:true};
 }
 module.exports={splitAsset,completeModel};
 

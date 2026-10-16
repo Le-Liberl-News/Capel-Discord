@@ -20,7 +20,6 @@ function createActivityService({
   navigationFor = () => grid,
   playerPolicy = () => ({}),
   combatEnabled = false,
-  isPumpkin = () => false,
   enemySpawns = [],
   dungeon = null,
   jumpEnabled = false,
@@ -320,8 +319,6 @@ function createActivityService({
             else { session.lastSpeech = now(); actionResult = { text, speaker: player.id, character: session.character }; }
           } else if(point.action.type==='drink'&&onDrink){actionResult=await onDrink({id:point.action.id,actor:session.id,character:session.character,player:{...player},channel:session.channel});}
           else if(player.duelProtected) actionResult={error:player.duelFinished?"Le duel est termine.":"Le combat va commencer."};
-          // a character turned into a pom-tiron has no basic attack, art or craft left
-          else if((['basic','art','craft'].includes(point.action.kind)||point.action.type==='parry')&&isPumpkin(session.character)) actionResult={error:"Pom ?"};
           else actionResult = world.action(player, point.action, room);
           if (actionResult.text) {
             const events = messageStreams.get(session.channel) ?? [];
@@ -394,7 +391,7 @@ function createActivityService({
         character: session.character,
         characterChanged,
         position: { x: player.x, y: player.y, z: player.z },
-        joueurs: [...room.values()].map(({ seen, lastTalk, acceptedAt, movementCredit, ...rest }) => isPumpkin(rest.character)?{...rest,pumpkin:true}:rest),
+        joueurs: [...room.values()].map(({ seen, lastTalk, acceptedAt, movementCredit, ...rest }) => rest),
       };
     },
   };

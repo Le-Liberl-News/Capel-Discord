@@ -16,7 +16,7 @@ export const MAP_LIGHTS={
 // Local illumination augments baked native colours without replacing transparency
 // or geometry. These lights currently have distance falloff, but no wall occlusion.
 export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
-  const horror=/^hallow[1-5]$/.test(map),horrorTint=[[.028,.038,.064],[.035,.042,.06],[.033,.046,.035],[.065,.05,.043],[.055,.027,.037]][Number(map.slice(6))-1];
+  const horror=map==='custom',horrorTint=[.075,.09,.13];
   const sources=[...(MAP_LIGHTS[map]??[]),...extraSources],materials=new Set();
   const uniforms={skyTint:{value:new THREE.Vector3(1,1,1)},skyLamps:{value:0}};
   for(let i=0;i<4;i++){uniforms['skyPhoto'+i]={value:new THREE.Vector4()};uniforms['skyPhotoDir'+i]={value:new THREE.Vector2()};}

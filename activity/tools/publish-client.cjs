@@ -18,10 +18,12 @@ const fs = require("node:fs/promises"),
     await fs.copyFile(path.join(root, source), path.join(output, target));
   await fs.cp(path.join(root, "assets"), path.join(output, "assets"), {
     recursive: true,
+    filter:source=>!/(?:^|[\\/])hallow(?:een(?:-dungeon)?|[1-5])(?:[\\/]|$)/i.test(source),
   });
   const files = {};
   async function hash(folder) {
     for (const e of await fs.readdir(folder, { withFileTypes: true })) {
+      if(/^hallow(?:een(?:-dungeon)?|[1-5])$/i.test(e.name))continue;
       const file = path.join(folder, e.name);
       if (e.isDirectory()) await hash(file);
       else {

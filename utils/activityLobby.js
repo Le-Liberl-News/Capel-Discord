@@ -1,10 +1,9 @@
 const { randomBytes } = require("node:crypto");
 const { createActivityService, ActivityError } = require("./activityService");
 // Real Discord IDs stay inside the server. Every scene exposes random avatar IDs.
-function createActivityLobby({ arena, axis=null, random=Math.random, halloween=null, isHalloweenAdmin=async()=>false, tower = [], halloweenDungeon=[], isDungeonAdmin=isHalloweenAdmin, rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
+function createActivityLobby({ arena, axis=null, random=Math.random, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
   const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
-  const halloweenScenes=new Map(),halloweenPlayback=new Map();
   const trainingRequests=new Map();let trainingSequence=0;
   // the arena board's queue (user -> time joined), shown to the queued player inside the activity
   let arenaQueue=null;
@@ -35,13 +34,12 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
     playerPolicy:user=>huntGame?.policy(user)??{} });
   const towerArrivals=new Map(),towerTeam=new Map();
   const towers=tower.map((floor,i)=>createActivityService({...options,...floor,dungeon:floor.layout,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:(_actor,target)=>target.enemy===true,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
-  const dungeonArrivals=new Map();const dungeons=halloweenDungeon.map((floor,i)=>createActivityService({...options,...floor,dungeon:floor.layout,now,persistent:true,store:worldStores['hallow'+(i+1)],combatEnabled:false,enemySpawns:[],canDamage:()=>false,onDrink:null,onCraft:()=>{},onSay:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>dungeonArrivals.get(user)??floor.grid.spawn}));
   const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(venueConfig(data)?.introDuration??0);}return data;};
   const saved=store?.load();
   for(const [id,replay]of saved?.completedCaptures??[])if(now()-replay.at<600000)completedCaptures.set(id,replay);
   for (const [id,data] of saved?.duels ?? []) if (data.expires>now()) duels.set(id,makeDuel(data));
   for (const [user,id] of saved?.assignments ?? []) if (duels.has(id)) { assignments.set(user,id); lastSeen.set(user,now()); }
-  for (const [user,map] of saved?.locations ?? []) if (["arena","anterose","rolent","hangar","liberl",...towers.map((_,i)=>"tower"+(i+1)),...dungeons.map((_,i)=>"hallow"+(i+1))].includes(map)) locations.set(user,map);
+  for (const [user,map] of saved?.locations ?? []) if (["arena","anterose","rolent","hangar","liberl",...towers.map((_,i)=>"tower"+(i+1))].includes(map)) locations.set(user,map);
   for (const [user] of assignments) if (!locations.has(user)) locations.set(user,"arena");
   for (const [user,id] of saved?.spectators ?? []) spectators.set(user,id);
   const persist=()=>store?.save({completedCaptures:[...completedCaptures],spectators:[...spectators],locations:[...locations],duels:[...duels].map(([id,{service,...data}])=>[id,data]),assignments:[...assignments]});
@@ -67,7 +65,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
     return aliases.get(id);
   };
   function detach(user, returnHome = true) {
-    if (returnHome) {locations.set(user,"anterose");halloweenScenes.delete(user);halloweenPlayback.delete(user);}
+    if (returnHome) {locations.set(user,"anterose");}
     assignments.delete(user); lastSeen.delete(user);
     if (returnHome) for (const session of sessions.values()) if (session.id === user && session.key !== "tavern") session.service.leave(session.token);
   }
@@ -100,8 +98,6 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
   }
   function destination(user) {
     prune(); const id = assignments.get(user), duel = duels.get(id);
-    if(locations.get(user)==='halloween'&&halloweenScenes.has(user))return {key:'halloween:'+alias(user),service:halloweenScenes.get(user),map:'halloween',channel:'map:halloween:'+alias(user),match:null};
-    const dungeonFloor=/^hallow([1-5])$/.exec(locations.get(user)??'');if(dungeonFloor&&dungeons[Number(dungeonFloor[1])-1]){const map='hallow'+dungeonFloor[1];return {key:map,service:dungeons[Number(dungeonFloor[1])-1],map,channel:'map:'+map,match:null};}
     if(hangar&&locations.get(user)==='hangar')return {key:'hangar',service:hangar,map:'hangar',channel:'map:hangar',match:null};
     if(skies&&locations.get(user)==='liberl')return {key:'liberl',service:skies,map:'liberl',channel:'map:liberl',match:null};
     const floor=/^tower([1-4])$/.exec(locations.get(user)??"");if(floor&&towers[Number(floor[1])-1]){const map="tower"+floor[1];return {key:map,service:towers[Number(floor[1])-1],map,channel:"map:"+map,match:null};}
@@ -120,21 +116,6 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
-    async enterHalloweenDungeon(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!dungeons[floor-1])throw new ActivityError('Etage de test indisponible.',400);if(!await isDungeonAdmin(user,{force:true}))throw new ActivityError('Accès au donjon Halloween non autorisé.',403);release(user);huntGame?.leave(user);spectators.delete(user);dungeons[floor-1].resetPlayer(user);dungeonArrivals.set(user,arrival??halloweenDungeon[floor-1].grid.spawn);locations.set(user,'hallow'+floor);persist();},
-    async enterHalloween(user){
-      if(dungeons.length)return this.enterHalloweenDungeon(user);
-      if(!halloween||!await isHalloweenAdmin(user,{force:true}))throw new ActivityError("Accès au test Halloween non autorisé.",403);
-      const definition=halloween.getScript?.();release(user);huntGame?.leave(user);spectators.delete(user);
-      const playback={started:definition?null:now(),duration:definition?.duration??halloween.duration??54000,finished:false,elapsed:0,done:false,eventsCount:definition?.events.length??0};
-      halloweenPlayback.set(user,playback);
-      const walk=require('../activity/scene-script.cjs').walkAt,first=definition?.events.find(e=>['walk','curve'].includes(e.type)&&e.actor==='player');
-      halloweenScenes.set(user,createActivityService({...options,...halloween,residents:definition?.actors.length?{disablePoms:true,npcs:[...(halloween.residents?.npcs??[]).filter(n=>!definition.actors.some(a=>'halloween-'+a.name===n.id)),...definition.actors.filter(a=>a.kind!=='player').map(a=>({id:'halloween-'+a.name,name:a.character,character:a.character,static:true,waypoints:[a.position],lines:[],heading:{dx:0,dz:-1}}))]}:halloween.residents,now,persistent:true,store:null,combatEnabled:false,onSay:()=>{},onCraft:()=>{},onDrink:null,spawnFor:()=>first?.from??halloween.grid.spawn,playerPolicy:()=>{
-        const elapsed=definition?playback.elapsed:Math.max(0,now()-playback.started),locked=definition?!playback.done:elapsed<playback.duration;
-        const movement=definition&&walk({...definition,events:definition.events.slice(0,playback.index??definition.events.length)},'player',elapsed),position=movement&&(!playback.finished)?movement.position:{};
-        if(!locked)playback.finished=true;return {...position,canMove:!locked};
-      }}));
-      locations.set(user,"halloween");
-    },
     attachQueue(queue){arenaQueue=queue;},
     requestTraining(user,mode='duel'){this.leaveStaleDuel(user);trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
     cancelTraining(user){trainingRequests.delete(user);},
@@ -207,7 +188,6 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       return target.service.captureMessage({ ...message, channel: target.channel });
     },
     async join({id,channel}) {
-      prune();if(/^hallow[1-5]$/.test(locations.get(id)??'')&&!await isDungeonAdmin(id,{force:true}))release(id);
       if (assignments.has(id)) lastSeen.set(id,now());
       const old=sessions.get(active.get(id)); if (old) old.service.leave(old.token,true);
       const target=destination(id), result=await target.service.join({id,channel:target.channel});
@@ -222,8 +202,6 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       prune(); const session=sessions.get(token); if (!session) throw new ActivityError("Reconnectez-vous à l'activité.",401);
       if (active.get(session.id)!==token) throw new ActivityError("Activité ouverte dans une autre fenêtre.",409);
       session.seen=now();
-      if(/^hallow[1-5]$/.test(locations.get(session.id)??'')&&!await isDungeonAdmin(session.id))release(session.id);
-      if(locations.get(session.id)==="halloween"&&!await isHalloweenAdmin(session.id))release(session.id);
       const trainingRequest=trainingRequests.get(session.id);if(trainingRequest&&(trainingRequest.expires<=now()||point?.trainingAck===trainingRequest.id))trainingRequests.delete(session.id);
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
       { const id=assignments.get(session.id),duel=duels.get(id); if(duel&&session.key==="arena:"+id&&!duel.arrived?.[session.id]){ (duel.arrived??={})[session.id]=true; persist(); } }
@@ -243,14 +221,13 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       }
       let towerError;
       if(point?.action?.type==='tower_step'&&session.key===destination(session.id).key){
-       session.towerActions??=new Set();const dungeonMode=/^hallow[1-5]$/.test(locations.get(session.id)??''),floor=Number((locations.get(session.id)??'').slice(dungeonMode?6:5)),levels=dungeonMode?halloweenDungeon:tower,services=dungeonMode?dungeons:towers,layout=levels[floor-1]?.layout;
+       session.towerActions??=new Set();const floor=Number((locations.get(session.id)??'').slice(5)),levels=tower,services=towers,layout=levels[floor-1]?.layout;
        if(!session.towerActions.has(point.action.id)){
         const snapshot=await session.service.state(session.token),player=snapshot.joueurs.find(p=>p.id===session.id),up=point.action.target==='up',down=point.action.target==='down',gate=up?layout?.exit:layout?.start,next=floor+(up?1:-1);
         if(!layout||(!up&&!down)||!services[next-1]||!player||player.hp<=0||Math.hypot(player.x-gate.x,player.z-gate.z)>2.2||Math.abs(player.y-gate.y)>1.2)towerError='Approchez-vous du passage.';
-        else{session.towerActions.add(point.action.id);if(session.towerActions.size>128)session.towerActions.delete(session.towerActions.values().next().value);if(dungeonMode)await this.enterHalloweenDungeon(session.id,next,up?levels[next-1].layout.start:levels[next-1].layout.exit);else this.enterTower(session.id,next,up?levels[next-1].layout.start:levels[next-1].layout.exit);}
+        else{session.towerActions.add(point.action.id);if(session.towerActions.size>128)session.towerActions.delete(session.towerActions.values().next().value);this.enterTower(session.id,next,up?levels[next-1].layout.start:levels[next-1].layout.exit);}
        }
       }
-      const playback=halloweenPlayback.get(session.id);if(playback&&playback.started===null&&point?.sceneReady==='halloween')playback.started=now();if(playback&&Number.isFinite(point?.sceneTime))playback.elapsed=Math.min(playback.duration,Math.max(playback.elapsed,point.sceneTime));if(playback&&Number.isSafeInteger(point?.sceneIndex)&&point.sceneIndex>=0)playback.index=Math.max(playback.index??0,Math.min(point.sceneIndex,playback.eventsCount));if(playback&&point?.sceneDone===true)playback.done=true;
       const target=destination(session.id); let changed=false;
       if (session.key!==target.key || session.match!==target.match) {
         session.service.leave(session.token);
@@ -281,7 +258,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       if(duel?.result)publishResult(duelId,duel);
       const introduction=isArena(target.map)&&duel&&(venueConfig(duel).introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,venue:venueOf(duel),startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],titles:duel.players.map((user,i)=>require('./characters').characterTitle(duel.names?.[i]??result.joueurs.find(p=>p.id===user)?.character)),phrases:(duel.names??[]).map((name,i)=>require('./characters').characterEntrance(name,duel.names[1-i])),streaks:duel.players.map(getArenaStreak),result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
       if(isArena(target.map))trainingRequests.delete(session.id);
-      return {...sanitize(result),halloween:target.map==='halloween'?{started:playback?.started,duration:playback?.duration}:undefined,trainingRequest:trainingRequests.get(session.id)?.id,trainingMode:trainingRequests.get(session.id)?.mode,queue:arenaQueue?.has(session.id)?{since:arenaQueue.get(session.id)}:null,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
+      return {...sanitize(result),trainingRequest:trainingRequests.get(session.id)?.id,trainingMode:trainingRequests.get(session.id)?.mode,queue:arenaQueue?.has(session.id)?{since:arenaQueue.get(session.id)}:null,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
         actionResult:boardingError?{id:point.action.id,error:boardingError}:['flight_board','hangar_enter'].includes(point?.action?.type)?{id:point.action.id}:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },
   };

@@ -1,0 +1,3 @@
+// Merge compatible draw calls within an object; retain object boundaries and native animations.
+function batchPreviewParts(parts){const result=[],groups=new Map();for(const part of parts){if(part.animation){result.push(part);continue;}const key=part.texture+'|'+(part.role??'')+'|'+JSON.stringify(part.material)+'|'+Boolean(part.colors?.length);let dst=groups.get(key);if(!dst){dst={...part,positions:[],uv:[],colors:[]};groups.set(key,dst);result.push(dst);}for(const field of ['positions','uv','colors'])for(const value of part[field]??[])dst[field].push(value);}return result;}
+module.exports={batchPreviewParts};

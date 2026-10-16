@@ -129,7 +129,6 @@ client.once('clientReady', async () => {
 
 client.on('interactionCreate', async interaction => {
     if (await require('./utils/activityEntry').handleActivityEntry(interaction)) return;
-    if (await sceneInvitations.handle(interaction)) return;
     if (await arenaBoard.handle(interaction)) return;
     if (await activiteDuels.handle(interaction)) return;
     if (await activitePropHunt.handle(interaction)) return;
@@ -227,26 +226,14 @@ const { createActivityLobby } = require('./utils/activityLobby.js');
 const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
 const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:{...require("./activity/assets/sky/characters.json"),Anton:{}}});
 const capelModel=require("./activity/assets/sky/capel.json");
-// Halloween 2026: one character of the day catches the rhumertume, see utils/rhumertume.js
-const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),announce:async text=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,allowedMentions:{parse:[]}});},log:console.log});
-client.rhumertume=rhumertume;
-setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
 const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
-  send:async payload=>payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{}),threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
+  send:async payload=>payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
-const isHalloweenAdmin=require('./utils/activityHalloweenAccess').createHalloweenAccess(client);
-const sceneInvitations=require('./utils/activitySceneInvitations').createSceneInvitations({client,canInvite:isHalloweenAdmin,store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-scene-invitations.json'))});
-const halloweenRoot=path.join(__dirname,'activity/assets/sky/halloween');
 const activiteService = createActivityLobby({
-    isPumpkin:character=>rhumertume.isInfected(character),
-    isHalloweenAdmin:async(id,options)=>await isHalloweenAdmin(id,options)||sceneInvitations.allowed(id),
-    isDungeonAdmin:isHalloweenAdmin,
-    halloweenDungeon:[1,2,3,4,5].map(floor=>{const root=path.join(__dirname,'activity/assets/sky/hallow'+floor);return {grid:require(path.join(root,'navigation.json')),layout:require(path.join(root,'layout.json')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};}),
-    halloween:{grid:require(path.join(halloweenRoot,'navigation.json')),residents:require(path.join(halloweenRoot,'residents.json')),getScript:()=>require('./activity/scene-script.cjs').compileScene(fs.readFileSync(path.join(halloweenRoot,'ray.sky'),'utf8')),geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(halloweenRoot,'anterose.gltf'),'utf8')))},
     getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,
     huntGame,
     tower:[1,2,3,4].map(floor=>{
@@ -307,7 +294,7 @@ client.once('clientReady',()=>{const rattraper=()=>arenaRanking.settle().catch(e
 setInterval(()=>{if(client.isReady())arenaBoard.tick().catch(e=>console.error('Arena board:',e.message));},10000).unref();
 client.on('messageCreate',message=>{if(message.channelId==='1558125759682576475'&&message.type===18)setTimeout(()=>{if(activiteDuels.ownsThread(message.reference?.channelId??message.id))message.delete().catch(e=>console.error('Arena thread notice:',e.code));},1500).unref();});
 const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({client,lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
-const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({isHalloweenAdmin,announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
+const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
 const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
 
 app.post('/api/token', async (req, res) => {
@@ -345,9 +332,8 @@ app.post('/api/profile', async (req, res) => {
         const response = await fetch('https://discord.com/api/users/@me', {headers: {Authorization: 'Bearer ' + activiteBearer(req)}});
         if (!response.ok) return res.status([401,403].includes(response.status) ? 401 : response.status === 429 ? 429 : 502).json({erreur: [401,403].includes(response.status) ? 'Identification Discord requise.' : 'Connexion Discord temporairement indisponible.'});
         const user = await response.json();
-        const sceneLaunch=typeof req.body?.sceneLink==='string'&&req.body.sceneLink.startsWith('scene:');
         await activityAccess.assertMember(user.id,{force:true});
-        const channel = sceneLaunch?await sceneInvitations.launchContext(req.body.sceneLink,user.id):await client.channels.fetch(String(req.body?.channel || ''));
+        const channel = await client.channels.fetch(String(req.body?.channel || ''));
         activityAccess.assertContext(channel,String(req.body?.guild || ''),user.id);
         if (channel?.guild) {
           if (channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur:'Salon Discord invalide.'});
@@ -357,7 +343,6 @@ app.post('/api/profile', async (req, res) => {
           return res.status(403).json({erreur:'Conversation privée invalide.'});
         }
         res.set('Cache-Control', 'no-store');
-        if(sceneLaunch)await activiteService.enterHalloween(user.id);
         res.json(await activiteService.join({id: user.id, channel: channel.id}));
     } catch (error) {
         if(error.status)return res.status(error.status).json({erreur:error.message});
@@ -472,8 +457,6 @@ client.on('messageCreate', async message => {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         }
-        const malade = message.channelId === roleplayId ? rhumertume.roleplay(pseudo, texte) : null;
-        if (malade) { payload.content = malade.text; payload.avatarURL = malade.avatarURL; }
         if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );

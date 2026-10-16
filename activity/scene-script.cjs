@@ -1,6 +1,6 @@
 // Small declarative scene language. No code evaluation or external commands.
 function compileScene(source){
- let at=0,end=0,map='halloween';const events=[],actors=[],assets=[];
+ let at=0,end=0,map='custom';const events=[],actors=[],assets=[];
  const number=(value,line)=>{const n=Number(value);if(!Number.isFinite(n))throw Error(`Scène ligne ${line}: nombre invalide`);return n;};
  const seconds=(value,line)=>{const n=number(value,line);if(n<0||n>600)throw Error(`Scène ligne ${line}: durée invalide`);return n*1000;};
  source.split(/\r?\n/).forEach((raw,i)=>{

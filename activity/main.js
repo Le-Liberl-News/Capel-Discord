@@ -120,8 +120,8 @@ async function publishCraftCapture({id,bytes,error}) {
 
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 
-const mapTitle = map => map==='axis'?'Pilier Axis - Sommet':/^hallow[1-5]$/.test(map)?'Donjon Halloween · Étage '+map.slice(6): map==='halloween'?'CTZ · Laboratoire de Ray':map==='hangar'?'Antérose · Lynx':map==='liberl'?'Liberl · Lynx':/^tower[1-4]$/.test(map)?map==="tower4"?"Tour d’Esmelas · Sommet":"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
-const musicUrl = map => /^hallow[1-5]$/.test(map)?null:new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : map === "axis" ? "music/axis.ogg" : /^tower[1-4]$/.test(map) ? "music/esmelas.ogg" : "music/anterose.ogg",ASSETS);
+const mapTitle = map => map==='axis'?'Pilier Axis - Sommet':map==='custom'?'Map personnalisée':map==='hangar'?'Antérose · Lynx':map==='liberl'?'Liberl · Lynx':/^tower[1-4]$/.test(map)?map==="tower4"?"Tour d’Esmelas · Sommet":"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+const musicUrl = map => map==='custom'?null:new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : map === "axis" ? "music/axis.ogg" : /^tower[1-4]$/.test(map) ? "music/esmelas.ogg" : "music/anterose.ogg",ASSETS);
 const gameHud = document.createElement("div"), blindfold = document.createElement("div");
 gameHud.id="sky-prophunt"; gameHud.hidden=true;
 gameHud.style.cssText="position:fixed;right:16px;top:64px;z-index:22;padding:12px;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;font:16px AveriaSky,sans-serif;white-space:pre-line";
@@ -256,7 +256,7 @@ async function entrer() {
       "Content-Type": "application/json",
       Authorization: "Bearer " + jeton,
     },
-    body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId,sceneLink:new URLSearchParams(location.search).get('custom_id')??undefined }),
+    body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId }),
   }), { onRetry: (_, attempt, total) => etape(`Connexion au duel : nouvelle tentative ${attempt}/${total}...`) });
   const profile = profileResponse;
   etat.map = profile.map ?? "anterose";

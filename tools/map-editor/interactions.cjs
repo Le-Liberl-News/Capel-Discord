@@ -1,0 +1,4 @@
+const TYPES=new Set(['message','animation']);
+function validateInteraction(value){if(!value)return;if(!TYPES.has(value.type)||typeof value.text!=='string'||value.text.length>12000||typeof value.title!=='string'||value.title.length>160||!Number.isFinite(value.radius)||value.radius<.25||value.radius>20)throw Error('Interaction invalide');if(value.sound&&!/^sounds\/native\/(FC|SC|Third)_ed6se\d+\.wav$/.test(value.sound))throw Error('Bruitage natif invalide');}
+function nearbyInteraction(items,position){return items.filter(o=>{const d=o.interaction,p=o.position;return d&&Math.hypot(p.x-position.x,p.z-position.z)<=d.radius&&Math.abs(p.y-position.y)<2;}).sort((a,b)=>Math.hypot(a.position.x-position.x,a.position.z-position.z)-Math.hypot(b.position.x-position.x,b.position.z-position.z))[0]??null;}
+module.exports={validateInteraction,nearbyInteraction};

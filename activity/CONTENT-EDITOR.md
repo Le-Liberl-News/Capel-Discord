@@ -14,7 +14,7 @@ Ouvrir l’Antérose, Rolent ou l’arène, puis glisser un objet depuis une bib
 - Lumières : emplacement, couleur, rayon, intensité, activation nocturne ; aperçu du cycle jour/nuit. Les textures ont déjà de l’éclairage peint, et les ombres de nouvelles lumières restent à développer et à mesurer sur mobile.
 - Collisions/navigation : afficher les obstacles, vérifier les chemins et reconstruire les données quand un meuble bloquant est déplacé. Les décals ne créent pas d’obstacle.
 
-Tout ceci se place dans une **couche** : « Halloween », « décor RP », etc. Le décor de base reste intact. Une couche peut être activée pour une période, puis désactivée pour retrouver la map habituelle, dans le même monde partagé.
+Tout ceci se place dans une **couche** : « décor RP », etc. Le décor de base reste intact. Une couche peut être activée pour une période, puis désactivée pour retrouver la map habituelle, dans le même monde partagé.
 
 ### Attaque
 
@@ -48,9 +48,9 @@ Le projet contient des définitions légères : maps, couches, attaques, associa
 
 Le serveur garde les règles/collisions nécessaires à la simulation et sert les assets sélectionnés aux clients. Il n’héberge pas les archives complètes. Les données de combat restent autoritaires côté serveur. Activer ou désactiver une couche recharge une version cohérente pour tous ; un pack défectueux peut revenir à la version précédente.
 
-### Exemple Halloween
+### Exemple de décor RP
 
-Créer une couche « Halloween Rolent », placer citrouilles, affiches et traces de sang, ajouter quelques lumières orangées et des fantômes sur une patrouille. Définir des apparences de Prop Hunt et des Poms citrouilles. Dupliquer un craft existant pour remplacer son effet visuel, sans changer ses dégâts par accident. Tester en local, exporter le pack, l’activer pour l’événement ; à la fin, désactiver la couche.
+Créer une couche « Décor de Rolent », placer affiches et mobilier, ajouter quelques lumières orangées et des fantômes sur une patrouille. Définir des apparences de Prop Hunt . Dupliquer un craft existant pour remplacer son effet visuel, sans changer ses dégâts par accident. Tester en local, exporter le pack, l’activer pour l’événement ; à la fin, désactiver la couche.
 
 ## Ordre de réalisation proposé
 

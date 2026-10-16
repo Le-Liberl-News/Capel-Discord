@@ -3427,30 +3427,5 @@
     "bodyPixelHeight": 81,
     "bodyRadiusPixels": 18,
     "bodyHeight": 1.62
-  },
-  "Pom-tiron": {
-    "texture": "halloween/pumpkin-pom-seul.png",
-    "columns": 8,
-    "rows": 4,
-    "frameWidth": 38,
-    "frameHeight": 36,
-    "frames": 32,
-    "directions": 8,
-    "idle": [
-      0
-    ],
-    "run": [
-      0,
-      1,
-      2,
-      3
-    ],
-    "fps": 8,
-    "height": 0.72,
-    "centerX": 0,
-    "centerY": 0.36,
-    "bodyPixelHeight": 33,
-    "bodyHeight": 0.66,
-    "pixelScale": 0.02
   }
 }

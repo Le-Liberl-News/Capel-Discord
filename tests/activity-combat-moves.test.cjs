@@ -203,8 +203,8 @@ test('starting a right-button camera drag preserves compatibility mouse events f
 
 
 test('camera-driven facing applies only in arenas and exploration dungeons',()=>{
- for(const map of ['arena','axis','tower1','tower2','tower3','tower4','hallow1','hallow5'])assert.equal(moves.usesCombatFacing(map),true,map);
- for(const map of ['anterose','hangar','rolent','halloween','liberl'])assert.equal(moves.usesCombatFacing(map),false,map);
+ for(const map of ['arena','axis','tower1','tower2','tower3','tower4','custom'])assert.equal(moves.usesCombatFacing(map),true,map);
+ for(const map of ['anterose','hangar','rolent','liberl'])assert.equal(moves.usesCombatFacing(map),false,map);
 });
 
 test('dash cooldown is three and a half seconds',()=>assert.equal(moves.DODGE.cooldown,3500));

@@ -1,6 +1,6 @@
 const {terminalNearby}=require("../activity/terminal-world.cjs");
 const {ActivityError}=require("./activityService");
-function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,isHalloweenAdmin=async()=>false,now=Date.now}) {
+function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,now=Date.now}) {
  const pending=new Map(),completed=new Map();
  async function nearby(token) {
   const identity=lobby.identity(token),p=await lobby.terminalPosition(token);
@@ -10,13 +10,12 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  }
  async function menu(token) {
   const {id}=await nearby(token),own=await resolveCharacter(id),characters=await assignedCharacters();
-  return {halloweenTest:await isHalloweenAdmin(id),testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
+  return {testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
  }
  async function perform(token,body) {
   const {id}=lobby.identity(token);
   switch(body.action) {
    case "rematch": {const opponent=lobby.rematchOpponent(body.invitation,id);return duels.challenge({id},opponent,client,true);}
-   case "halloween_test": {await nearby(token);await lobby.enterHalloween(id);return {message:"Donjon Halloween rejoint."};}
    case "tower": {await nearby(token);lobby.enterTower(id,1);return {message:"Tour rejointe."};}
    case "test_character": {
     await nearby(token);

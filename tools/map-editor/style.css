@@ -17,3 +17,11 @@ body.immersive>header,body.immersive>footer,body.immersive main>aside,body.immer
 #asset-destination input:not([type=checkbox]),#asset-destination select{width:100%;max-width:100%}#asset-result{color:#a9e6bf;font-size:12px;white-space:normal;overflow-wrap:anywhere}
 
 #library-dialog .library-actions{display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;border-top:1px solid #46536b}#library-dialog .library-actions button{width:auto}#library-combine{background:#405c7f}#asset-result:empty{display:none}
+
+#room-fields label{font-size:12px}#room-fields input,#room-fields select,#room-tools input,#room-tools select{width:100%;min-width:0}#room-fields button,#room-tools>button,#room-adopt{width:100%;margin:4px 0}#room-fields input{padding:5px}
+
+#interaction-fields textarea{box-sizing:border-box;width:100%;font:inherit;color:inherit;background:#171b24;border:1px solid #596070;padding:6px;resize:vertical}#interaction-fields label{display:block;margin:8px 0}
+
+.catalogue-entry{display:flex;gap:4px;margin:4px 0}.catalogue-entry>button:first-child{flex:0 0 32px;color:#ffd479}.catalogue-entry>button:last-child{flex:1;min-width:0;text-align:left}
+
+.catalogue-entry{content-visibility:auto;contain-intrinsic-size:auto 65px}#library-load-status{font-size:13px;color:#e0c58b;max-width:300px}

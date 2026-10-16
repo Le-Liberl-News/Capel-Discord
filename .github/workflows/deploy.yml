@@ -80,6 +80,7 @@ jobs:
 
           cd /home/twnkek290001/LN-Bot
           npm install --omit=dev --no-audit --no-fund
+          node tools/prune-retired-files.cjs
           node tools/sync-application-commands.cjs
           chmod +x maj.sh
           ./maj.sh

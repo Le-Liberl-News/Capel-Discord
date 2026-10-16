@@ -310,11 +310,10 @@ module.exports = async function handleModals(interaction, sheets) {
         const messageUrl = `https://discord.com/channels/${guildId}/${threadId}/${targetMessageId}`;
 
         try {
-            const malade = isRoleplay ? interaction.client.rhumertume?.roleplay(pseudo, texte) : null;
             const payload = {
-                content: `> [**${auteurOriginal}** : ${extrait}](${messageUrl})\n${malade ? malade.text : texte}`,
+                content: `> [**${auteurOriginal}** : ${extrait}](${messageUrl})\n${texte}`,
                 username: pseudo,
-                avatarURL: malade ? malade.avatarURL : `${process.env.BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`,
+                avatarURL: `${process.env.BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`,
             };
             if (!isRoleplay) payload.threadId = threadId;
 
