@@ -3967,7 +3967,7 @@
     "source": {
       "model": "chr5314.glb",
       "clip": "chr5314_m_walk.glb",
-      "look": "v9",
+      "look": "v9-satin-leger",
       "generatedWithAI": false
     },
     "cropBox": [
@@ -4012,7 +4012,7 @@
     "source": {
       "model": "chr0317.glb",
       "clip": "chr0317_m_walk.glb",
-      "look": "v9",
+      "look": "v9-satin-leger",
       "generatedWithAI": false
     },
     "cropBox": [
