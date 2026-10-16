@@ -290,7 +290,7 @@ test("Capel native footprint blocks movement while its front stays reachable",as
 
 test("Capel refuses paused Prop Hunt and capture-the-flag entry points",async()=>{
  const {createActivityTerminal}=require('../utils/activityTerminal');const terminal=createActivityTerminal({lobby:{identity:()=>({id:'one'})}});
- for(const action of ['hunt_create','hunt_join','hunt_start','ctf'])await assert.rejects(()=>terminal.action('session',{request:'paused-'+action,action,invitation:'old'}),e=>e.status===403);
+ for(const action of ['hunt_create','hunt_join','hunt_start','ctf'])await assert.rejects(()=>terminal.action('session',{request:'paused-111-'+action.replace(/_/g,'-'),action,invitation:'old'}),e=>e.status===403);
 });
 
 

@@ -17,7 +17,7 @@ function createActivityPropHunt({lobby,resolveCharacter,client,generalChannel="5
    if(changed)await message.edit({components});
   }
  },async handle(interaction){
-  if((interaction.isChatInputCommand?.()&&interaction.commandName==='prophunt')||(interaction.isButton?.()&&/^(prophunt:|activity:prophunt:)/.test(interaction.customId??''))){await interaction.reply({content:'Mode indisponible.',flags:64});if(interaction.message?.author?.id===client.user?.id)await interaction.message.edit({components:[]}).catch(()=>{});return true;}
+  if((interaction.isChatInputCommand?.()&&interaction.commandName==='prophunt')||(interaction.isButton?.()&&/^(prophunt:|activity:prophunt:)/.test(interaction.customId??''))){await interaction.reply({content:'Mode indisponible.',flags:64});if(interaction.message&&client?.user?.id&&interaction.message.author?.id===client.user.id)await interaction.message.edit({components:[]}).catch(()=>{});return true;}
 
   if(interaction.isChatInputCommand?.()&&interaction.commandName==='prophunt'){
    await interaction.deferReply({flags:64});
