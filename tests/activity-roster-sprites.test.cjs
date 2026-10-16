@@ -10,7 +10,18 @@ test('every character assignable in chat has its own existing sprite asset',()=>
  }
 });
 test('limited cutscene sources do not invent walking directions',()=>{
- for(const name of ['Ein Selnate','Jack','Halle'])assert.equal(catalogue[name].directions,1,name);
- for(const name of ['Jack','Halle'])assert.equal(catalogue[name].source.kind,'illustration',name);
+ assert.equal(catalogue['Ein Selnate'].directions,1);
  assert.equal(catalogue['Rufina Argent'].source.chip,'ch03940');
+});
+
+test('Jack and Halle have twelve walking poses in all eight directions',()=>{
+ for(const name of ['Jack','Halle']){
+  const info=catalogue[name];
+  assert.equal(info.directions,8,name);
+  assert.equal(info.run.length,12,name);
+  assert.equal(info.source.generatedWithAI,false,name);
+  const png=fs.readFileSync(path.join(__dirname,'../activity/assets/sky',info.texture));
+  assert.equal(png.readUInt32BE(16),info.columns*info.frameWidth,name);
+  assert.equal(png.readUInt32BE(20),info.rows*info.frameHeight,name);
+ }
 });

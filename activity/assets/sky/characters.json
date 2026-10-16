@@ -3934,55 +3934,93 @@
     }
   },
   "Halle": {
-    "texture": "roster-c_vis550.png",
-    "columns": 1,
-    "rows": 1,
-    "frameWidth": 49,
-    "frameHeight": 86,
-    "frames": 1,
+    "texture": "halle-marche.png",
+    "columns": 8,
+    "rows": 13,
+    "frames": 104,
+    "frameWidth": 52,
+    "frameHeight": 91,
+    "directions": 8,
     "idle": [
       0
     ],
     "run": [
-      0
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
     ],
-    "directions": 1,
-    "fps": 1,
-    "height": 1.72,
+    "fps": 10,
     "pixelScale": 0.02,
+    "height": 1.82,
+    "centerX": 0,
+    "centerY": 0.87,
     "bodyHeight": 1.72,
     "source": {
-      "game": "Third",
-      "chip": "c_vis550",
-      "scene": "e1000",
-      "kind": "illustration",
-      "limitedAnimation": true
-    }
+      "model": "chr5314.glb",
+      "clip": "chr5314_m_walk.glb",
+      "look": "v9",
+      "generatedWithAI": false
+    },
+    "cropBox": [
+      22,
+      27,
+      74,
+      118
+    ],
+    "bodyPixelHeight": 86
   },
   "Jack": {
-    "texture": "roster-c_vis560.png",
-    "columns": 1,
-    "rows": 1,
-    "frameWidth": 50,
-    "frameHeight": 86,
-    "frames": 1,
+    "texture": "jack-marche.png",
+    "columns": 8,
+    "rows": 13,
+    "frames": 104,
+    "frameWidth": 52,
+    "frameHeight": 92,
+    "directions": 8,
     "idle": [
       0
     ],
     "run": [
-      0
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
     ],
-    "directions": 1,
-    "fps": 1,
-    "height": 1.72,
+    "fps": 10,
     "pixelScale": 0.02,
+    "height": 1.84,
+    "centerX": 0,
+    "centerY": 0.84,
     "bodyHeight": 1.72,
     "source": {
-      "game": "Third",
-      "chip": "c_vis560",
-      "scene": "e1000",
-      "kind": "illustration",
-      "limitedAnimation": true
-    }
+      "model": "chr0317.glb",
+      "clip": "chr0317_m_walk.glb",
+      "look": "v9",
+      "generatedWithAI": false
+    },
+    "cropBox": [
+      22,
+      28,
+      74,
+      120
+    ],
+    "bodyPixelHeight": 86
   }
 }
