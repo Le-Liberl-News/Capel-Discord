@@ -86,7 +86,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
         }
   }
   async function boardInvite(players,client,automatic=false) {
-    prune();if(players.some(user=>lobby.matchFor(user)))throw new DuelError("Un personnage est d\u00e9j\u00e0 en duel.");if(players[0]===players[1])throw new DuelError("Choisissez un autre personnage.");
+    prune();if(players.some(user=>lobby.busyInDuel?lobby.busyInDuel(user):lobby.matchFor(user)))throw new DuelError("Un personnage est d\u00e9j\u00e0 en duel.");if(players[0]===players[1])throw new DuelError("Choisissez un autre personnage.");
     const names=await Promise.all(players.map(resolveCharacter));
     lobby.prepareDuel(players[0],players[1]);const id="duel:"+randomBytes(16).toString("hex");
     lobby.createDuel({id,channel:spectatorChannel,players,names});

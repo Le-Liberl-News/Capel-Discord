@@ -9,6 +9,10 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
   // the arena board's queue (user -> time joined), shown to the queued player inside the activity
   let arenaQueue=null;
   const presenceGrace = 2 * 60 * 1000;
+  // A started duel is called off when one fighter stays away: 1 min once they have reached the arena, 3 min to get
+  // there at first (opening the activity from a DM, loading the venue); a finished one once someone has left for 30 s.
+  const duelAbsence = 60 * 1000, duelArrival = 3 * 60 * 1000, finishedAbsence = 30 * 1000;
+  const isReady = duel => !!duel && duel.players.every(p => duel.accepted?.includes(p));
   const sources = new Map(), locations = new Map(), spectators = new Map();
   const tavern = createActivityService({ ...options, onSay:event=>options.onSay?.({...event,map:"anterose"}), now, persistent: true, store: worldStores.anterose });
   const skies=airship&&require('./activityAirship').createActivityAirship({...airship,now,resolveCharacter:options.resolveCharacter,onSay:options.onSay,store:worldStores.liberl});
@@ -83,7 +87,11 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
   function prune() {
     let changed = false;
     for(const [id,replay]of completedCaptures)if(now()-replay.at>=600000){completedCaptures.delete(id);changed=true;}
-    for (const [user] of assignments) if (now() - (lastSeen.get(user) ?? 0) > presenceGrace) { release(user,false,false); changed = true; }
+    for (const [id, duel] of duels) if (isReady(duel)) {
+      const away = user => now() - Math.max(lastSeen.get(user) ?? 0, duel.readyAt ?? 0) > (duel.result ? finishedAbsence : duel.arrived?.[user] ? duelAbsence : duelArrival);
+      if (duel.players.some(away)) { closeDuel(id); changed = true; }
+    }
+    for (const [user, id] of assignments) if (!isReady(duels.get(id)) && now() - (lastSeen.get(user) ?? 0) > presenceGrace) { release(user,false,false); changed = true; }
     for (const [id, duel] of duels) if (duel.expires < now()) {
       closeDuel(id); changed = true;
     }
@@ -128,7 +136,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       locations.set(user,"halloween");
     },
     attachQueue(queue){arenaQueue=queue;},
-    requestTraining(user,mode='duel'){trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
+    requestTraining(user,mode='duel'){this.leaveStaleDuel(user);trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
     cancelTraining(user){trainingRequests.delete(user);},
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
@@ -139,6 +147,13 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
     setDuelThread(id,thread) { const d=duels.get(id);if(d){d.thread=thread;persist();} },
     rematchOpponent(id,user){const d=duels.get(id);if(!d?.result||!d.players.includes(user))throw new ActivityError("Revanche indisponible.",403);const name=d.names[1-d.players.indexOf(user)];closeDuel(id);persist();return name;},
     duelStatus(id,user) {const d=duels.get(id);return d?.players.includes(user)?{accepted:d.accepted?.includes(user)??false}:null;},
+    // in a started duel that is not over: the only case that keeps someone from training, the queue or a new challenge
+    busyInDuel(user) { prune(); const duel=duels.get(assignments.get(user)); return isReady(duel)&&!duel.result; },
+    // a finished duel, or a challenge nobody accepted yet, gives way to whatever the player asks for next
+    leaveStaleDuel(user) { const duel=duels.get(assignments.get(user)); if(duel&&(duel.result||!isReady(duel))){ release(user); persist(); } },
+    // fighters of a started duel who have not reached it a while after it began, each named once (to send them the way in)
+    duelLatecomers(after=20000) { prune(); const late=[]; for(const [id,duel] of duels) if(isReady(duel)&&!duel.result&&now()-(duel.readyAt??0)>after) for(const user of duel.players) if(!duel.arrived?.[user]&&!duel.reminded?.[user]){ (duel.reminded??={})[user]=true; late.push({id,user}); } if(late.length)persist(); return late; },
+    markReminded(id,user) { const duel=duels.get(id); if(duel){ (duel.reminded??={})[user]=true; persist(); } },
     isConnected(user) { const session=sessions.get(active.get(user));return !!session && session.expires>now() && now()-(session.seen??-Infinity)<15000; },
     findDuel(players, channel) {
       prune();
@@ -152,7 +167,9 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
     },
     prepareDuel(user, opponent) {
       prune();
-      if(duels.get(assignments.get(opponent))?.result)release(opponent);
+      // a finished duel, or one whose fighter has closed the activity, no longer keeps the opponent busy
+      const theirs=duels.get(assignments.get(opponent));
+      if(theirs&&(theirs.result||!this.isConnected(opponent)))release(opponent);
       if (assignments.has(opponent)) throw new ActivityError("Le personnage ciblé est déjà dans un duel actif.");
       huntGame?.leave(user); spectators.delete(user); release(user); persist();
     },
@@ -209,6 +226,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, halloween=n
       if(locations.get(session.id)==="halloween"&&!await isHalloweenAdmin(session.id))release(session.id);
       const trainingRequest=trainingRequests.get(session.id);if(trainingRequest&&(trainingRequest.expires<=now()||point?.trainingAck===trainingRequest.id))trainingRequests.delete(session.id);
       if (assignments.has(session.id)) lastSeen.set(session.id,now());
+      { const id=assignments.get(session.id),duel=duels.get(id); if(duel&&session.key==="arena:"+id&&!duel.arrived?.[session.id]){ (duel.arrived??={})[session.id]=true; persist(); } }
       if (["leave_duel","leave_map"].includes(point?.action?.type)) { skies?.resetPlayer(session.id);huntGame?.leave(session.id); spectators.delete(session.id); release(session.id); persist(); }
       let boardingError;
       if(point?.action?.type==='hangar_enter'&&session.hangarAction!==point.action.id){

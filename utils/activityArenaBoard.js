@@ -7,7 +7,10 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
  const saveNotices=()=>{saved.queueNotices=[...notices];store.save(saved);};
  async function removeNotice(user){const id=notices.get(user);if(!id)return;try{const channel=await client.channels.fetch(CHANNEL);await channel.messages.delete(id);}catch(e){if(e.code!==10008&&e.code!==10003)throw e;}notices.delete(user);saveNotices();}
  async function announceQueue(user){if(notices.has(user))return;const name=resolveCharacter?await resolveCharacter(user):(await assigned()).find(r=>r.user===user)?.name;if(!name)return;const channel=await client.channels.fetch(CHANNEL);const message=await channel.send({content:name+" entre dans la file d\u2019attente de l'ar\u00e8ne.",allowedMentions:{parse:[]},components:[{type:1,components:[{type:2,custom_id:'arena:queue',label:'Rejoindre la file',style:1}]}]});notices.set(user,message.id);saveNotices();}
+ // only a started duel not over yet keeps someone busy (lobbies without that notion: any match)
+ const inDuel=user=>lobby.busyInDuel?lobby.busyInDuel(user):!!lobby.matchFor(user);
  const button=(id,label,style=2)=>({type:2,custom_id:'arena:'+id,label,style});
+ async function sendWayIn(user,id,content){const member=await client.users.fetch(user);await member.send({content,components:[{type:1,components:[{type:2,custom_id:'activity:'+id,label:'Rejoindre le duel',style:1}]}],allowedMentions:{parse:[]}});}
  async function refresh() {
   if(busy)return;busy=true;
   try {
@@ -31,12 +34,14 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
  }
  return {refresh,
   async tick(){if(ticking)return;ticking=true;try{
-   for(const [id,at] of queue)if(now()-at>10*60*1000||lobby.matchFor(id))queue.delete(id);
+   for(const [id,at] of queue)if(now()-at>10*60*1000||inDuel(id))queue.delete(id);
    const ready=[...queue.keys()].filter(id=>lobby.isConnected(id));
    while(ready.length>=2){const pair=ready.splice(0,2);pair.forEach(id=>queue.delete(id));try{await duels.match(pair,client);}catch(e){console.error('Arena matchmaking:',e.message);}}
    // someone waits in the activity and a recent queued player closed theirs: start the duel and send them the way back in DM
    const away=[...queue].filter(([id,at])=>!lobby.isConnected(id)&&now()-at<3*60*1000).map(([id])=>id);
-   while(ready.length&&away.length){const present=ready.shift(),absent=away.shift();queue.delete(present);queue.delete(absent);try{const id=await duels.match([present,absent],client);const user=await client.users.fetch(absent);await user.send({content:'Adversaire trouvé dans la file d’attente de l’arène !',components:[{type:1,components:[{type:2,custom_id:'activity:'+id,label:'Rejoindre le duel',style:1}]}],allowedMentions:{parse:[]}});}catch(e){console.error('Arena matchmaking (DM):',e.code??e.message);}}
+   while(ready.length&&away.length){const present=ready.shift(),absent=away.shift();queue.delete(present);queue.delete(absent);try{const id=await duels.match([present,absent],client);lobby.markReminded?.(id,absent);await sendWayIn(absent,id,'Adversaire trouvé dans la file d’attente de l’arène !');}catch(e){console.error('Arena matchmaking (DM):',e.code??e.message);}}
+   // a fighter who has not reached a started duel (activity closed, or lost while loading the venue) gets the way in by DM
+   for(const {id,user} of lobby.duelLatecomers?.()??[])await sendWayIn(user,id,'Votre duel a commencé dans l’arène : rejoignez-le ici.').catch(e=>console.error('Arena duel reminder (DM):',e.code??e.message));
    for(const user of notices.keys())if(!queue.has(user))await removeNotice(user);
    await duels.cleanupAnnouncements?.(client);
    await refresh();
@@ -59,8 +64,8 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
     }
     else if(action==='next'||action==='previous'){await i.deferUpdate();page=Math.max(0,page+(action==='next'?1:-1));await refresh();}
     else if(action==='leave'){queue.delete(user);await removeNotice(user);await i.reply({content:'File quittée.',flags:64});await refresh();}
-    else if(action==='queue'){if(lobby.matchFor(user))throw Error('Vous êtes déjà en duel.');if(lobby.isConnected(user))await i.reply({content:'En attente dans la file.',flags:64});else await i.launchActivity();const alreadyQueued=queue.has(user);queue.set(user,now());if(!alreadyQueued)await announceQueue(user).catch(e=>console.error("Arena queue announcement:",e.code??e.message));await refresh();}
-    else if(action==='training'||action==='ctf'){if(lobby.matchFor(user))throw Error('Vous êtes déjà en duel.');lobby.requestTraining(user,action==='ctf'?'ctf':'duel');try{if(lobby.isConnected(user))await i.reply({content:action==='ctf'?'Capture du drapeau lancée : choisissez votre équipe.':'Entraînement lancé.',flags:64});else await i.launchActivity();}catch(e){lobby.cancelTraining(user);throw e;}}
+    else if(action==='queue'){if(inDuel(user))throw Error('Vous êtes déjà en duel.');lobby.leaveStaleDuel?.(user);if(lobby.isConnected(user))await i.reply({content:'En attente dans la file.',flags:64});else await i.launchActivity();const alreadyQueued=queue.has(user);queue.set(user,now());if(!alreadyQueued)await announceQueue(user).catch(e=>console.error("Arena queue announcement:",e.code??e.message));await refresh();}
+    else if(action==='training'||action==='ctf'){if(inDuel(user))throw Error('Vous êtes déjà en duel.');lobby.requestTraining(user,action==='ctf'?'ctf':'duel');try{if(lobby.isConnected(user))await i.reply({content:action==='ctf'?'Capture du drapeau lancée : choisissez votre équipe.':'Entraînement lancé.',flags:64});else await i.launchActivity();}catch(e){lobby.cancelTraining(user);throw e;}}
     else if(action==='open'){if(lobby.isConnected(user))await i.reply({content:'Activite ouverte.',flags:64});else await i.launchActivity();}
     else if(action==='requests'){const requests=duels.pending(user).slice(0,5);await i.reply({content:requests.length?'Défis reçus :':'Aucun défi en attente.',flags:64,components:requests.length?[{type:1,components:requests.map(r=>button('accept:'+r.id,r.opponent,1))}]:[]});}
     else if(action.startsWith('accept:')){if(lobby.isConnected(user))await i.reply({content:'Duel rejoint.',flags:64});else await i.launchActivity();await duels.accept(action.slice(7),user,client);}

@@ -483,3 +483,29 @@ test('arena allows server-owned jumps while keeping spectators on their free cam
 test('Training launch request survives polls until acknowledged and a human duel takes priority',async()=>{const lobby=createActivityLobby({grid,arena:{grid},resolveCharacter:async()=> 'Estelle'});const session=await lobby.join({id:'user',channel:'room'});lobby.requestTraining('user');const first=await lobby.state(session.activity_token,{passive:true});assert.ok(first.trainingRequest);assert.equal((await lobby.state(session.activity_token)).trainingRequest,first.trainingRequest);assert.equal((await lobby.state(session.activity_token,{trainingAck:first.trainingRequest,passive:true})).trainingRequest,undefined);lobby.requestTraining('user');lobby.createDuel({id:'match',players:['user','other']});lobby.joinDuel('match','user');const result=await lobby.state(session.activity_token);assert.equal(result.map,'arena');assert.equal(result.trainingRequest,undefined);});
 
 test("Rematches require a finished duel participant and consume only that arena",()=>{const lobby=createActivityLobby({grid,now:()=>100,resolveCharacter:async()=>"Estelle",arena:{grid},store:{load:()=>({duels:[["finished",{players:["a","b"],names:["Estelle","Joshua"],accepted:["a","b"],expires:10000,result:{winner:"a",loser:"b",at:10,captureId:"done"}}],["live",{players:["c","d"],names:["Walter","Zin"],expires:10000}]],assignments:[["a","finished"],["b","finished"],["c","live"]]}),save:()=>{}}});assert.throws(()=>lobby.rematchOpponent("finished","outsider"));assert.throws(()=>lobby.rematchOpponent("live","c"));assert.equal(lobby.rematchOpponent("finished","a"),"Joshua");assert.equal(lobby.duelStatus("finished","a"),null);assert.ok(lobby.duelStatus("live","c"));assert.throws(()=>lobby.rematchOpponent("finished","b"));});
+const startDuel=async(lobby,id='duel:live')=>{lobby.createDuel({id,channel:'guild',players:['a','b']});for(const user of ['a','b']){lobby.joinDuel(id,user);lobby.acceptDuel(id,user);}const a=await lobby.join({id:'a',channel:'dm-a'}),b=await lobby.join({id:'b',channel:'dm-b'});await lobby.state(a.activity_token);await lobby.state(b.activity_token);return {a,b};};
+test('a started duel is called off a minute after one fighter closes the activity; the other goes home free',async()=>{
+ const {lobby,tick}=fixture();const {b}=await startDuel(lobby);
+ assert.equal(lobby.busyInDuel('a'),true);
+ for(let t=0;t<55;t+=5){tick(5000);await lobby.state(b.activity_token);}assert.equal(lobby.busyInDuel('b'),true);
+ for(let t=0;t<10;t+=5){tick(5000);await lobby.state(b.activity_token);}
+ assert.equal(lobby.busyInDuel('a'),false);assert.equal(lobby.busyInDuel('b'),false);assert.equal((await lobby.state(b.activity_token)).map,'anterose');
+});
+test('both fighters gone: the duel no longer holds either of them',async()=>{
+ const {lobby,tick}=fixture();await startDuel(lobby);tick(61000);
+ assert.equal(lobby.busyInDuel('a'),false);assert.equal(lobby.busyInDuel('b'),false);assert.equal(lobby.matchFor('a'),null);
+});
+test('a fighter who never reached a started duel has three minutes, and is named once for a reminder after 20 s',()=>{
+ const {lobby,tick}=fixture();lobby.createDuel({id:'duel:late',channel:'guild',players:['a','b']});for(const user of ['a','b']){lobby.joinDuel('duel:late',user);lobby.acceptDuel('duel:late',user);}
+ tick(21000);assert.deepEqual(lobby.duelLatecomers().map(l=>l.user),['a','b']);assert.deepEqual(lobby.duelLatecomers(),[]);
+ tick(150000);assert.equal(lobby.busyInDuel('a'),true);tick(15000);assert.equal(lobby.busyInDuel('a'),false);
+});
+test('a finished duel or an unanswered challenge never keeps someone from training or a new duel',async()=>{
+ const store={load:()=>({duels:[['duel:over',{players:['a','b'],accepted:['a','b'],channel:'g',names:['Estelle','Joshua'],readyAt:0,startsAt:0,expires:1e12,result:{winner:'a',loser:'b',at:0}}]],assignments:[['a','duel:over'],['b','duel:over']],locations:[['a','arena'],['b','arena']]}),save(){}};
+ const lobby=createActivityLobby({grid,now:()=>1000,store,resolveCharacter:async()=>'Estelle',arena:{grid,residents:{npcs:[]}}});
+ assert.equal(lobby.busyInDuel('a'),false);
+ lobby.requestTraining('a');assert.equal((await lobby.join({id:'a',channel:'dm-a'})).map,'anterose');
+ lobby.prepareDuel('c','b');assert.equal(lobby.duelStatus('duel:over','b'),null);
+ lobby.createDuel({id:'duel:pending',channel:'guild',players:['d','e']});lobby.joinDuel('duel:pending','d');
+ lobby.requestTraining('d');assert.equal(lobby.duelStatus('duel:pending','d'),null);assert.equal((await lobby.join({id:'d',channel:'dm-d'})).map,'anterose');
+});
