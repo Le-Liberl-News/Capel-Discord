@@ -3934,7 +3934,7 @@
     }
   },
   "Halle": {
-    "texture": "halle-marche.png",
+    "texture": "halle-satin-851801dede.png",
     "columns": 8,
     "rows": 13,
     "frames": 104,
@@ -3979,7 +3979,7 @@
     "bodyPixelHeight": 86
   },
   "Jack": {
-    "texture": "jack-marche.png",
+    "texture": "jack-satin-d8b190e5c7.png",
     "columns": 8,
     "rows": 13,
     "frames": 104,
