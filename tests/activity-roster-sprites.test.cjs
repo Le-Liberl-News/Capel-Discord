@@ -10,8 +10,17 @@ test('every character assignable in chat has its own existing sprite asset',()=>
  }
 });
 test('limited cutscene sources do not invent walking directions',()=>{
- assert.equal(catalogue['Ein Selnate'].directions,1);
  assert.equal(catalogue['Rufina Argent'].source.chip,'ch03940');
+});
+
+test('Ein walks in all eight directions from her 3D model',()=>{
+ const info=catalogue['Ein Selnate'];
+ assert.equal(info.directions,8);
+ assert.equal(info.run.length,8);
+ assert.equal(info.source.generatedWithAI,false);
+ const png=fs.readFileSync(path.join(__dirname,'../activity/assets/sky',info.texture));
+ assert.equal(png.readUInt32BE(16),info.columns*info.frameWidth);
+ assert.equal(png.readUInt32BE(20),info.rows*info.frameHeight);
 });
 
 test('Jack and Halle have twelve walking poses in all eight directions',()=>{

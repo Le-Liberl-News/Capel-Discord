@@ -3749,29 +3749,39 @@
     }
   },
   "Ein Selnate": {
-    "texture": "roster-ch20744.png",
+    "texture": "ein-sky-d0a435333d.png",
     "columns": 8,
-    "rows": 1,
-    "frameWidth": 38,
-    "frameHeight": 82,
-    "frames": 1,
+    "rows": 9,
+    "frameWidth": 91,
+    "frameHeight": 95,
+    "frames": 72,
     "idle": [
       0
     ],
     "run": [
-      0
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
     ],
-    "directions": 1,
-    "fps": 8,
-    "height": 1.6400000000000001,
+    "directions": 8,
+    "fps": 12,
     "pixelScale": 0.02,
-    "bodyHeight": 1.6400000000000001,
-    "centerX": -0.32,
+    "height": 1.9000000000000001,
+    "centerX": 0.01,
+    "centerY": 0.81,
+    "bodyHeight": 1.6600000000000001,
     "source": {
-      "game": "Third",
-      "chip": "ch20744",
-      "scene": "e1210"
-    }
+      "model": "kzgjol pet_222 (ein_selnate.glb)",
+      "clip": "idle (pose de repos) / run",
+      "look": "atelier-sprites, satin doux",
+      "generatedWithAI": false
+    },
+    "bodyPixelHeight": 83
   },
   "Rufina Argent": {
     "texture": "roster-ch03940.png",
