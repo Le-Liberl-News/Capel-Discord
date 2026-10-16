@@ -198,7 +198,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = isArena ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
-  const arenaAudience=map==='arena'?await createArenaAudience(THREE,scene,ASSETS,catalogue,arenaIntroDefinition,cutaway):null;
+  const arenaAudience=map==='arena'?await createArenaAudience(THREE,scene,ASSETS,catalogue,arenaIntroDefinition,cutaway,arenaSun?.apply):null;
   const introCamera=isArena?new THREE.PerspectiveCamera(53.2,innerWidth/innerHeight,.08,250):null;
   const airBounds=flight.flightBounds(grid);
   let walkingGrid = grid, movementAllowed = true;
@@ -634,6 +634,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         side: THREE.DoubleSide,
       }),
     );
+    if(player.id.startsWith("world:pom"))arenaSun?.apply(mesh,{cutout:true});
     scene.add(mesh);
     avatar = {
       mesh,
