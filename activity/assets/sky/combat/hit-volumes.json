@@ -306,5 +306,77 @@
   "Dorothy": {
     "height": 1.84,
     "radius": 0.36
+  },
+  "Aina": {
+    "height": 1.74,
+    "radius": 0.36
+  },
+  "Jean": {
+    "height": 1.72,
+    "radius": 0.36
+  },
+  "Chancelier Osborne": {
+    "height": 1.96,
+    "radius": 0.36
+  },
+  "Theresa": {
+    "height": 1.7,
+    "radius": 0.36
+  },
+  "Mme Mao": {
+    "height": 1.72,
+    "radius": 0.36
+  },
+  "Dalmore": {
+    "height": 1.7,
+    "radius": 0.36
+  },
+  "Ambassadrice Elsa": {
+    "height": 1.78,
+    "radius": 0.36
+  },
+  "Ambassadeur Davil": {
+    "height": 1.74,
+    "radius": 0.36
+  },
+  "Lucy": {
+    "height": 1.7,
+    "radius": 0.36
+  },
+  "Leo": {
+    "height": 1.8,
+    "radius": 0.36
+  },
+  "Ein Selnate": {
+    "height": 1.64,
+    "radius": 0.36
+  },
+  "Rufina Argent": {
+    "height": 1.82,
+    "radius": 0.36
+  },
+  "Celeste von Auslese": {
+    "height": 1.86,
+    "radius": 0.36
+  },
+  "Directeur Murdock": {
+    "height": 1.76,
+    "radius": 0.36
+  },
+  "Chef-mécanicien Gustav": {
+    "height": 1.84,
+    "radius": 0.36
+  },
+  "Dan Russell": {
+    "height": 1.98,
+    "radius": 0.36
+  },
+  "Halle": {
+    "height": 1.72,
+    "radius": 0.36
+  },
+  "Jack": {
+    "height": 1.72,
+    "radius": 0.36
   }
 }

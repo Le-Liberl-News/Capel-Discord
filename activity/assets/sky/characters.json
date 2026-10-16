@@ -3427,5 +3427,562 @@
     "bodyPixelHeight": 81,
     "bodyRadiusPixels": 18,
     "bodyHeight": 1.62
+  },
+  "Aina": {
+    "texture": "roster-ch02560.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 38,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.74,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.74,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02560",
+      "scene": "t0700"
+    }
+  },
+  "Jean": {
+    "texture": "roster-ch02400.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 38,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.72,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.72,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02400",
+      "scene": "SC"
+    }
+  },
+  "Chancelier Osborne": {
+    "texture": "roster-ch03950.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 52,
+    "frameHeight": 98,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.96,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.96,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch03950",
+      "scene": "t4105"
+    }
+  },
+  "Theresa": {
+    "texture": "roster-ch02570.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.7,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.7,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02570",
+      "scene": "t2410"
+    }
+  },
+  "Mme Mao": {
+    "texture": "roster-ch02430.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 86,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.72,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.72,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02430",
+      "scene": "t3221"
+    }
+  },
+  "Dalmore": {
+    "texture": "roster-ch02410.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.7,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.7,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02410",
+      "scene": "SC"
+    }
+  },
+  "Ambassadrice Elsa": {
+    "texture": "roster-ch03720.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 89,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.78,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.78,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch03720",
+      "scene": "t3221"
+    }
+  },
+  "Ambassadeur Davil": {
+    "texture": "roster-ch03710.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 87,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.74,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.74,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch03710",
+      "scene": "t4138"
+    }
+  },
+  "Lucy": {
+    "texture": "roster-ch02690.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 40,
+    "frameHeight": 85,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.7,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.7,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02690",
+      "scene": "t2510"
+    }
+  },
+  "Leo": {
+    "texture": "roster-ch02680.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 44,
+    "frameHeight": 90,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.8,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.8,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02680",
+      "scene": "t2510"
+    }
+  },
+  "Ein Selnate": {
+    "texture": "roster-ch20744.png",
+    "columns": 8,
+    "rows": 1,
+    "frameWidth": 38,
+    "frameHeight": 82,
+    "frames": 1,
+    "idle": [
+      0
+    ],
+    "run": [
+      0
+    ],
+    "directions": 1,
+    "fps": 8,
+    "height": 1.6400000000000001,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.6400000000000001,
+    "centerX": -0.32,
+    "source": {
+      "game": "Third",
+      "chip": "ch20744",
+      "scene": "e1210"
+    }
+  },
+  "Rufina Argent": {
+    "texture": "roster-ch03940.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 46,
+    "frameHeight": 91,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.82,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.82,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch03940",
+      "scene": "m5415"
+    }
+  },
+  "Celeste von Auslese": {
+    "texture": "roster-ch02890.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 93,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.86,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.86,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02890",
+      "scene": "u4205"
+    }
+  },
+  "Directeur Murdock": {
+    "texture": "roster-ch02620.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 88,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.76,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.76,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02620",
+      "scene": "t3130"
+    }
+  },
+  "Chef-mécanicien Gustav": {
+    "texture": "roster-ch02440.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 42,
+    "frameHeight": 92,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.84,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.84,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch02440",
+      "scene": "t3102"
+    }
+  },
+  "Dan Russell": {
+    "texture": "roster-ch03980.png",
+    "columns": 8,
+    "rows": 8,
+    "frameWidth": 52,
+    "frameHeight": 99,
+    "frames": 64,
+    "idle": [
+      0
+    ],
+    "run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "directions": 8,
+    "fps": 8,
+    "height": 1.98,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.98,
+    "centerX": 0,
+    "source": {
+      "game": "Third",
+      "chip": "ch03980",
+      "scene": "t3121"
+    }
+  },
+  "Halle": {
+    "texture": "roster-c_vis550.png",
+    "columns": 1,
+    "rows": 1,
+    "frameWidth": 49,
+    "frameHeight": 86,
+    "frames": 1,
+    "idle": [
+      0
+    ],
+    "run": [
+      0
+    ],
+    "directions": 1,
+    "fps": 1,
+    "height": 1.72,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.72,
+    "source": {
+      "game": "Third",
+      "chip": "c_vis550",
+      "scene": "e1000",
+      "kind": "illustration",
+      "limitedAnimation": true
+    }
+  },
+  "Jack": {
+    "texture": "roster-c_vis560.png",
+    "columns": 1,
+    "rows": 1,
+    "frameWidth": 50,
+    "frameHeight": 86,
+    "frames": 1,
+    "idle": [
+      0
+    ],
+    "run": [
+      0
+    ],
+    "directions": 1,
+    "fps": 1,
+    "height": 1.72,
+    "pixelScale": 0.02,
+    "bodyHeight": 1.72,
+    "source": {
+      "game": "Third",
+      "chip": "c_vis560",
+      "scene": "e1000",
+      "kind": "illustration",
+      "limitedAnimation": true
+    }
   }
 }
