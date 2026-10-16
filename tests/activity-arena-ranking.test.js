@@ -17,7 +17,7 @@ test('board is anonymous, paginated, persistent and queue matches only connected
  let saved,payload,sends=0;const connected=new Set(),pairs=[],permissions=[];
  const message={id:'board',edit:async p=>payload=p};const channel={guild:{roles:{everyone:{id:'everyone'}}},permissionOverwrites:{edit:async(...a)=>permissions.push(a)},messages:{fetch:async()=>message},send:async p=>{payload=p;sends++;return message;}};
  const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},lobby:{isConnected:id=>connected.has(id),matchFor:()=>null},duels:{match:async p=>pairs.push(p)},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>Array.from({length:30},(_,i)=>({user:'secret-'+i,name:'Character '+i})),store:{load:()=>saved,save:s=>saved=s},render:async()=>Buffer.from("image")});
- await board.refresh();await board.refresh();assert.equal(sends,1);assert.equal(payload.components.length,2);assert.equal(JSON.stringify(payload).includes('secret-'),false);assert.equal(permissions[1][1].SendMessages,false);
+ await board.refresh();await board.refresh();assert.equal(sends,1);assert.equal(payload.components.length,3);assert.equal(payload.components[0].components[0].label,'⚔ Combat solo');assert.equal(payload.components[0].components[0].style,3);assert.ok(!payload.components.flatMap(r=>r.components).some(b=>b.custom_id==='arena:ctf'));assert.equal(JSON.stringify(payload).includes('secret-'),false);assert.equal(permissions[1][1].SendMessages,false);
  const interaction=id=>({isButton:()=>true,customId:'arena:queue',user:{id},launchActivity:async()=>{},reply:async()=>{}});
  await board.handle(interaction('one'));await board.handle(interaction('two'));await board.tick();assert.equal(pairs.length,0);connected.add('one');connected.add('two');await Promise.all([board.tick(),board.tick()]);assert.deepEqual(pairs,[['one','two']]);
 });
@@ -64,7 +64,7 @@ test('a player waiting in the activity is matched with a recently queued player 
  const interaction=id=>({isButton:()=>true,customId:'arena:queue',user:{id},launchActivity:async()=>{},reply:async()=>{}});
  await board.handle(interaction('stale'));clock=4*60*1000;await board.handle(interaction('here'));await board.tick();
  assert.equal(pairs.length,0,'an absent player queued 4 minutes ago is not matched');
- assert.match(payload.components[0].components[1].label,/2 · 1 prêt\)/);
+ assert.match(payload.components.flatMap(r=>r.components).find(b=>b.custom_id==='arena:queue').label,/2 · 1 prêt\)/);
  await board.handle(interaction('away'));await board.tick();
  assert.deepEqual(pairs,[['here','away']]);assert.equal(dms[0][0],'away');assert.equal(dms[0][1].components[0].components[0].custom_id,'activity:duel:x');
 });

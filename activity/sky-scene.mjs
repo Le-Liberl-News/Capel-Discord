@@ -1,3 +1,4 @@
+import {frameCombatCamera} from './combat-framing.mjs';
 import {createMapInteractions} from './map-interactions.mjs';
 import {createArenaSun} from './arena-sun.mjs';
 import {createMapBloom} from './map-bloom.mjs';
@@ -680,7 +681,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const editing=!!document.activeElement?.closest?.("input,textarea,[contenteditable]");
     viewport=viewportSize(viewport,{width:innerWidth,height:innerHeight},editing);
     const aspect=viewport.width/viewport.height;
-    camera.left=-zoom*aspect;camera.right=zoom*aspect;camera.top=zoom;camera.bottom=-zoom;
+    frameCombatCamera(walkingCamera,zoom,aspect,combatCamera);
     flightCamera.aspect=aspect;flightCamera.updateProjectionMatrix();
     camera.updateProjectionMatrix();renderer.setSize(viewport.width,viewport.height,false);
     canvas.style.width=viewport.width+"px";canvas.style.height=viewport.height+"px";

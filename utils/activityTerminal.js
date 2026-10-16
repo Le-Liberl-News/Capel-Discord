@@ -14,6 +14,7 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  }
  async function perform(token,body) {
   const {id}=lobby.identity(token);
+  if(body.action.startsWith("hunt_")||body.action==="ctf")throw new ActivityError("Mode indisponible.",403);
   switch(body.action) {
    case "rematch": {const opponent=lobby.rematchOpponent(body.invitation,id);return duels.challenge({id},opponent,client,true);}
    case "tower": {await nearby(token);lobby.enterTower(id,1);return {message:"Tour rejointe."};}

@@ -117,7 +117,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, tower = [],
   }
   return {
     attachQueue(queue){arenaQueue=queue;},
-    requestTraining(user,mode='duel'){this.leaveStaleDuel(user);trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
+    requestTraining(user,mode='duel'){if(mode!=='duel')throw new ActivityError('Mode indisponible.',403);this.leaveStaleDuel(user);trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
     cancelTraining(user){trainingRequests.delete(user);},
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},

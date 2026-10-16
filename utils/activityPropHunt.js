@@ -9,7 +9,16 @@ function createActivityPropHunt({lobby,resolveCharacter,client,generalChannel="5
  }
  const panel=summary=>({content:'Prop Hunt a Rolent \u2014 inscriptions ouvertes.\n30 secondes pour se cacher, puis '+summary.duration+' minutes de recherche. Les apparences sont des objets de la ville.',components:[{type:1,components:[{type:2,custom_id:'prophunt:signup:'+summary.id,label:'Participer',style:1},{type:2,custom_id:'prophunt:start:'+summary.id,label:'Demarrer',style:3}]}],allowedMentions:{parse:[]}});
  async function started(state){const game=lobby.huntSummary(),message=await announcements.get(game?.id);if(message?.edit)await message.edit({content:"Prop Hunt commence ! "+state.hunter+" cherche les autres personnages.\n30 secondes de preparation, puis "+game.duration+" minutes de recherche.",components:[],allowedMentions:{parse:[]}});}
- return {announce,started,async handle(interaction){
+ return {announce,started,async retireEntries(){
+  const channel=await client.channels.fetch(generalChannel);if(!channel?.messages?.fetch)return;
+  const recent=await channel.messages.fetch({limit:100});for(const message of recent.values()){
+   if(message.author?.id!==client.user.id)continue;
+   let changed=false;const components=(message.components??[]).map(row=>{const data=row.toJSON?row.toJSON():row;const kept=(data.components??[]).filter(c=>{const disabled=/^(prophunt:|activity:prophunt:)/.test(c.custom_id??'');changed||=disabled;return !disabled;});return {...data,components:kept};}).filter(row=>row.components.length);
+   if(changed)await message.edit({components});
+  }
+ },async handle(interaction){
+  if((interaction.isChatInputCommand?.()&&interaction.commandName==='prophunt')||(interaction.isButton?.()&&/^(prophunt:|activity:prophunt:)/.test(interaction.customId??''))){await interaction.reply({content:'Mode indisponible.',flags:64});if(interaction.message?.author?.id===client.user?.id)await interaction.message.edit({components:[]}).catch(()=>{});return true;}
+
   if(interaction.isChatInputCommand?.()&&interaction.commandName==='prophunt'){
    await interaction.deferReply({flags:64});
    let opened;

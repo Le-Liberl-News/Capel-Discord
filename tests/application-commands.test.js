@@ -10,7 +10,7 @@ test("a missing command fails deployment verification",async()=>{
  await assert.rejects(()=>syncApplicationCommands(rest,[{name:"duel",type:1}]),/duel/);
 });
 
- test("prophunt is registered with an optional 1-30 minute duration",()=>{ const command=require("../utils/applicationCommands").commands.find(c=>c.name==="prophunt");assert.ok(command);assert.equal(command.options[0].min_value,1);assert.equal(command.options[0].max_value,30); });
+ test("paused modes have no Discord slash command",()=>{ const names=require("../utils/applicationCommands").commands.map(c=>c.name);assert.ok(!names.includes("prophunt"));assert.ok(!names.includes("ctf")); });
 
 test("activity entry sends only a private launch button, and launches from a DM",async()=>{
  const {handleActivityEntry}=require("../utils/activityEntry");let dm,reply,flags,launched=false;

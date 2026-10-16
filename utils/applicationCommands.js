@@ -1,8 +1,6 @@
 const {SlashCommandBuilder,ContextMenuCommandBuilder,ApplicationCommandType}=require('discord.js');
 const commands = [
     new SlashCommandBuilder().setName("anterose").setDescription("Ouvrir le monde partag\u00e9 en priv\u00e9"),
-    new SlashCommandBuilder().setName("prophunt").setDescription("Cache-cache dans Rolent sous forme d’objets").setDMPermission(false)
-      .addIntegerOption(o=>o.setName("duree").setDescription("Minutes de recherche (10 par défaut)").setMinValue(1).setMaxValue(30)),
     new SlashCommandBuilder().setName("duel").setDescription("Défier un personnage dans l’arène de Grancel").setDMPermission(false)
         .addStringOption(o => o.setName("personnage").setDescription("Personnage de votre adversaire du jour").setRequired(true).setAutocomplete(true)),
     new SlashCommandBuilder().setName('test1').setDescription('Parse la TABLE'),
