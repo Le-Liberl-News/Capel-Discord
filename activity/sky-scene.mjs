@@ -1,3 +1,5 @@
+import {createArenaSun} from './arena-sun.mjs';
+import {createMapBloom} from './map-bloom.mjs';
 import {createHorrorMembranes} from './horror-membranes.mjs';
 import {createHalloweenDungeonView} from './halloween-dungeon-view.mjs';
 import {createSceneAssets} from './scene-assets.mjs';
@@ -94,6 +96,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     antialias: false,
     alpha: false,
   });
+  const mapBloom=createMapBloom(renderer);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(inTower?0x06080b:map==='axis'?0x8db9df:0x201b18);   // Axis: open sky above the sea of clouds
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -179,6 +182,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const tavernTables=map==='anterose'?await createTavernTables(THREE,model,collision,ASSETS):null;
   const horrorMembranes=inDungeon?await createHorrorMembranes(model,ASSETS,towerLayout.membranes):null;
   const halloweenDecor=inDungeon?await createHalloweenDungeonView(model,ASSETS,towerLayout):null;
+  const arenaSun=map==='arena'?createArenaSun(renderer,scene,model):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows,map==='axis'?AXIS_LIGHTS:tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]);
   halloweenDecor?.install();
@@ -884,7 +888,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     catch(error){
       reportFrameError('frame',error);
       // still show the world as it is, so the game never looks frozen
-      try{renderer.render(scene,camera);}catch{}
+      try{mapBloom.render(scene,camera);}catch{}
       if(!disposed)requestAnimationFrame(render);
     }
   }
@@ -1180,7 +1184,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(previewDrinkingClock){previewDrinkingClock.tick(environment.npcs);dialogues.receive(environment.npcs.filter(n=>n.utterance).map(n=>({...n.utterance,author:n.id})));}
     drinkingTable?.update(time,avatars);
     dialogues.update(time, avatars, camera);
-    renderer.render(scene, camera);
+    mapBloom.render(scene, camera);
     // the x-ray pass only runs when a fighter is actually hidden by the scenery (a second render otherwise wasted)
     if(xray)guarded('xray',()=>{if(fighterHidden())xray.render(renderer, scene, camera);});
     craftCapture?.update(time);
@@ -1431,7 +1435,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       removeEventListener("resize", resize);
       muellerTarget.geometry.dispose();muellerTarget.material.dispose();
       touches.reset();touchButton.remove();touchStyle.remove();
-      horrorMembranes?.dispose();halloweenDecor?.dispose();halloweenScene?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      horrorMembranes?.dispose();halloweenDecor?.dispose();halloweenScene?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();arenaSun?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       drinkingTable?.dispose();tavernTables?.dispose();crosshair.remove();blindness.remove();photoWhite.remove();for(const ghost of photoGhosts.values()){scene.remove(ghost);ghost.material.dispose();}teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();
@@ -1446,7 +1450,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       for (const pending of propModels.values()) pending.then(value => value.scene.traverse(object => { object.geometry?.dispose(); for(const material of [].concat(object.material??[])){ material.map?.dispose(); material.dispose(); } }));
       mapShadows?.light.shadow.dispose();
       shadowTexture.dispose();
-      renderer.dispose();
+      mapBloom.dispose();renderer.dispose();
     },
   };
 }

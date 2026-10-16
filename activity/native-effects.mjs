@@ -1,3 +1,4 @@
+import {setBloomEmission} from './map-bloom.mjs';
 import {nativeRing,nativeCrossBeam} from './native-primitives.mjs';
 import {nativeSector} from './native-sector.mjs';
 import {createNativeRig} from './native-rig.mjs';
@@ -20,7 +21,7 @@ export function nativeEffectSprite(THREE,player,size=2,zoom=2) {
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
    const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
- sprite.scale.setScalar(size);sprite.renderOrder=5;
+ setBloomEmission(sprite.material);sprite.scale.setScalar(size);sprite.renderOrder=5;
  return {sprite,draw(ms){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,256,256);player.draw(ctx,ms,256,256,zoom,false);map.needsUpdate=true;},dispose(){map.dispose();sprite.material.dispose();}};
 }
 
@@ -39,7 +40,7 @@ export function nativeCastingHalo(THREE,player) {
    const [a,b]=item.part.vertices,geometry=new THREE.CylinderGeometry(Math.abs(a[0]),Math.abs(b[0]),Math.abs(a[1]-b[1]),32,1,true);
    object=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
   }else object=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
-  group.add(object);parts.push({item,object,map});
+  setBloomEmission(object.material);group.add(object);parts.push({item,object,map});
  }
  return {group,draw(ms){for(const {item,object}of parts){const state=player.state(item,ms);object.visible=!!state;if(!state)continue;object.position.set(...state.position);object.scale.set(...state.scale);object.material.color.setRGB(...state.color.slice(0,3).map(v=>v/255));if(object.isMesh)object.rotation.set(...state.rotation.map(v=>v*Math.PI/180));else object.material.rotation=state.rotation[2]*Math.PI/180;}},dispose(){for(const {object,map}of parts){object.geometry?.dispose();object.material.dispose();map.dispose();}}};
 }
@@ -51,7 +52,7 @@ export function nativeWorldEffect(THREE,player,options={}){
  for(const item of player.instances){
   const p=item.part;if(options.startBefore!=null&&item.start>options.startBefore)continue;if(options.parts&&!options.parts.includes(p.index))continue;if(player.entry.id.toLowerCase()==='sc/mgblood2._ef'&&[0,8].includes(p.index))continue;if(player.entry.id.toLowerCase()==='third/sc009_06._ef'&&[8,10,11].includes(p.index))continue;if(player.entry.id.toLowerCase()==='third/sc009_05._ef'&&item.start>180)continue;if(player.entry.id.toLowerCase()==='sc/sc020_02._ef'&&item.start>2000)continue;if(player.entry.id.toLowerCase()==='sc/mg075_0._ef'&&p.primitive!==0)continue;if(!p.enabled||(p.renderFlags&1)||!item.texture||item.scale.every(k=>k.value.every(v=>v===0)))continue;
   const whiteKey=!!(p.renderFlags&64)||options.whiteKeyParts?.includes(p.index),additive=!!(p.renderFlags&4),ground=options.spatial&&p.primitive===0&&(options.groundParts?.includes(p.index)||item.scale.every(k=>Math.abs(k.value[1])<1e-6)&&item.scale.some(k=>Math.abs(k.value[2])>1e-6)),geometryPart=p.primitive===4||p.primitive===7||p.primitive===1||p.primitive===9||p.primitive===8||options.spatial&&p.primitive===3||ground,key=item.texture.texture+':'+p.uv.join(':')+':'+additive+':'+geometryPart+':'+whiteKey;
-  if(p.primitive===10){const model=player.models.get(p.model);if(!model)continue;const object=new THREE.Group(),rig=options.animate&&model.rig?createNativeRig(THREE,model.rig):null;for(const mesh of model.meshes){const image=player.textureImages.get(mesh.texture?.additiveTexture??mesh.texture?.texture??item.texture.additiveTexture??item.texture.texture);if(!image)continue;const map=new THREE.Texture(image);map.needsUpdate=true;map.colorSpace=THREE.SRGBColorSpace;map.wrapS=map.wrapT=THREE.RepeatWrapping;maps.set(p.model+':'+parts.length+':'+object.children.length,map);const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(mesh.positions.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(mesh.uv.flat(),2));geometry.setIndex(mesh.indices);const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});object.add(rig?rig.skin(geometry,material):new THREE.Mesh(geometry,material));}if(rig){object.add(rig.group);object.userData.nativeRig=rig;}group.add(object);parts.push({item,object,width:1,height:1,center:[0,0]});continue;}
+  if(p.primitive===10){const model=player.models.get(p.model);if(!model)continue;const object=new THREE.Group(),rig=options.animate&&model.rig?createNativeRig(THREE,model.rig):null;for(const mesh of model.meshes){const image=player.textureImages.get(mesh.texture?.additiveTexture??mesh.texture?.texture??item.texture.additiveTexture??item.texture.texture);if(!image)continue;const map=new THREE.Texture(image);map.needsUpdate=true;map.colorSpace=THREE.SRGBColorSpace;map.wrapS=map.wrapT=THREE.RepeatWrapping;maps.set(p.model+':'+parts.length+':'+object.children.length,map);const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(mesh.positions.flat(),3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(mesh.uv.flat(),2));geometry.setIndex(mesh.indices);const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});setBloomEmission(material);object.add(rig?rig.skin(geometry,material):new THREE.Mesh(geometry,material));}if(rig){object.add(rig.group);object.userData.nativeRig=rig;}group.add(object);parts.push({item,object,width:1,height:1,center:[0,0]});continue;}
   let map=maps.get(key);
   if(!map){
    const image=player.textureImages.get(additive?item.texture.additiveTexture??item.texture.texture:item.texture.texture);if(!image)continue;
@@ -76,7 +77,7 @@ export function nativeWorldEffect(THREE,player,options={}){
   else if(p.primitive===1)object=new THREE.Mesh(new THREE.CylinderGeometry(Math.abs(a[0]),Math.abs(b[0]),height,24,1,true),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));
   else if(p.primitive===9||p.primitive===8){object=new THREE.Mesh(new THREE.RingGeometry(Math.abs(a[0]),Math.abs(b[0]),32),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));const uv=object.geometry.attributes.uv;for(let i=0;i<uv.count;i++){const row=Math.floor(i/33),col=i%33;uv.setXY(i,col/32,row);}object.rotation.x=-Math.PI/2;}
   else object=new THREE.Sprite(new THREE.SpriteMaterial(material));
-  object.renderOrder=4;group.add(object);parts.push({item,object,width,height,center:[(a[0]+b[0])/2,(a[1]+b[1])/2]});
+  if(additive||options.bloom>0)setBloomEmission(object.material,options.bloom??1.6);object.renderOrder=4;group.add(object);parts.push({item,object,width,height,center:[(a[0]+b[0])/2,(a[1]+b[1])/2]});
  }
  return{group,draw(ms,animationTime=ms){const anchor=options.anchorPart==null?null:parts.find(p=>p.item.part.index===options.anchorPart),offset=anchor?player.state(anchor.item,ms)?.position:null;for(const{item,object,width,height,center}of parts){const state=player.state(item,ms);object.visible=!!state;if(!state)continue;
   object.position.set(state.position[0]+(object.isSprite?center[0]*state.scale[0]:0),state.position[1]+(pRing(item.part)&&!object.userData.nativeHelix?item.part.vertices[0][1]*state.scale[2]:0)+(object.isSprite?center[1]*state.scale[1]:item.part.primitive===1?height*state.scale[1]/2:0),state.position[2]);

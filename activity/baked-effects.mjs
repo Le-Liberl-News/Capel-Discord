@@ -1,3 +1,4 @@
+import {setBloomEmission} from './map-bloom.mjs';
 import {shareTexture} from './shared-texture.mjs';
 const imageCache=new Map();let cachedBytes=0;
 const CACHE_LIMIT=128*1024*1024;
@@ -10,7 +11,7 @@ export async function loadBakedEffect(THREE,assets,name,frames){
 export function bakedEffectSprite(THREE,bank,size){
  const map=shareTexture(bank.map);const insetX=.5/(map.image?.width??bank.columns*128),insetY=.5/(map.image?.height??bank.rows*128);map.repeat.set(1/bank.columns-2*insetX,1/bank.rows-2*insetY);
  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:bank.blend==='normal'?THREE.NormalBlending:THREE.AdditiveBlending}));
- sprite.scale.setScalar(size);sprite.renderOrder=5;
+ if(bank.blend!=='normal')setBloomEmission(sprite.material,bank.bloom??1.6);sprite.scale.setScalar(size);sprite.renderOrder=5;
  return {sprite,draw(ms){const frame=Math.min(bank.frames-1,Math.max(0,Math.floor(ms*(bank.duration?bank.frames/bank.duration:30/1000))));map.offset.set(frame%bank.columns/bank.columns+insetX,1-(Math.floor(frame/bank.columns)+1)/bank.rows+insetY);},dispose(){map.dispose();sprite.material.dispose();}};
 }
 
