@@ -19,7 +19,7 @@ const { relancerAudioApresCrash } = require('./rpg/audioManager.js');
 
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
-const { updateRanking, photographierJour } = require('./utils/rankings.js')
+const { miseAJourQuotidienne } = require('./utils/rankings.js')
 const { createDebugReportIngress } = require('./utils/debugReportIngress.js');
 const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportService.js');
 const { createPatchReleaseService } = require('./utils/patchReleaseService.js');
@@ -302,6 +302,8 @@ const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({s
 const arenaRanking=require('./utils/activityArenaRanking').createArenaRanking({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-arena-ranking.json')),credit:require('./utils/activityArenaRanking').createArenaCredit(db)});
 const arenaBoard=require('./utils/activityArenaBoard').createArenaBoard({client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,lobby:activiteService,duels:activiteDuels,ranking:arenaRanking,store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-arena-board.json')),assigned:async()=>{const [rows]=await db.query('SELECT user_id,pseudo_index FROM pseudos_anonymes');return rows.map(r=>({user:r.user_id,name:require('./commands/anonyme').characterNames[r.pseudo_index]})).filter(r=>r.name);}});
 client.once('clientReady',()=>arenaBoard.refresh().catch(e=>console.error('Arena board:',e.message)));
+// catches up the ranking's nightly update when midnight was missed (the bot down, Discord or the database failing)
+client.once('clientReady',()=>{const rattraper=()=>arenaRanking.settle().catch(e=>console.error('Arène : versement des PB :',e)).then(()=>miseAJourQuotidienne(client));setTimeout(rattraper,60000);setInterval(rattraper,15*60000);});
 setInterval(()=>{if(client.isReady())arenaBoard.tick().catch(e=>console.error('Arena board:',e.message));},10000).unref();
 client.on('messageCreate',message=>{if(message.channelId==='1558125759682576475'&&message.type===18)setTimeout(()=>{if(activiteDuels.ownsThread(message.reference?.channelId??message.id))message.delete().catch(e=>console.error('Arena thread notice:',e.code));},1500).unref();});
 const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({client,lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
@@ -487,11 +489,9 @@ app.listen(3000, () => {
 
 
 cron.schedule('0 0 * * *', async () => {
-    await arenaRanking.settle();
-    // the ranking's picture of the day, once the arena's points are paid
-    try { await photographierJour(); } catch (error) { console.error("Erreur historique classement :", error); }
-    // the ranking is refreshed every night, missions or not
-    try { await updateRanking(client); } catch (errTop) { console.error("[XP-DEBUG] ❌ Erreur classement :", errTop.message); }
+    try { await arenaRanking.settle(); } catch (error) { console.error("Arène : versement des PB :", error); }
+    // the ranking's picture of the day, once the arena's points are paid, and the board, missions or not
+    await miseAJourQuotidienne(client);
     await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);

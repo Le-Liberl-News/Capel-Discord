@@ -39,8 +39,10 @@ async function actualiserClassement(client, top10) {
             attachments: [],
             files: [attachment]
         });
+        console.log(`[CLASSEMENT] Image mise à jour (${top10.length} bracers).`);
+        return true;
 
-    } catch (erreur) { console.error("Erreur maj classement image :", erreur); }
+    } catch (erreur) { console.error("Erreur maj classement image :", erreur); return false; }
 }
 
 // Each bracer's points, trads and place as the day starts (Paris, taken by the midnight cron), kept for a few days: the board shows what the
@@ -129,7 +131,19 @@ async function updateRanking(client) {
         });
     }
 
-    await actualiserClassement(client, top10Formate);
+    return actualiserClassement(client, top10Formate);
 }
 
-module.exports = { actualiserClassement, updateRanking, photographierJour, evolutionVeille };
+// The nightly update: the day's picture then the board. Midnight asks for it, and a regular check asks again
+// so a night the bot was down or Discord failed is caught up as soon as possible.
+let quotidienneEnCours = null;
+function miseAJourQuotidienne(client) {
+    return quotidienneEnCours ??= (async () => {
+        const jour = jourParis();
+        if (historique.load()?.rafraichi === jour) return;
+        await photographierJour();
+        if (await updateRanking(client)) { const etat = historique.load() ?? { jours: {} }; etat.rafraichi = jour; historique.save(etat); }
+    })().catch(erreur => console.error("[CLASSEMENT] Mise à jour quotidienne :", erreur)).finally(() => { quotidienneEnCours = null; });
+}
+
+module.exports = { actualiserClassement, updateRanking, photographierJour, evolutionVeille, miseAJourQuotidienne };
