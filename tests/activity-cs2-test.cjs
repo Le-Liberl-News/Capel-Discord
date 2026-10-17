@@ -18,5 +18,5 @@ test('the Rean/Altina encounter has one group introduction, a damageable guardia
  assert.equal(pet.guardianFor,owner.id);assert.equal(pet.maxHp,650);const state=game.tick(game.player);assert.equal(state.duel.groups.length,2);assert.equal(state.duel.groups[1].name,'Rean et Altina');
  Object.assign(owner,{x:0,z:0});Object.assign(pet,{x:1,z:1});Object.assign(game.player,{x:0,z:6});let magic=false;
  for(let i=0;i<100;i++){time+=50;const state=game.tick(game.player);magic ||= state.combat.attacks.some(a=>a.character==='Altina'&&a.kind==='basic');assert.doesNotThrow(()=>JSON.stringify(state));}
- assert.ok(magic);owner.hp=0;time+=50;game.tick(game.player);assert.equal(pet.hp,0);
+ assert.ok(magic);assert.ok(Math.hypot(pet.x-game.player.x,pet.z-game.player.z)<2.8,'guardian engages at melee range');assert.ok(game.world.cooldownsFor(pet.id).basic>0,'guardian strikes in melee');owner.hp=0;time+=50;game.tick(game.player);assert.equal(pet.hp,0);
 });

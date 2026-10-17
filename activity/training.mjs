@@ -51,9 +51,9 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
   const target=perceived(time),snapshot=world.snapshot(),balls=snapshot.poms??[],held=balls.find(p=>p.owner===ai.id),distance=Math.hypot(ai.x-target.x,ai.z-target.z),busy=ai.attackBusyUntil>time;
   if(ai.guardianFor){
    const owner=players.get(ai.guardianFor);if(!owner||owner.hp<=0){ai.hp=0;path=[];return;}
-   const dx=target.x-owner.x,dz=target.z-owner.z,length=Math.hypot(dx,dz)||1;
-   const guard=place({x:owner.x+dx/length*Math.min(2,length*.5),z:owner.z+dz/length*Math.min(2,length*.5)});
-   if(Math.hypot(ai.x-guard.x,ai.z-guard.z)>.45)navigate(guard);else path=[];
+   const dx=ai.x-target.x,dz=ai.z-target.z,length=Math.hypot(dx,dz)||1;
+   const melee=place({x:target.x+dx/length*1.7,z:target.z+dz/length*1.7});
+   if(distance>2.1)navigate(melee);else path=[];
    if(!busy&&distance<2.7&&time>=(world.cooldownsFor(ai.id).basic??0))send({type:'attack',kind:'basic',aim:aimAt(target),target:player.id});
    return;
   }

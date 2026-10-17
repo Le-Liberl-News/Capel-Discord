@@ -5,7 +5,13 @@ import native from '../activity/native-combat.cjs';
 test('Carna recoils once per bullet, through the full three seconds, never during reload',()=>{
  const update=createGunRecoil(native.combatSpec,()=>1),e={id:'a',kind:'basic',localStart:0};
  let pitch=0;for(let t=0;t<5000;t+=10){pitch+=update(e,'Carna',t,true).pitch;assert.equal(update(e,'Carna',t,true).pitch,0);}
- assert.ok(Math.abs(pitch+.15)<1e-8);
+ assert.ok(Math.abs(pitch+.24)<1e-8);
+});
+test('combos do not slow Carna normal recoil or shot sounds and authoritative releases stay aligned',()=>{
+ const event={id:'combo',kind:'basic',localStart:0,started:1000,tempo:.4},spec=native.combatSpec('Carna','basic');
+ assert.equal(releasedShots(event,spec,2999).length,30);
+ assert.equal(releasedShots({...event,shots:[{started:1050}]},spec,49).length,0);
+ assert.equal(releasedShots({...event,shots:[{started:1050}]},spec,50).length,1);
 });
 test('Josette kicks harder, and intros and old network shots do not kick',()=>{
  const update=createGunRecoil(native.combatSpec,()=>0),e={id:'a',kind:'basic',localStart:0};

@@ -4033,7 +4033,7 @@
     "bodyPixelHeight": 86
   },
   "Rean": {
-    "texture": "rean-cs2-run.png",
+    "texture": "rean-cs2-run-96bd957ed2.png",
     "columns": 8,
     "rows": 13,
     "frameWidth": 58,
@@ -4061,21 +4061,22 @@
     "pixelScale": 0.02,
     "height": 2.06,
     "centerX": 0,
-    "centerY": 0.794,
+    "centerY": 0.796,
     "bodyHeight": 1.94,
     "source": {
       "model": "cold-steel2/gltf/C_PLY000/model.gltf",
       "tool": "atelier-sprites",
       "generatedWithAI": false
     },
-    "bodyPixelHeight": 97
+    "bodyPixelHeight": 97,
+    "groundProjection": true
   },
   "Altina": {
-    "texture": "altina-cs2-run.png",
+    "texture": "altina-cs2-run-e0829b9176.png",
     "columns": 8,
     "rows": 13,
-    "frameWidth": 128,
-    "frameHeight": 106,
+    "frameWidth": 173,
+    "frameHeight": 110,
     "frames": 104,
     "idle": [
       0
@@ -4097,16 +4098,17 @@
     "directions": 8,
     "fps": 12,
     "pixelScale": 0.02,
-    "height": 2.12,
-    "centerX": 0,
-    "centerY": 0.624,
+    "height": 2.2,
+    "centerX": 0.01,
+    "centerY": 0.586,
     "bodyHeight": 1.74,
     "source": {
       "model": "cold-steel2/gltf/C_NPC070/model.gltf",
       "tool": "atelier-sprites",
       "generatedWithAI": false
     },
-    "bodyPixelHeight": 87
+    "bodyPixelHeight": 87,
+    "groundProjection": true
   },
   "Claiomh Solais": {
     "texture": "claiomh-solais-cs2-run.png",

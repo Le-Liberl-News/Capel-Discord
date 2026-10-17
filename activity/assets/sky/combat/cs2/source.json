@@ -12,7 +12,10 @@
         "walk": "WALK",
         "run": "RUN",
         "attack": "BTL_ATTACK",
-        "craft": "BTL_CRAFT01_01"
+        "craft": "BTL_CRAFT01_01",
+        "battleRun": "BTL_MOVE",
+        "battleIdle": "BTL_WAIT",
+        "death": "BTL_DEAD"
       },
       "chibi": {
         "legs": 0.48,
@@ -210,5 +213,6 @@
       "flipUV": false,
       "nativeClips": true
     }
-  }
+  },
+  "exportNotes": "384x320 capture canvas with transparent margins; combat run uses native BTL_MOVE, death clamps BTL_DEAD; ground projection preserves feet and tail pixels without lifting the character."
 }

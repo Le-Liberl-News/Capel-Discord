@@ -47,7 +47,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(!active||player.hp<=0||player.spectator||immobilized(player,now()))return {error:'Rafale inactive.'};
       // Once triggered the normal volley always completes its three seconds.
       if(command.kind==='fireEnd'&&active.kind==='basic')return {};
-      if(command.kind==='aim'&&active.kind==='craft'){
+      if(command.kind==='aim'&&['basic','craft'].includes(active.kind)){
         const ray=validateRay(player,command.ray);if(!ray)return {error:'Visée invalide.'};
         active.baseRay=ray;player.heading={dx:ray.direction.x,dz:ray.direction.z};return {};
       }
