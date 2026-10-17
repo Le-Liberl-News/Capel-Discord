@@ -21,6 +21,7 @@ import {createTowerGates} from './tower-gates.mjs';
 import {recordCorrection,recordDiagnostic} from './diagnostics.mjs';
 import playerHealth from './player-health.cjs';
 import {createGunRecoil} from './gun-recoil.mjs';
+import {createAltinaCompanionView} from './altina-companion-view.mjs';
 import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
 import projectionMechanics from './combat-projection.cjs';
 import diveMechanics from './sieg-dive.cjs';
@@ -231,6 +232,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const duelFinish=isArena?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const gunRecoil=createGunRecoil(renneMechanics.combatSpec);
+  const altinaCompanion=await createAltinaCompanionView(THREE,scene,ASSETS,catalogue);
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event),(phase,event)=>cookingInput(phase,event),phase=>guardInput(phase));
@@ -1101,6 +1103,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }else avatar.craftTiltAngle=null;
       }
     }
+    altinaCompanion.update(time,seconds,camera,avatars);
     const photoTime=(health.serverTime??Date.now())+(performance.now()-(health.received??performance.now())),photoAmount=photoMechanics.photoStrength(health.photoFlash,photoTime);
     photoWhite.style.opacity=String(photoAmount*.95);
     for(const [id,ghost] of photoGhosts){const a=avatars.get(id);if(!a||!photoAmount){scene.remove(ghost);ghost.material.dispose();photoGhosts.delete(id);}}
@@ -1460,7 +1463,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       status.remove();
       labels.remove();
       style.remove();
-      offscreenOpponents.dispose();mapInteractions.dispose();dialogues.dispose();
+      altinaCompanion.dispose();offscreenOpponents.dispose();mapInteractions.dispose();dialogues.dispose();
       damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();gpuWarning?.remove();ctfView?.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();

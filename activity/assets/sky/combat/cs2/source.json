@@ -1,0 +1,214 @@
+{
+  "game": "The Legend of Heroes: Trails of Cold Steel II (GOG)",
+  "generatedWithAI": false,
+  "profiles": {
+    "rean-cs2": {
+      "id": "rean-cs2",
+      "name": "Rean — Cold Steel II",
+      "rig": "ed8",
+      "model": "cold-steel2/gltf/C_PLY000/model.gltf",
+      "motions": {
+        "idle": "WAIT",
+        "walk": "WALK",
+        "run": "RUN",
+        "attack": "BTL_ATTACK",
+        "craft": "BTL_CRAFT01_01"
+      },
+      "chibi": {
+        "legs": 0.48,
+        "torso": 0.62,
+        "arms": 0.73,
+        "head": 1.85,
+        "headWidth": 0.9,
+        "shoulders": 1.18,
+        "shoulderDrop": 0.045,
+        "facePitch": 15,
+        "feet": 1.08,
+        "widen": 1.06,
+        "neckDrop": 0.015
+      },
+      "sourceHeight": 1.8,
+      "satin": 0.08,
+      "face3d": {
+        "width": 1,
+        "height": 0.85,
+        "depth": 0.53,
+        "flat": 0.9,
+        "nose": 0,
+        "chin": 1,
+        "hollow": 1.1,
+        "cheek": 1,
+        "eyeLevel": 0.14,
+        "forehead": 0.6,
+        "shortProfile": false,
+        "x": 0,
+        "y": 0,
+        "z": 0.022,
+        "lowerBulge": 0,
+        "lowerBulgeLevel": -0.35,
+        "lowerLength": 0.9,
+        "sideCheek": 1,
+        "richardShape": true,
+        "jawPoint": 0.38
+      },
+      "colors": {
+        "skin": "#ebc0a0"
+      },
+      "render": {
+        "width": 128,
+        "height": 160,
+        "pixelsPerMetre": 64,
+        "scale": 4,
+        "elevation": 30,
+        "lift": 0.2
+      },
+      "eyes": {
+        "mode": "surface",
+        "iris": "#2d7fb6",
+        "spread": 0.49,
+        "y": 0.26,
+        "screenSides": true,
+        "outlineStrength": 1,
+        "size": 1.18
+      },
+      "grade": {
+        "saturation": 1.13,
+        "contrast": 1.19,
+        "gamma": 0.91
+      },
+      "weapon": "cold-steel2/gltf/C_EQU300_R/model.gltf"
+    },
+    "altina-cs2": {
+      "id": "altina-cs2",
+      "name": "Altina — Cold Steel II",
+      "rig": "ed8",
+      "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+      "motions": {
+        "idle": "WAIT",
+        "walk": "WALK",
+        "run": "RUN",
+        "attack": "BTL_ATTACK",
+        "craft": "BTL_CRAFT01_01"
+      },
+      "chibi": {
+        "legs": 0.48,
+        "torso": 0.62,
+        "arms": 0.73,
+        "head": 1.85,
+        "headWidth": 0.9,
+        "shoulders": 1.18,
+        "shoulderDrop": 0.04,
+        "facePitch": 15,
+        "feet": 1,
+        "widen": 1.06,
+        "neckDrop": 0.01
+      },
+      "sourceHeight": 1.5,
+      "satin": 0.08,
+      "face3d": {
+        "width": 1,
+        "height": 0.75,
+        "depth": 0.53,
+        "flat": 0.9,
+        "nose": 0,
+        "chin": 1,
+        "hollow": 1.1,
+        "cheek": 1,
+        "eyeLevel": 0.14,
+        "forehead": 0.6,
+        "shortProfile": false,
+        "x": 0,
+        "y": -0.034,
+        "z": 0.022,
+        "lowerBulge": 0,
+        "lowerBulgeLevel": -0.35,
+        "lowerLength": 0.9,
+        "sideCheek": 1,
+        "richardShape": true,
+        "jawPoint": 0.38
+      },
+      "colors": {
+        "skin": "#efcdb5"
+      },
+      "render": {
+        "width": 128,
+        "height": 160,
+        "pixelsPerMetre": 64,
+        "scale": 4,
+        "elevation": 30,
+        "lift": 0.2
+      },
+      "eyes": {
+        "mode": "surface",
+        "iris": "#ad698e",
+        "spread": 0.49,
+        "y": 0.26,
+        "screenSides": true,
+        "outlineStrength": 1,
+        "size": 1.18
+      },
+      "grade": {
+        "saturation": 1.13,
+        "contrast": 1.19,
+        "gamma": 0.91
+      },
+      "ed8": {
+        "faceMeshes": [
+          "npc070_setbody03_8",
+          "npc070_setbody03_9",
+          "npc070_setbody03_10",
+          "npc070_setbody03_11",
+          "npc070_setbody03_12"
+        ],
+        "hairMesh": "npc070_setbody03_1",
+        "hairMeshes": [
+          "npc070_setbody03_1",
+          "npc070_setbody03_2"
+        ]
+      },
+      "notes": "Altina de CS2 (C_NPC070, t_name.tbl), tenue noire originale. Visage Sky validé sur Rean, pointe 0.38, yeux attachés au visage et satin léger. Sources Horizon conservées séparément.",
+      "hair": {
+        "strandLength": 0.35
+      }
+    },
+    "claiomh-solais-cs2": {
+      "id": "claiomh-solais-cs2",
+      "name": "Claiomh Solais — Cold Steel II",
+      "rig": "companion",
+      "model": "cold-steel2/gltf/C_NPC079/model.gltf",
+      "motions": {
+        "idle": "WAIT",
+        "run": "RUN",
+        "attack": "BTL_ATTACK",
+        "craft": "BTL_CRAFT01_01"
+      },
+      "sourceHeight": 0.95,
+      "hover": 0.15,
+      "satin": 0.08,
+      "eyes": {
+        "mode": "surface"
+      },
+      "lights": {
+        "ambient": 0.65,
+        "sun": 2.6,
+        "sunColor": "#fff2d9"
+      },
+      "render": {
+        "width": 128,
+        "height": 128,
+        "pixelsPerMetre": 67,
+        "scale": 4,
+        "elevation": 30,
+        "lift": 0.2
+      },
+      "grade": {
+        "saturation": 1.13,
+        "contrast": 1.19,
+        "gamma": 0.91
+      },
+      "notes": "Claiomh Solais original de CS2 (C_NPC079, t_name.tbl), textures et animations natives. Éclairage, palette et satin Sky.",
+      "flipUV": false,
+      "nativeClips": true
+    }
+  }
+}

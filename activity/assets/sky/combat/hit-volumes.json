@@ -378,5 +378,17 @@
   "Jack": {
     "height": 1.72,
     "radius": 0.36
+  },
+  "Rean": {
+    "height": 1.94,
+    "radius": 0.36
+  },
+  "Altina": {
+    "height": 1.74,
+    "radius": 0.36
+  },
+  "Claiomh Solais": {
+    "height": 1,
+    "radius": 0.36
   }
 }

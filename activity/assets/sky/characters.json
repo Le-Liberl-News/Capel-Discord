@@ -4031,5 +4031,120 @@
       120
     ],
     "bodyPixelHeight": 86
+  },
+  "Rean": {
+    "texture": "rean-cs2-run.png",
+    "columns": 8,
+    "rows": 13,
+    "frameWidth": 58,
+    "frameHeight": 103,
+    "frames": 104,
+    "idle": [
+      0
+    ],
+    "run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "directions": 8,
+    "fps": 12,
+    "pixelScale": 0.02,
+    "height": 2.06,
+    "centerX": 0,
+    "centerY": 0.794,
+    "bodyHeight": 1.94,
+    "source": {
+      "model": "cold-steel2/gltf/C_PLY000/model.gltf",
+      "tool": "atelier-sprites",
+      "generatedWithAI": false
+    },
+    "bodyPixelHeight": 97
+  },
+  "Altina": {
+    "texture": "altina-cs2-run.png",
+    "columns": 8,
+    "rows": 13,
+    "frameWidth": 128,
+    "frameHeight": 106,
+    "frames": 104,
+    "idle": [
+      0
+    ],
+    "run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "directions": 8,
+    "fps": 12,
+    "pixelScale": 0.02,
+    "height": 2.12,
+    "centerX": 0,
+    "centerY": 0.624,
+    "bodyHeight": 1.74,
+    "source": {
+      "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+      "tool": "atelier-sprites",
+      "generatedWithAI": false
+    },
+    "bodyPixelHeight": 87
+  },
+  "Claiomh Solais": {
+    "texture": "claiomh-solais-cs2-run.png",
+    "columns": 8,
+    "rows": 13,
+    "frameWidth": 60,
+    "frameHeight": 76,
+    "frames": 104,
+    "idle": [
+      0
+    ],
+    "run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "directions": 8,
+    "fps": 12,
+    "pixelScale": 0.02,
+    "height": 1.52,
+    "centerX": 0,
+    "centerY": 0.736,
+    "bodyHeight": 1,
+    "source": {
+      "model": "cold-steel2/gltf/C_NPC079/model.gltf",
+      "tool": "atelier-sprites",
+      "generatedWithAI": false
+    },
+    "bodyPixelHeight": 50,
+    "bodyRadiusPixels": 22
   }
 }

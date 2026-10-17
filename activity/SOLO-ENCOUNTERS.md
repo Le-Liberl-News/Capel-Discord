@@ -2,6 +2,8 @@
 
 Configuration : `activity/assets/sky/combat/solo-encounters.json`.
 
+Le groupe `rean-altina` réunit les prototypes CS2 Rean et Altina. Ils ont seulement une attaque normale, en attendant leurs crafts : tachi pour Rean, magie à distance pour Altina. Claiomh Solais est ajouté automatiquement auprès de chaque Altina, avec 650 PV ; il se place devant elle et absorbe ses dégâts tant qu'il est vivant à moins de 3,5 m. Il cesse de protéger à sa défaite et n'est pas réinvoqué pendant le combat. Les trois sont exclus de `rpg/data/persos.json` et du tirage Discord. Rean et Altina restent sélectionnables dans le menu de test du Capel après l'expiration du sélecteur temporaire général.
+
 - `groupChance` : probabilité de tirer un groupe (0 à 1). Par défaut 0.5. Sinon, duel contre un personnage avec craft.
 - `groups` : liste des compositions, tirées à chances égales. Chaque groupe a un `id`, un `name`, des `allies` et des `enemies`.
 - Le joueur est automatiquement ajouté aux alliés : deux entrées dans `allies` donnent donc une équipe de trois.

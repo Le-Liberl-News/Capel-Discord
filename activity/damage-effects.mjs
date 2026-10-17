@@ -14,7 +14,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
  const banks=new Map(await Promise.all([0,1,2,3,5].map(async index=>[index,await loadBakedEffect(THREE,new URL('../',url),`damage${index}`,24)])));
  const catBank=await loadBakedEffect(THREE,new URL('../',url),'third-msc0601',90);catBank.duration=3000;catBank.blend='normal';
  const estelleBank=await loadBakedEffect(THREE,new URL('../',url),'third-cr151_01',90);estelleBank.duration=1800;
- const bulletBank=await loadBakedEffect(THREE,new URL('../',url),'sc-sbkicon',90);bulletBank.duration=450;
+ const bulletBank=await loadBakedEffect(THREE,new URL('../',url),'sc-ms10920-hit',30);Object.assign(bulletBank,{frames:30,duration:1000,blend:'normal',opaque:true});
  const zinBank=await loadBakedEffect(THREE,new URL('../',url),'sc-cr160_00',90);
  zinBank.duration=650;
  const glowMap=await new THREE.TextureLoader(loading).loadAsync(new URL('native-hit-glow.png?v=2',url).href);glowMap.colorSpace=THREE.SRGBColorSpace;
@@ -26,7 +26,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
   hit(id,amount,heal=false,delay=0,impact=null) {
    if(!amount)return;
    const map=texture.clone();map.repeat.set(.25,1);
-   const bulletHit=impact?.nativeEffect==='SC/sbkicon._ef';
+   const bulletHit=impact?.nativeEffect==='SC/ms10920._ef';
    const nativeFist=impact?.nativeEffect==='SC/cr160_00._ef';
    // quiet: combat-feedback.mjs already plays this hit's own impact; only the number is shown here
    const quiet=!!impact?.quiet;
@@ -40,7 +40,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    const label=damageLabel(amount);number.innerHTML=label.markup;
    if(heal)number.style.filter='hue-rotate(115deg)';container.append(number);
    const occupied=new Set(hits.filter(h=>h.id===id).map(h=>h.lane));let lane=0;while(occupied.has(lane))lane++;
-   hits.push({id,sprite,effect,extra,number,impact,labelWidth:label.width,time:-delay,lane});
+   hits.push({id,sprite,effect,extra,number,impact,bulletHit,labelWidth:label.width,time:-delay,lane});
   },
   update(dt,camera,avatars,width,height) {
    for(let i=hits.length-1;i>=0;i--) {
@@ -52,7 +52,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     // Place the flash just in front of the opaque character plane, keeping scenery occlusion.
     if(hit.impact?.nativeEffect==='SC/cr160_00._ef'&&hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.sprite.position.y+=[.18,-.1,.3,.04][n%4];}
     hit.sprite.position.add(new THREE.Vector3().subVectors(camera.position,hit.sprite.position).normalize().multiplyScalar(hit.impact?.catBite?.4:.18));if(hit.extra){hit.extra.sprite.position.copy(hit.sprite.position);if(hit.impact?.hitIndex!=null){const n=hit.impact.hitIndex;hit.extra.sprite.position.x+=camera.matrixWorld.elements[0]*[-.28,.25,-.12,.32][n%4];hit.extra.sprite.position.y+=[.18,-.1,.3,.04][n%4];}hit.extra.sprite.visible=hit.time<.8;hit.extra.draw(hit.time*1000);if(hit.impact?.point&&hit.impact?.nativeEffect!=='SC/cr160_00._ef'){const units=camera.isOrthographicCamera?(camera.top-camera.bottom)/camera.zoom:2*camera.position.distanceTo(hit.extra.sprite.position)*Math.tan(camera.fov*Math.PI/360)/camera.zoom;hit.extra.sprite.scale.setScalar(Math.max(.55,units*58/Math.max(1,height))*(1+Math.min(1,hit.time/.08)*.15));}}
-    hit.sprite.visible=!hit.impact?.quiet&&hit.time<(hit.effect ? .8 : .35);
+    hit.sprite.visible=!hit.impact?.quiet&&hit.time<(hit.bulletHit?1:hit.effect ? .8 : .35);
     if(hit.effect){hit.effect.draw(hit.time*1000);hit.sprite.material.opacity=1;}else {hit.sprite.scale.setScalar(.65+hit.time*3);hit.sprite.material.opacity=Math.max(0,1-hit.time/.35);hit.sprite.material.map.offset.x=Math.min(3,Math.floor(hit.time*14))*.25;}
     const screen=new THREE.Vector3(p.x,p.y+h+.3,p.z).project(camera);
     hit.number.hidden=screen.z>1||screen.z< -1||Math.abs(screen.x)>1.1||Math.abs(screen.y)>1.1;

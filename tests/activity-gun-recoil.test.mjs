@@ -15,5 +15,5 @@ test('Josette kicks harder, and intros and old network shots do not kick',()=>{
 });
 test('cancelled volleys have no releases and requested native impacts are authoritative',()=>{
  assert.deepEqual(releasedShots({cancelled:true},native.combatSpec('Carna','craft'),0),[]);
- for(const c of ['Carna','Josette'])for(const kind of ['basic','craft'])assert.equal(native.combatSpec(c,kind).hitEffect,'SC/sbkicon._ef');
+ for(const c of ['Carna','Josette'])for(const kind of ['basic','craft'])assert.equal(native.combatSpec(c,kind).hitEffect,'SC/ms10920._ef');
 });

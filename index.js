@@ -226,7 +226,7 @@ const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || ''
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
 const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
-const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:{...require("./activity/assets/sky/characters.json"),Anton:{}}});
+const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:Object.fromEntries(Object.entries({...require("./activity/assets/sky/characters.json"),Anton:{}}).filter(([name])=>name!==require('./activity/cs2-test-characters.cjs').COMPANION)),permanent:require('./activity/cs2-test-characters.cjs').TEST_CHARACTERS});
 const capelModel=require("./activity/assets/sky/capel.json");
 // until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
 const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async text=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,allowedMentions:{parse:[]}});},log:console.log});

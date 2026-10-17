@@ -1,3 +1,4 @@
+import cs2 from './cs2-test-characters.cjs';
 import {catRicochetPlan} from './cat-ricochet-ai.mjs';
 import worldModule from '../utils/activityWorld.js';
 import combat from './native-combat.cjs';
@@ -23,6 +24,11 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
   if(member.monster){const base=spawns[1],p=place({x:base.x+(i-((encounter.enemies.length-1)/2))*2.5,z:base.z});monsterSpawns.push({...p,teamId:'red',team:'red',noRespawn:true,ranged:member.character==='MishyArdent'});}
   else {const p=actor(member,'red',i,'training:ai'+(i?':'+i:''));ai??=p;}
  }
+ // Altina's companion is an independent, damageable combatant, never a Discord draw.
+ for(const owner of [...players.values()].filter(p=>p.character==='Altina')){
+  const guardian=actor({character:cs2.COMPANION,hp:650},owner.teamId,0,owner.id+':guardian');
+  Object.assign(guardian,place({x:owner.x+1.3,z:owner.z+(owner.teamId==='red'?1.4:-1.4)}),{guardianFor:owner.id});cs2.protectWithGuardian(owner,guardian);
+ }
  const world=worldModule.createActivityWorld({grid,geometry,now,combatEnabled:true,jumpEnabled:true,ballSpawns,disablePoms:!ballSpawns.length,enemySpawns:monsterSpawns,enemyRespawn:false,projectilesEnabled:true,canDamage:(a,b)=>a.teamId!==b.teamId});
  const roster=()=>[...players.values(),...world.snapshot().enemies],teams=['blue','red'].map(side=>roster().filter(p=>p.teamId===side));
  if(!teams[1].length)throw Error('La rencontre doit contenir un adversaire.');
@@ -43,6 +49,14 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
  function think(time){if(player.smokeHiddenUntil>time){path=[];return;}
   if(ai.hp<=0||player.hp<=0||status.immobilized(ai,time)||time<(ai.combatLockedUntil??0))return;
   const target=perceived(time),snapshot=world.snapshot(),balls=snapshot.poms??[],held=balls.find(p=>p.owner===ai.id),distance=Math.hypot(ai.x-target.x,ai.z-target.z),busy=ai.attackBusyUntil>time;
+  if(ai.guardianFor){
+   const owner=players.get(ai.guardianFor);if(!owner||owner.hp<=0){ai.hp=0;path=[];return;}
+   const dx=target.x-owner.x,dz=target.z-owner.z,length=Math.hypot(dx,dz)||1;
+   const guard=place({x:owner.x+dx/length*Math.min(2,length*.5),z:owner.z+dz/length*Math.min(2,length*.5)});
+   if(Math.hypot(ai.x-guard.x,ai.z-guard.z)>.45)navigate(guard);else path=[];
+   if(!busy&&distance<2.7&&time>=(world.cooldownsFor(ai.id).basic??0))send({type:'attack',kind:'basic',aim:aimAt(target),target:player.id});
+   return;
+  }
   if(time>=nextRest){restUntil=time+between(BREATHER);nextRest=restUntil+between(BREATHER_EVERY);}
   const resting=time<restUntil;
   if(time>=ballDecisionAt){wantsBall=random()<chance;ballDecisionAt=time+5000;}
@@ -108,7 +122,7 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
  if(player.cooking){if(position.cookingHeld)player.cooking.heldUntil=time+1500;else delete player.cooking;}
  if(player.hp>0&&!(player.guardHold?.until>time)&&!player.jump&&!player.siegDive&&!player.knockback&&time>=(player.combatLockedUntil??0)&&!status.immobilized(player,time))Object.assign(player,{x:position.x,y:position.y,z:position.z});
  let actionResult;if(command&&time>=readyAt){let result={};if(command.type==='say')result={text:command.text,speaker:player.id};else if(!finish)result=world.action(player,command,players);actionResult={id:command.id,...result};}
- if(!finish&&time>=readyAt){world.tick(players);const alive=roster().filter(p=>p.hp>0),blue=alive.some(p=>p.teamId==='blue'),red=alive.some(p=>p.teamId==='red');if(!blue||!red){finish={winner:blue?character:(encounter?.name??ai?.name??'Les monstres'),text:grouped?(blue?'Victoire de votre équipe':'Défaite de votre équipe'):undefined};for(const p of bots)p.moving=false;}else for(const brain of controllers)brain.step(time,dt);}
+ if(!finish&&time>=readyAt){for(const p of players.values())if(p.guardianFor&&!(players.get(p.guardianFor)?.hp>0))p.hp=0;world.tick(players);const alive=roster().filter(p=>p.hp>0),blue=alive.some(p=>p.teamId==='blue'),red=alive.some(p=>p.teamId==='red');if(!blue||!red){finish={winner:blue?character:(encounter?.name??ai?.name??'Les monstres'),text:grouped?(blue?'Victoire de votre équipe':'Défaite de votre équipe'):undefined};for(const p of bots)p.moving=false;}else for(const brain of controllers)brain.step(time,dt);}
  const canMove=time>=readyAt&&!finish&&player.hp>0&&!status.immobilized(player,time)&&time>=(player.combatLockedUntil??0);
  return {duel,...world.snapshot(),joueurs:[...players.values()].map(p=>({...p})),position:{x:player.x,y:player.y,z:player.z},actionResult,health:{...player,canMove,canDetonate:world.canDetonate(player.id),frozenUntil:player.stoneUntil??0,movementFactor:status.movementFactor(player,time),cooldowns:world.cooldownsFor(player.id),serverTime:time},messages:actionResult?.text?[{id:command.id,author:actionResult.speaker,character:player.character,text:actionResult.text}]:[],finish};
  }

@@ -286,7 +286,7 @@
       "cooldown": 300,
       "projectile": true,
       "projectileSpeed": 45,
-      "hitEffect": "SC/sbkicon._ef"
+      "hitEffect": "SC/ms10920._ef"
     },
     "slot": 16,
     "craft": {
@@ -309,7 +309,7 @@
       "projectile": true,
       "projectileSpeed": 45,
       "lockOn": true,
-      "hitEffect": "SC/sbkicon._ef"
+      "hitEffect": "SC/ms10920._ef"
     }
   },
   "Ries": {

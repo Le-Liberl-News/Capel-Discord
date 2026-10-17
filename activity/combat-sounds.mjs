@@ -10,7 +10,7 @@ export function createCombatSounds(assets){
   const context=new Context(),master=context.createGain();master.gain.value=volume;master.connect(context.destination);
   const onVolume=v=>{master.gain.value=v;};listeners.add(onVolume);
   const buffers=new Map();
-  for(const name of NAMES)buffers.set(name,fetch(new URL(`sounds/se/${name}.wav`,assets)).then(r=>r.arrayBuffer()).then(data=>context.decodeAudioData(data)).catch(()=>null));
+  for(const name of NAMES)buffers.set(name,fetch(new URL(`sounds/se/${name}.wav${name==='carna-shot'?'?v=ed6se689':''}`,assets)).then(r=>r.arrayBuffer()).then(data=>context.decodeAudioData(data)).catch(()=>null));
   const wake=()=>{if(context.state==='suspended')void context.resume().catch(()=>{});};
   addEventListener('pointerdown',wake,true);addEventListener('keydown',wake,true);
   function start(name,{gain=1,loop=false}={}){
