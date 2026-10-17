@@ -15,7 +15,7 @@ function comboOf(player,time){return player?.combo&&time<player.combo.until?play
 // each landed hit makes the next basic attack 20 % quicker: full speed (40 % of the normal timing) after 3 hits
 function comboFactor(count){return Math.max(COMBO.minFactor,1-COMBO.speedStep*Math.max(0,count||0));}
 function tempoSpec(spec,factor){
- if(!spec||factor===1)return spec;
+ if(!spec||spec.noTempo||factor===1)return spec;
  const scale=v=>v==null?v:v*factor;
  return {...spec,windup:scale(spec.windup),duration:scale(spec.duration),cooldown:scale(spec.cooldown),hitOffsets:spec.hitOffsets?.map(scale),tempo:factor};
 }

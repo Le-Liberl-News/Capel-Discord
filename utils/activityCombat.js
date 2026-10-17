@@ -42,6 +42,16 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function action(player, command, room) {
 
     players=room;
+    if(player.character==='Carna'&&['aim','fireEnd'].includes(command.kind)){
+      const active=[...attacks.values()].find(a=>a.actor===player.id&&a.character==='Carna'&&!a.cancelled&&now()<a.started+combatSpec('Carna',a.kind).fireDuration);
+      if(!active||player.hp<=0||player.spectator||immobilized(player,now()))return {error:'Rafale inactive.'};
+      if(command.kind==='fireEnd'&&active.kind==='basic'){active.fireStoppedAt=now();return {};}
+      if(command.kind==='aim'&&active.kind==='craft'){
+        const ray=validateRay(player,command.ray);if(!ray)return {error:'Visée invalide.'};
+        active.baseRay=ray;player.heading={dx:ray.direction.x,dz:ray.direction.z};return {};
+      }
+      return {};
+    }
     const cooking=require("../activity/phyllis-cooking.cjs");let food=null;
     if(player.character==='Phyllis'&&command.kind==='craft'){if(command.cookPhase==='end'){cooking.cookingTick(player,now());delete player.cooking;return {};}if(player.hp<=0||player.spectator||player.duelProtected||player.canMove===false||immobilized(player,now()))return {error:"Cuisine indisponible."};if(player.cooking)return {};if(!player.foodStock?.length){if(player.jump||player.knockback)return {error:'Cuisine au sol uniquement.'};cooking.beginCooking(player,now());return {cooking:true};}food=player.foodStock[0];}
 
@@ -145,6 +155,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     const travel = fps?Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z)/spec.projectileSpeed*1000:spec.leap?spec.leapDuration:spec.dash ? spec.dashDuration : !spec.projectile ? 0 : Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/14*1000;
 
     const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,tempo:spec.tempo,technique:spec.name,target:supportTarget?.id??(spec.targetRequired?command.target:undefined),effect:spec.effect,origin:fps?fps.origin:origin,ray:fps,obstacleImpact,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.persistentBuff?spec.buffDuration:spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
+    if(player.character==='Carna'){attack.baseRay=fps;attack.impactAt=time;}
     if(food){attack.food=food;attack.technique=cooking.FOODS[food].name;player.foodStock.shift();}
 
     if(spec.lockOn){attack.target=lockedTarget;attack.lockedOffset=lockedOffset;attack.shots=[];}
@@ -431,6 +442,16 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       const attacker=room.get(attack.actor),spec=combatSpec(attack.character,attack.kind);
 
       if(!attacker||attacker.hp<=0||attacker.character!==attack.character||attacker.spectator||immobilized(attacker,time)){attack.cancelled=true;attack.resolved=true;break;}
+      if(spec.automatic){
+        if(attack.fireStoppedAt&&attack.impactAt+hitOffsets[hitIndex]>=attack.fireStoppedAt){attack.resolved=true;break;}
+        const ray=require('../activity/carna-gun.cjs').shotRay(attack.baseRay,attack.id,hitIndex);
+        attack.ray=ray;attack.origin={...ray.origin};let distance=spec.range;
+        const endpoint={};for(const k of ['x','y','z'])endpoint[k]=ray.origin[k]+ray.direction[k]*distance;
+        const wall=geometry?.sweep(ray.origin,endpoint,.02);if(wall)distance=Math.min(distance,Math.hypot(wall.point.x-ray.origin.x,wall.point.y-ray.origin.y,wall.point.z-ray.origin.z));
+        for(const target of room.values()){if(target.id===attacker.id||target.hp<=0||target.spectator||!canDamage(attacker,target))continue;const body=rayBody(ray.origin,ray.direction,target,distance);if(body)distance=Math.min(distance,body.distance+.001);}
+        attack.aim={};for(const k of ['x','y','z'])attack.aim[k]=ray.origin[k]+ray.direction[k]*distance;
+        attack.shots??=[];const released=attack.impactAt+hitOffsets[hitIndex];attack.shots[hitIndex]={origin:{...ray.origin},aim:{...attack.aim},started:released,impactAt:released+90};
+      }
 
       if(spec.effect){const target=room.get(attack.target);if(!target||target.hp<=0||target.enemy||target.spectator||Math.hypot(target.x-attacker.x,target.z-attacker.z)>spec.range||Math.abs((target.y??0)-(attacker.y??0))>3){attack.cancelled=true;attack.resolved=true;break;}attack.aim={x:target.x,y:target.y??0,z:target.z};if(spec.effect==='heal'){const heal=Math.max(0,Math.min(spec.heal,(target.maxHp??require('../activity/player-health.cjs').PLAYER_MAX_HP)-target.hp));target.hp+=heal;attack.hits.push({id:target.id,heal});}else if(spec.effect==='guard'){target.guard={until:time+spec.shieldDuration};attack.hits.push({id:target.id,guard:true});}else if(spec.effect.endsWith('Buff')){applyBuff(target,spec,time);attack.hits.push({id:target.id,buff:spec.effect});}else {target.shield={hp:spec.shield,maxHp:spec.shield,until:time+spec.shieldDuration};attack.hits.push({id:target.id,shield:spec.shield});}continue;}
 
