@@ -4,7 +4,7 @@ const {encodeLoop}=require('./loopingGif');
 // Cinzel: the font of the activity's place titles
 GlobalFonts.registerFromPath(path.join(__dirname,'../activity/assets/sky/fonts/Cinzel.ttf'),'RankCinzel');
 const AXIS=path.join(__dirname,'../activity/assets/sky/axis');
-const W=1024,TOP=200,ROW=56,FRAMES=24,DELAY=80,GOLD='#f3c45a',EMBER='#ff8a2a';
+const W=1024,TOP=200,ROW=56,DELAY=80,GOLD='#f3c45a',EMBER='#ff8a2a';
 const FONT=(size,weight='')=>`${weight} ${size}px RankCinzel`.trim();
 
 // The pieces of the Axis Pillar the board is made of, taken from the game's own textures:
@@ -70,13 +70,12 @@ function drawBoard(c,rows,avatars,height,{circle,frieze}){
  if(!rows.length){c.font=FONT(24);c.fillStyle='#d9b26a';c.fillText('Aucun bracer classé.',W/2,TOP+40);}
  rule(TOP+Math.max(rows.length,1)*ROW+6,.6);
 }
-// What moves: a glow sliding along both friezes and a shine over the leader's row.
-function drawFrame(c,f,height,rows){
- const t=f/FRAMES;
- c.save();c.globalCompositeOperation='lighter';
- for(const [y,dir] of [[20,1],[height-20,-1]]){const x=dir>0?-150+(W+300)*t:W+150-(W+300)*t,g=c.createRadialGradient(x,y,0,x,y,140);g.addColorStop(0,'rgba(255,190,80,.55)');g.addColorStop(1,'rgba(255,120,30,0)');c.fillStyle=g;c.fillRect(x-140,y-20,280,40);}
- if(rows.length&&f<10){const x=14+(W-28)*f/9,g=c.createLinearGradient(x-80,0,x+80,0);g.addColorStop(0,'rgba(255,220,140,0)');g.addColorStop(.5,'rgba(255,220,140,.16)');g.addColorStop(1,'rgba(255,220,140,0)');c.fillStyle=g;c.fillRect(Math.max(14,x-80),TOP+4,160,ROW-8);}
- c.restore();
+// What moves: a shine sweeping over the leader's row, once every six seconds.
+const SWEEP=12,PERIOD=6000;
+function drawFrame(c,f,rows){
+ if(!rows.length||f>=SWEEP)return;
+ const x=14+(W-28)*f/(SWEEP-1),g=c.createLinearGradient(x-90,0,x+90,0);g.addColorStop(0,'rgba(255,220,140,0)');g.addColorStop(.5,'rgba(255,224,150,.34)');g.addColorStop(1,'rgba(255,220,140,0)');
+ c.globalCompositeOperation='lighter';c.fillStyle=g;c.fillRect(Math.max(14,x-90),TOP+4,Math.min(W-14,x+90)-Math.max(14,x-90),ROW-8);
 }
 // rows: {pseudo, avatar (an image, a buffer or null), pb, seuil, seuilSuivant (a number or 'MAX'), nomRang, trads, couleurHex,
 // pbGain and tradsGain (what the day before brought), placeChange (places won, negative when lost), arenaWins and arenaGain}
@@ -84,6 +83,6 @@ async function renderRankings(rows){
  const parts=await loadPieces(),height=TOP+Math.max(rows.length,1)*ROW+70;
  const avatars=await Promise.all(rows.map(r=>r.avatar?(Buffer.isBuffer(r.avatar)||typeof r.avatar==='string'?loadImage(r.avatar).catch(()=>null):r.avatar):null));
  const base=createCanvas(W,height);drawBoard(base.getContext('2d'),rows,avatars,height,parts);
- return encodeLoop(base,{frames:FRAMES,delay:DELAY,draw:(c,f)=>drawFrame(c,f,height,rows)});
+ return encodeLoop(base,{frames:SWEEP+1,delay:f=>f<SWEEP?DELAY:PERIOD-SWEEP*DELAY,draw:(c,f)=>drawFrame(c,f,rows)});
 }
 module.exports={renderRankings};

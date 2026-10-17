@@ -74,10 +74,8 @@
   "tests/activity-halloween-occlusion.test.cjs",
   "tests/activity-halloween.test.cjs",
   "tests/activity-lake-prototype.test.cjs",
-  "tests/rhumertume.test.cjs",
   "tools/map-editor/lake-prototype.cjs",
   "tools/map-editor/lake-textures.py",
   "utils/activityHalloweenAccess.js",
-  "utils/activitySceneInvitations.js",
-  "utils/rhumertume.js"
+  "utils/activitySceneInvitations.js"
 ]
