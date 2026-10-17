@@ -77,7 +77,7 @@ export function nativeWorldEffect(THREE,player,options={}){
   else if(p.primitive===1)object=new THREE.Mesh(new THREE.CylinderGeometry(Math.abs(a[0]),Math.abs(b[0]),height,24,1,true),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));
   else if(p.primitive===9||p.primitive===8){object=new THREE.Mesh(new THREE.RingGeometry(Math.abs(a[0]),Math.abs(b[0]),32),new THREE.MeshBasicMaterial({...material,side:THREE.DoubleSide}));const uv=object.geometry.attributes.uv;for(let i=0;i<uv.count;i++){const row=Math.floor(i/33),col=i%33;uv.setXY(i,col/32,row);}object.rotation.x=-Math.PI/2;}
   else object=new THREE.Sprite(new THREE.SpriteMaterial(material));
-  if(additive||options.bloom>0)setBloomEmission(object.material,options.bloom??1.6);object.renderOrder=4;group.add(object);parts.push({item,object,width,height,center:[(a[0]+b[0])/2,(a[1]+b[1])/2]});
+  object.userData.nativePartIndex=p.index;if(additive||options.bloom>0)setBloomEmission(object.material,options.bloom??1.6);object.renderOrder=4;group.add(object);parts.push({item,object,width,height,center:[(a[0]+b[0])/2,(a[1]+b[1])/2]});
  }
  return{group,draw(ms,animationTime=ms){const anchor=options.anchorPart==null?null:parts.find(p=>p.item.part.index===options.anchorPart),offset=anchor?player.state(anchor.item,ms)?.position:null;for(const{item,object,width,height,center}of parts){const state=player.state(item,ms);object.visible=!!state;if(!state)continue;
   object.position.set(state.position[0]+(object.isSprite?center[0]*state.scale[0]:0),state.position[1]+(pRing(item.part)&&!object.userData.nativeHelix?item.part.vertices[0][1]*state.scale[2]:0)+(object.isSprite?center[1]*state.scale[1]:item.part.primitive===1?height*state.scale[1]/2:0),state.position[2]);
