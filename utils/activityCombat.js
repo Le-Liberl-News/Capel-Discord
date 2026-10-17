@@ -32,7 +32,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   };
 
   const smoke=require('../activity/nial-smoke.cjs').createSmoke((attack,actor,target,amount,time,impact)=>hurt(attack,actor,target,amount/attackFactor(actor,time),time,impact));
-  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft});
+  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft,catchTarget});
 
   const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
 
@@ -287,7 +287,10 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function project(attack,attacker,player,spec,direction,time){
 
     const safeFloor=point=>{if(!grid)return floor(point);const x=Math.round((point.x-grid.origin.x)/grid.step),z=Math.round((point.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return null;const y=floor(point);return Number.isFinite(y)&&Math.abs(y-grid.cells[z*grid.width+x])<=.35?y:null;};
-    const path=projectionPath(player,direction,spec.knockback,safeFloor,geometry);if(!path)return;
+    let start=player;
+    if(spec.comboCatch){const ground=safeFloor(player);if(!Number.isFinite(ground)||Math.abs(ground-(player.y??0))>1.5)return;start={...player,y:ground};}
+    const path=projectionPath(start,direction,spec.knockback,safeFloor,geometry);if(!path)return;
+    if(spec.comboCatch)path.origin={x:player.x,y:player.y??0,z:player.z};
 
     const duration=spec.knockbackDuration??450,projection={...path,id:attack.id+':'+player.id,started:time,duration};
 
@@ -296,9 +299,18 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(player.enemy){player.attack=null;player.charge=null;player.path=[];player.stunUntil=Math.max(player.stunUntil??0,time+duration);}
 
     projections.set(player.id,{projection,attack,attacker,spec});
+    return projection;
 
   }
 
+  // Only the confirmed first hit calls this: prediction and target selection cannot pull anyone.
+  function catchTarget(attack,actor,target,point,time){
+    const direction={x:point.x-target.x,z:point.z-target.z},distance=Math.hypot(direction.x,direction.z);
+    if(distance<.03||target.hp<=0||attack.cancelled)return;
+    const projection=project(attack,actor,target,{knockback:distance,knockbackDuration:160,comboCatch:true},direction,time);
+    if(projection){target.moving=false;target.movementCredit=0;if(target.enemy)target.path=[];}
+    return projection;
+  }
   const driveContacts=new Map();
   function tick(room) {
     const cooking=require("../activity/phyllis-cooking.cjs");for(const player of room.values())cooking.cookingTick(player,now());

@@ -1,7 +1,7 @@
 const {projectilePosition,divePosition}=require('../activity/special-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {immobilized,applyStatus}=require('../activity/combat-status.cjs');
-function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=()=>{}}){
+function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=()=>{},catchTarget=()=>{}}){
  const entities=new Map(),highlights=new Map();let last=now();
  const activeSpire=id=>[...attacks.values()].find(a=>a.actor===id&&a.special==='spire'&&!a.explodedAt&&!a.cancelled&&now()>=a.impactAt&&now()<a.objectExpiresAt);
  function damageArea(a,actor,room,point,radius,damage,time,freeze=false){
@@ -29,17 +29,18 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
   if(!s.special)return false;
   if(a.cancelled)return true;
   const actor=room.get(a.actor);if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
-  if(s.special==='flameSlash'){require('./activityReanFlameSlash').tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt});return true;}
+  if(s.special==='flameSlash'){require('./activityReanFlameSlash').tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt,catchTarget});return true;}
   if(s.special==='mueller'){
    const combo=require('../activity/mueller-combo.cjs'),p=combo.muellerPhases(a),age=time-a.started;
    if(immobilized(actor,time)){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return true;}
    if(!a.dashFinished){Object.assign(actor,combo.muellerMotion(a,age).position);actor.acceptedAt=time;if(age>=p.land)a.dashFinished=true;}
-   const hits=[p.first,p.second,p.land];while(a.nextHit<3&&age>=hits[a.nextHit]){const strike=a.nextHit++;
+   const hits=[p.first,p.second,p.land];while(a.nextHit<3&&age+1e-6>=hits[a.nextHit]&&!a.cancelled){const strike=a.nextHit++;
     for(const target of room.values()){
+     if(a.cancelled)break;
      if(target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||(strike>0&&!a.caught.includes(target.id))||Math.hypot(target.x-a.aim.x,target.z-a.aim.z)>s.radius+(target.boss?1:0)||Math.abs((target.y??0)-a.aim.y)>1.2)continue;
      if(geometry?.sweep({...a.aim,y:a.aim.y+.8},{x:target.x,y:(target.y??0)+.8,z:target.z},.08))continue;
      const point={x:target.x,y:(target.y??0)+.8,z:target.z},dealt=hurt(a,actor,target,strike===2?s.finalDamage:s.damage,time,{point});a.hits.push({id:target.id,strike,at:time,point,...dealt});
-     if(strike===0&&dealt.damage&&target.hp>0){a.caught.push(target.id);applyStatus(target,{status:'stun',statusDuration:Math.max(0,a.started+p.end-time)},time);}
+     if(strike===0&&dealt.damage&&target.hp>0){a.caught.push(target.id);applyStatus(target,{status:'stun',statusDuration:Math.max(0,a.started+p.end-time)},time);catchTarget(a,actor,target,{...combo.muellerSlashPoint(a),y:a.aim.y},time);}
     }
    }
    if(age>=p.end){a.resolved=true;actor.combatLockedUntil=Math.min(actor.combatLockedUntil??time,time);}

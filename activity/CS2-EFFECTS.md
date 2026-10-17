@@ -18,3 +18,5 @@ L'export du tachi conserve les nœuds non dessinés du modèle, notamment `effec
 Les animations viennent maintenant de `BTL_S_CRAFT01_02`, `_07`, `_04`, `_05` et `_06`. Le lever et la coupe finale partagent deux fenêtres de `_06`. Le minutage et l'échelle des effets sont adaptés à l'enchaînement à trois coups et à la zone de dégâts du combat ; la simulation des dégâts reste dans `rean-flame-slash.cjs` et `utils/activityReanFlameSlash.js`.
 
 Les outils d'extraction, les sorties brutes du décodeur et les exports de l'atelier sont conservés localement dans `E:/dev/sky-activity-tools/cold-steel2/` et `E:/dev/sky-activity-tools/atelier-sprites/`.
+
+Le premier impact réussi de Rean ou Mueller attire la victime pendant 160 ms vers le point des coupes, en respectant les murs et les ruptures de sol. Un coup évité, bloqué ou paré ne déclenche aucune attraction. Rean utilise des bruitages Sky synchronisés aux phases du craft : l'installation CS2 locale ne contient pas les fichiers SE originaux. Les sons respectent le volume des effets et cessent si le craft est interrompu.

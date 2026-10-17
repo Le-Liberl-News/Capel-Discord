@@ -1,7 +1,7 @@
 const {flamePhases,flameMotion,flamePath}=require('../activity/rean-flame-slash.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {applyStatus,immobilized}=require('../activity/combat-status.cjs');
-function tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt}){
+function tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt,catchTarget}){
  if(a.resolved)return;
  if(immobilized(actor,time)){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return;}
  const p=flamePhases(a),age=time-a.started,path=flamePath(a);
@@ -16,7 +16,7 @@ function tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt}){
    if(geometry?.sweep({...a.aim,y:a.aim.y+.8},{x:target.x,y:(target.y??0)+.8,z:target.z},.08))continue;
    const point={x:target.x,y:(target.y??0)+.8,z:target.z},dealt=hurt(a,actor,target,strike===2?s.finalDamage:s.damage,at,{point});
    a.hits.push({id:target.id,strike,at,point,...dealt});
-   if(strike===0&&dealt.damage&&target.hp>0)applyStatus(target,{status:'stun',statusDuration:p.third+120-p.first},at);
+   if(strike===0&&dealt.damage&&target.hp>0){applyStatus(target,{status:'stun',statusDuration:p.third+120-p.first},at);catchTarget(a,actor,target,a.aim,time);}
   }
  }
  if(age>=p.end){a.resolved=true;a.dashFinished=true;actor.combatLockedUntil=Math.min(actor.combatLockedUntil??time,time);}
