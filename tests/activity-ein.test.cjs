@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {COMBAT,combatSpec}=require('../activity/native-combat.cjs');
+test('Ein has corrected eight-direction movement and a complete basic attack',()=>{const hero=COMBAT['Ein Selnate'],spec=combatSpec('Ein Selnate','basic');assert.equal(hero.banks[0].directions,8);assert.equal(hero.banks[2].directions,8);assert.equal(hero.sequences.basic.length,24);assert.equal(spec.duration,1433);assert.ok(spec.windup<spec.duration);for(const bank of Object.values(hero.banks)){assert.equal(bank.pixelScale,.02);assert.ok(Math.abs(bank.bodyHeight-1.66)<1e-9);assert.ok(fs.existsSync(path.join(__dirname,'../activity/assets/sky',bank.texture)));}for(const f of hero.sequences.basic)assert.ok(f.pose>0&&f.pose<hero.banks[2].rows);});
+
