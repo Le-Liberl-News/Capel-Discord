@@ -1,5 +1,6 @@
 const {dashPosition}=require('./black-fang.cjs');
 function combatMotion(event,time,spec){
+ if(spec.special==='flameSlash')return require('./rean-flame-slash.cjs').flameMotion(event,time);
  if(spec.special==='mueller')return require('./mueller-combo.cjs').muellerMotion(event,time);
  if(spec.special==='phoenix')return {active:time<spec.windup+spec.leapDuration,position:require('./cassius-phoenix.cjs').phoenixPosition(event,time,spec)};
  if(spec.special==='dive')return {active:time<spec.windup+spec.leapDuration,position:require('./special-crafts.cjs').divePosition(event,time,spec)};

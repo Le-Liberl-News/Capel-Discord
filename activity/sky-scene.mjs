@@ -1053,7 +1053,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       const attack=avatar.dead||down?null:renneCombat?.current(id);if(avatar.character==='Loewe'){const visual=loeweMechanics.loeweVisual(attack);bodyScale=visual.scale;bodyOffsetX=visual.offsetX;}
 
       if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
-      if(combatCamera&&avatar===me&&!introPlaying)avatar.heading=combatMoves.cameraFacing(yaw);
+      if(combatCamera&&avatar===me&&!introPlaying&&attack?.special!=='flameSlash')avatar.heading=combatMoves.cameraFacing(yaw);
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,
@@ -1079,7 +1079,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:holdingGuard?0xb8daff:0xffffff);
       avatar.deathLift=avatar.dead||down?(info.groundOffsets?.[frame]??0):0;
       if(avatar.character==="Cassius"||avatar.character==="Mueller")avatar.mesh.scale.x=craftFlip?-1:1;
-      avatar.spriteFloorClearance=spriteFrames.spriteFloorClearance(info,frame);avatar.renderFrame={pose,info};avatar.mesh.visible=!craftHidden&&!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
+      avatar.spriteFloorClearance=spriteFrames.spriteFloorClearance(info,frame);avatar.renderFrame={pose,frame,info};avatar.mesh.visible=!craftHidden&&!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;
       avatar.footOffset=!avatar.battleTextures&&!avatar.dead?(avatar.info.footOffsets?.[avatar.direction%(avatar.info.directions??8)]??0):0;
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
@@ -1130,7 +1130,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(juliaCombo&&(performance.now()>juliaCombo.until||me?.character!=='Julia'||health.hp<=0)){juliaCombo=null;craftTarget=false;combatControls.targeting(null);}
     aimLine.visible=false;
     if(craftTarget&&me&&!me.dead&&connected){const spec=renneMechanics.combatSpec(me.character,craftTarget),selected=spec.targetRequired?pickCombatTarget(cursor,spec):null,point=spec.targetRequired?avatars.get(selected)?.position:aimForAttack(cursor,true),target=spec.targetRequired?point:point&&renneMechanics.attackPoint(me.position,point,craftTarget,me.character);marker.visible=!!target;aimLine.visible=!!target&&renneMechanics.combatSpec(me.character,craftTarget)?.shape==='line';if(target){if(aimLine.visible)marker.visible=false;marker.position.set(target.x,target.y+.06,target.z);marker.scale.setScalar(spec.special==='dimension'?spec.radius/.22:2.5);if(aimLine.visible){const dx=target.x-me.position.x,dz=target.z-me.position.z;aimLine.position.set((target.x+me.position.x)/2,combatGround.lineMarkerHeight(me.position,target),(target.z+me.position.z)/2);aimLine.rotation.z=-Math.atan2(dz,dx);aimLine.scale.set(Math.hypot(dx,dz),renneMechanics.combatSpec(me.character,craftTarget).radius*2,1);}}}else {craftTarget=false;combatControls.targeting(null);marker.scale.setScalar(1);if(!path.length)marker.visible=false;}
-    muellerTarget.visible=!!craftTarget&&renneMechanics.combatSpec(me?.character,craftTarget)?.special==='mueller'&&marker.visible;if(muellerTarget.visible){muellerTarget.position.copy(marker.position);muellerTarget.scale.setScalar(renneMechanics.combatSpec(me.character,craftTarget).radius);marker.visible=false;}
+    muellerTarget.visible=!!craftTarget&&renneMechanics.combatSpec(me?.character,craftTarget)?.special&&['mueller','flameSlash'].includes(renneMechanics.combatSpec(me?.character,craftTarget)?.special)&&marker.visible;if(muellerTarget.visible){muellerTarget.position.copy(marker.position);muellerTarget.scale.setScalar(renneMechanics.combatSpec(me.character,craftTarget).radius);marker.visible=false;}
     if(connected&&movementAllowed&&me&&!me.dead&&!health.spectator&&health.hp>0&&!actionQueue.length&&performance.now()>=autoPickupAt){
       const ball=pomInput.pickupCandidate(environment.poms,{...me.position,hp:health.hp,duelProtected:me.duelProtected},localId);
       if(ball&&queueAction('pickup',ball.id))autoPickupAt=performance.now()+1000;

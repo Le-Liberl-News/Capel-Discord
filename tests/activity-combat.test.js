@@ -58,7 +58,7 @@ test('lethal attacks retain anonymous cinematic timing and target markers',()=>{
 
 
 test('all native combatants have valid local banks and server-owned actions, civilians cannot invent them',()=>{
- const fs=require('node:fs'),path=require('node:path'),{COMBAT,combatSpec}=require('../activity/native-combat.cjs');assert.equal(Object.keys(COMBAT).length,40);assert.equal(Object.values(COMBAT).filter(c=>c.actions.art).length,31);
+ const fs=require('node:fs'),path=require('node:path'),{COMBAT,combatSpec}=require('../activity/native-combat.cjs'),{TEST_CHARACTERS,COMPANION}=require('../activity/cs2-test-characters.cjs');const prototypes=new Set([...TEST_CHARACTERS,COMPANION]);assert.equal(Object.keys(COMBAT).filter(name=>!prototypes.has(name)).length,40);for(const name of prototypes)assert.ok(COMBAT[name],name);assert.equal(Object.values(COMBAT).filter(c=>c.actions.art).length,31);
  for(const [character,meta]of Object.entries(COMBAT)){
   for(const info of Object.values(meta.banks)){assert.ok(fs.existsSync(path.join(__dirname,'../activity/assets/sky',info.texture)),info.texture);assert.ok(info.frames>0);}
   for(const frames of Object.values(meta.sequences))for(const frame of frames){assert.ok(frame.pose*(meta.banks[frame.bank].directions??8)+(meta.banks[frame.bank].directions??8)-1<meta.banks[frame.bank].frames,character);assert.ok(frame.ms>0);}

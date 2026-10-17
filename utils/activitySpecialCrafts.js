@@ -16,6 +16,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
  function setup(a,s,command,room){
   a.special=s.special;
   if(a.character==='Bleublanc'&&s.special==='dive')room.get(a.actor).projectileReflection={id:a.id,from:a.started+s.windup+1,until:a.started+s.windup+s.leapDuration};
+  if(s.special==='flameSlash'){const p=require('../activity/rean-flame-slash.cjs').flamePhases(a);a.impactAt=a.started+p.first;a.endsAt=a.started+p.end+400;}
   if(s.special==='mueller'){const p=require('../activity/mueller-combo.cjs').muellerPhases(a);a.impactAt=a.started+p.first;a.endsAt=a.started+p.end+400;a.caught=[];a.nextHit=0;}
   if(s.special==='spire'){a.impactAt=a.started+s.windup;a.objectExpiresAt=a.impactAt+12000;a.endsAt=a.objectExpiresAt+700;}
   if(s.special==='summon')a.impactAt=a.started+s.windup;
@@ -28,6 +29,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
   if(!s.special)return false;
   if(a.cancelled)return true;
   const actor=room.get(a.actor);if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
+  if(s.special==='flameSlash'){require('./activityReanFlameSlash').tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt});return true;}
   if(s.special==='mueller'){
    const combo=require('../activity/mueller-combo.cjs'),p=combo.muellerPhases(a),age=time-a.started;
    if(immobilized(actor,time)){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return true;}

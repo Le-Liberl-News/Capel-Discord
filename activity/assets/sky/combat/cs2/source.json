@@ -214,5 +214,34 @@
       "nativeClips": true
     }
   },
-  "exportNotes": "384x320 capture canvas with transparent margins; combat run uses native BTL_MOVE, death clamps BTL_DEAD; ground projection preserves feet and tail pixels without lifting the character."
+  "exportNotes": "384x320 capture canvas with transparent margins; combat run uses native BTL_MOVE, death clamps BTL_DEAD; ground projection preserves feet and tail pixels without lifting the character.",
+  "flameSlash": {
+    "clips": {
+      "flamePrep": {
+        "source": "BTL_CRAFT01_01",
+        "duration": 0.7999860048294067
+      },
+      "flameRush": {
+        "source": "BTL_CRAFT01_04",
+        "duration": 0.9999859929084778
+      },
+      "flameFirst": {
+        "source": "BTL_CRAFT01_02",
+        "duration": 0.6666600108146667
+      },
+      "flameSecond": {
+        "source": "BTL_CRAFT03_03",
+        "duration": 0.8999860286712646
+      },
+      "flameRaise": {
+        "source": "BTL_CRAFT05_01",
+        "duration": 0.8999900221824646
+      },
+      "flameThird": {
+        "source": "BTL_CRAFT05_03",
+        "duration": 1.699970006942749
+      }
+    },
+    "notes": "Native CS2 animation poses, eight directions. Blade anchors projected from the actual equipped tachi for temporary fire. Final Sky effects pending selection."
+  }
 }
