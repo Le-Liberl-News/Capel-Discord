@@ -4,7 +4,8 @@ import audioop, json, wave
 from pathlib import Path
 SOURCE = Path('E:/dev/sky-activity-tools/sons')
 OUTPUT = Path(__file__).resolve().parents[1] / 'assets/sky/sounds/se'
-SOUNDS = {  # use -> extracted file
+SOUNDS = {
+    'schera-whip': 'FC/ed6se502.wav', 'carna-shot': 'FC/ed6se592.wav', 'josette-shot': 'FC/ed6se855.wav',  # use -> extracted file
     'miss': 'FC/ed6se132.wav', 'fight': 'FC/ed6se155.wav', 'jump': 'FC/ed6se163.wav', 'olivier': 'FC/ed6se190.wav',
     'block': 'FC/ed6se214.wav', 'antoine': 'FC/ed6se402.wav', 'axis-ambience': 'FC/ed6se451.wav', 'joshua': 'FC/ed6se504.wav',
     'hit1': 'FC/ed6se552.wav', 'hit2': 'FC/ed6se553.wav', 'hit3': 'FC/ed6se554.wav', 'hit4': 'FC/ed6se555.wav', 'dash': 'FC/ed6se571.wav',

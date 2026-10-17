@@ -94,8 +94,8 @@ export async function createRenneCombat(THREE,scene,assets) {
     const arc=spec.arcFencer?arcBank.create(event,spec):null;if(arc)scene.add(arc.group);
     const whip=spec.whip?createScheraWhip(THREE,event,spec):null;if(whip)scene.add(whip.group);
     const charge=spec.chargeEffects?createArcCharge(THREE,scene,heroBanks,event,spec):null;
-    const obstacle=spec.fps?bakedEffectSprite(THREE,heroBanks.get('sc/ms10920._ef'),1.2):null;if(obstacle)scene.add(obstacle.sprite);
-    const muzzle=spec.fps&&spec.burstShots?bakedEffectSprite(THREE,{...heroBanks.get('sc/msc0548._ef'),duration:220},.9):null;if(muzzle)scene.add(muzzle.sprite);
+    const obstacle=spec.fps?bakedEffectSprite(THREE,heroBanks.get('sc/sbkicon._ef'),1.2):null;if(obstacle)scene.add(obstacle.sprite);
+    const muzzle=spec.fps&&spec.burstShots?bakedEffectSprite(THREE,{...heroBanks.get(event.character==='Carna'?'sc/sc006_01._ef':'sc/msc0548._ef'),duration:220},.9):null;if(muzzle)scene.add(muzzle.sprite);
     if(event.character==='Luciola'&&event.kind==='craft')for(const root of [group,bolt,assembly?.sprite,worldAssembly?.group,halo?.group])root?.traverse(o=>{for(const material of [].concat(o.material??[]))material.userData.bloomEmission=0;});
     const effect={muzzle,obstacle,burst,charge,arc,whip,group,ring,vortex,bolt,shot,volleys,assembly,worldAssembly,halo,trail,wave};effects.set(event.id,effect);return effect;
   }

@@ -1,4 +1,6 @@
 import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
+import {combatSpec} from './native-combat.cjs';
+import {releasedShots} from './gun-recoil.mjs';
 import moves from './combat-moves.cjs';
 // What makes the shared moves readable (combat-moves.cjs): combo hits shake the target and show the
 // combo counter, a missed swing puffs, a parried craft says so and blows up on its caster, a dodge
@@ -47,6 +49,14 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     const fresh=now-event.localStart<1000;
     if(event.missed&&!done.has('miss')){done.add('miss');if(fresh)sounds?.play('miss');}
     if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))sounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])sounds?.play(CRAFT_SOUNDS[event.character]);}
+    const spec=combatSpec(event.character,event.kind);
+    const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':event.character==='Josette'&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
+    if(sound&&!event.cancelled&&!event.reflectedProjectile){
+     for(const shot of releasedShots(event,spec,now)){
+      const key='sound:'+shot.index;if(done.has(key))continue;done.add(key);
+      if(shot.age<150)sounds?.play(sound,{gain:event.character==='Carna'?.3:1});
+     }
+    }
     for(const hit of event.hits??[]){
      if(hit.parried&&!done.has('parry:'+hit.id)){done.add('parry:'+hit.id);labels.push({el:callout('Parade !','#9fe8ff'),id:hit.id,started:now});}
      // a basic attack stopped by a guard facing it

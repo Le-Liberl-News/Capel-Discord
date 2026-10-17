@@ -20,6 +20,7 @@ import axisIntroDefinition from './assets/sky/axis/intro.json';
 import {createTowerGates} from './tower-gates.mjs';
 import {recordCorrection,recordDiagnostic} from './diagnostics.mjs';
 import playerHealth from './player-health.cjs';
+import {createGunRecoil} from './gun-recoil.mjs';
 import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
 import projectionMechanics from './combat-projection.cjs';
 import diveMechanics from './sieg-dive.cjs';
@@ -229,6 +230,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let notifyCapture=()=>{};
   const duelFinish=isArena?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
+  const gunRecoil=createGunRecoil(renneMechanics.combatSpec);
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event),(phase,event)=>cookingInput(phase,event),phase=>guardInput(phase));
@@ -934,6 +936,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(!connected||!me||me.dead||health.spectator||!mobileTarget.canLockTarget(mobileTargetId,target,localId,inTower,me.teamId))mobileTargetId=null;
       else if(!introPlaying)({yaw,pitch}=mobileTarget.followTarget(yaw,pitch,me.position,target.position,seconds,isFPS));
     }
+    const kick=gunRecoil(renneCombat?.current(localId),me?.character,time,isFPS&&!introPlaying);yaw+=kick.yaw;if(kick.pitch)pitch=Math.max(-1.35,Math.min(1.35,pitch+kick.pitch));
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
     camera.position.set(

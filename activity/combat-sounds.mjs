@@ -1,6 +1,6 @@
 // Game sound effects (tools/export-sounds.py). Web Audio: overlapping, low latency, and one gain for
 // the "Effets" volume of the settings. The context starts on the first touch or key, as browsers require.
-const NAMES=['miss','fight','jump','olivier','block','antoine','axis-ambience','joshua','hit1','hit2','hit3','hit4','dash'];
+const NAMES=['schera-whip','carna-shot','josette-shot','miss','fight','jump','olivier','block','antoine','axis-ambience','joshua','hit1','hit2','hit3','hit4','dash'];
 let volume=.5;try{const saved=localStorage.getItem('sky-sfx-volume');if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(1,Number(saved)));}catch{}
 const listeners=new Set();
 export function effectsVolume(){return volume;}
@@ -15,7 +15,7 @@ export function createCombatSounds(assets){
   addEventListener('pointerdown',wake,true);addEventListener('keydown',wake,true);
   function start(name,{gain=1,loop=false}={}){
     let source=null,stopped=false;
-    void buffers.get(name)?.then(buffer=>{if(!buffer||stopped||volume<=0&&!loop)return;wake();const node=context.createGain();node.gain.value=gain;node.connect(master);source=context.createBufferSource();source.buffer=buffer;source.loop=loop;source.connect(node);source.start();});
+    void buffers.get(name)?.then(buffer=>{if(!buffer||stopped||volume<=0&&!loop)return;wake();const node=context.createGain();node.gain.value=gain;node.connect(master);source=context.createBufferSource();source.buffer=buffer;source.loop=loop;source.connect(node);source.onended=()=>{source.disconnect();node.disconnect();};source.start();});
     return ()=>{stopped=true;try{source?.stop();}catch{}};
   }
   return {
