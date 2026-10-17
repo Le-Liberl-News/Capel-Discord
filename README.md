@@ -102,16 +102,15 @@ Ajouter au `.env` du serveur :
 
 ```dotenv
 PATCH_RELEASE_CHANNEL_ID=identifiant_du_salon
-PATCH2ND_GITHUB_TOKEN=token_finement_scopé
 PLATFORM_TOKEN=jeton_api_de_la_plateforme
 ```
 
-Le token GitHub doit avoir accès au dépôt privé `Le-Liberl-News/Patch2nd`, avec
-`Actions: Read and write` et `Contents: Read` (`PATCHSC_GITHUB_TOKEN` reste lu si
-`PATCH2ND_GITHUB_TOKEN` est absent). `PLATFORM_TOKEN` est le jeton d'un compte de
-la plateforme autorisé à traduire : `/write`, les boutons de correction et
-`/lexique` lisent et écrivent les répliques de SC sur la plateforme (plus sur les
-feuilles Google). Aucun jeton ne doit être placé dans le dépôt.
+`PLATFORM_TOKEN` est le jeton API d'un compte administrateur de la plateforme
+(lecture / écriture). La plateforme lance et suit elle-même la compilation de
+Patch2nd avec son application GitHub (`plateforme/api/build.php`) : Capel ne
+détient aucun token GitHub. Le même jeton sert à `/write`, aux boutons de
+correction et à `/lexique`, qui lisent et écrivent les répliques de SC sur la
+plateforme (plus sur les feuilles Google). Aucun jeton ne doit être placé dans le dépôt.
 Si une publication est déjà active sur GitHub, Capel refuse une
 nouvelle demande. Le verrou est donc conservé même après un redémarrage du bot. Le
 panneau est désactivé pendant le traitement et le salon reçoit le lien de la release,

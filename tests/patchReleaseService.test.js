@@ -90,8 +90,8 @@ test('button dispatches the Patch2nd build with the requester', async () => {
     assert.equal(await service.handleButton(click), true);
     assert.deepEqual(calls[0], {
         method: 'POST',
-        path: '/repos/Le-Liberl-News/Patch2nd/actions/workflows/build.yml/dispatches',
-        body: { ref: 'main', inputs: { requested_by: 'Estelle', force: 'false' } },
+        path: '/plateforme/api/build.php',
+        body: { project: 'sky-sc', requested_by: 'Estelle' },
     });
     assert.equal(service.started.baseline, 7);
     assert.equal(service.started.requester, '42');
@@ -112,7 +112,7 @@ test('daily publication names Capel as the requester', async () => {
 
     await service.requestRelease();
 
-    assert.equal(calls[0].body.inputs.requested_by, 'Capel (publication quotidienne)');
+    assert.equal(calls[0].body.requested_by, 'Capel (publication quotidienne)');
 });
 
 test('daily no-change result does not post a Discord message', async () => {
@@ -151,14 +151,24 @@ test('successful publishing workflow publishes the resulting release', async () 
     assert.equal(service.release.tag_name, 'patch-v0.5.5');
 });
 
-test('latest release skips backups and older patch releases', async () => {
+test('runs and the latest release come from the platform build API', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
-    service.github = async () => [
-        { id: 1, tag_name: 'v2026.10.05-1257', created_at: '2026-10-05T12:51:47Z' },
-        { id: 2, tag_name: 'sauvegarde-2026-10-16', created_at: '2026-10-16T01:00:00Z' },
-        { id: 3, tag_name: 'v2026.10.06-0721', created_at: '2026-10-06T07:10:20Z' },
-    ];
-    assert.equal((await service.latestRelease()).id, 3);
+    const paths = [];
+    service.github = async (method, path) => {
+        paths.push(`${method} ${path}`);
+        return {
+            runs: [{ id: 5, status: 'in_progress', conclusion: '', created_at: '2026-10-17T10:00:00Z', url: 'https://example/run' }],
+            release: { tag: 'v2026.10.17-1031', name: 'Patch FR SC 2026.10.17-1031', url: 'https://example/release', body: 'Notes', date: '2026-10-17T10:33:33Z' },
+        };
+    };
+    const active = await service.activeRun();
+    assert.equal(active.id, 5);
+    assert.equal(active.html_url, 'https://example/run');
+    const release = await service.latestRelease();
+    assert.equal(release.id, 'v2026.10.17-1031');
+    assert.equal(release.html_url, 'https://example/release');
+    assert.equal(release.body, 'Notes');
+    assert.deepEqual(paths, ['GET /plateforme/api/build.php?project=sky-sc', 'GET /plateforme/api/build.php?project=sky-sc']);
 });
 
 test('a new release is announced with its notes, in messages Discord accepts', async () => {
