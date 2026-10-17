@@ -1,6 +1,7 @@
 const db = require('../utils/db.js');
 const { ajouterXP } = require('../utils/xpManager.js');
 const cleanup = require('../utils/cleanup.js');
+const platformTexts = require('../utils/platformTexts.js');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const SALON_READONLY_ID = "1493171302624657428";
@@ -221,11 +222,8 @@ module.exports = async function handleButtons(interaction, sheets) {
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
-            if (candidats.length === 0) return interaction.editReply(`❌ Feuille \`${feuille}\` introuvable.`);
-
-            const row = await sheetManager.lireLigne(sheets, candidats[0].id, ligne);
-            const reponse = sheetManager.formaterLigneDiscord(row, ligne, feuille, interaction.user.id, false);
+            const item = await platformTexts.bubble(feuille, ligne);
+            const reponse = platformTexts.formatBubble(item, ligne, feuille, interaction.user.id, false);
 
             await interaction.editReply(reponse);
         } catch (error) {
@@ -239,9 +237,9 @@ module.exports = async function handleButtons(interaction, sheets) {
         const ligne = parseInt(parts[2], 10);
 
         try {
-            const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
-            const row = await sheetManager.lireLigne(sheets, candidats[0].id, ligne);
-            const texteActuel = (row && row[4]) ? row[4] : '';
+            const item = await platformTexts.bubble(feuille, ligne);
+            if (!item) throw new Error(`ligne ${ligne} de ${feuille} introuvable sur la plateforme`);
+            const texteActuel = item.fr || '';
 
             const modal = new ModalBuilder()
             .setCustomId(`modal_save|${feuille}|${ligne}`)
@@ -274,7 +272,7 @@ module.exports = async function handleButtons(interaction, sheets) {
         await interaction.deferUpdate();
 
         try {
-            await sheetManager.updateTranslation(sheets, TABLE_ID, baseName, tradAnnulee, repliqueOriginale);
+            await platformTexts.replaceTranslation(baseName, tradAnnulee, repliqueOriginale);
             await interaction.editReply({
                 content: `⏪ **Restauration effectuée**.\nLe texte original (\`${repliqueOriginale}\`) a été remis à la place de (\`${tradAnnulee}\`).`,
                 components: []

@@ -63,7 +63,8 @@ const debugReportIngress = createDebugReportIngress({
 });
 const patchReleaseService = createPatchReleaseService({
     client,
-    token: process.env.PATCHSC_GITHUB_TOKEN,
+    // Patch2nd (Sky SC built from the platform); the old variable still works.
+    token: process.env.PATCH2ND_GITHUB_TOKEN || process.env.PATCHSC_GITHUB_TOKEN,
     channelId: process.env.PATCH_RELEASE_CHANNEL_ID,
 });
 const testerPresenceService = createTesterPresenceService({

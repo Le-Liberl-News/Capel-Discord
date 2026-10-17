@@ -28,7 +28,8 @@ Module._load = originalLoad;
 function interaction() {
     return {
         customId: 'patch_release_start',
-        user: { id: '42' },
+        user: { id: '42', username: 'estelle' },
+        member: { displayName: 'Estelle' },
         replies: [],
         async deferReply(options) { this.deferred = options; },
         async editReply(message) { this.replies.push(message); },
@@ -37,7 +38,7 @@ function interaction() {
 
 test('activeRun locks on the single publishing workflow', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
-    service.workflowRuns = async workflow => workflow === 'nightly-translation.yml' ? [{
+    service.workflowRuns = async workflow => workflow === 'build.yml' ? [{
         id: 10, status: 'in_progress', created_at: '2026-08-30T10:00:00Z', html_url: 'nightly',
     }] : [];
     const active = await service.activeRun();
@@ -72,7 +73,7 @@ test('GitHub calls do not retry HTTP or authentication failures', async () => {
     assert.equal(calls, 1);
 });
 
-test('button dispatches the publishing workflow with publish=true', async () => {
+test('button dispatches the Patch2nd build with the requester', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     const calls = [];
     service.activeRun = async () => null;
@@ -89,15 +90,15 @@ test('button dispatches the publishing workflow with publish=true', async () => 
     assert.equal(await service.handleButton(click), true);
     assert.deepEqual(calls[0], {
         method: 'POST',
-        path: '/repos/Le-Liberl-News/PatchSC/actions/workflows/nightly-translation.yml/dispatches',
-        body: { ref: 'main', inputs: { publish: 'true', notify_discord: 'true' } },
+        path: '/repos/Le-Liberl-News/Patch2nd/actions/workflows/build.yml/dispatches',
+        body: { ref: 'main', inputs: { requested_by: 'Estelle', force: 'false' } },
     });
     assert.equal(service.started.baseline, 7);
     assert.equal(service.started.requester, '42');
     assert.match(click.replies[0], /demandée/);
 });
 
-test('daily publication disables Discord release notifications', async () => {
+test('daily publication names Capel as the requester', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     const calls = [];
     service.activeRun = async () => null;
@@ -111,7 +112,7 @@ test('daily publication disables Discord release notifications', async () => {
 
     await service.requestRelease();
 
-    assert.equal(calls[0].body.inputs.notify_discord, 'false');
+    assert.equal(calls[0].body.inputs.requested_by, 'Capel (publication quotidienne)');
 });
 
 test('daily no-change result does not post a Discord message', async () => {
@@ -148,4 +149,26 @@ test('successful publishing workflow publishes the resulting release', async () 
     service.finishSuccess = async release => { service.release = release; };
     await service.monitorPipeline(nightly, 8);
     assert.equal(service.release.tag_name, 'patch-v0.5.5');
+});
+
+test('latest release skips backups and older patch releases', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    service.github = async () => [
+        { id: 1, tag_name: 'v2026.10.05-1257', created_at: '2026-10-05T12:51:47Z' },
+        { id: 2, tag_name: 'sauvegarde-2026-10-16', created_at: '2026-10-16T01:00:00Z' },
+        { id: 3, tag_name: 'v2026.10.06-0721', created_at: '2026-10-06T07:10:20Z' },
+    ];
+    assert.equal((await service.latestRelease()).id, 3);
+});
+
+test('a new release is announced with its notes, in messages Discord accepts', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    const newline = String.fromCharCode(10);
+    const lines = Array.from({ length: 300 }, (_, index) => `- scripts/c${String(index).padStart(4, '0')}.json`);
+    const messages = service.releaseMessages({ name: 'Patch FR SC 2026.10.18-0100', html_url: 'https://example/release',
+        body: ['Version de test.', '', 'Modifié depuis v2026.10.17-0100 (300 fichier(s)) :', ...lines].join(newline) });
+    assert.ok(messages.length > 1);
+    assert.ok(messages.every(message => message.length <= 2000));
+    assert.ok(messages[0].startsWith(['**Patch FR SC 2026.10.18-0100**', 'https://example/release'].join(newline)));
+    assert.equal(messages.join(newline).split('- scripts/c').length - 1, 300);
 });
