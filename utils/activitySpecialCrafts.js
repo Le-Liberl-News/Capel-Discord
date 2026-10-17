@@ -15,6 +15,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
  function detonate(actor,room){const a=activeSpire(actor.id);if(!a)return false;a.explodedAt=now();a.endsAt=now()+700;for(const target of room.values())if(target.stoneSource===a.id){target.stoneUntil=0;delete target.stoneSource;}damageArea(a,actor,room,a.aim,2.8,36,now());return true;}
  function setup(a,s,command,room){
   a.special=s.special;
+  if(a.character==='Bleublanc'&&s.special==='dive')room.get(a.actor).projectileReflection={id:a.id,from:a.started+s.windup+1,until:a.started+s.windup+s.leapDuration};
   if(s.special==='mueller'){const p=require('../activity/mueller-combo.cjs').muellerPhases(a);a.impactAt=a.started+p.first;a.endsAt=a.started+p.end+400;a.caught=[];a.nextHit=0;}
   if(s.special==='spire'){a.impactAt=a.started+s.windup;a.objectExpiresAt=a.impactAt+12000;a.endsAt=a.objectExpiresAt+700;}
   if(s.special==='summon')a.impactAt=a.started+s.windup;

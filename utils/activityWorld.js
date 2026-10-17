@@ -293,6 +293,10 @@ function createSingleActivityWorld({
           );
         });
         if (struck) {
+          if(require('../activity/projectile-reflection.cjs').reflecting(p,time)){
+            const shooter=players.get(ball.thrownBy),speed=Math.max(8,Math.hypot(ball.vx,ball.vy,ball.vz)),direction=shooter?{x:shooter.x-x,y:(shooter.y??0)+.85-y,z:shooter.z-z}:{x:-ball.vx,y:-ball.vy,z:-ball.vz},length=Math.hypot(direction.x,direction.y,direction.z)||1;
+            ball.x=x;ball.y=y;ball.z=z;ball.vx=direction.x/length*speed;ball.vy=direction.y/length*speed;ball.vz=direction.z/length*speed;ball.thrownBy=p.id;ball.ricochets=0;ball.stopAt=ball.flight+3;sample();break;
+          }
           applyDamage(p,DAMAGE,time,{pom:true});
           if (p.hp === 0) {p.deadUntil = time + RESPAWN_MS;onDefeat({victim:p,attacker:ball.thrownBy,players,point:{x:p.x,y:p.y??0,z:p.z},action:{kind:"pom",id:"pom:"+ball.shotId,follow:"projectile",started:ball.launchedAt,releaseAt:ball.launchedAt,impactAt:ball.launchedAt+ball.flight*1000,trajectory:[...ball.trajectory.map(q=>({...q})),{t:ball.flight,x,y,z}]},at:time});}
           ball.x = x;

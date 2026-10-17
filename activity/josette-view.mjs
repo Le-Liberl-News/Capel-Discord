@@ -39,10 +39,10 @@ export async function createJosetteView(THREE,assets){
   if(!canvas.hidden){
    const elapsed=attack?.kind==='basic'?time-attack.localStart:null,firing=character==='Carna'&&elapsed!==null&&elapsed<3000&&!attack.fireStoppedAt;const pose=gunPose(firing?elapsed%100:elapsed),bob=moving?Math.sin(time*.012)*3:Math.sin(time*.002)*.7;
    const reload=character==='Carna'&&(elapsed>=3000||!!attack?.fireStoppedAt)&&elapsed<5000;
-   context.clearRect(0,0,176,164);context.save();context.translate(168+pose.recoil*8,42+bob+pose.recoil*15+(reload?30:0));context.rotate(.28-pose.recoil*.1+(reload?.35:0));context.scale(-3.6,3.6);context.drawImage(character==='Carna'?carna:image,pose.frame*40,0,40,30,0,0,40,30);const flash=muzzleFrame(firing?elapsed%100:character==='Carna'?null:elapsed);if(flash!==null){context.globalCompositeOperation='lighter';context.drawImage(spark,flash%8*128,Math.floor(flash/8)*128,128,128,27,-5,26,26);}context.restore();
+   const carnaGun=character==='Carna',gunScale=carnaGun?4.8:3.6;
+   context.clearRect(0,0,176,164);context.save();context.translate(168+pose.recoil*8,(carnaGun?24:42)+bob+pose.recoil*15+(reload?30:0));context.rotate(.28-pose.recoil*.1+(reload?.35:0));context.scale(-gunScale,gunScale);context.drawImage(carnaGun?carna:image,pose.frame*40,0,40,30,0,0,40,30);const flash=muzzleFrame(firing?elapsed%100:character==='Carna'?null:elapsed);if(flash!==null){context.globalCompositeOperation='lighter';context.drawImage(spark,flash%8*128,Math.floor(flash/8)*128,128,128,27,-5,26,26);}context.restore();
    if(reload){context.font='bold 12px sans-serif';context.fillStyle='white';context.fillText('Rechargement…',12,155);}
   }
   return blend;
  },dispose(){canvas.remove();}};
 }
-

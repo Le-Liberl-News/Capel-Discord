@@ -252,6 +252,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     return true;
   }
   function hurt(attack,attacker,player,amount,time,impact){
+    if(reflectProjectile(attack,attacker,player,amount,time))return {damage:0,absorbed:amount,reflected:true};
     if(blockedBasic(attack,attacker,player,time))return {damage:0,absorbed:0,blocked:true};
     if(parried(attack,player,time))return {damage:0,absorbed:0,parried:true};
 
@@ -261,6 +262,18 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     return dealt;
 
+  }
+
+  function reflectProjectile(attack,attacker,player,amount,time){
+    const spec=combatSpec(attack.character,attack.kind);
+    if(attack.reflectedProjectile||!require('../activity/projectile-reflection.cjs').reflecting(player,time)||!(attack.ray||spec?.projectile||attack.food))return false;
+    if(attacker?.hp>0&&canDamage(player,attacker)){
+      const origin={x:player.x,y:(player.y??0)+.85,z:player.z},aim={x:attacker.x,y:(attacker.y??0)+.85,z:attacker.z},travel=Math.max(50,Math.hypot(aim.x-origin.x,aim.y-origin.y,aim.z-origin.z)/18*1000);
+      const id=attack.id+':reflected:'+player.id+':'+time;
+      attacks.set(id,{id,actor:player.id,character:'Josette',kind:'basic',technique:'Renvoi',reflectedProjectile:true,reflectedDamage:amount*attackFactor(attacker,time),target:attacker.id,origin,aim,started:time,impactAt:time+travel,endsAt:time+travel+350,resolved:false,hits:[]});
+    }
+    attack.hits.push({id:player.id,at:time,damage:0,reflected:true,point:{x:player.x,y:(player.y??0)+.85,z:player.z}});
+    return true;
   }
 
   function project(attack,attacker,player,spec,direction,time){
@@ -296,6 +309,12 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     smoke.tick([...attacks.values()].filter(a=>a.character==='Nial'&&a.kind==='craft'),room,time);
     for(const [id,attack]of attacks) {
+      if(attack.reflectedProjectile){
+        if(time>attack.endsAt+1800){attacks.delete(id);continue;}
+        if(!attack.resolved&&time>=attack.impactAt){attack.resolved=true;const actor=room.get(attack.actor),target=room.get(attack.target),length=Math.hypot(attack.aim.x-attack.origin.x,attack.aim.y-attack.origin.y,attack.aim.z-attack.origin.z),direction={x:(attack.aim.x-attack.origin.x)/(length||1),y:(attack.aim.y-attack.origin.y)/(length||1),z:(attack.aim.z-attack.origin.z)/(length||1)};
+          if(actor&&target?.hp>0&&canDamage(actor,target)&&rayBody(attack.origin,direction,target,length+.5)&&!geometry?.sweep(attack.origin,attack.aim,.05)){const dealt=hurt(attack,actor,target,attack.reflectedDamage/attackFactor(actor,time),time,{point:attack.aim});attack.hits.push({id:target.id,at:time,...dealt});}}
+        continue;
+      }
 
       if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);attacks.delete(id);driveContacts.delete(id);continue;}
 
@@ -518,6 +537,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         if(parried(attack,player,time))break;
         if(blockedBasic(attack,attacker,player,time)){blocked=true;continue;}
 
+        if(reflectProjectile(attack,attacker,player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)/(spec.wave||spec.sweepShots?1:hitOffsets.length),time))continue;
         const dealt=applyDamage(player,spec.damage*(precise?.headshot?spec.headshotMultiplier:1)*attackFactor(attacker,time)/(spec.wave||spec.sweepShots?1:hitOffsets.length),attack.impactAt+hitOffsets[hitIndex],precise?{point:precise.point,headshot:precise.headshot}:spec.hitEffect?{nativeEffect:spec.hitEffect,hitIndex,...(comboNext?{combo:comboNext,comboHold,from:{x:source.x,z:source.z}}:{})}:comboNext?{nativeEffect:moves.COMBO.hitEffect,combo:comboNext,comboHold,from:{x:source.x,z:source.z}}:undefined);if(dealt.damage||dealt.absorbed)landed=true;if(dealt.damage)applyStatus(player,spec.status==='stun'?{...spec,statusDuration:Math.max(0,attack.started+spec.duration-time)}:spec,time);if(player.hp===0){player.deadUntil=time+(player.boss?120000:player.enemy?30000:10000);if(!player.enemy)onDefeat({victim:player,attacker:attack.actor,players:room,point:{x:player.x,y:player.y??0,z:player.z},action:{id:attack.id,kind:attack.kind,technique:attack.technique,follow:spec.projectile||spec.wave?"projectile":"actor",started:attack.started,releaseAt:attack.started+spec.windup,impactAt:attack.impactAt+hitOffsets[hitIndex],endsAt:attack.endsAt,origin:{...attack.origin},aim:spec.wave?{x:player.x,y:player.y??0,z:player.z}:{...attack.aim}},at:time});}
 
         attack.hits.push({id:player.id,hitIndex,at:attack.impactAt+hitOffsets[hitIndex],...dealt});
