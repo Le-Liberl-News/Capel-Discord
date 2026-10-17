@@ -88,26 +88,29 @@ doit donc être traitée comme un secret donnant indirectement un droit d'écrit
 feuilles de traduction. Sa révocation s'effectue en régénérant ou supprimant le webhook
 Discord.
 
-## Bouton de publication PatchSC
+## Bouton de publication du patch SC
 
-Capel peut maintenir un panneau persistant permettant à tout membre ayant accès au salon
-de lancer la chaîne de publication PatchSC. Le bouton déclenche
-`nightly-translation.yml` avec `publish=true` : récupération Drive, réinjection et
-vérifications, incrémentation de version, puis construction de la release.
+Capel maintient un panneau persistant permettant à tout membre ayant accès au salon
+de lancer la publication du patch de Sky SC, construit depuis la plateforme de
+traduction par `Le-Liberl-News/Patch2nd`. Le bouton, et chaque nuit à 3 h la
+publication quotidienne, déclenchent `build.yml` : textes de la plateforme,
+compilation, puis release seulement si un fichier du patch a changé depuis la
+précédente. Capel annonce la release dans le salon avec la liste des fichiers
+modifiés, puis replace le panneau et son bouton en dernier message.
 
 Ajouter au `.env` du serveur :
 
 ```dotenv
 PATCH_RELEASE_CHANNEL_ID=identifiant_du_salon
-PATCHSC_GITHUB_TOKEN=token_finement_scopé
+PLATFORM_TOKEN=jeton_api_de_la_plateforme
 ```
 
-Le secret Actions `DISCORD_WEBHOOK_URL` de PatchSC doit viser ce même salon. Après
-chaque notification envoyée par ce webhook, Capel replace automatiquement le panneau
-et son bouton en dernier message.
-
-Le token doit avoir accès au dépôt privé `Le-Liberl-News/PatchSC`, avec
-`Actions: Read and write` et `Contents: Read`. Il ne doit jamais être placé dans le dépôt.
+`PLATFORM_TOKEN` est le jeton API d'un compte administrateur de la plateforme
+(lecture / écriture). La plateforme lance et suit elle-même la compilation de
+Patch2nd avec son application GitHub (`plateforme/api/build.php`) : Capel ne
+détient aucun token GitHub. Le même jeton sert à `/write`, aux boutons de
+correction et à `/lexique`, qui lisent et écrivent les répliques de SC sur la
+plateforme (plus sur les feuilles Google). Aucun jeton ne doit être placé dans le dépôt.
 Si une publication est déjà active sur GitHub, Capel refuse une
 nouvelle demande. Le verrou est donc conservé même après un redémarrage du bot. Le
 panneau est désactivé pendant le traitement et le salon reçoit le lien de la release,

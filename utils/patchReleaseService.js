@@ -1,9 +1,16 @@
 const https = require('https');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
-const OWNER = 'Le-Liberl-News';
-const REPOSITORY = 'PatchSC';
-const NIGHTLY_WORKFLOW = 'nightly-translation.yml';
+// Sky SC's patch is built from the translation platform by Patch2nd (build.yml):
+// texts of the platform, compiled, published as a release only if a file changed.
+// The platform starts and follows that build with its own GitHub App
+// (plateforme/api/build.php): Capel only holds its platform token.
+const PLATFORM_URL = new URL(process.env.PLATFORM_URL || 'https://leliberlnews.fr');
+const PROJECT = 'sky-sc';
+const BUILD_API = `/plateforme/api/build.php?project=${PROJECT}`;
+const NIGHTLY_WORKFLOW = 'build.yml';
+const DAILY_REQUESTER = 'Capel (publication quotidienne)';
+const DISCORD_MESSAGE_LIMIT = 1900;
 const BUTTON_ID = 'patch_release_start';
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -25,7 +32,7 @@ class PatchReleaseService {
     }
 
     async github(method, path, body = null) {
-        if (!this.token) throw new Error('PATCHSC_GITHUB_TOKEN est absent.');
+        if (!this.token) throw new Error('PLATFORM_TOKEN est absent.');
         const attempts = 4;
         for (let attempt = 1; attempt <= attempts; attempt += 1) {
             try {
@@ -33,7 +40,7 @@ class PatchReleaseService {
             } catch (error) {
                 if (!RETRYABLE_NETWORK_ERRORS.has(error.code) || attempt === attempts) throw error;
                 console.warn(
-                    `[PatchSC release] GitHub inaccessible (${error.code}), ` +
+                    `[PatchSC release] Plateforme inaccessible (${error.code}), ` +
                     `nouvelle tentative ${attempt}/${attempts - 1}.`);
                 await delay(1_000 * (2 ** (attempt - 1)));
             }
@@ -43,12 +50,13 @@ class PatchReleaseService {
     async githubRequest(method, path, body = null) {
         const payload = body === null ? null : Buffer.from(JSON.stringify(body), 'utf8');
         const options = {
-            hostname: 'api.github.com', path, method,
+            hostname: PLATFORM_URL.hostname, port: PLATFORM_URL.port || undefined, path, method,
             headers: {
-                Accept: 'application/vnd.github+json',
+                Accept: 'application/json',
                 Authorization: `Bearer ${this.token}`,
-                'User-Agent': 'Capel-PatchSC-Release',
-                'X-GitHub-Api-Version': '2022-11-28',
+                // Some hostings drop Authorization before PHP.
+                'X-Platform-Token': this.token,
+                'User-Agent': 'Capel-Patch-Release',
             },
         };
         if (payload) {
@@ -66,8 +74,8 @@ class PatchReleaseService {
                         try { parsed = JSON.parse(raw); } catch { parsed = raw; }
                     }
                     if (response.statusCode < 200 || response.statusCode >= 300) {
-                        const detail = parsed && parsed.message ? parsed.message : raw;
-                        reject(new Error(`GitHub HTTP ${response.statusCode}${detail ? ` : ${detail}` : ''}`));
+                        const detail = parsed && (parsed.error || parsed.message) ? (parsed.error || parsed.message) : raw;
+                        reject(new Error(`Plateforme HTTP ${response.statusCode}${detail ? ` : ${detail}` : ''}`));
                         return;
                     }
                     resolve(parsed);
@@ -75,7 +83,7 @@ class PatchReleaseService {
             });
             request.on('error', reject);
             request.setTimeout(30_000, () => {
-                const error = new Error('GitHub ne répond pas.');
+                const error = new Error('La plateforme ne répond pas.');
                 error.code = 'ETIMEDOUT';
                 request.destroy(error);
             });
@@ -84,10 +92,13 @@ class PatchReleaseService {
         });
     }
 
-    async workflowRuns(workflow) {
-        const result = await this.github('GET',
-            `/repos/${OWNER}/${REPOSITORY}/actions/workflows/${workflow}/runs?branch=main&per_page=20`);
-        return Array.isArray(result.workflow_runs) ? result.workflow_runs : [];
+    // The build's latest runs, as GitHub names their fields.
+    async workflowRuns() {
+        const result = await this.github('GET', BUILD_API);
+        return (Array.isArray(result.runs) ? result.runs : []).map(run => ({
+            id: run.id, status: run.status, conclusion: run.conclusion || null,
+            created_at: run.created_at, html_url: run.url,
+        }));
     }
 
     async activeRun() {
@@ -97,13 +108,13 @@ class PatchReleaseService {
             .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0] || null;
     }
 
+    // The newest patch release ("v…", not the backups), its tag as identity.
     async latestRelease() {
-        try {
-            return await this.github('GET', `/repos/${OWNER}/${REPOSITORY}/releases/latest`);
-        } catch (error) {
-            if (String(error.message).includes('HTTP 404')) return null;
-            throw error;
-        }
+        const release = (await this.github('GET', BUILD_API)).release;
+        return release ? {
+            id: release.tag, tag_name: release.tag, name: release.name,
+            html_url: release.url, body: release.body || '', created_at: release.date,
+        } : null;
     }
 
     panelPayload(state = {}) {
@@ -111,7 +122,7 @@ class PatchReleaseService {
         const embed = new EmbedBuilder()
             .setTitle('Publication du patch français Sky SC')
             .setDescription(state.description ||
-                'Récupère les traductions depuis Drive, vérifie leur réinjection, incrémente la version puis publie PatchSC.')
+                'Récupère les traductions de la plateforme, compile le patch et publie une release si un fichier a changé.')
             .setColor(state.failed ? 0xC0392B : (busy ? 0xE67E22 : 0x2ECC71));
         if (state.url) embed.setURL(state.url);
         const button = new ButtonBuilder()
@@ -129,7 +140,7 @@ class PatchReleaseService {
         }
         const channel = await this.client.channels.fetch(this.channelId);
         if (!channel || !channel.isTextBased()) {
-            throw new Error(`Le salon PatchSC ${this.channelId} n'est pas un salon texte accessible.`);
+            throw new Error(`Le salon de publication ${this.channelId} n'est pas un salon texte accessible.`);
         }
         const messages = await channel.messages.fetch({ limit: 100 });
         this.panelMessage = messages.find(message =>
@@ -138,7 +149,7 @@ class PatchReleaseService {
         const active = this.token ? await this.activeRun() : null;
         const payload = active ? this.panelPayload({
             busy: true,
-            description: `Une ${active.stage} PatchSC est déjà en cours.`,
+            description: `Une ${active.stage} du patch SC est déjà en cours.`,
             url: active.html_url,
         }) : this.panelPayload();
         if (this.panelMessage) await this.panelMessage.edit(payload);
@@ -177,7 +188,7 @@ class PatchReleaseService {
         const active = this.token ? await this.activeRun() : null;
         this.panelMessage = await channel.send(active ? this.panelPayload({
             busy: true,
-            description: `Une ${active.stage} PatchSC est déjà en cours.`,
+            description: `Une ${active.stage} du patch SC est déjà en cours.`,
             url: active.html_url,
         }) : this.panelPayload());
         if (active) this.startMonitor(active, null, null);
@@ -205,8 +216,7 @@ class PatchReleaseService {
                 url: current.html_url,
             });
             await delay(30_000);
-            current = await this.github('GET',
-                `/repos/${OWNER}/${REPOSITORY}/actions/runs/${current.id}`);
+            current = (await this.workflowRuns()).find(candidate => candidate.id === current.id) || current;
         }
         return current;
     }
@@ -219,7 +229,7 @@ class PatchReleaseService {
                 console.error('[PatchSC release] Surveillance échouée :', error);
                 await this.updatePanel({ failed: true, description: `Échec : ${error.message}` });
                 if (this.requestedBy && this.panelMessage) await this.panelMessage.channel.send(
-                    `❌ Publication PatchSC interrompue : ${error.message}`);
+                    `❌ Publication du patch SC interrompue : ${error.message}`);
             })
             .finally(() => {
                 this.monitorPromise = null;
@@ -238,28 +248,51 @@ class PatchReleaseService {
                 description: 'Vérification terminée : aucun fichier binaire n’a changé, aucune release créée.',
             });
             if (this.requestedBy && this.panelMessage) await this.panelMessage.channel.send(
-                'ℹ️ PatchSC vérifié : aucun changement à publier.');
+                'ℹ️ Patch SC vérifié : aucun fichier n’a changé depuis la dernière release.');
             return;
         }
         await this.finishSuccess(release);
     }
 
+    // The release and what changed (its notes), as PatchSC's webhook announced it.
     async finishSuccess(release) {
+        const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
+        if (channel && channel.isTextBased()) {
+            for (const message of this.releaseMessages(release)) {
+                await channel.send({ content: message, allowedMentions: { parse: [] } });
+            }
+        }
         await this.bumpPanel();
     }
 
-    async requestRelease(requestedBy = null) {
+    releaseMessages(release) {
+        const lines = String(release.body || '').split(/\r?\n/).filter(line => line.trim() !== '');
+        const messages = [];
+        let current = `**${release.name || release.tag_name}**\n${release.html_url}`;
+        for (const line of lines) {
+            if (current.length + line.length + 1 > DISCORD_MESSAGE_LIMIT) {
+                messages.push(current);
+                current = line.slice(0, DISCORD_MESSAGE_LIMIT);
+            } else {
+                current += `\n${line}`;
+            }
+        }
+        messages.push(current);
+        return messages;
+    }
+
+    async requestRelease(requestedBy = null, requesterName = null) {
         if (this.dispatching) {
             throw new Error('Une demande de publication est déjà en cours de traitement.');
         }
         this.dispatching = true;
         try {
-            if (!this.token) throw new Error('Le token GitHub PatchSC n’est pas configuré sur Capel.');
+            if (!this.token) throw new Error('PLATFORM_TOKEN n’est pas configuré sur Capel.');
             const active = await this.activeRun();
             if (active) {
                 await this.updatePanel({
                     busy: true,
-                    description: `Une ${active.stage} PatchSC est déjà en cours.`,
+                    description: `Une ${active.stage} du patch SC est déjà en cours.`,
                     url: active.html_url,
                 });
                 this.startMonitor(active, null, requestedBy);
@@ -267,20 +300,18 @@ class PatchReleaseService {
             }
             const baseline = await this.latestRelease();
             const requestedAt = Date.now();
-            await this.github('POST',
-                `/repos/${OWNER}/${REPOSITORY}/actions/workflows/${NIGHTLY_WORKFLOW}/dispatches`,
-                { ref: 'main', inputs: {
-                    publish: 'true',
-                    notify_discord: requestedBy ? 'true' : 'false',
-                } });
+            await this.github('POST', '/plateforme/api/build.php', {
+                project: PROJECT,
+                requested_by: requestedBy ? (requesterName || 'Discord') : DAILY_REQUESTER,
+            });
             await this.updatePanel({
                 busy: true,
                 description: requestedBy
-                    ? `Publication demandée par <@${requestedBy}>. Démarrage de la réinjection…`
-                    : 'Publication quotidienne de 3 h demandée. Démarrage de la réinjection…',
+                    ? `Publication demandée par <@${requestedBy}>. Récupération des traductions de la plateforme…`
+                    : 'Publication quotidienne de 3 h demandée. Récupération des traductions de la plateforme…',
             });
             const run = await this.waitForRun(NIGHTLY_WORKFLOW, requestedAt, 120_000);
-            if (!run) throw new Error('GitHub a accepté la demande mais le workflow n’est pas apparu.');
+            if (!run) throw new Error('La plateforme a accepté la demande mais la compilation n’est pas apparue.');
             run.stage = 'publication';
             this.startMonitor(run, baseline ? baseline.id : null, requestedBy);
             return { alreadyRunning: false, run };
@@ -293,10 +324,11 @@ class PatchReleaseService {
         if (interaction.customId !== BUTTON_ID) return false;
         await interaction.deferReply({ ephemeral: true });
         try {
-            const result = await this.requestRelease(interaction.user.id);
+            const result = await this.requestRelease(interaction.user.id,
+                interaction.member?.displayName || interaction.user.globalName || interaction.user.username);
             await interaction.editReply(result.alreadyRunning
                 ? `Une publication est déjà en cours : ${result.run.html_url}`
-                : '✅ Publication PatchSC demandée. Le bouton restera verrouillé jusqu’au résultat.');
+                : '✅ Publication du patch SC demandée. Le bouton restera verrouillé jusqu’au résultat.');
             return true;
         } catch (error) {
             await this.updatePanel({ failed: true, description: `Impossible de démarrer : ${error.message}` });

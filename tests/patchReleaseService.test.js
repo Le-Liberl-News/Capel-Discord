@@ -28,7 +28,8 @@ Module._load = originalLoad;
 function interaction() {
     return {
         customId: 'patch_release_start',
-        user: { id: '42' },
+        user: { id: '42', username: 'estelle' },
+        member: { displayName: 'Estelle' },
         replies: [],
         async deferReply(options) { this.deferred = options; },
         async editReply(message) { this.replies.push(message); },
@@ -37,7 +38,7 @@ function interaction() {
 
 test('activeRun locks on the single publishing workflow', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
-    service.workflowRuns = async workflow => workflow === 'nightly-translation.yml' ? [{
+    service.workflowRuns = async workflow => workflow === 'build.yml' ? [{
         id: 10, status: 'in_progress', created_at: '2026-08-30T10:00:00Z', html_url: 'nightly',
     }] : [];
     const active = await service.activeRun();
@@ -72,7 +73,7 @@ test('GitHub calls do not retry HTTP or authentication failures', async () => {
     assert.equal(calls, 1);
 });
 
-test('button dispatches the publishing workflow with publish=true', async () => {
+test('button dispatches the Patch2nd build with the requester', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     const calls = [];
     service.activeRun = async () => null;
@@ -89,15 +90,15 @@ test('button dispatches the publishing workflow with publish=true', async () => 
     assert.equal(await service.handleButton(click), true);
     assert.deepEqual(calls[0], {
         method: 'POST',
-        path: '/repos/Le-Liberl-News/PatchSC/actions/workflows/nightly-translation.yml/dispatches',
-        body: { ref: 'main', inputs: { publish: 'true', notify_discord: 'true' } },
+        path: '/plateforme/api/build.php',
+        body: { project: 'sky-sc', requested_by: 'Estelle' },
     });
     assert.equal(service.started.baseline, 7);
     assert.equal(service.started.requester, '42');
     assert.match(click.replies[0], /demandée/);
 });
 
-test('daily publication disables Discord release notifications', async () => {
+test('daily publication names Capel as the requester', async () => {
     const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
     const calls = [];
     service.activeRun = async () => null;
@@ -111,7 +112,7 @@ test('daily publication disables Discord release notifications', async () => {
 
     await service.requestRelease();
 
-    assert.equal(calls[0].body.inputs.notify_discord, 'false');
+    assert.equal(calls[0].body.requested_by, 'Capel (publication quotidienne)');
 });
 
 test('daily no-change result does not post a Discord message', async () => {
@@ -148,4 +149,36 @@ test('successful publishing workflow publishes the resulting release', async () 
     service.finishSuccess = async release => { service.release = release; };
     await service.monitorPipeline(nightly, 8);
     assert.equal(service.release.tag_name, 'patch-v0.5.5');
+});
+
+test('runs and the latest release come from the platform build API', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    const paths = [];
+    service.github = async (method, path) => {
+        paths.push(`${method} ${path}`);
+        return {
+            runs: [{ id: 5, status: 'in_progress', conclusion: '', created_at: '2026-10-17T10:00:00Z', url: 'https://example/run' }],
+            release: { tag: 'v2026.10.17-1031', name: 'Patch FR SC 2026.10.17-1031', url: 'https://example/release', body: 'Notes', date: '2026-10-17T10:33:33Z' },
+        };
+    };
+    const active = await service.activeRun();
+    assert.equal(active.id, 5);
+    assert.equal(active.html_url, 'https://example/run');
+    const release = await service.latestRelease();
+    assert.equal(release.id, 'v2026.10.17-1031');
+    assert.equal(release.html_url, 'https://example/release');
+    assert.equal(release.body, 'Notes');
+    assert.deepEqual(paths, ['GET /plateforme/api/build.php?project=sky-sc', 'GET /plateforme/api/build.php?project=sky-sc']);
+});
+
+test('a new release is announced with its notes, in messages Discord accepts', async () => {
+    const service = new PatchReleaseService({ client: {}, token: 'token', channelId: 'channel' });
+    const newline = String.fromCharCode(10);
+    const lines = Array.from({ length: 300 }, (_, index) => `- scripts/c${String(index).padStart(4, '0')}.json`);
+    const messages = service.releaseMessages({ name: 'Patch FR SC 2026.10.18-0100', html_url: 'https://example/release',
+        body: ['Version de test.', '', 'Modifié depuis v2026.10.17-0100 (300 fichier(s)) :', ...lines].join(newline) });
+    assert.ok(messages.length > 1);
+    assert.ok(messages.every(message => message.length <= 2000));
+    assert.ok(messages[0].startsWith(['**Patch FR SC 2026.10.18-0100**', 'https://example/release'].join(newline)));
+    assert.equal(messages.join(newline).split('- scripts/c').length - 1, 300);
 });

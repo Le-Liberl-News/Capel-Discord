@@ -1,9 +1,8 @@
 const db = require('../utils/db.js');
-const sheetManager = require('../utils/sheetManager.js');
+const platformTexts = require('../utils/platformTexts.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const ROLES_AUTORISES = ["1306002617725353997", "1020694737725956106"];
-const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
 const DAILY_TABLE_ID = process.env.DAILY_TABLE_ID || '1JZm08gB7IdSR9cvdPCQ0G2t9ymI8nF45RwMQ0d7wWjY';
 const DAILY_TABLE_GID = Number(process.env.DAILY_TABLE_GID || '824641947');
 
@@ -64,7 +63,7 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
 
     if (commandName === 'test1') {
         const cmdTest1 = require('../commands/test1.js');
-        return cmdTest1.execute(interaction, sheets, TABLE_ID);
+        return cmdTest1.execute(interaction, sheets, DAILY_TABLE_ID);
     }
     if (commandName === 'runtrad') {
         const cmdTest2 = require('../commands/test2.js');
@@ -105,11 +104,9 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         const ligne = options.getInteger('ligne');
 
         try {
-            const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
-            if (candidats.length === 0) return interaction.editReply(`❌ Feuille \`${feuille}\` introuvable.`);
-
-            const row = await sheetManager.lireLigne(sheets, candidats[0].id, ligne);
-            const texteReponse = sheetManager.formaterLigneDiscord(row, ligne, feuille, interaction.user.id, false);
+            const item = await platformTexts.bubble(feuille, ligne);
+            if (!item) return interaction.editReply(platformTexts.formatBubble(null, ligne, feuille));
+            const texteReponse = platformTexts.formatBubble(item, ligne, feuille, interaction.user.id, false);
 
             const btnEdit = new ButtonBuilder()
             .setCustomId(`btn_edit|${feuille}|${ligne}`)
@@ -138,14 +135,11 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         const trad = options.getString('trad');
 
         try {
-            const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
-            if (candidats.length === 0) return interaction.editReply(`❌ Feuille \`${feuille}\` introuvable.`);
+            const item = await platformTexts.bubble(feuille, ligne);
+            if (!item) return interaction.editReply(platformTexts.formatBubble(null, ligne, feuille));
+            const texteAncien = item.fr || '*vide*';
 
-            const sheetId = candidats[0].id;
-            const rowAvant = await sheetManager.lireLigne(sheets, sheetId, ligne);
-            const texteAncien = rowAvant ? (rowAvant[4] || '*vide*') : '*vide*';
-
-            await sheetManager.ecrireEtVerifier(sheets, sheetId, 'E', ligne, trad);
+            await platformTexts.writeBubble(item, item.fr, trad);
 
             const readButton = new ButtonBuilder()
             .setCustomId(`btn_read|${feuille}|${ligne}`)
@@ -168,21 +162,25 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
 
     const feuille = options.getString('feuille');
     
-    const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
-
-    if (candidats.length === 0) {
-        return interaction.editReply({ content: `❌ Feuille \`${feuille}\` introuvable.` });
+    let items;
+    try {
+        items = await platformTexts.bubbles(feuille);
+    } catch (error) {
+        return interaction.editReply({ content: `❌ ${error.message}` });
+    }
+    if (items.length === 0) {
+        return interaction.editReply({ content: `❌ Fichier \`${feuille}\` introuvable sur la plateforme.` });
     }
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setLabel(`Ouvrir ${candidats[0].nom}`)
+            .setLabel(`Ouvrir ${feuille.toUpperCase()}`)
             .setStyle(ButtonStyle.Link)
-            .setURL(candidats[0].lien)
+            .setURL(platformTexts.scriptUrl(feuille))
     );
 
     await interaction.editReply({
-        content: `🔗 <@${interaction.user.id}> a demandé l'accès rapide au script **${candidats[0].nom}** :`,
+        content: `🔗 <@${interaction.user.id}> a demandé l'accès rapide au script **${feuille.toUpperCase()}** sur la plateforme :`,
         components: [row]
     });
 }

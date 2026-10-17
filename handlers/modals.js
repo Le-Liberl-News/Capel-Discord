@@ -2,9 +2,8 @@ const db = require('../utils/db.js');
 const { ajouterXP } = require('../utils/xpManager.js');
 const { evaluerProposition } = require('../utils/ia_eval.js');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, WebhookClient } = require('discord.js');
-const sheetManager = require('../utils/sheetManager.js');
+const platformTexts = require('../utils/platformTexts.js');
 const stringSimilarity = require('string-similarity');
-const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
 
 const SALON_READONLY_ID = "1493171302624657428";
 
@@ -234,18 +233,19 @@ module.exports = async function handleModals(interaction, sheets) {
         const nouvelleTrad = interaction.fields.getTextInputValue('input_trad_fr');
 
         try {
-            const candidats = await sheetManager.getFeuillesParNom(sheets, TABLE_ID, feuille);
-            if (candidats.length === 0) throw new Error("Feuille disparue.");
-            const sheetId = candidats[0].id;
+            const item = await platformTexts.bubble(feuille, ligne);
+            if (!item) throw new Error("Réplique introuvable sur la plateforme.");
 
-            await sheetManager.ecrireEtVerifier(sheets, sheetId, 'E', ligne, nouvelleTrad);
+            await platformTexts.writeBubble(item, item.fr, nouvelleTrad);
 
             console.log(`[CAPEL-LOG] Modification manuelle réussie : ${feuille} L${ligne}`);
             await interaction.editReply(`✅ **CORRECTION APPLIQUÉE** par <@${interaction.user.id}>\n📄 **Fichier :** ${feuille} (Ligne **${ligne}**)\n📝 ➔ \`${nouvelleTrad}\``);
 
         } catch (error) {
             console.error("❌ ERREUR ÉCRITURE MODALE :", error);
-            await interaction.editReply("❌ **Échec de l'écriture.** Vérifiez l'intégrité de la liaison avec le serveur distant.");
+            await interaction.editReply(error.status === 409
+                ? `❌ **La réplique a changé sur la plateforme entre-temps.** Texte actuel : \`${error.current || ''}\``
+                : `❌ **Échec de l'écriture sur la plateforme :** ${error.message}`);
         }
     }
 
@@ -259,7 +259,7 @@ module.exports = async function handleModals(interaction, sheets) {
         await interaction.deferReply({ ephemeral: false });
 
         try {
-            await sheetManager.updateTranslation(sheets, TABLE_ID, baseName, repliqueOriginale, nouvelleTrad);
+            await platformTexts.replaceTranslation(baseName, repliqueOriginale, nouvelleTrad);
 
             const revertButton = new ButtonBuilder()
                 .setCustomId(`btn_revert_${baseName}`)

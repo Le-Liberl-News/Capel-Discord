@@ -442,27 +442,9 @@ async function updateOccurrencesVerified(sheets, occurrences, originalText, newT
     return completed.length;
 }
 
-async function recupererLexique(sheets) {
-    try {
-        const lexiqueResponse = await sheets.spreadsheets.values.batchGet({
-            spreadsheetId: '1fDydK9_A185s2bz9EnLEeuLosDKS7hre5NK8Zd_a-jM',
-            ranges: ['Général!B3:D', 'Items!C2:E', 'Lieux!B2:D', 'Noms!B2:D', 'Ennemis!B2:D'],
-        });
-
-        let lexiqueTerms = [];
-        lexiqueResponse.data.valueRanges.forEach(vr => {
-            if (!vr.values) return;
-            vr.values.forEach(row => {
-                const eng = row[0] ? row[0].trim() : "";
-                const fr = row[1] ? row[1].trim() : "";
-                if (eng && fr) lexiqueTerms.push(`${eng} = ${fr}`);
-            });
-        });
-        return lexiqueTerms.join('\n');
-    } catch (e) {
-        console.error("Erreur lors de la récupération du lexique :", e);
-        return "Lexique indisponible.";
-    }
+// SC's lexicon now lives on the translation platform (no more Lexique sheet).
+async function recupererLexique() {
+    return require('./platformTexts.js').lexiconText();
 }
 
 async function recupererScript(sheets, spreadsheetId, targetLines) {
