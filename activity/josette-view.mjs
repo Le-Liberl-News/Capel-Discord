@@ -21,6 +21,7 @@ export async function createJosetteView(THREE,assets){
  const eye=new THREE.Vector3(),end=new THREE.Vector3(),look=new THREE.Vector3(),matrix=new THREE.Matrix4(),first=new THREE.Quaternion(),third=new THREE.Quaternion();
  let craft=null;
  return {update({camera,position,attack,spec,active,time,moving,yaw,character}){
+  active&&=['Josette','Carna'].includes(character);
   if(attack?.kind==='craft'&&spec?.thirdPersonCraft)craft={event:attack,duration:spec.duration};
   if(!active){craft=null;canvas.hidden=true;canvas.style.display='none';return 0;}
   const age=craft?time-craft.event.localStart:0;

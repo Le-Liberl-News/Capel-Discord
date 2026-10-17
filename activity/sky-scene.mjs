@@ -1,3 +1,4 @@
+import altinaSword from './altina-scraft.cjs';
 import {createOffscreenOpponents} from './offscreen-opponents.mjs';
 import {frameCombatCamera} from './combat-framing.mjs';
 import {createMapInteractions} from './map-interactions.mjs';
@@ -246,7 +247,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const ground=collision.floor(point.x,point.z,point.y+.6);if(ground!==null)point.y=ground;return point;
   }
   const crosshair=document.createElement('div');crosshair.textContent='+';crosshair.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:28px monospace;color:#fff;text-shadow:0 0 3px #000;pointer-events:none;z-index:20';crosshair.hidden=true;document.body.append(crosshair);
-  const fpsActive=()=>!!renneCombat&&['Josette','Carna'].includes(avatars.get(localId)?.character)&&!avatars.get(localId)?.dead&&!health.spectator&&!duelIntro?.active(performance.now());
+  const altinaAim=()=>{const a=renneCombat?.current(localId);return altinaSword.aiming(a,performance.now()-(a?.localStart??0))?a:null;};
+  let altinaCameraBlend=0,altinaPreviousAim=false,altinaDivePending=false;const altinaCameraPosition=new THREE.Vector3(),altinaCameraQuaternion=new THREE.Quaternion();
+  const fpsActive=()=>!!renneCombat&&(['Josette','Carna'].includes(avatars.get(localId)?.character)||!!altinaAim())&&!avatars.get(localId)?.dead&&!health.spectator&&!duelIntro?.active(performance.now());
+  const altinaPrompt=document.createElement('button');altinaPrompt.textContent='Viser le sol : cliquer / toucher pour plonger';altinaPrompt.style.cssText='position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:28;padding:10px 16px;background:#231c39e8;color:#ffe9bc;border:1px solid #c5a7ef;border-radius:6px;font:16px AveriaSky;max-width:85vw';altinaPrompt.hidden=true;altinaPrompt.addEventListener('click',()=>altinaDive());document.body.append(altinaPrompt);
   let craftTarget=false,lastCombatDash=null,mobileTargetId=null;
   // once the duel intro hands the camera back: the nearest opponent, put straight ahead, and on phones locked on
   function faceOpponent(){
@@ -271,6 +275,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     return candidates.find(([,a])=>a.mesh===hit?.object||(hit&&a.mesh.getObjectById(hit.object.id)))?.[0]??null;
   }
   function mobileTap(event){
+    if(altinaDive())return;
     if(!connected)return;
     if(environment.poms.some(p=>p.owner===localId)){click(event);return;}
     if(touchArmed){disarmTouch();interaction(event);return;}
@@ -757,8 +762,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     keys.clear();craftTarget=false;
     endDrag();touches.reset();disarmTouch();
   }
+  function altinaDive(){const a=altinaAim();if(!a||altinaDivePending)return !!a;const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);const hits=ray.intersectObject(model,true),point=hits.find(h=>h.point.y<=a.aim.y+1&&Math.hypot(h.point.x-a.aim.x,h.point.z-a.aim.z)<=14)?.point;if(!point)return true;const ground=collision.floor(point.x,point.z,point.y+.5);if(!Number.isFinite(ground))return true;queueAction('attack',undefined,{x:point.x,y:ground,z:point.z},undefined,{kind:'altinaDive'});altinaDivePending=true;setTimeout(()=>{altinaDivePending=false;},350);return true;}
   function click(event) {
     if (event.button !== 0) return;
+    if(altinaDive())return;
     if(health.hp>0&&!health.spectator&&!craftTarget&&mapInteractions.interact(avatars.get(localId),camera,event))return;
     menu.hidden = true;
     if(environment.poms.some(p=>p.owner===localId)){interaction(event,true);return;}
@@ -929,8 +936,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Carna","Sieg"].includes(avatars.get(localId)?.character))yaw=faceOpponent()??Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;const push={origin:{x:target.point.x,y:target.point.y-.8,z:target.point.z},end:{x:target.point.x+(target.point.x>=-1?1.5:-1.5),y:target.point.y-.8,z:target.point.z},started:previewCollapse.started+585,duration:250};if(age>=585){Object.assign(a.position,projectionMechanics.projectionPosition(push,Date.now()));a.knockback=age<835?push:null;}a.downUntil=age>=835&&age<3335?previewCollapse.started+3335:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3400)previewCollapse=null;}
     if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
-    const freeSpectator=!!health.spectator;const isFPS=fpsActive();canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
-    if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?0:isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
+    const freeSpectator=!!health.spectator;const isFPS=fpsActive(),altinaAiming=!!altinaAim();if(altinaAiming&&!altinaPreviousAim){altinaCameraPosition.copy(camera.position);altinaCameraQuaternion.copy(camera.quaternion);}altinaPreviousAim=altinaAiming;altinaPrompt.hidden=!altinaAiming;canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
+    if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?(altinaAiming?1.05:0):isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
     towerGates?.draw(time);if(towerGates&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')){const direction=towerGates.check(me.position);if(direction)queueAction('tower_step',direction);}
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
@@ -955,8 +962,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
+    if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';}else altinaCameraBlend=0;
     if(carnaHeld&&me?.character==='Carna'&&!renneCombat?.current(localId)&&combatControls.ready('basic'))startAttack('basic',cursor,true);const activeCarna=renneCombat?.current(localId);if(me?.character==='Carna'&&['basic','craft'].includes(activeCarna?.kind)&&time-activeCarna.localStart<renneMechanics.combatSpec('Carna',activeCarna.kind).fireDuration&&time-carnaAimAt>50){carnaAimAt=time;const direction=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));const ray={origin:{x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction:{x:direction.x,y:direction.y,z:direction.z}};queueAction('attack',undefined,undefined,undefined,{kind:'aim',ray});}
-    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(me?.character!=='Carna'&&josetteBlend>.05);
+    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(!altinaAiming&&me?.character!=='Carna'&&josetteBlend>.05);
     if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
@@ -1053,7 +1061,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       const attack=avatar.dead||down?null:renneCombat?.current(id);if(avatar.character==='Loewe'){const visual=loeweMechanics.loeweVisual(attack);bodyScale=visual.scale;bodyOffsetX=visual.offsetX;}
 
       if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
-      if(combatCamera&&avatar===me&&!introPlaying&&attack?.special!=='flameSlash')avatar.heading=combatMoves.cameraFacing(yaw);
+      if(combatCamera&&avatar===me&&!introPlaying&&!['flameSlash','altinaSword'].includes(attack?.special))avatar.heading=combatMoves.cameraFacing(yaw);
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,
@@ -1107,7 +1115,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }else avatar.craftTiltAngle=null;
       }
     }
-    altinaCompanion.update(time,seconds,camera,avatars);
+    altinaCompanion.update(time,seconds,camera,avatars,renneCombat);
     const photoTime=(health.serverTime??Date.now())+(performance.now()-(health.received??performance.now())),photoAmount=photoMechanics.photoStrength(health.photoFlash,photoTime);
     photoWhite.style.opacity=String(photoAmount*.95);
     for(const [id,ghost] of photoGhosts){const a=avatars.get(id);if(!a||!photoAmount){scene.remove(ghost);ghost.material.dispose();photoGhosts.delete(id);}}
@@ -1467,7 +1475,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       status.remove();
       labels.remove();
       style.remove();
-      altinaCompanion.dispose();offscreenOpponents.dispose();mapInteractions.dispose();dialogues.dispose();
+      altinaPrompt.remove();altinaCompanion.dispose();offscreenOpponents.dispose();mapInteractions.dispose();dialogues.dispose();
       damageEffects.dispose();combatFeedback?.dispose();introAmbience?.();combatSounds.dispose();gpuWarning?.remove();ctfView?.dispose();
       for (const effect of effects.values()) effect.dispose();
       const materials = new Set(), maps = new Set();

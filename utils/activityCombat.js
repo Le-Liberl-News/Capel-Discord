@@ -32,7 +32,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   };
 
   const smoke=require('../activity/nial-smoke.cjs').createSmoke((attack,actor,target,amount,time,impact)=>hurt(attack,actor,target,amount/attackFactor(actor,time),time,impact));
-  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft,catchTarget});
+  const special=require('./activitySpecialCrafts').createSpecialCrafts({now,geometry,floor,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args),attacks,onCraft,catchTarget,project,grid});
 
   const trinity=require('./activityTrinity').createTrinity({now,attacks,canDamage:(a,b)=>canDamage(a,b),hurt:(...args)=>hurt(...args)});
 
@@ -42,6 +42,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function action(player, command, room) {
 
     players=room;
+    if(command.kind==='altinaDive'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.cancelled&&!a.resolved);return a?special.altina.choose(a,player,command.aim,now()):{error:'Plongeon indisponible.'};}
     if(player.character==='Carna'&&['aim','fireEnd'].includes(command.kind)){
       const active=[...attacks.values()].find(a=>a.actor===player.id&&a.character==='Carna'&&!a.cancelled&&now()<a.started+combatSpec('Carna',a.kind).fireDuration);
       if(!active||player.hp<=0||player.spectator||immobilized(player,now()))return {error:'Rafale inactive.'};
@@ -336,7 +337,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
         continue;
       }
 
-      if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);attacks.delete(id);driveContacts.delete(id);continue;}
+      if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);if(attack.special==='altinaSword')special.altina.cancel(attack,room.get(attack.actor),time);attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
       if(dashSpec?.special==='smoke'){attack.resolved=true;continue;}

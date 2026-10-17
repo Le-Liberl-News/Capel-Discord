@@ -1,7 +1,8 @@
 const {projectilePosition,divePosition}=require('../activity/special-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {immobilized,applyStatus}=require('../activity/combat-status.cjs');
-function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=()=>{},catchTarget=()=>{}}){
+function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=()=>{},catchTarget=()=>{},project,grid}){
+ const altina=require('./activityAltinaSword').createAltinaSword({floor,geometry,grid,hurt,canDamage,project});
  const entities=new Map(),highlights=new Map();let last=now();
  const activeSpire=id=>[...attacks.values()].find(a=>a.actor===id&&a.special==='spire'&&!a.explodedAt&&!a.cancelled&&now()>=a.impactAt&&now()<a.objectExpiresAt);
  function damageArea(a,actor,room,point,radius,damage,time,freeze=false){
@@ -15,6 +16,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
  function detonate(actor,room){const a=activeSpire(actor.id);if(!a)return false;a.explodedAt=now();a.endsAt=now()+700;for(const target of room.values())if(target.stoneSource===a.id){target.stoneUntil=0;delete target.stoneSource;}damageArea(a,actor,room,a.aim,2.8,36,now());return true;}
  function setup(a,s,command,room){
   a.special=s.special;
+  if(s.special==='altinaSword'){altina.setup(a,room.get(a.actor));for(const other of attacks.values())if(other.actor===a.actor+':guardian')other.cancelled=true;}
   if(a.character==='Bleublanc'&&s.special==='dive')room.get(a.actor).projectileReflection={id:a.id,from:a.started+s.windup+1,until:a.started+s.windup+s.leapDuration};
   if(s.special==='flameSlash'){const p=require('../activity/rean-flame-slash.cjs').flamePhases(a);a.impactAt=a.started+p.first;a.endsAt=a.started+p.end+400;}
   if(s.special==='mueller'){const p=require('../activity/mueller-combo.cjs').muellerPhases(a);a.impactAt=a.started+p.first;a.endsAt=a.started+p.end+400;a.caught=[];a.nextHit=0;}
@@ -27,6 +29,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
  }
  function tickAttack(a,s,room,time){
   if(!s.special)return false;
+  if(s.special==='altinaSword'){altina.tick(a,s,room.get(a.actor),room,time);return true;}
   if(a.cancelled)return true;
   const actor=room.get(a.actor);if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
   if(s.special==='flameSlash'){require('./activityReanFlameSlash').tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt,catchTarget});return true;}
@@ -90,6 +93,6 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
     if(dealt.damage&&previous.count<3&&time-previous.at>=20000){highlights.set(owner.id,{count:previous.count+1,at:time});attack.hits.push({id:target.id,at:time,...dealt});attacks.set(attack.id,attack);onCraft({...attack,text:'Les tomates de Ray passent \u00e0 l\u2019attaque !'});}}
   }
  }
- return {entities,setup,tickAttack,tickEntities,detonate,activeSpire};
+ return {altina,entities,setup,tickAttack,tickEntities,detonate,activeSpire};
 }
 module.exports={createSpecialCrafts};

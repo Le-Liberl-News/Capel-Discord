@@ -1,0 +1,712 @@
+{
+  "banks": {
+    "5": {
+      "texture": "combat/cs2/altina-scraft-5-08b4f6bef5.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 98,
+      "frameHeight": 109,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 2.18,
+      "centerX": 0.04,
+      "centerY": 0.642,
+      "bodyHeight": 1.76,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 88,
+      "groundProjection": true
+    },
+    "6": {
+      "texture": "combat/cs2/altina-scraft-6-5e6b9f00e9.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 97,
+      "frameHeight": 109,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 2.18,
+      "centerX": 0.03,
+      "centerY": 0.622,
+      "bodyHeight": 1.76,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 88,
+      "groundProjection": true
+    },
+    "7": {
+      "texture": "combat/cs2/altina-scraft-7-073a91357c.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 86,
+      "frameHeight": 108,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 2.16,
+      "centerX": 0,
+      "centerY": 0.632,
+      "bodyHeight": 1.76,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 88,
+      "groundProjection": true
+    },
+    "8": {
+      "texture": "combat/cs2/altina-scraft-8-48f7aabc32.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 182,
+      "frameHeight": 178,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 3.56,
+      "centerX": -0.02,
+      "centerY": 0.252,
+      "bodyHeight": 1.76,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 88,
+      "groundProjection": true
+    },
+    "9": {
+      "texture": "combat/cs2/altina-scraft-9-c4d45b3d97.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 193,
+      "frameHeight": 111,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 2.22,
+      "centerX": 0.03,
+      "centerY": 0.702,
+      "bodyHeight": 1.78,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 89,
+      "groundProjection": true
+    },
+    "10": {
+      "texture": "combat/cs2/altina-scraft-10-ca51f60709.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 164,
+      "frameHeight": 118,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 2.36,
+      "centerX": 0,
+      "centerY": 0.672,
+      "bodyHeight": 1.5,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 75,
+      "groundProjection": true
+    },
+    "11": {
+      "texture": "combat/cs2/altina-scraft-11-b1e9348e68.png",
+      "columns": 8,
+      "rows": 12,
+      "frameWidth": 183,
+      "frameHeight": 116,
+      "frames": 96,
+      "idle": [
+        0
+      ],
+      "run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "directions": 8,
+      "fps": 12,
+      "pixelScale": 0.02,
+      "height": 2.32,
+      "centerX": 0.05,
+      "centerY": 0.772,
+      "bodyHeight": 1.68,
+      "source": {
+        "model": "cold-steel2/gltf/C_NPC070/model.gltf",
+        "tool": "atelier-sprites",
+        "generatedWithAI": false
+      },
+      "bodyPixelHeight": 84,
+      "groundProjection": true
+    }
+  },
+  "clips": {
+    "scraft0": {
+      "source": "BTL_S_CRAFT00_01",
+      "duration": 3.666611909866333
+    },
+    "scraft1": {
+      "source": "BTL_S_CRAFT00_02",
+      "duration": 2.333350896835327
+    },
+    "scraft2": {
+      "source": "BTL_S_CRAFT00_03",
+      "duration": 2.3333520889282227
+    },
+    "scraft3": {
+      "source": "BTL_S_CRAFT00_04",
+      "duration": 1.5000079870224
+    },
+    "scraft4": {
+      "source": "BTL_S_CRAFT00_05",
+      "duration": 2.333404064178467
+    },
+    "scraft5": {
+      "source": "BTL_S_CRAFT00_06",
+      "duration": 2.3333001136779785
+    },
+    "scraft6": {
+      "source": "BTL_S_CRAFT00_07",
+      "duration": 1.5000460147857666
+    }
+  },
+  "sword": {
+    "texture": "combat/cs2/altina-sword-04fd871748.png",
+    "columns": 8,
+    "rows": 1,
+    "frameWidth": 234,
+    "frameHeight": 128,
+    "frames": 8,
+    "idle": [
+      0
+    ],
+    "run": [],
+    "directions": 8,
+    "fps": 12,
+    "pixelScale": 0.02,
+    "height": 2.56,
+    "centerX": 0,
+    "centerY": 0.063,
+    "bodyHeight": 2.12,
+    "source": {
+      "model": "cold-steel2/gltf/C_NPC079_C00/model.gltf",
+      "tool": "atelier-sprites",
+      "generatedWithAI": false
+    }
+  },
+  "swordDive": {
+    "texture": "combat/cs2/altina-swordDive-716411f7f0.png",
+    "columns": 8,
+    "rows": 1,
+    "frameWidth": 160,
+    "frameHeight": 185,
+    "frames": 8,
+    "idle": [
+      0
+    ],
+    "run": [],
+    "directions": 8,
+    "fps": 12,
+    "pixelScale": 0.02,
+    "height": 3.7,
+    "centerX": 0,
+    "centerY": 0.453,
+    "bodyHeight": 3.28,
+    "source": {
+      "model": "cold-steel2/gltf/C_NPC079_C00/model.gltf",
+      "tool": "atelier-sprites",
+      "generatedWithAI": false
+    }
+  },
+  "pack": "effects/cs2/altina-scraft-5ea81afb25.json",
+  "source": {
+    "script": "scripts/ani/dat_us/npc070.dat",
+    "function": "AniBtlSCraft00",
+    "sword": "C_NPC079_C00",
+    "effects": [
+      "sclt00_00",
+      "sclt00_02",
+      "sclt00_03",
+      "sclt00_04",
+      "sclt00_06",
+      "sclt00_07",
+      "sclt00_08",
+      "sclt00_09",
+      "sclt00_10"
+    ],
+    "scriptSha256": "f482dae32aa3f479cbbb9a6ac8e972964dd3fb79282cd44c489d6724556b52ab",
+    "calls": [
+      {
+        "offset": 68,
+        "op": "load",
+        "entity": -2,
+        "slot": 136,
+        "file": "battle/sclt00_00.eff"
+      },
+      {
+        "offset": 94,
+        "op": "load",
+        "entity": -2,
+        "slot": 138,
+        "file": "battle/sclt00_02.eff"
+      },
+      {
+        "offset": 120,
+        "op": "load",
+        "entity": -2,
+        "slot": 139,
+        "file": "battle/sclt00_03.eff"
+      },
+      {
+        "offset": 146,
+        "op": "load",
+        "entity": -2,
+        "slot": 140,
+        "file": "battle/sclt00_04.eff"
+      },
+      {
+        "offset": 172,
+        "op": "load",
+        "entity": -2,
+        "slot": 141,
+        "file": "battle/sclt00_06.eff"
+      },
+      {
+        "offset": 198,
+        "op": "load",
+        "entity": -2,
+        "slot": 142,
+        "file": "battle/sclt00_07.eff"
+      },
+      {
+        "offset": 608,
+        "op": "play",
+        "entity": -2,
+        "slot": 136,
+        "anchor": -2,
+        "unknown": 1,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 2
+      },
+      {
+        "offset": 939,
+        "op": "play",
+        "entity": -2,
+        "slot": 138,
+        "anchor": 71,
+        "unknown": 3,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 3
+      },
+      {
+        "offset": 1149,
+        "op": "play",
+        "entity": -2,
+        "slot": 139,
+        "anchor": 71,
+        "unknown": 3,
+        "node": "",
+        "position": [
+          0.0,
+          1.5,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 4
+      },
+      {
+        "offset": 1405,
+        "op": "play",
+        "entity": -2,
+        "slot": 140,
+        "anchor": 2120,
+        "unknown": 3,
+        "node": "NULL_EFF",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 5
+      },
+      {
+        "offset": 1780,
+        "op": "play",
+        "entity": -2,
+        "slot": 141,
+        "anchor": -2,
+        "unknown": 0,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "instance": 6
+      },
+      {
+        "offset": 2621,
+        "op": "play",
+        "entity": -2,
+        "slot": 142,
+        "anchor": -3,
+        "unknown": 0,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "instance": 7
+      },
+      {
+        "offset": 2864,
+        "op": "play",
+        "entity": -2,
+        "slot": 137,
+        "anchor": -2,
+        "unknown": 0,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 8
+      },
+      {
+        "offset": 3061,
+        "op": "load",
+        "entity": -2,
+        "slot": 138,
+        "file": "battle/sclt00_08.eff"
+      },
+      {
+        "offset": 3087,
+        "op": "load",
+        "entity": -2,
+        "slot": 139,
+        "file": "battle/sclt00_10.eff"
+      },
+      {
+        "offset": 3113,
+        "op": "load",
+        "entity": -2,
+        "slot": 141,
+        "file": "battle/sclt00_09.eff"
+      },
+      {
+        "offset": 3139,
+        "op": "play",
+        "entity": -2,
+        "slot": 138,
+        "anchor": 2120,
+        "unknown": 1,
+        "node": "",
+        "position": [
+          0.0,
+          -15.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "instance": 9
+      },
+      {
+        "offset": 3504,
+        "op": "play",
+        "entity": -2,
+        "slot": 138,
+        "anchor": -3,
+        "unknown": 0,
+        "node": "",
+        "position": [
+          0.0,
+          -15.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "instance": 10
+      },
+      {
+        "offset": 3554,
+        "op": "play",
+        "entity": -2,
+        "slot": 141,
+        "anchor": 2120,
+        "unknown": 3,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 9
+      },
+      {
+        "offset": 4046,
+        "op": "play",
+        "entity": -2,
+        "slot": 139,
+        "anchor": -2,
+        "unknown": 0,
+        "node": "",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "instance": 10
+      }
+    ]
+  },
+  "clipWindows": {
+    "scraft5": [
+      0,
+      0.4
+    ]
+  }
+}

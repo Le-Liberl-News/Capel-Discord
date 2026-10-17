@@ -47,10 +47,11 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
  const send=(command)=>world.action(ai,{id:ai.id+':action:'+ ++count,...command},players);
  function navigate(target){if(path.length&&goal&&Math.hypot(goal.x-target.x,goal.z-target.z)<1.5)return;goal={...target};path=smoothRoute(grid,ai,route(grid,ai,target));}
  function think(time){if(player.smokeHiddenUntil>time){path=[];return;}
+  if(ai.character==='Altina'&&ai.hp>0&&!status.immobilized(ai,time)){const cast=world.snapshot().combat.attacks.find(a=>a.actor===ai.id&&a.special==='altinaSword'&&!a.cancelled&&!a.resolved);if(cast&&!cast.diveAt&&time-cast.started>=5500)send({type:'attack',kind:'altinaDive',aim:aimAt(perceived(time))});}
   if(ai.hp<=0||player.hp<=0||status.immobilized(ai,time)||time<(ai.combatLockedUntil??0))return;
   const target=perceived(time),snapshot=world.snapshot(),balls=snapshot.poms??[],held=balls.find(p=>p.owner===ai.id),distance=Math.hypot(ai.x-target.x,ai.z-target.z),busy=ai.attackBusyUntil>time;
   if(ai.guardianFor){
-   const owner=players.get(ai.guardianFor);if(!owner||owner.hp<=0){ai.hp=0;path=[];return;}
+   const owner=players.get(ai.guardianFor);if(!owner||owner.hp<=0){ai.hp=0;path=[];return;}if(owner.altinaSwordUntil){path=[];ai.moving=false;return;}
    const dx=ai.x-target.x,dz=ai.z-target.z,length=Math.hypot(dx,dz)||1;
    const melee=place({x:target.x+dx/length*1.7,z:target.z+dz/length*1.7});
    if(distance>2.1)navigate(melee);else path=[];

@@ -4,7 +4,7 @@ test('CS2 prototypes exist in the Capel test catalogue, remain selectable, and d
  const fields=require('../activity/assets/sky/characters.json'),daily=require('../rpg/data/persos.json'),combat=require('../activity/native-combat.cjs');
  const choices=createTestCharacters({characters:fields,expires:0,permanent:TEST_CHARACTERS});
  assert.deepEqual(choices.menu('user').characters,TEST_CHARACTERS);
- for(const name of TEST_CHARACTERS){assert.ok(fs.existsSync('activity/assets/sky/'+fields[name].texture));assert.equal(daily[name],undefined);assert.ok(combat.combatSpec(name,'basic'));assert.equal(combat.combatSpec(name,'craft')?.name??null,name==='Rean'?'Flame Slash':null);choices.set('user',name);}
+ for(const name of TEST_CHARACTERS){assert.ok(fs.existsSync('activity/assets/sky/'+fields[name].texture));assert.equal(daily[name],undefined);assert.ok(combat.combatSpec(name,'basic'));assert.equal(combat.combatSpec(name,'craft').special,name==='Rean'?'flameSlash':'altinaSword');choices.set('user',name);}
 });
 test('a nearby living guardian takes damage, and a defeated or distant guardian cannot protect',()=>{
  const owner={id:'altina',hp:500,x:0,y:0,z:0},pet={id:'pet',hp:100,x:1,y:0,z:0,guardianFor:'altina'};protectWithGuardian(owner,pet);
@@ -17,6 +17,6 @@ test('the Rean/Altina encounter has one group introduction, a damageable guardia
  const game=m.exports.createTraining({grid,character:'Estelle',encounter,now:()=>time,random:()=>.3,ballSpawns:[]}),owner=[...game.players.values()].find(p=>p.character==='Altina'),pet=game.players.get(owner.id+':guardian');
  assert.equal(pet.guardianFor,owner.id);assert.equal(pet.maxHp,650);const state=game.tick(game.player);assert.equal(state.duel.groups.length,2);assert.equal(state.duel.groups[1].name,'Rean et Altina');
  Object.assign(owner,{x:0,z:0});Object.assign(pet,{x:1,z:1});Object.assign(game.player,{x:0,z:6});let magic=false;
- for(let i=0;i<100;i++){time+=50;const state=game.tick(game.player);magic ||= state.combat.attacks.some(a=>a.character==='Altina'&&a.kind==='basic');assert.doesNotThrow(()=>JSON.stringify(state));}
+ for(let i=0;i<300;i++){time+=50;const state=game.tick(game.player);magic ||= state.combat.attacks.some(a=>a.character==='Altina'&&a.kind==='basic');assert.doesNotThrow(()=>JSON.stringify(state));}
  assert.ok(magic);assert.ok(Math.hypot(pet.x-game.player.x,pet.z-game.player.z)<2.8,'guardian engages at melee range');assert.ok(game.world.cooldownsFor(pet.id).basic>0,'guardian strikes in melee');owner.hp=0;time+=50;game.tick(game.player);assert.equal(pet.hp,0);
 });
