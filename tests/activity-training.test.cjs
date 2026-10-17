@@ -31,3 +31,29 @@ test('training rejects walking while guard is held, but accepts turning the guar
  assert.deepEqual(state.position,before);assert.equal(state.health.movementFactor,0);assert.equal(game.player.guardHold.dz,1);assert.equal(game.player.parry.at,parryAt);
  step(100,{id:'release',type:'parry',phase:'end'});assert.equal(game.player.guardHold,null);
 });
+
+test('team encounters share combat, protect allies and finish only after an entire side loses',()=>{
+ const {game,step}=setup(null,{encounter:{name:'Le duo',allies:['Joshua'],enemies:['Walter','Loewe']},ballSpawns:[]});
+ assert.equal(game.players.size,4);const intro=step(1).duel;assert.deepEqual(intro.groups.map(g=>g.players.length),[2,2]);
+ game.ai.hp=0;assert.equal(step().finish,null);game.players.get('training:ai:1').hp=0;assert.equal(step().finish.text,'Victoire de votre équipe');
+ const second=setup(null,{encounter:{name:'Adversaires',allies:['Joshua'],enemies:['Walter']},ballSpawns:[]});second.game.player.hp=0;assert.equal(second.step().finish,null);second.game.players.get('training:ally:0').hp=0;assert.equal(second.step().finish.text,'Défaite de votre équipe');
+});
+test('allied AIs fight with distinct action IDs and never hurt their own team',()=>{
+ const {game,step}=setup(null,{encounter:{name:'Duo',allies:['Walter'],enemies:['Joshua','Mueller']},ballSpawns:[]});
+ for(const p of game.players.values()){p.x=p.teamId==='blue'?0:1;p.y=0;p.z=0;p.hp=p.maxHp=5000;}
+ const actors=new Set();for(let i=0;i<200;i++)for(const a of step().combat.attacks)actors.add(a.actor);
+ assert.ok(actors.has('training:ally:0'));assert.ok(actors.has('training:ai'));assert.ok(actors.has('training:ai:1'));
+ const ally=game.players.get('training:ally:0');ally.hp=500;for(const p of game.players.values())if(p.teamId==='red')Object.assign(p,{x:20,z:20});game.world.action(game.player,{id:'friendly-test',type:'attack',kind:'basic',aim:ally,target:ally.id},game.players);step(1500);assert.equal(ally.hp,500);
+});
+test('monster groups use native enemy sprites, combat and permanent deaths',()=>{
+ const {game,step}=setup(null,{character:'Loewe',encounter:{name:'Les monstres',allies:[],enemies:[{monster:true,character:'Mishy'},{monster:true,character:'MishyArdent'}]},ballSpawns:[]});
+ let s=step(1);assert.deepEqual(s.enemies.map(e=>e.character),['Mishy','MishyArdent']);assert.equal(s.duel.groups[1].players.length,2);assert.ok(s.enemies.every(e=>e.teamId==='red'));assert.ok(game.characters.includes('Mishy'));
+ const target=s.enemies[0];Object.assign(game.player,{x:target.x,y:target.y,z:target.z+1,hp:50000});
+ game.world.action(game.player,{id:'monster-hit-1',type:'attack',kind:'craft',aim:game.player},game.players);step(600);
+ game.world.action(game.player,{id:'monster-hit-2',type:'attack',kind:'craft',aim:game.player},game.players);step(7000);
+ game.world.action(game.player,{id:'monster-hit-3',type:'attack',kind:'craft',aim:game.player},game.players);step(600);
+ assert.ok(game.world.snapshot().enemies.some(e=>e.hp===0));step(40000);game.world.tick(game.players);assert.ok(game.world.snapshot().enemies.some(e=>e.hp===0));
+});
+
+test('intro clock starts again after preparation rather than consuming the loading time',()=>{const {game,step}=setup('Walter',{introDuration:19000,ballSpawns:[]});step(10000);game.beginIntro();assert.equal(step(10000).health.canMove,false);assert.equal(step(9000).health.canMove,true);});
+test('monster projectiles pass through their own team and damage only opponents',()=>{let clock=0;const {createDungeonFire}=require('../utils/activityDungeonFire'),source={id:'monster',teamId:'red',x:0,y:0,z:0,hp:75},ally={id:'ally',teamId:'red',x:2,y:0,z:0,hp:75},foe={id:'foe',teamId:'blue',x:4,y:0,z:0,hp:500},room=new Map([source,ally,foe].map(p=>[p.id,p])),fire=createDungeonFire({now:()=>clock,canDamage:(a,b)=>a.teamId!==b.teamId});fire.launch({x:0,y:.7,z:0},{x:1,y:0,z:0},{speed:10,damage:8,source:source.id});clock=500;fire.tick(room);assert.equal(ally.hp,75);assert.equal(foe.hp,492);});

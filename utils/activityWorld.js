@@ -472,10 +472,10 @@ function createActivityWorld(options) {
   if(!options.combatEnabled)return world;
   const combat=require("./activityCombat").createActivityCombat(options);
   const jumps=(options.dungeon||options.jumpEnabled)?require('./activityDungeonJumps').createDungeonJumps(options):null;
-  const fire=options.dungeon?require('./activityDungeonFire').createDungeonFire({...options,traps:options.dungeon.traps??[]}):null;
+  const fire=options.dungeon||options.projectilesEnabled?require('./activityDungeonFire').createDungeonFire({...options,traps:options.dungeon?.traps??[]}):null;
   const enemies=require("./activityEnemies").createActivityEnemies({...options,spawns:options.enemySpawns??[],fire});
   return {...world,
-    tick(players){world.tick(players,new Map([...players,...enemies.entities,...combat.entities]));options.platforms?.tick(players);jumps?.tick(players);enemies.tick(new Map([...players,...combat.entities]));fire?.tick(new Map([...players,...combat.entities]));combat.tick(new Map([...players,...enemies.entities,...combat.entities]));if(options.dungeon)for(const p of players.values())if(p.hp===0&&!p.noRespawn)p.deadUntil=Math.min(p.deadUntil??Infinity,(options.now??Date.now)()+2000);},
+    tick(players){world.tick(players,new Map([...players,...enemies.entities,...combat.entities]));options.platforms?.tick(players);jumps?.tick(players);enemies.tick(new Map([...players,...combat.entities]));fire?.tick(new Map([...players,...(options.projectilesEnabled?enemies.entities:[]),...combat.entities]));combat.tick(new Map([...players,...enemies.entities,...combat.entities]));if(options.dungeon)for(const p of players.values())if(p.hp===0&&!p.noRespawn)p.deadUntil=Math.min(p.deadUntil??Infinity,(options.now??Date.now)()+2000);},
     action(player,command,players){return command?.type==='parry'?combat.parry(player,new Map([...players,...enemies.entities,...combat.entities]),command):command?.type==='jump'&&jumps?jumps.action(player,command):command?.type==="attack" ? combat.action(player,command,new Map([...players,...enemies.entities,...combat.entities])) : world.action(player,command,players);},
     snapshot(){return {...world.snapshot(),combat:combat.snapshot(),enemies:[...enemies.snapshot(),...combat.entities.values()],fire:fire?.snapshot()??[]};},
     cooldownsFor:combat.cooldownsFor,canDetonate:combat.canDetonate,

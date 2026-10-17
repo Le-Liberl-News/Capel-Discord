@@ -1,5 +1,5 @@
 import {createOffscreenOpponents} from './offscreen-opponents.mjs';
-import {frameCombatCamera,advanceCraftFocus} from './combat-framing.mjs';
+import {frameCombatCamera} from './combat-framing.mjs';
 import {createMapInteractions} from './map-interactions.mjs';
 import {createArenaSun} from './arena-sun.mjs';
 import {createMapBloom} from './map-bloom.mjs';
@@ -117,9 +117,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const photoWhite=document.createElement('div');photoWhite.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:18;background:#fff;opacity:0';document.body.append(photoWhite);const photoGhosts=new Map();
   const blindness=document.createElement('div');blindness.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;background:radial-gradient(ellipse at center,transparent 5%,rgba(0,0,0,.85) 48%,#000 80%);transition:opacity .15s;opacity:0';document.body.append(blindness);
   const bossPanel=document.createElement('div');bossPanel.id='sky-boss';bossPanel.hidden=true;bossPanel.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);padding:8px 18px;background:#211624e8;border:1px solid #dfb075;color:#ffe0a0;font:18px AveriaSky,sans-serif;z-index:25;pointer-events:none;text-align:center';document.body.append(bossPanel);
-  const enemyEffects=inTower&&!inDungeon?createEnemyEffects(THREE,scene):null;
+  const enemyEffects=(inTower&&!inDungeon||isArena)?createEnemyEffects(THREE,scene):null;
   const flightCamera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.08,350);
-  let localCombo=null,steering=null;let cookingHeld=false;let patDrive=null,patDriveId=null;let craftFocus=0;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
+  let localCombo=null,steering=null;let cookingHeld=false;let patDrive=null,patDriveId=null;let wasIntro=false;let camera=walkingCamera,wasFlying=false,wasFPS=false,flightMotion={moving:false,dx:0,dz:0};
   const version = new URL(import.meta.url).searchParams.get("v") ?? "rooftop-sky-20261009-4";
   const loading = new THREE.LoadingManager();
   loading.setURLModifier(url => versionAsset(url, version));
@@ -186,7 +186,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const dayNight=createDayNight(THREE,model,map,mapShadows,map==='axis'?AXIS_LIGHTS:tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]);
   mapDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
-  const dungeonEffects=inTower&&!inDungeon?await createDungeonEffects(THREE,scene,ASSETS,towerLayout):null;
+  const dungeonEffects=(inTower&&!inDungeon||isArena)?await createDungeonEffects(THREE,scene,ASSETS,isArena?{}:towerLayout):null;
   // "Commencez !" sound, and the wind of the Axis Pillar looping through its introduction
   let introAmbience=null;
   const duelIntro=isArena?createDuelIntro({assets:ASSETS,venue:map,onSpeech:message=>dialogues.receive([message]),onPhase:kind=>{if(kind==='begin')combatSounds.play('fight');if(map==='axis'&&kind&&!introAmbience)introAmbience=combatSounds.loop('axis-ambience',{gain:.8});if(!kind&&introAmbience){introAmbience();introAmbience=null;}}}):null;
@@ -253,7 +253,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   function pickCombatTarget(event,spec){
     if(!event)return null;
     pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);
-    const candidates=[...avatars].filter(([id,a])=>!a.npc&&!a.dead&&a.catCling?.target!==localId&&(spec.effect?(!a.enemy&&(id===localId||inTower)):(id!==localId&&(a.enemy||!inTower))));
+    const candidates=[...avatars].filter(([id,a])=>!a.npc&&!a.dead&&a.catCling?.target!==localId&&(spec.effect?(!a.enemy&&(id===localId||inTower)):(id!==localId&&(a.enemy||!inTower)&&(avatars.get(localId)?.teamId==null||a.teamId!==avatars.get(localId).teamId))));
     const hit=raycaster.intersectObjects(candidates.map(([,a])=>a.mesh),true)[0];
     return candidates.find(([,a])=>a.mesh.id===hit?.object.id)?.[0]??null;
   }
@@ -943,8 +943,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec('Josette',localAttack.kind):null,active:isFPS,time,moving:me?.walking||keys.size>0,yaw})??0;crosshair.hidden=!isFPS||josetteBlend>.05;
-    craftFocus=advanceCraftFocus(craftFocus,seconds,!!localAttack&&localAttack.kind==='craft'&&!craftTarget&&!introPlaying&&!freeSpectator&&!me?.dead);
-    if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true,craftFocus);
+    if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
     arenaAudience?.update(time,camera);
