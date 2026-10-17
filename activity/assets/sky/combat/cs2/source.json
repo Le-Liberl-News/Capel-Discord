@@ -218,30 +218,30 @@
   "flameSlash": {
     "clips": {
       "flamePrep": {
-        "source": "BTL_CRAFT01_01",
-        "duration": 0.7999860048294067
+        "source": "BTL_S_CRAFT01_02",
+        "duration": 0.6666499972343445
       },
       "flameRush": {
-        "source": "BTL_CRAFT01_04",
-        "duration": 0.9999859929084778
+        "source": "BTL_S_CRAFT01_07",
+        "duration": 0.3333260118961334
       },
       "flameFirst": {
-        "source": "BTL_CRAFT01_02",
-        "duration": 0.6666600108146667
+        "source": "BTL_S_CRAFT01_04",
+        "duration": 0.8666539788246155
       },
       "flameSecond": {
-        "source": "BTL_CRAFT03_03",
-        "duration": 0.8999860286712646
+        "source": "BTL_S_CRAFT01_05",
+        "duration": 0.7999860048294067
       },
       "flameRaise": {
-        "source": "BTL_CRAFT05_01",
-        "duration": 0.8999900221824646
+        "source": "BTL_S_CRAFT01_06",
+        "duration": 1.4333100318908691
       },
       "flameThird": {
-        "source": "BTL_CRAFT05_03",
-        "duration": 1.699970006942749
+        "source": "BTL_S_CRAFT01_06",
+        "duration": 1.4333100318908691
       }
     },
-    "notes": "Native CS2 animation poses, eight directions. Blade anchors projected from the actual equipped tachi for temporary fire. Final Sky effects pending selection."
+    "notes": "Native Azure Flame Slash S-craft poses in eight directions; projected effect_point02 attachment for the native CS2 sword flame. Native effect resources and decoder provenance are in flame-effects.json."
   }
 }
