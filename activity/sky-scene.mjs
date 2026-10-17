@@ -689,7 +689,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     canvas.style.width=viewport.width+"px";canvas.style.height=viewport.height+"px";
   }
   let carnaHeld=false,carnaAimAt=0;
-  function stopCarna(){if(!carnaHeld)return;carnaHeld=false;const current=renneCombat?.current(localId);if(current?.character==='Carna'&&current.kind==='basic'){queueAction('attack',undefined,undefined,undefined,{kind:'fireEnd'});current.fireStoppedAt=Date.now();}}
+  function stopCarna(){if(!carnaHeld)return;carnaHeld=false;const current=renneCombat?.current(localId);if(current?.character==='Carna'&&current.kind==='basic'){}}
   let cursor={clientX:innerWidth/2,clientY:innerHeight/2};
   function keyboardInteraction() {
     const me=avatars.get(localId);if(!me||health.hp===0||health.spectator)return;
@@ -948,7 +948,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     if(carnaHeld&&me?.character==='Carna'&&!renneCombat?.current(localId)&&combatControls.ready('basic'))startAttack('basic',cursor,true);const activeCarna=renneCombat?.current(localId);if(me?.character==='Carna'&&activeCarna?.kind==='craft'&&time-carnaAimAt>100){carnaAimAt=time;const direction=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));const ray={origin:{x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction:{x:direction.x,y:direction.y,z:direction.z}};queueAction('attack',undefined,undefined,undefined,{kind:'aim',ray});}
-    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(me?.character!=='Carna'&&josetteBlend>.05);
+    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(me?.character!=='Carna'&&josetteBlend>.05);
     if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
@@ -1470,3 +1470,4 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     },
   };
 }
+

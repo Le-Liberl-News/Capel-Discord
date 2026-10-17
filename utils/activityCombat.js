@@ -45,7 +45,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(player.character==='Carna'&&['aim','fireEnd'].includes(command.kind)){
       const active=[...attacks.values()].find(a=>a.actor===player.id&&a.character==='Carna'&&!a.cancelled&&now()<a.started+combatSpec('Carna',a.kind).fireDuration);
       if(!active||player.hp<=0||player.spectator||immobilized(player,now()))return {error:'Rafale inactive.'};
-      if(command.kind==='fireEnd'&&active.kind==='basic'){active.fireStoppedAt=now();return {};}
+      // Once triggered the normal volley always completes its three seconds.
+      if(command.kind==='fireEnd'&&active.kind==='basic')return {};
       if(command.kind==='aim'&&active.kind==='craft'){
         const ray=validateRay(player,command.ray);if(!ray)return {error:'Visée invalide.'};
         active.baseRay=ray;player.heading={dx:ray.direction.x,dz:ray.direction.z};return {};
@@ -444,7 +445,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(!attacker||attacker.hp<=0||attacker.character!==attack.character||attacker.spectator||immobilized(attacker,time)){attack.cancelled=true;attack.resolved=true;break;}
       if(spec.automatic){
         if(attack.fireStoppedAt&&attack.impactAt+hitOffsets[hitIndex]>=attack.fireStoppedAt){attack.resolved=true;break;}
-        const ray=require('../activity/carna-gun.cjs').shotRay(attack.baseRay,attack.id,hitIndex);
+        const base={origin:{x:attacker.x,y:(attacker.y??0)+1.45,z:attacker.z},direction:attack.baseRay.direction};
+        const ray=require('../activity/carna-gun.cjs').shotRay(base,attack.id,hitIndex);
         attack.ray=ray;attack.origin={...ray.origin};let distance=spec.range;
         const endpoint={};for(const k of ['x','y','z'])endpoint[k]=ray.origin[k]+ray.direction[k]*distance;
         const wall=geometry?.sweep(ray.origin,endpoint,.02);if(wall)distance=Math.min(distance,Math.hypot(wall.point.x-ray.origin.x,wall.point.y-ray.origin.y,wall.point.z-ray.origin.z));

@@ -1,6 +1,6 @@
 const offsets=duration=>Array.from({length:duration/100},(_,i)=>i*100);
 const common={fps:true,projectile:true,projectileSpeed:1000,range:30,radius:.1,windup:0,lockMovement:true,headshotMultiplier:1.25,shotVisual:'bullet',burstShots:true,noTempo:true,automatic:true,effectDuration:0};
-const ACTIONS={basic:{...common,name:'Rafale',key:'f',duration:5000,cooldown:5000,fireDuration:3000,reloadDuration:2000,damage:90,hitOffsets:offsets(3000)},craft:{...common,name:'Tir de suppression',key:'g',duration:5000,cooldown:12000,fireDuration:5000,damage:150,hitOffsets:offsets(5000),thirdPersonCraft:true,steerFire:true}};
+const ACTIONS={basic:{...common,name:'Rafale',lockMovement:false,key:'f',duration:5000,cooldown:5000,fireDuration:3000,reloadDuration:2000,damage:90,hitOffsets:offsets(3000)},craft:{...common,name:'Tir de suppression',key:'g',duration:5000,cooldown:12000,fireDuration:5000,damage:150,hitOffsets:offsets(5000),thirdPersonCraft:true,steerFire:true}};
 function shotRay(base,id,index,spread=.045){
  let seed=2166136261;for(const ch of String(id)+':'+index)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;
  const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
@@ -11,3 +11,4 @@ function shotRay(base,id,index,spread=.045){
  return {origin:{...base.origin},direction};
 }
 module.exports={ACTIONS,shotRay};
+

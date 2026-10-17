@@ -21,7 +21,7 @@ for row,(bank,frames) in enumerate(decoded.items()):
  for pose in range(min(8,len(frames)//8)):contact.paste(frames[pose*8+5],(pose*256,row*256))
 contact.save('E:/dev/sky-activity-tools/carna-contact.png')
 c['sequences']['carnaFire']=firing or c['sequences']['basic']
-c['sequences']['carnaCraft']=c['sequences']['carnaFire']
+c['sequences']['carnaCraft']=[{'bank':12,'pose':i,'ms':100} for i in range(len(decoded[12])//8)]
 c['sequences']['carnaReload']=[{'bank':13,'pose':i,'ms':150} for i in range(len(decoded[13])//8)]
 c['actions']['basic']={'key':'f'};c['actions']['craft']={'key':'g'}
 (root/'combat/catalogue.json').write_text(json.dumps(cat,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf8')
@@ -34,3 +34,4 @@ gun=Image.new('RGBA',frame.size);gun.paste(frame,(0,0),mask);gun=gun.crop((111,1
 sheet=Image.new('RGBA',(120,30))
 for i in range(3):sheet.paste(gun,(i*40,0))
 sheet.save(root/'combat/carna-gun.png')
+

@@ -15,13 +15,13 @@ export async function createJosetteView(THREE,assets){
  const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=new URL('combat/josette-gun.png',assets).href;});
  const carna=new Image();await new Promise((resolve,reject)=>{carna.onload=resolve;carna.onerror=reject;carna.src=new URL('combat/carna-gun.png',assets).href;});
  const spark=new Image();await new Promise((resolve,reject)=>{spark.onload=resolve;spark.onerror=reject;spark.src=new URL('effects/sc-msc0548-frames.png',assets).href;});
- const canvas=document.createElement('canvas');canvas.width=176;canvas.height=164;canvas.style.cssText='position:fixed;right:26%;bottom:4%;width:clamp(130px,23vw,290px);height:auto;image-rendering:pixelated;pointer-events:none;z-index:16';canvas.hidden=true;document.body.append(canvas);
+ const canvas=document.createElement('canvas');canvas.width=176;canvas.height=164;canvas.style.cssText='position:fixed;right:26%;bottom:4%;width:clamp(130px,23vw,290px);height:auto;image-rendering:pixelated;pointer-events:none;z-index:16';canvas.hidden=true;canvas.style.display='none';document.body.append(canvas);
  const context=canvas.getContext('2d');context.imageSmoothingEnabled=false;
  const eye=new THREE.Vector3(),end=new THREE.Vector3(),look=new THREE.Vector3(),matrix=new THREE.Matrix4(),first=new THREE.Quaternion(),third=new THREE.Quaternion();
  let craft=null;
  return {update({camera,position,attack,spec,active,time,moving,yaw,character}){
   if(attack?.kind==='craft'&&spec?.thirdPersonCraft)craft={event:attack,duration:spec.duration};
-  if(!active){craft=null;canvas.hidden=true;return 0;}
+  if(!active){craft=null;canvas.hidden=true;canvas.style.display='none';return 0;}
   const age=craft?time-craft.event.localStart:0;
   let blend=craft&&!craft.event.cancelled?craftViewBlend(age,craft.duration):0;
   if(craft&&(age>=craft.duration||craft.event.cancelled))craft=null;
@@ -35,7 +35,7 @@ export async function createJosetteView(THREE,assets){
    if(character==='Carna')third.copy(first);
    camera.position.lerpVectors(eye,end,blend);camera.quaternion.copy(first).slerp(third,blend);
   }
-  canvas.hidden=!active||blend>.95;canvas.style.opacity=String(1-blend);
+  canvas.hidden=!active||blend>.95;canvas.style.display=canvas.hidden?'none':'block';canvas.style.opacity=String(1-blend);
   if(!canvas.hidden){
    const elapsed=attack?.kind==='basic'?time-attack.localStart:null,firing=character==='Carna'&&elapsed!==null&&elapsed<3000&&!attack.fireStoppedAt;const pose=gunPose(firing?elapsed%100:elapsed),bob=moving?Math.sin(time*.012)*3:Math.sin(time*.002)*.7;
    const reload=character==='Carna'&&(elapsed>=3000||!!attack?.fireStoppedAt)&&elapsed<5000;
@@ -45,3 +45,4 @@ export async function createJosetteView(THREE,assets){
   return blend;
  },dispose(){canvas.remove();}};
 }
+
