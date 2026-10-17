@@ -4,8 +4,9 @@ export function createArenaSun(renderer,scene,model){
  const converted=new Map();
  function apply(root,{cutout=false}={}){root.traverse(o=>{if(!o.isMesh)return;const convert=m=>{if((m.transparent&&!cutout)||m.userData?.skyEmissive||m.userData?.horrorDecal)return m;if(converted.has(m))return converted.get(m);
   const lit=new THREE.MeshStandardMaterial({map:m.map,alphaMap:m.alphaMap,color:m.color,vertexColors:m.vertexColors,side:m.side,roughness:.85,metalness:0,alphaTest:m.alphaTest,transparent:m.transparent,opacity:m.opacity,depthWrite:m.depthWrite});
+  if(cutout){lit.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <normal_vertex>','#include <normal_vertex>\n vNormal = normalize(mat3(viewMatrix) * vec3(0.0,1.0,0.0));');};lit.customProgramCacheKey=()=> 'solar-billboard-up';lit.userData.solarBillboard=true;}
   lit.clippingPlanes=m.clippingPlanes;lit.clipIntersection=m.clipIntersection;lit.polygonOffset=m.polygonOffset;lit.polygonOffsetFactor=m.polygonOffsetFactor;lit.polygonOffsetUnits=m.polygonOffsetUnits;lit.name=m.name;lit.userData={...m.userData,solarLit:true};converted.set(m,lit);return lit;};
-  o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);o.receiveShadow=true;o.castShadow=[].concat(o.material).every(m=>!m.transparent);
+  o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);o.receiveShadow=!cutout;o.castShadow=[].concat(o.material).every(m=>!m.transparent);
  });}
  apply(model);
  const bounds=new THREE.Box3().setFromObject(model),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()),extent=Math.max(size.x,size.z,20)*.6;
