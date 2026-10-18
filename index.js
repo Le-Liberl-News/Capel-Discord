@@ -229,7 +229,7 @@ const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({sto
 const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:Object.fromEntries(Object.entries({...require("./activity/assets/sky/characters.json"),Anton:{}}).filter(([name])=>name!==require('./activity/cs2-test-characters.cjs').COMPANION)),permanent:require('./activity/cs2-test-characters.cjs').TEST_CHARACTERS});
 const capelModel=require("./activity/assets/sky/capel.json");
 // until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
-const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async text=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,allowedMentions:{parse:[]}});},log:console.log});
+const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
@@ -474,11 +474,14 @@ client.on('messageCreate', async message => {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         }
-        const malade = message.channelId === roleplayId ? rhumertume.roleplay(pseudo, texte) : null;
-        if (malade) { payload.content = malade.text; payload.avatarURL = malade.avatarURL; }
-        if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
+        // the rhumertume: the pom's bubble in place of the text, its name and avatar
+        const malade = message.channelId === roleplayId ? await rhumertume.message(pseudo, texte) : null;
+        if (malade) { payload.content = malade.content; payload.username = malade.username; payload.avatarURL = malade.avatarURL; }
+        const fichiers = [...(malade?.files ?? []), ...fichiersTelecharges];
+        if (fichiers.length > 0) payload.files = fichiers;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );
+        if (malade) rhumertume.after(pseudo).catch(e => console.error('Rhumertume :', e.message));
         await defendreLeLiberl({ channel: message.channel, pseudo, texte, state, saveState, databasePersos });
 
     } catch (e) { console.error("Erreur envoi anonymisé :", e); }
@@ -494,7 +497,8 @@ cron.schedule('0 0 * * *', async () => {
     try { await arenaRanking.settle(); } catch (error) { console.error("Arène : versement des PB :", error); }
     // the ranking's picture of the day, once the arena's points are paid, and the board, missions or not
     await miseAJourQuotidienne(client);
-    await db.query('DELETE FROM pseudos_anonymes');
+    // from October 31 on, everyone keeps the character they have (a mini-game will decide later)
+    if (require('./utils/rhumertume').parisParts(Date.now()).date < '2026-10-31') await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
     const voting = voting_rows[0]?.voting;

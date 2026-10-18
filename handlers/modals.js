@@ -310,15 +310,18 @@ module.exports = async function handleModals(interaction, sheets) {
         const messageUrl = `https://discord.com/channels/${guildId}/${threadId}/${targetMessageId}`;
 
         try {
-            const malade = isRoleplay ? interaction.client.rhumertume?.roleplay(pseudo, texte) : null;
+            // the rhumertume: the pom's bubble under the quote, its name and avatar
+            const malade = isRoleplay ? await interaction.client.rhumertume?.message(pseudo, texte) : null;
             const payload = {
-                content: `> [**${auteurOriginal}** : ${extrait}](${messageUrl})\n${malade ? malade.text : texte}`,
-                username: pseudo,
+                content: `> [**${auteurOriginal}** : ${extrait}](${messageUrl})\n${malade ? malade.content : texte}`,
+                username: malade ? malade.username : pseudo,
                 avatarURL: malade ? malade.avatarURL : `${process.env.BASE_URL}/pp/${encodeURIComponent(pseudo)}.webp`,
             };
+            if (malade?.files) payload.files = malade.files;
             if (!isRoleplay) payload.threadId = threadId;
 
             await webhook.send(payload);
+            if (malade) interaction.client.rhumertume.after(pseudo).catch(e => console.error('Rhumertume :', e.message));
             await interaction.deleteReply();
 
         } catch (e) { console.error(e); }

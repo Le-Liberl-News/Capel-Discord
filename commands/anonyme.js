@@ -119,12 +119,15 @@ async function execute(interaction) {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         };
-        const malade = interaction.channelId === roleplayId ? interaction.client.rhumertume?.roleplay(pseudo, texte) : null;
-        if (malade) { payload.content = malade.text; payload.avatarURL = malade.avatarURL; }
-        if (image) payload.files = [image.url];
+        // the rhumertume: the pom's bubble in place of the text, its name and avatar
+        const malade = interaction.channelId === roleplayId ? await interaction.client.rhumertume?.message(pseudo, texte) : null;
+        if (malade) { payload.content = malade.content; payload.username = malade.username; payload.avatarURL = malade.avatarURL; }
+        const fichiers = [...(malade?.files ?? []), ...(image ? [image.url] : [])];
+        if (fichiers.length) payload.files = fichiers;
         if (interaction.channelId !== roleplayId) payload.threadId = threadId;
         
         await webhook.send(payload);
+        if (malade) interaction.client.rhumertume.after(pseudo).catch(e => console.error('Rhumertume :', e.message));
         await interaction.reply({ content: "Message anonyme envoyé !", flags: ['Ephemeral'] });
         await defendreLeLiberl({ channel: interaction.channel, pseudo, texte, state, saveState, databasePersos });
 
