@@ -162,9 +162,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       spec=flame.flameSpec({origin,aim:endpoint},spec);
     }
     let exitPoint=null;
-    if(spec.zeroth){exitPoint=require('../activity/daybreak-crafts.cjs').exitPoint({origin,aim:endpoint});let previous=origin.y;const d=Math.hypot(exitPoint.x-origin.x,exitPoint.z-origin.z),steps=Math.max(1,Math.ceil(d/.15));
-     for(let i=1;i<=steps;i++){const p={x:origin.x+(exitPoint.x-origin.x)*i/steps,y:previous,z:origin.z+(exitPoint.z-origin.z)*i/steps},y=floor(p),gx=grid?Math.round((p.x-grid.origin.x)/grid.step):0,gz=grid?Math.round((p.z-grid.origin.z)/grid.step):0;if(!Number.isFinite(y)||Math.abs(y-previous)>.35||grid&&(gx<0||gz<0||gx>=grid.width||gz>=grid.height||grid.cells[gz*grid.width+gx]===null)||geometry?.sweep({...origin,y:origin.y+.8},{...p,y:y+.8},.16))return {error:'Pas de passage accessible derrière la cible.'};previous=y;}exitPoint.y=previous;
-    }
+    if(spec.zeroth){exitPoint=require('../activity/daybreak-crafts.cjs').zerothPath(origin,endpoint,{floor,grid,geometry});if(!exitPoint)return {error:'Pas de passage accessible derrière la cible.'};}
     let lockedTarget=null,lockedOffset=null;
 
     if(fps){let closest=Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z);for(const target of room.values()){if(target.id===player.id||target.hp<=0||target.spectator||!canDamage(player,target))continue;const body=rayBody(fps.origin,fps.direction,target,closest);if(body&&body.distance<closest){closest=body.distance;obstacleImpact=false;Object.assign(endpoint,body.point);if(spec.lockOn){lockedTarget=target.id;lockedOffset={x:body.point.x-target.x,y:body.point.y-(target.y??0),z:body.point.z-target.z};}}}}

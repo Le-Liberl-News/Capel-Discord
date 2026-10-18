@@ -4,7 +4,7 @@ const SHARED={key:'g',special:'daybreak',groundTarget:true,windup:0,cooldown:100
 const CRAFTS={
  Van:{...SHARED,name:'Tir à la pièce',groundTarget:false,targetRequired:true,coinShot:true,projectile:true,dash:false,duration:2200,radius:.9,range:18,damage:40,throwAt:700,fireAt:1250,hitAt:1430,color:0xffd66b,stages:[{bank:5,frames:20,ms:400},{bank:6,frames:20,ms:800},{bank:7,frames:20,ms:150},{bank:8,frames:20,ms:400},{bank:9,frames:20,ms:450}]},
  Elaine:{...SHARED,name:'Kaleido Fencer',groundTarget:false,selfTarget:true,targetRequired:false,kaleido:true,dash:false,duration:7300,range:3,radius:3,captureAt:650,gatherEnd:1750,flurryEnd:3750,finishAt:5750,damage:5,finalDamage:24,hitAt:1800,hitTimes:[1800,2050,2300,2550,2800,3050,3300,3550,6300],color:0x65d7b1,stages:[{bank:5,frames:20,ms:650},{bank:9,frames:16,ms:1100,holdPose:8},{bank:6,frames:16,ms:2000,loopMs:400},{bank:7,frames:24,ms:2000,holdPose:0},{bank:7,frames:24,ms:900},{bank:8,frames:20,ms:650}]},
- Shizuna:{...SHARED,name:'Zeroth Gleam',groundTarget:false,targetRequired:true,zeroth:true,duration:4800,dashDuration:4800,range:12,radius:1.4,damage:22,finalDamage:42,hitAt:2400,hitTimes:[2400,4250],moveStart:2300,moveEnd:2400,line:true,cooldown:15000,color:0xff3655,stages:[{bank:5,frames:24,ms:1000},{bank:6,frames:12,ms:300},{bank:7,frames:24,ms:1000},{bank:8,frames:16,ms:100},{bank:9,frames:12,ms:150},{bank:10,frames:24,ms:700},{bank:11,frames:16,ms:450},{bank:12,frames:12,ms:150},{bank:13,frames:24,ms:550},{bank:14,frames:20,ms:400}]},
+ Shizuna:{...SHARED,name:'Zeroth Gleam',groundTarget:false,targetRequired:true,zeroth:true,duration:5100,dashDuration:5100,range:12,radius:1.4,damage:22,finalDamage:42,hitAt:2400,hitTimes:[2400,4488],moveStart:2300,moveEnd:2400,line:true,cooldown:15000,color:0xff3655,stages:[{bank:5,frames:22,ms:1000},{bank:6,frames:12,ms:300},{bank:7,frames:24,ms:1000},{bank:8,frames:16,ms:100},{bank:9,frames:12,ms:150},{bank:10,frames:24,ms:700},{bank:11,frames:16,ms:450},{bank:12,frames:12,ms:150},{bank:13,frames:24,ms:850},{bank:14,frames:20,ms:400,holdPose:0}]},
 };
 const clamp=t=>Math.max(0,Math.min(1,t));
 function motion(a,time,s=CRAFTS[a.character]){
@@ -23,6 +23,14 @@ function coinPoint(a,time){
  return {x:a.origin.x+dx/d*(.3+.7*t),y:a.origin.y+1.1+Math.sin(t*Math.PI)*1.05,z:a.origin.z+dz/d*(.3+.7*t)};
 }
 function exitPoint(a){if(a.exitPoint)return a.exitPoint;const dx=a.aim.x-a.origin.x,dz=a.aim.z-a.origin.z,d=Math.hypot(dx,dz)||1;return {x:a.aim.x+dx/d*2,y:a.aim.y,z:a.aim.z+dz/d*2};}
+
+// Re-evaluated at dash launch, using the target's current location and the whole exit route.
+function zerothPath(origin,aim,{floor,grid,geometry}){
+ const end=exitPoint({origin,aim});let previous=origin.y;const distance=Math.hypot(end.x-origin.x,end.z-origin.z),steps=Math.max(1,Math.ceil(distance/.15));
+ for(let i=1;i<=steps;i++){const p={x:origin.x+(end.x-origin.x)*i/steps,y:previous,z:origin.z+(end.z-origin.z)*i/steps},y=floor(p),gx=grid?Math.round((p.x-grid.origin.x)/grid.step):0,gz=grid?Math.round((p.z-grid.origin.z)/grid.step):0;
+  if(!Number.isFinite(y)||Math.abs(y-previous)>.35||grid&&(gx<0||gz<0||gx>=grid.width||gz>=grid.height||grid.cells[gz*grid.width+gx]===null)||geometry?.sweep({...origin,y:origin.y+.8},{...p,y:y+.8},.16))return null;previous=y;
+ }return {...end,y:previous};
+}
 function gatherPoint(a){const dx=a.aim.x-a.origin.x,dz=a.aim.z-a.origin.z,d=Math.hypot(dx,dz)||1;return {x:a.origin.x+dx/d*1.3,y:a.origin.y,z:a.origin.z+dz/d*1.3};}
 function blackened(events,id,elapsed){return [...events].some(a=>!a.cancelled&&CRAFTS[a.character]?.zeroth&&elapsed(a)>=CRAFTS[a.character].hitAt&&elapsed(a)<CRAFTS[a.character].hitTimes.at(-1)+180&&a.hits?.some(h=>h.id===id&&h.damage>0));}
-module.exports={CRAFTS,motion,pose,coinPoint,exitPoint,gatherPoint,blackened};
+module.exports={CRAFTS,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};

@@ -1,14 +1,20 @@
-const {motion,exitPoint,gatherPoint}=require('../activity/daybreak-crafts.cjs');
+const {motion,exitPoint,zerothPath,gatherPoint}=require('../activity/daybreak-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {applyStatus,immobilized}=require('../activity/combat-status.cjs');
 function release(a,room,time){for(const id of a.caught??[]){const target=room.get(id);if(target?.stunUntil===a.holdUntil)target.stunUntil=time;if(a.cancelled&&target?.knockback?.id===a.id+':'+id){if(target.combatLockedUntil===target.knockback.started+target.knockback.duration)target.combatLockedUntil=time;target.knockback=null;}}}
-function tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor,catchTarget}){
+function tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor,catchTarget,grid}){
  if(a.resolved)return;
  if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator||immobilized(actor,time)){
   a.cancelled=true;a.resolved=true;a.dashFinished=true;release(a,room,time);
   if(actor&&actor.character===a.character){const ground=floor?.(actor);actor.y=Number.isFinite(ground)?ground:a.daybreakGroundY??a.origin.y;actor.combatLockedUntil=time;}return;
  }
- const age=time-a.started,p=motion(a,age,s).position;a.daybreakGroundY=p.y;Object.assign(actor,p);actor.acceptedAt=time;actor.moving=false;
+ const age=time-a.started;
+ if(s.zeroth&&!a.lineLocked&&age>=s.moveStart){
+  const target=room.get(a.target),aim=target?{x:target.x,y:target.y??0,z:target.z}:null,end=aim&&zerothPath(a.origin,aim,{floor,grid,geometry});
+  if(!target||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||!end){a.cancelled=true;a.resolved=true;a.dashFinished=true;actor.combatLockedUntil=time;return;}
+  a.aim=aim;a.exitPoint=end;a.lineLocked=true;actor.heading={dx:aim.x-a.origin.x,dz:aim.z-a.origin.z};
+ }
+ const p=motion(a,age,s).position;a.daybreakGroundY=p.y;Object.assign(actor,p);actor.acceptedAt=time;actor.moving=false;
  if(s.coinShot&&!a.coinReleased&&age>=s.fireAt){
   const target=room.get(a.target);a.coinReleased=true;
   if(!target||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||Math.hypot(target.x-a.origin.x,target.z-a.origin.z)>s.range){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return;}

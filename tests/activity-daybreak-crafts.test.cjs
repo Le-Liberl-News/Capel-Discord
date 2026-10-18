@@ -92,7 +92,7 @@ test('interrupting a captured multi-hit craft releases its own remaining stun an
 });
 test('the black silhouette uses confirmed damage and ends after the sheathing strike',()=>{
  const {blackened}=require('../activity/daybreak-crafts.cjs'),a={character:'Shizuna',hits:[{id:'hit',damage:22},{id:'blocked',damage:0}]};
- assert.equal(blackened([a],'hit',()=>2500),true);assert.equal(blackened([a],'blocked',()=>2500),false);assert.equal(blackened([a],'hit',()=>4500),false);a.cancelled=true;assert.equal(blackened([a],'hit',()=>2500),false);
+ assert.equal(blackened([a],'hit',()=>2500),true);assert.equal(blackened([a],'blocked',()=>2500),false);assert.equal(blackened([a],'hit',()=>CRAFTS.Shizuna.hitTimes.at(-1)+180),false);a.cancelled=true;assert.equal(blackened([a],'hit',()=>2500),false);
 });
 test('run and idle grounding never uses the bottom of a sword as a foot contact',()=>{
  const catalogue=require('../activity/assets/sky/combat/catalogue.json');
@@ -120,4 +120,30 @@ test('visual accents release their geometry on event removal and disposal',async
 
 test('interrupting Elaine during gathering stops the pull without inflicting an early hit',()=>{
  const f=fixture('Elaine'),s=CRAFTS.Elaine;f.cast();f.tick(s.captureAt);assert.ok(f.target.knockback);f.actor.stunUntil=f.time+1000;f.tick(100);const x=f.target.x;assert.equal(f.target.knockback,null);assert.equal(f.target.stunUntil,f.time);f.tick(2000);assert.equal(f.target.x,x);assert.equal(f.target.hp,500);
+});
+
+
+test('Zeroth locks its line at launch on the moved target and includes enemies on that new line',()=>{
+ const f=fixture('Shizuna'),s=CRAFTS.Shizuna;f.cast();f.tick(s.moveStart-1);f.target.x=6;f.target.z=4;
+ f.room.set('new-line',{id:'new-line',x:3,y:0,z:2,hp:500,team:'red'});f.room.set('old-line',{id:'old-line',x:3,y:0,z:-.7,hp:500,team:'red'});
+ f.tick(1);const a=f.combat.snapshot().attacks[0];assert.ok(a.lineLocked);assert.equal(a.aim.x,6);assert.equal(a.aim.z,4);assert.equal(f.actor.x,0);
+ f.tick(s.hitAt-s.moveStart);assert.equal(f.target.hp,478);assert.equal(f.room.get('new-line').hp,478);assert.equal(f.room.get('old-line').hp,500);assert.ok(f.actor.x>f.target.x&&f.actor.z>f.target.z);
+});
+test('Zeroth rechecks the launch route and cancels rather than crossing a new wall',()=>{
+ let blocked=false;const f=fixture('Shizuna',{geometry:{floor:()=>0,sweep:()=>blocked?{point:{x:2,y:.8,z:0}}:null}});f.cast();blocked=true;f.tick(CRAFTS.Shizuna.moveStart);assert.equal(f.actor.x,0);assert.ok(f.combat.snapshot().attacks[0].cancelled);assert.equal(f.target.hp,500);
+});
+test('the second Zeroth slash coincides with the fully sheathed final frame',()=>{
+ const hit=CRAFTS.Shizuna.hitTimes[1];assert.deepEqual(pose('Shizuna',hit),{bank:13,pose:18});assert.equal(pose('Shizuna',hit-30).pose,17);
+});
+
+
+test('clients wait for the launch line instead of dashing down the stale intro line',async()=>{
+ const {dashPlayback}=await import('../activity/combat-dash-playback.mjs'),s=CRAFTS.Shizuna,a={actor:'a',character:'Shizuna',accepted:true,origin:{x:0,y:0,z:0},aim:{x:5,y:0,z:0}},events=new Map([['a',a]]);
+ assert.deepEqual(dashPlayback(events,'a',()=>s.moveStart+50,()=>s).position,a.origin);
+ a.lineLocked=true;a.aim={x:4,y:0,z:4};a.exitPoint={x:6,y:0,z:6};assert.deepEqual(dashPlayback(events,'a',()=>s.moveEnd,()=>s).position,a.exitPoint);
+});
+test('changed Elaine craft atlases have content-addressed names, so old cached dimensions cannot be reused',()=>{
+ const fs=require('node:fs'),crypto=require('node:crypto'),catalogue=require('../activity/assets/sky/combat/catalogue.json');
+ for(const bank of [5,6,7,8,9]){const b=catalogue.Elaine.banks[bank],hash=crypto.createHash('sha256').update(fs.readFileSync('activity/assets/sky/'+b.texture)).digest('hex').slice(0,10);assert.ok(b.texture.endsWith('-'+hash+'.png'));const png=fs.readFileSync('activity/assets/sky/'+b.texture);assert.equal(png.readUInt32BE(16),b.columns*b.frameWidth);assert.equal(png.readUInt32BE(20),b.rows*b.frameHeight);}
+ assert.equal(catalogue.Elaine.banks[6].rows,16);
 });

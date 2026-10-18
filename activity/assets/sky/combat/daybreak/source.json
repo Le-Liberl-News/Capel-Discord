@@ -203,7 +203,8 @@
         "zeroth07": "kai/gltf/chr5117_m_btl_s_craft00_07.glb",
         "zeroth09": "kai/gltf/chr5117_m_btl_s_craft00_09.glb",
         "zeroth10": "kai/gltf/chr5117_m_btl_s_craft00_10.glb",
-        "zeroth11": "kai/gltf/chr5117_m_btl_s_craft00_11.glb"
+        "zeroth11": "kai/gltf/chr5117_m_btl_s_craft00_11.glb",
+        "zeroth10b": "kai/gltf/chr5117_m_btl_s_craft00_10b.glb"
       },
       "chibi": {
         "legs": 0.48,
@@ -275,7 +276,26 @@
         "zeroth09",
         "zeroth01"
       ],
-      "weaponScale": 0.8
+      "weaponScale": 0.8,
+      "weaponSheath": true,
+      "clipWindows": {
+        "zeroth10b": [
+          0,
+          0.58
+        ]
+      },
+      "nativeCraftRevision": {
+        "sheathingClip": "chr5117_m_btl_s_craft00_10b",
+        "closedFrame": {
+          "bank": 13,
+          "pose": 18
+        },
+        "secondHitAt": 4488,
+        "lineLockedAt": 2300,
+        "target": "current selected enemy at dash launch",
+        "sourceClosedFraction": 0.435,
+        "bank5Frames": 22
+      }
     }
   },
   "clipDurations": {
@@ -326,7 +346,8 @@
       "zeroth07": 0.366668701171875,
       "zeroth09": 0.40000152587890625,
       "zeroth10": 2.399993896484375,
-      "zeroth11": 1.5
+      "zeroth11": 1.5,
+      "zeroth10b": 4.066650390625
     }
   }
 }

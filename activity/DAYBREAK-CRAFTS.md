@@ -1,21 +1,23 @@
 # Crafts Daybreak I
 
-Van, Elaine et Shizuna sont disponibles dans le sélecteur de test de Capel, sans participer au tirage Discord. Le rôle Daybreak I est requis pour les rencontrer en combat solo aléatoire.
+Van, Elaine et Shizuna sont disponibles dans le sélecteur de test du Capel. Ils restent exclus du tirage Discord et requièrent le rôle Daybreak I pour apparaître comme adversaires du combat solo.
 
-Les modèles, textures et mouvements proviennent de Horizon, avec les tenues originales Daybreak I et le visage Kai validé. Les cheveux conservent les longueurs validées. Seuls les atlas et effets nécessaires sont livrés.
+Les modèles, textures et mouvements proviennent de Horizon, avec les tenues originales Daybreak I et le visage Kai validé. Seuls les atlas et effets nécessaires sont livrés.
 
-| Personnage | Craft | Mouvements natifs |
+| Personnage | Craft | Clips natifs |
 | --- | --- | --- |
-| Van | Coin Bullets : pièce lancée puis tir et impact lumineux sur la cible | `chr0000_m_btl_craft03_*` |
-| Elaine | Kaleido Fencer : mêlée obligatoire, rassemblement des adversaires touchés, estocades puis slash vert, sans déplacement du lanceur | `chr5110_m_btl_craft02_1`, `_2_lp` (pr�paration tenue), `_2` (estocade r�p�t�e), `_3`, `_3_ed` |
-| Shizuna | Zeroth Gleam : pétales, vent, préparation, traversée instantanée, silhouettes noires des victimes, rengainage puis seconde frappe rouge | `chr5117_m_btl_scraft00_01` à `_07`, `_09`, `_10`, `_11` |
+| Van | Coin Bullets : pièce puis tir et impact lumineux sur sa cible | `chr0000_m_btl_craft03_*` |
+| Elaine | Kaleido Fencer sans ciblage : capture proche, placement progressif devant son épée, estocades répétées, pause puis slash vert | `chr5110_m_btl_craft02_1`, `_2_lp` (préparation), `_2` (estocades), `_3`, `_3_ed` |
+| Shizuna | Zeroth Gleam : pétales, vent, traversée, silhouettes noires, rengainage et seconde frappe rouge | `chr5117_m_btl_s_craft00_01` à `_07`, `_09`, `_10b`, `_11` |
 
-Les noms et associations sont identifiés dans `t_skill.tbl`. Les timings adaptés sont partagés entre serveur et affichage dans `daybreak-crafts.cjs`. Les trois crafts nécessitent une cible. Van peut viser à 18 m, Shizuna à 12 m, Elaine à 3 m. Shizuna frappe tous les adversaires présents sur sa ligne effective au premier slash et termine 2 m derrière sa cible initiale ; le trajet entier doit être praticable. Les cibles réellement touchées restent étourdies jusqu’au second coup. Elaine ne rassemble que les adversaires effectivement touchés dans son rayon initial de mêlée. Les alliés et les adversaires protégés ne sont pas affectés ; l’interruption libère les étourdissements de cette action.
+Les timings sont partagés entre serveur et affichage dans `daybreak-crafts.cjs`. Van et Shizuna nécessitent une cible, à 18 m et 12 m respectivement. Elaine se déclenche sans visée et capture les ennemis présents dans un rayon de 3 m après 650 ms. Ils sont immobilisés et amenés devant elle pendant 1,1 seconde, avant les premiers dégâts ; les nouveaux arrivants sont exclus. Une pause de deux secondes précède son dernier slash.
 
-Les graphes `.vfx` natifs et leurs textures DDS sont adaptés en packs gzip `.vfxpack`, chargés à la préparation du combat. Les passes de distorsion écran, l’éclairage spéculaire dynamique et les traînées historiques du moteur Horizon ne sont pas reproduits. Les couleurs natives sont conservées ; le vent est atténué pour garder les sprites lisibles. Les sons restent des bruitages Sky. La provenance et les fichiers sources figurent dans `assets/sky/effects/horizon/source.json` et `assets/sky/combat/daybreak/source.json`.
+Shizuna recalcule sa ligne à 2 300 ms depuis la position actuelle de sa cible et valide à nouveau tout le trajet. La ligne reste ensuite fixe ; tous les ennemis présents dessus peuvent être touchés. Elle termine 2 m derrière la cible. La variante native `_10b` fournit le rengainage : fourreau visible, lame masquée une fois rentrée. La seconde frappe arrive à 4 488 ms, sur la frame 18 de la banque 13. Les victimes restent étourdies jusqu'à la seconde frappe. Les alliés et adversaires protégés sont exclus ; une interruption libère les étourdissements de cette action.
 
-La marche et la course d’Elaine et Shizuna sont calées sur les pieds, indépendamment de la pointe de leur arme, pour supprimer leur oscillation verticale. Les nouvelles banques ont huit directions, un cadrage commun par animation et des atlas de hauteur maximale 4096 px. Aucun recentrage cinématique de caméra n’est ajouté.
+Les graphes `.vfx` et textures natives sont adaptés en packs gzip `.vfxpack`. La distorsion écran, l'éclairage spéculaire dynamique et les traînées historiques du moteur Horizon restent simplifiés. Les sons utilisent des bruitages Sky. La provenance est enregistrée dans `assets/sky/effects/horizon/source.json` et `assets/sky/combat/daybreak/source.json`.
 
-Outils locaux : `E:/dev/sky-activity-tools/atelier-sprites/prepare-native-crafts.py`, `export-native-crafts.cjs`, `bake-horizon-vfx.py`. QA : `qa-full-native-crafts.cjs` utilise la vraie scène et le serveur de combat ; `qa-native-daybreak.cjs` contrôle séparément les effets WebGL.
+Les atlas modifiés portent leur empreinte SHA-256 dans leur nom pour éviter de combiner une ancienne image en cache avec de nouvelles dimensions. La marche et la course sont calées sur les pieds, sans utiliser la pointe des armes. Les atlas ont huit directions et restent sous 4096 px de hauteur. Aucun recentrage cinématique n'est ajouté. Le bouton Thors est retiré du client et le serveur ne le propose plus dans le menu du Capel.
 
-Validation : `npm run activity:test` ; `node --test tests/activity-cs2-effects.test.mjs tests/activity-cs2-test.cjs tests/activity-training.test.cjs tests/activity-spoiler-access.test.cjs`.
+Outils locaux : `E:/dev/sky-activity-tools/atelier-sprites/export-zeroth-final.cjs`, `export-zeroth-sheath.cjs`, `export-elaine-fixed.cjs`, `bake-horizon-vfx.py`. La QA navigateur utilise la vraie scène et le serveur de combat.
+
+Validation : `npm run activity:test` ; `node --test tests/activity-training.test.cjs tests/activity-spoiler-access.test.cjs tests/activity-cs2-effects.test.mjs`.

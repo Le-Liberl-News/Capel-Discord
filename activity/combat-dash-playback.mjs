@@ -9,6 +9,7 @@ export function dashPlayback(actions,actor,elapsed,specFor){
   if(['trinity','phoenix','flameSlash','altinaSword','daybreak'].includes(spec.special)){
    if(event.localDashFinished)return null;
    const time=event.dashFinished?Math.max(elapsed(event),spec.windup+(spec.leapDuration??spec.dashDuration)):elapsed(event);
+   if(spec.zeroth&&event.accepted&&!event.lineLocked&&time>=spec.moveStart)return {event,active:true,position:{...event.origin}};
    return {event,...motion.combatMotion(event,time,spec)};
   }
   if(!event.dashFinished)return {event,...motion.combatMotion(event,elapsed(event),spec)};
