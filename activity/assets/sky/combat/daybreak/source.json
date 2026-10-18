@@ -94,7 +94,11 @@
         "death": "kai/gltf/chr5110_m_btl_dead.glb",
         "craftStart": "kai/gltf/chr5110_m_btl_craft02_1.glb",
         "craftStrike": "kai/gltf/chr5110_m_btl_craft02_2.glb",
-        "craftEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb"
+        "craftEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb",
+        "kaleidoStart": "kai/gltf/chr5110_m_btl_craft02_1.glb",
+        "kaleidoFlurry": "kai/gltf/chr5110_m_btl_craft02_2_lp.glb",
+        "kaleidoFinish": "kai/gltf/chr5110_m_btl_craft02_3.glb",
+        "kaleidoEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb"
       },
       "chibi": {
         "legs": 0.48,
@@ -148,13 +152,17 @@
       },
       "weapon": "kai/gltf/equ0040.glb",
       "combatWeaponClips": [
+        "craftStrike",
+        "craftEnd",
+        "kaleidoFinish",
+        "death",
+        "kaleidoEnd",
+        "kaleidoFlurry",
         "battleIdle",
         "run",
-        "attack",
-        "death",
+        "kaleidoStart",
         "craftStart",
-        "craftStrike",
-        "craftEnd"
+        "attack"
       ],
       "weaponScale": 0.8
     },
@@ -172,7 +180,17 @@
         "death": "kai/gltf/chr5117_m_btl_dead.glb",
         "craftStart": "kai/gltf/chr5117_m_btl_craft02_01.glb",
         "craftStrike": "kai/gltf/chr5117_m_btl_craft02_02.glb",
-        "craftEnd": "kai/gltf/chr5117_m_btl_craft02_02_ed.glb"
+        "craftEnd": "kai/gltf/chr5117_m_btl_craft02_02_ed.glb",
+        "zeroth01": "kai/gltf/chr5117_m_btl_s_craft00_01.glb",
+        "zeroth02": "kai/gltf/chr5117_m_btl_s_craft00_02.glb",
+        "zeroth03": "kai/gltf/chr5117_m_btl_s_craft00_03.glb",
+        "zeroth04": "kai/gltf/chr5117_m_btl_s_craft00_04.glb",
+        "zeroth05": "kai/gltf/chr5117_m_btl_s_craft00_05.glb",
+        "zeroth06": "kai/gltf/chr5117_m_btl_s_craft00_06.glb",
+        "zeroth07": "kai/gltf/chr5117_m_btl_s_craft00_07.glb",
+        "zeroth09": "kai/gltf/chr5117_m_btl_s_craft00_09.glb",
+        "zeroth10": "kai/gltf/chr5117_m_btl_s_craft00_10.glb",
+        "zeroth11": "kai/gltf/chr5117_m_btl_s_craft00_11.glb"
       },
       "chibi": {
         "legs": 0.48,
@@ -226,13 +244,23 @@
       },
       "weapon": "kai/gltf/equ0110.glb",
       "combatWeaponClips": [
+        "craftStrike",
+        "craftEnd",
+        "zeroth04",
+        "zeroth07",
+        "zeroth06",
+        "zeroth10",
+        "death",
+        "zeroth05",
+        "zeroth03",
+        "zeroth11",
         "battleIdle",
         "run",
-        "attack",
-        "death",
         "craftStart",
-        "craftStrike",
-        "craftEnd"
+        "zeroth02",
+        "attack",
+        "zeroth09",
+        "zeroth01"
       ],
       "weaponScale": 0.8
     }
@@ -260,7 +288,11 @@
       "death": 3.3333282470703125,
       "craftStart": 0.6666679382324219,
       "craftStrike": 0.466644287109375,
-      "craftEnd": 1
+      "craftEnd": 1,
+      "kaleidoStart": 0.6666679382324219,
+      "kaleidoFlurry": 3.3333282470703125,
+      "kaleidoFinish": 3.4000244140625,
+      "kaleidoEnd": 1
     },
     "Shizuna": {
       "idle": 6.6666669845581055,
@@ -271,7 +303,17 @@
       "death": 3.3333282470703125,
       "craftStart": 0.9333305358886719,
       "craftStrike": 1.0666694641113281,
-      "craftEnd": 1.866668701171875
+      "craftEnd": 1.866668701171875,
+      "zeroth01": 2,
+      "zeroth02": 0.4333343505859375,
+      "zeroth03": 3,
+      "zeroth04": 1.5333251953125,
+      "zeroth05": 0.666656494140625,
+      "zeroth06": 1.633331298828125,
+      "zeroth07": 0.366668701171875,
+      "zeroth09": 0.40000152587890625,
+      "zeroth10": 2.399993896484375,
+      "zeroth11": 1.5
     }
   }
 }

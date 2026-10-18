@@ -110,7 +110,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
 
-    if((spec.effect||spec.chargeStun||spec.coinShot||spec.special==='flameSlash')&&hit&&Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2)return {error:'La cible est derrière un obstacle.'};
+    if((spec.effect||spec.chargeStun||spec.coinShot||spec.zeroth||spec.kaleido||spec.special==='flameSlash')&&hit&&Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2)return {error:'La cible est derrière un obstacle.'};
 
     if(!spec.catLeap && spec.special!=='phoenix' && hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
 
@@ -159,6 +159,10 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(!flamePath)return {error:'Le trajet doit rester sur un sol accessible.'};
       spec=flame.flameSpec({origin,aim:endpoint},spec);
     }
+    let exitPoint=null;
+    if(spec.zeroth){exitPoint=require('../activity/daybreak-crafts.cjs').exitPoint({origin,aim:endpoint});let previous=origin.y;const d=Math.hypot(exitPoint.x-origin.x,exitPoint.z-origin.z),steps=Math.max(1,Math.ceil(d/.15));
+     for(let i=1;i<=steps;i++){const p={x:origin.x+(exitPoint.x-origin.x)*i/steps,y:previous,z:origin.z+(exitPoint.z-origin.z)*i/steps},y=floor(p),gx=grid?Math.round((p.x-grid.origin.x)/grid.step):0,gz=grid?Math.round((p.z-grid.origin.z)/grid.step):0;if(!Number.isFinite(y)||Math.abs(y-previous)>.35||grid&&(gx<0||gz<0||gx>=grid.width||gz>=grid.height||grid.cells[gz*grid.width+gx]===null)||geometry?.sweep({...origin,y:origin.y+.8},{...p,y:y+.8},.16))return {error:'Pas de passage accessible derrière la cible.'};previous=y;}exitPoint.y=previous;
+    }
     let lockedTarget=null,lockedOffset=null;
 
     if(fps){let closest=Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z);for(const target of room.values()){if(target.id===player.id||target.hp<=0||target.spectator||!canDamage(player,target))continue;const body=rayBody(fps.origin,fps.direction,target,closest);if(body&&body.distance<closest){closest=body.distance;obstacleImpact=false;Object.assign(endpoint,body.point);if(spec.lockOn){lockedTarget=target.id;lockedOffset={x:body.point.x-target.x,y:body.point.y-(target.y??0),z:body.point.z-target.z};}}}}
@@ -178,6 +182,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     if(spec.leap&&spec.landingOffset){const length=Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z),ratio=length?1-Math.min(spec.landingOffset,Math.max(0,length-.2))/length:1,p={x:origin.x+(endpoint.x-origin.x)*ratio,y:endpoint.y,z:origin.z+(endpoint.z-origin.z)*ratio},height=floor(p);attack.landingPoint=height!==null&&Number.isFinite(height)&&Math.abs(height-p.y)<1.2?{...p,y:height}:{...endpoint};}
 
     if(flamePath)attack.flamePath=flamePath;
+    if(exitPoint)attack.exitPoint=exitPoint;
     special.setup(attack,spec,command,room);
     if(spec.special==='dimension')dimension.setup(attack,spec,room);
     if(spec.special==='trinity')trinity.setup(attack,spec,player);

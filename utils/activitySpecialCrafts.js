@@ -32,7 +32,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
   if(!s.special)return false;
   if(s.special==='altinaSword'){altina.tick(a,s,room.get(a.actor),room,time);return true;}
   if(a.cancelled)return true;
-  const actor=room.get(a.actor);if(s.special==='daybreak'){require('./activityDaybreakCrafts').tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor});return true;}if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
+  const actor=room.get(a.actor);if(s.special==='daybreak'){require('./activityDaybreakCrafts').tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor,catchTarget});return true;}if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
 
   if(s.special==='flameSlash'){require('./activityReanFlameSlash').tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt,catchTarget});return true;}
   if(s.special==='mueller'){

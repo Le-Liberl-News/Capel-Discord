@@ -1,0 +1,133 @@
+{
+  "format": 1,
+  "sourceGame": "Trails beyond the Horizon (Daybreak I outfits and crafts)",
+  "archives": [
+    "vfx.p3a",
+    "asset_image.p3a",
+    "asset_common_model.p3a"
+  ],
+  "sampling": {
+    "fps": 30,
+    "maxInstances": 512,
+    "maxVisibleNodes": 128
+  },
+  "adaptation": [
+    "Native emitter transforms, curves, meshes and source textures sampled into horizon-vfx-1.",
+    "Specular lighting is not additive color; additive node colors remain zero.",
+    "Screen distortion passes excluded; wind opacity reduced and petal dimensions adapted to sprite scale."
+  ],
+  "unsupported": [
+    "screen distortion",
+    "dynamic specular lighting",
+    "trail history"
+  ],
+  "effects": {
+    "van": {
+      "pack": "van.vfxpack",
+      "sha256": "58457e25aff86fe3e58f160b154ca50e84f14cc034e59513a3c33fb6a3d302fa",
+      "sources": [
+        "vfx/battle/cr0000_30_2.vfx",
+        "vfx/battle/cr0000_30_3.vfx",
+        "vfx/battle/cr0000_30_4.vfx",
+        "vfx/battle/cr0000_30_5.vfx"
+      ],
+      "textures": [
+        "effects/horizon/effl_a000.png",
+        "effects/horizon/effl_a002.png",
+        "effects/horizon/effl_a005.png",
+        "effects/horizon/effl_a008.png",
+        "effects/horizon/effl_a012.png",
+        "effects/horizon/effl_a020.png",
+        "effects/horizon/efsh_a000.png",
+        "effects/horizon/efsh_a004.png",
+        "effects/horizon/efsh_a006.png",
+        "effects/horizon/efsh_a015.png",
+        "effects/horizon/efsl_a010.png",
+        "effects/horizon/efsm_a000.png",
+        "effects/horizon/efsm_a001.png",
+        "effects/horizon/efth_z000.png",
+        "effects/horizon/efwa_a008.png"
+      ]
+    },
+    "elaine": {
+      "pack": "elaine.vfxpack",
+      "sha256": "549c1b4e987785f9f29af4d0bdd16a14ea2323cbdf756076b9039f36e74a9b19",
+      "sources": [
+        "vfx/battle/cr5110_20_1.vfx",
+        "vfx/battle/cr5110_20_2.vfx",
+        "vfx/battle/cr5110_20_3.vfx",
+        "vfx/battle/cr5110_20_4.vfx",
+        "vfx/battle/cr5110_20_5.vfx",
+        "vfx/battle/cr5110_20_7.vfx"
+      ],
+      "textures": [
+        "effects/horizon/efau_a011.png",
+        "effects/horizon/effi_a008.png",
+        "effects/horizon/effl_a000.png",
+        "effects/horizon/effl_a001.png",
+        "effects/horizon/effl_a002.png",
+        "effects/horizon/effl_a003.png",
+        "effects/horizon/effl_a005.png",
+        "effects/horizon/effl_a006.png",
+        "effects/horizon/effl_a008.png",
+        "effects/horizon/effl_a016.png",
+        "effects/horizon/effl_a017.png",
+        "effects/horizon/effl_a020.png",
+        "effects/horizon/efsh_a002.png",
+        "effects/horizon/efsh_a003.png",
+        "effects/horizon/efsh_a004.png",
+        "effects/horizon/efsh_a006.png",
+        "effects/horizon/efsh_a013.png",
+        "effects/horizon/efsh_a015.png",
+        "effects/horizon/efsl_a002.png",
+        "effects/horizon/efsl_a003.png",
+        "effects/horizon/efsl_a005.png",
+        "effects/horizon/efsl_a008.png",
+        "effects/horizon/efsl_a012.png",
+        "effects/horizon/efsl_z008.png",
+        "effects/horizon/efsp_a008.png"
+      ]
+    },
+    "shizuna": {
+      "pack": "shizuna.vfxpack",
+      "sha256": "e834814a756a54ed33d054ec2f5abb75ae6bcb7d412045d2f862e7b96e6ee074",
+      "sources": [
+        "vfx/battle/sc5117_00_02.vfx",
+        "vfx/battle/sc5117_00_04.vfx",
+        "vfx/battle/sc5117_00_08.vfx",
+        "vfx/battle/sc5117_00_09.vfx",
+        "vfx/battle/sc5117_00_11.vfx",
+        "vfx/battle/sc5117_00_13.vfx",
+        "vfx/battle/sc5117_00_14.vfx",
+        "vfx/battle/sc5117_00_16.vfx"
+      ],
+      "textures": [
+        "effects/horizon/efau_a001.png",
+        "effects/horizon/efau_a011.png",
+        "effects/horizon/efau_z000.png",
+        "effects/horizon/efet_a002.png",
+        "effects/horizon/efet_z103.png",
+        "effects/horizon/effi_a006.png",
+        "effects/horizon/effi_a007.png",
+        "effects/horizon/effl_a000.png",
+        "effects/horizon/effl_a005.png",
+        "effects/horizon/effl_a008.png",
+        "effects/horizon/effl_a011.png",
+        "effects/horizon/effl_a012.png",
+        "effects/horizon/effl_a020.png",
+        "effects/horizon/effl_a022.png",
+        "effects/horizon/efsh_a003.png",
+        "effects/horizon/efsh_a013.png",
+        "effects/horizon/efsl_a002.png",
+        "effects/horizon/efsl_a003.png",
+        "effects/horizon/efsl_a005.png",
+        "effects/horizon/efsl_a008.png",
+        "effects/horizon/efsl_a009.png",
+        "effects/horizon/efsl_a012.png",
+        "effects/horizon/efsl_a014.png",
+        "effects/horizon/efsm_a000.png",
+        "effects/horizon/efsm_a001.png"
+      ]
+    }
+  }
+}

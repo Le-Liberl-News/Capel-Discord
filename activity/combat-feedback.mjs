@@ -53,7 +53,7 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))sounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])sounds?.play(CRAFT_SOUNDS[event.character]);}
     const spec=combatSpec(event.character,event.kind);
     playReanCraftSounds(event,now,done,sounds);
-    if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of (spec.coinShot?[['block',spec.throwAt,.25],['josette-shot',spec.fireAt,.75]]:[['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8]])){const key='daybreak-sound:'+name,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)sounds?.play(name,{gain});}}}
+    if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of (spec.coinShot?[['block',spec.throwAt,.25],['josette-shot',spec.fireAt,.75]]:spec.zeroth?[['block',1900,.35],['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8],['hit4',spec.hitTimes[1],.8]]:[['hit1',500,.35],['hit2',900,.35],['hit3',1300,.35],['hit4',1900,.35],['dash',2500,.65]])){const key='daybreak-sound:'+name,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)sounds?.play(name,{gain});}}}
     const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':event.character==='Josette'&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
     if(sound&&!event.cancelled&&!event.reflectedProjectile){
      for(const shot of releasedShots(event,spec,now)){
@@ -86,7 +86,7 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
    const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
    for(const [id,s]of shakes){const avatar=avatars.get(id),age=now-s.started;if(!avatar||age>SHAKE_MS){shakes.delete(id);continue;}if(age<0)continue;
     const k=s.strength*(1-age/SHAKE_MS)*Math.sin(age*.12);avatar.mesh.position.addScaledVector(right,k);}
-   for(const [id,started]of flashes){const avatar=avatars.get(id),age=now-started;if(!avatar||age>FLASH_MS){flashes.delete(id);continue;}if(age>=0)avatar.mesh.material.color.setScalar(4);}
+   for(const [id,started]of flashes){const avatar=avatars.get(id),age=now-started;if(!avatar||age>FLASH_MS){flashes.delete(id);continue;}if(age>=0&&!avatar.zerothBlack)avatar.mesh.material.color.setScalar(4);}
    for(const [id,c]of combos){const avatar=avatars.get(id),age=now-c.started;if(!avatar||age>c.hold){c.el.remove();combos.delete(id);continue;}
     c.el.hidden=age<0;if(age<0)continue;
     const h=avatar.info?.bodyHeight??avatar.info?.height??1.6,screen=new THREE.Vector3(avatar.position.x,avatar.position.y+h+.3,avatar.position.z).project(camera),pop=Math.min(1,age/80),scale=.55+.15*(1-pop);

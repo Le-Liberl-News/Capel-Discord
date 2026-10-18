@@ -20,7 +20,7 @@ function material(THREE,map,mode,bloom=.7){
 }
 const TRIANGLE=[0,1,2],QUAD=[0,1,2,0,2,3],triangles=face=>face.length===3?TRIANGLE:QUAD;
 export async function loadCs2Effects(THREE,assets,file){
- const response=await fetch(new URL(file,assets));if(!response.ok)throw Error('Effets CS2 introuvables');const data=await response.json(),textures=new Map();
+ const response=await fetch(new URL(file,assets));if(!response.ok)throw Error('Effets CS2 introuvables');const data=file.endsWith('.vfxpack')?await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json():await response.json(),textures=new Map();
  await Promise.all(Object.entries(data.textures).map(async([name,file])=>{const texture=await new THREE.TextureLoader().loadAsync(new URL(file,assets).href);texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=false;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.magFilter=THREE.LinearFilter;textures.set(name,texture);}));
  function create(id,scene,options={}){
   const effect=data.effects[id];if(!effect)throw Error('Effet CS2 inconnu: '+id);
@@ -35,9 +35,9 @@ export async function loadCs2Effects(THREE,assets,file){
    for(const n of frame){const s=effect.segments[n[0]];if(options.excludeTextures?.includes(s.texture))continue;const b=buckets.get(keys[n[0]]),g=b.mesh.geometry;
     const billboard=!!n[1]&&!s.procedural;let cr=1,sr=0;
     if(billboard){center.set(n[2],n[3],n[4]).applyMatrix4(placement);axis.set(n[5],n[6],n[7]).transformDirection(placement);const angle=Math.atan2(axis.dot(up),axis.dot(right));cr=Math.cos(angle);sr=Math.sin(angle);}
-    for(const face of s.faces)for(const index of triangles(face)){const v=face[index];if(billboard){const x=v[0]*n[14]*scale,y=v[1]*n[15]*scale;point.copy(center).addScaledVector(right,x*cr-y*sr).addScaledVector(up,x*sr+y*cr);}else{const x=v[0],y=v[1],z=v[2];local.set((x*n[5]+y*n[8]+z*n[11])*n[14]+n[2],(x*n[6]+y*n[9]+z*n[12])*n[15]+n[3],(x*n[7]+y*n[10]+z*n[13])*n[16]+n[4]);point.copy(local).applyMatrix4(placement);}
+    for(const face of s.faces)for(const index of triangles(face)){const v=face[index];if(billboard){const x=v[0]*n[14]*scale,y=v[1]*n[15]*scale;point.copy(center).addScaledVector(right,x*cr-y*sr).addScaledVector(up,x*sr+y*cr);}else{const horizon=data.format==='horizon-vfx-1',x=v[0]*(horizon?n[14]:1),y=v[1]*(horizon?n[15]:1),z=v[2]*(horizon?n[16]:1);local.set((x*n[5]+y*n[8]+z*n[11])*(horizon?1:n[14])+n[2],(x*n[6]+y*n[9]+z*n[12])*(horizon?1:n[15])+n[3],(x*n[7]+y*n[10]+z*n[13])*(horizon?1:n[16])+n[4]);point.copy(local).applyMatrix4(placement);}
      if(floorY!==null&&point.y<floorY&&point.y-camera.position.y<-.03){const t=(floorY-point.y)/(point.y-camera.position.y);point.addScaledVector(local.copy(point).sub(camera.position),t);}
-     const i=b.cursor++;g.attributes.position.setXYZ(i,point.x,point.y,point.z);g.attributes.uv.setXY(i,v[3],v[4]);g.attributes.nativeMultiply.setXYZW(i,n[17],n[18],n[19],n[20]*opacity);g.attributes.nativeAdd.setXYZW(i,n[21]*opacity,n[22]*opacity,n[23]*opacity,n[24]);
+     const i=b.cursor++;g.attributes.position.setXYZ(i,point.x,point.y,point.z);g.attributes.uv.setXY(i,n.length>=29?n[25]+v[3]*n[27]:v[3],n.length>=29?n[26]+v[4]*n[28]:v[4]);g.attributes.nativeMultiply.setXYZW(i,n[17],n[18],n[19],n[20]*opacity);g.attributes.nativeAdd.setXYZW(i,n[21]*opacity,n[22]*opacity,n[23]*opacity,n[24]);
     }
    }
    for(const b of buckets.values())if(b.cursor){b.mesh.visible=true;b.mesh.geometry.setDrawRange(0,b.cursor);for(const attr of Object.values(b.mesh.geometry.attributes))attr.needsUpdate=true;}

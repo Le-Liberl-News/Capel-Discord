@@ -1096,7 +1096,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(avatar.geometryInfo!==info){avatar.mesh.geometry.dispose();avatar.mesh.geometry=new THREE.PlaneGeometry(info.height*info.frameWidth/info.frameHeight,info.height);avatar.mesh.geometry.translate(info.centerX??0,info.centerY??info.height/2,0);avatar.nativeAnchor=null;avatar.geometryInfo=info;}
       if(info.anchors){const [ax,ay]=info.anchors[avatar.direction%8],offset={x:(128-ax)*info.pixelScale,y:(ay-176)*info.pixelScale},previous=avatar.nativeAnchor??{x:0,y:0};avatar.mesh.geometry.translate(offset.x-previous.x,offset.y-previous.y,0);avatar.nativeAnchor=offset;}
       if(avatar.summoned){const scale=Math.max(0,Math.min(1,(Date.now()+jumpClockOffset-avatar.spawnedAt)/700));avatar.mesh.scale.setScalar(avatar.deathAt?0:scale);}
-      avatar.mesh.material.color.set(avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:holdingGuard?0xb8daff:0xffffff);
+      avatar.zerothBlack=renneCombat?.blackened(id);avatar.mesh.material.color.set(avatar.zerothBlack?0x000000:avatar.frozenUntil>Date.now()+jumpClockOffset?0x82baff:holdingGuard?0xb8daff:0xffffff);
       avatar.deathLift=avatar.dead||down?(info.groundOffsets?.[frame]??0):0;
       if(avatar.character==="Cassius"||avatar.character==="Mueller")avatar.mesh.scale.x=craftFlip?-1:1;
       avatar.spriteFloorClearance=spriteFrames.spriteFloorClearance(info,frame);avatar.renderFrame={pose,frame,info};avatar.mesh.visible=!craftHidden&&!(id===localId&&isFPS&&josetteBlend<.12);avatar.mesh.material.opacity=id===localId&&isFPS?Math.max(0,Math.min(1,(josetteBlend-.12)/.25)):1;

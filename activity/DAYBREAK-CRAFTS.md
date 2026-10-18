@@ -1,19 +1,21 @@
-# Première passe Daybreak I
+# Crafts Daybreak I
 
-Van, Elaine et Shizuna sont disponibles dans le sélecteur de test de Capel. Ils ne participent pas au tirage Discord. En combat solo aléatoire, ils nécessitent le rôle Daybreak I, comme les autres adversaires soumis aux rôles.
+Van, Elaine et Shizuna sont disponibles dans le sélecteur de test de Capel, sans participer au tirage Discord. Le rôle Daybreak I est requis pour les rencontrer en combat solo aléatoire.
 
-Les modèles, textures et mouvements sont extraits de Horizon. Les tenues sont celles de Daybreak I ; le modèle de Shizuna est `chr5117-original`, pas sa tenue de Daybreak II. Le visage Kai antérieur est conservé, avec les couleurs des textures et les longueurs de cheveux validées. Les modèles 3D complets restent dans les outils locaux, seuls les atlas nécessaires sont livrés.
+Les modèles, textures et mouvements proviennent de Horizon, avec les tenues originales Daybreak I et le visage Kai validé. Les cheveux conservent les longueurs validées. Seuls les atlas et effets nécessaires sont livrés.
 
-| Personnage | Première adaptation | Clips natifs |
+| Personnage | Craft | Mouvements natifs |
 | --- | --- | --- |
-| Van | Lance une pièce puis tire à travers elle sur un ennemi, sans se déplacer | `chr0000_m_btl_craft03_01`, `_02`, `_03`, `_04`, `_04_ed` |
-| Elaine | Estocade en ligne droite | `chr5110_m_btl_craft02_1`, `chr5110_m_btl_craft02_2`, `chr5110_m_btl_craft02_3_ed` |
-| Shizuna | Préparation, ruée au sabre et récupération | `chr5117_m_btl_craft02_01`, `chr5117_m_btl_craft02_02`, `chr5117_m_btl_craft02_02_ed` |
+| Van | Coin Bullets : pièce lancée puis tir et impact lumineux sur la cible | `chr0000_m_btl_craft03_*` |
+| Elaine | Kaleido Fencer : mêlée obligatoire, rassemblement des adversaires touchés, estocades puis slash vert, sans déplacement du lanceur | `chr5110_m_btl_craft02_1`, `_2_lp`, `_3`, `_3_ed` |
+| Shizuna | Zeroth Gleam : pétales, vent, préparation, traversée instantanée, silhouettes noires des victimes, rengainage puis seconde frappe rouge | `chr5117_m_btl_scraft00_01` à `_07`, `_09`, `_10`, `_11` |
 
-Les intitulés sont descriptifs, pas une identification officielle des noms des crafts. Les timings adaptés sont centralisés dans `daybreak-crafts.cjs`, partagés entre serveur, entraînement et affichage. Van nécessite un ennemi sélectionné à moins de 18 m ; la pièce est lancée à 700 ms, le tir part à 1 250 ms et arrive à 1 430 ms. Il suit la position de la cible jusqu’au départ du tir, puis celle-ci peut esquiver. Elaine et Shizuna visent le sol ; sur mobile, leur ruée part devant le personnage. Le mouvement est bloqué pendant la séquence et la récupération. Les déplacements respectent les sols et obstacles, les alliés sont protégés et une parade peut interrompre le craft.
+Les noms et associations sont identifiés dans `t_skill.tbl`. Les timings adaptés sont partagés entre serveur et affichage dans `daybreak-crafts.cjs`. Les trois crafts nécessitent une cible. Van peut viser à 18 m, Shizuna à 12 m, Elaine à 3 m. Shizuna frappe tous les adversaires présents sur sa ligne effective au premier slash et termine 2 m derrière sa cible initiale ; le trajet entier doit être praticable. Les cibles réellement touchées restent étourdies jusqu’au second coup. Elaine ne rassemble que les adversaires effectivement touchés dans son rayon initial de mêlée. Les alliés et les adversaires protégés ne sont pas affectés ; l’interruption libère les étourdissements de cette action.
 
-Cette passe utilise des accents géométriques colorés et des bruitages Sky existants. Les effets et bruitages Horizon spécifiques ne sont pas encore décodés. Les attaques normales, course de combat, marche hors combat et morts utilisent aussi les mouvements natifs. Toutes les banques ont huit directions et un cadrage commun par animation, contrôlé pendant l’export pour éviter de couper armes, pieds ou cheveux.
+Les graphes `.vfx` natifs et leurs textures DDS sont adaptés en packs gzip `.vfxpack`, chargés à la préparation du combat. Les passes de distorsion écran, l’éclairage spéculaire dynamique et les traînées historiques du moteur Horizon ne sont pas reproduits. Les couleurs natives sont conservées ; le vent est atténué pour garder les sprites lisibles. Les sons restent des bruitages Sky. La provenance et les fichiers sources figurent dans `assets/sky/effects/horizon/source.json` et `assets/sky/combat/daybreak/source.json`.
 
-Les profils et chemins sources sont enregistrés dans `assets/sky/combat/daybreak/source.json`. Atelier local : `E:/dev/sky-activity-tools/atelier-sprites` ; extraction `prepare-daybreak.py`, export `export-daybreak-game.cjs`, installation `install-daybreak-game.py`. Le rig Kai attache les armes à `RightHand_Point` et ne les montre que pour les clips de combat.
+La marche et la course d’Elaine et Shizuna sont calées sur les pieds, indépendamment de la pointe de leur arme, pour supprimer leur oscillation verticale. Les nouvelles banques ont huit directions, un cadrage commun par animation et des atlas de hauteur maximale 4096 px. Aucun recentrage cinématique de caméra n’est ajouté.
 
-Validation : `node --test tests/activity-daybreak-crafts.test.cjs tests/activity-cs2-test.cjs tests/activity-training.test.cjs tests/activity-spoiler-access.test.cjs`. La QA navigateur locale `E:/dev/sky-activity-tools/qa-daybreak-game.cjs` charge les trois dans la vraie scène et déclenche chaque craft. Aucun changement de caméra cinématique n’est ajouté.
+Outils locaux : `E:/dev/sky-activity-tools/atelier-sprites/prepare-native-crafts.py`, `export-native-crafts.cjs`, `bake-horizon-vfx.py`. QA : `qa-full-native-crafts.cjs` utilise la vraie scène et le serveur de combat ; `qa-native-daybreak.cjs` contrôle séparément les effets WebGL.
+
+Validation : `npm run activity:test` ; `node --test tests/activity-cs2-effects.test.mjs tests/activity-cs2-test.cjs tests/activity-training.test.cjs tests/activity-spoiler-access.test.cjs`.

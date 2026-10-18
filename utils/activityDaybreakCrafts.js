@@ -1,36 +1,41 @@
-const {motion}=require('../activity/daybreak-crafts.cjs');
+const {motion,exitPoint,gatherPoint}=require('../activity/daybreak-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {applyStatus,immobilized}=require('../activity/combat-status.cjs');
-function tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor}){
+function release(a,room,time){for(const id of a.caught??[]){const target=room.get(id);if(target?.stunUntil===a.holdUntil)target.stunUntil=time;}}
+function tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor,catchTarget}){
  if(a.resolved)return;
  if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator||immobilized(actor,time)){
-  a.cancelled=true;a.resolved=true;a.dashFinished=true;
-  if(actor&&actor.character===a.character){const ground=floor?.(actor);actor.y=Number.isFinite(ground)?ground:a.daybreakGroundY??a.origin.y;actor.combatLockedUntil=time;}
-  return;
+  a.cancelled=true;a.resolved=true;a.dashFinished=true;release(a,room,time);
+  if(actor&&actor.character===a.character){const ground=floor?.(actor);actor.y=Number.isFinite(ground)?ground:a.daybreakGroundY??a.origin.y;actor.combatLockedUntil=time;}return;
  }
- const age=time-a.started;
- const p=motion(a,age,s).position,t=s.coinShot?0:Math.max(0,Math.min(1,(age-s.moveStart)/(s.moveEnd-s.moveStart)));a.daybreakGroundY=a.origin.y+(a.aim.y-a.origin.y)*t;
- Object.assign(actor,p);actor.acceptedAt=time;actor.moving=false;
+ const age=time-a.started,p=motion(a,age,s).position;a.daybreakGroundY=p.y;Object.assign(actor,p);actor.acceptedAt=time;actor.moving=false;
  if(s.coinShot&&!a.coinReleased&&age>=s.fireAt){
   const target=room.get(a.target);a.coinReleased=true;
-  if(!target||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return;}
-  const distance=Math.hypot(target.x-a.origin.x,target.z-a.origin.z);
-  if(distance>s.range){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return;}
+  if(!target||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||Math.hypot(target.x-a.origin.x,target.z-a.origin.z)>s.range){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return;}
   a.aim={x:target.x,y:target.y??0,z:target.z};actor.heading={dx:target.x-actor.x,dz:target.z-actor.z};
  }
- if(!a.nextHit&&age>=s.hitAt){
-  a.nextHit=1;const at=a.started+s.hitAt;
+ const times=s.hitTimes??[s.hitAt];a.caught??=[];
+ while(a.nextHit<times.length&&age>=times[a.nextHit]&&!a.cancelled){
+  const strike=a.nextHit++,at=a.started+times[strike],final=strike===times.length-1;
   for(const target of room.values()){
    if(a.cancelled)break;
-   if((s.coinShot&&target.id!==a.target)||target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||Math.abs((target.y??0)-a.aim.y)>1.5)continue;
-   const d=s.line?segmentDistance(target,a.origin,a.aim):Math.hypot(target.x-a.aim.x,target.z-a.aim.z);
-   if(d>s.radius+(target.boss?1:0))continue;
-   const point={x:target.x,y:(target.y??0)+.8,z:target.z};
-   if(geometry?.sweep(s.coinShot?{...a.origin,y:a.origin.y+.9}:{...a.aim,y:a.aim.y+.8},point,.08))continue;
-   const dealt=hurt(a,actor,target,s.damage,at,{point});a.hits.push({id:target.id,at,point,...dealt});
-   if(dealt.damage&&s.stun)applyStatus(target,{status:'stun',statusDuration:s.stun},at);
+   if((s.coinShot&&target.id!==a.target)||target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||Math.abs((target.y??0)-a.origin.y)>1.5)continue;
+   let inRange;
+   if(strike>0&&(s.zeroth||s.kaleido))inRange=a.caught.includes(target.id);
+   else if(s.zeroth)inRange=segmentDistance(target,a.origin,exitPoint(a))<=s.radius+(target.boss?1:0);
+   else if(s.kaleido)inRange=Math.hypot(target.x-a.origin.x,target.z-a.origin.z)<=s.radius+(target.boss?1:0);
+   else inRange=Math.hypot(target.x-a.aim.x,target.z-a.aim.z)<=s.radius+(target.boss?1:0);
+   if(!inRange)continue;
+   const point={x:target.x,y:(target.y??0)+.8,z:target.z},from=s.zeroth||s.kaleido||s.coinShot?a.origin:a.aim;
+   if(geometry?.sweep({...from,y:from.y+.8},point,.08))continue;
+   const dealt=hurt(a,actor,target,final&&s.finalDamage!=null?s.finalDamage:s.damage,at,{point,quiet:true});a.hits.push({id:target.id,strike,at,point,...dealt});
+   if(strike===0&&dealt.damage&&target.hp>0&&(s.zeroth||s.kaleido)){
+    a.caught.push(target.id);a.holdUntil=a.started+times.at(-1)+180;applyStatus(target,{status:'stun',statusDuration:Math.max(0,a.holdUntil-at)},at);
+    if(s.kaleido)catchTarget?.(a,actor,target,gatherPoint(a),time);
+   }
   }
  }
- if(age>=s.duration){a.resolved=true;a.dashFinished=true;actor.combatLockedUntil=Math.min(actor.combatLockedUntil??time,time);}
+ if(a.cancelled){release(a,room,time);actor.combatLockedUntil=time;}
+ if(age>=s.duration){a.resolved=true;a.dashFinished=true;release(a,room,time);actor.combatLockedUntil=Math.min(actor.combatLockedUntil??time,time);}
 }
-module.exports={tickDaybreak};
+module.exports={tickDaybreak,release};
