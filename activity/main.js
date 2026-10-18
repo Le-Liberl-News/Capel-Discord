@@ -1,7 +1,7 @@
 import {introDurationFor} from './duel-intro.mjs';
 import axisResidents from './assets/sky/axis/residents.json';
 // training also takes place one time in two at the top of the Axis Pillar
-const TRAINING_VENUES={arena:{},axis:{spawns:[{x:0,z:-9.5},{x:0,z:9.5}],ballSpawns:axisResidents.ballSpawns}};let trainingVenue='arena';
+const TRAINING_VENUES={arena:{},gehenna:{spawns:[{x:0,y:0,z:-12},{x:0,y:0,z:12}],ballSpawns:[{x:0,y:.075,z:-4},{x:0,y:.075,z:4}]},axis:{spawns:[{x:0,z:-9.5},{x:0,z:9.5}],ballSpawns:axisResidents.ballSpawns}};let trainingVenue='arena';
 import {createTraining} from './training.mjs';
 import {pickSoloEncounter} from './solo-encounters.mjs';
 import trainingCombat from './native-combat.cjs';
@@ -70,7 +70,7 @@ async function startCaptureTheFlag(){
  trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;trainingMode='ctf';
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
- const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=Math.random()<.5?'axis':'arena';}
+ const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=(__ACTIVITY_PREVIEW__&&new URLSearchParams(location.search).get('venue'))||['arena','axis','gehenna'][Math.floor(Math.random()*3)];}
  try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}
   const game=createCaptureTheFlag({...scene.trainingGeometry(),character:trainingReturn.player.character,team,venue:CTF_VENUES[trainingVenue],candidates:ctfOpponents(scene.catalogue)});
   scene.retainCombatCharacters([trainingReturn.player.character,...game.characters]);training=game;bindScene();
@@ -84,7 +84,7 @@ async function startTraining(forcedEncounter=null){
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
  let titles={},entrances={};try{if(!apercuLocal){const config=await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});titles=config.titles;entrances=config.entrances;}}catch(error){trainingBusy=false;throw error;}
- const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=Math.random()<.5?'axis':'arena';}
+ const reuseArena=!!training;training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=(__ACTIVITY_PREVIEW__&&new URLSearchParams(location.search).get('venue'))||['arena','axis','gehenna'][Math.floor(Math.random()*3)];}
  try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}const forced=forcedEncounter??(__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('opponent'):null),selection=pickSoloEncounter(scene.catalogue,{forced});training=createTraining({...scene.trainingGeometry(),...TRAINING_VENUES[trainingVenue],character:trainingReturn.player.character,...selection,titles,entrances,introDuration:introDurationFor(trainingVenue)});scene.retainCombatCharacters(training.characters);bindScene();await Promise.all([scene.me(training.player),...training.characters.map(name=>scene.prepareCombat(name))]);training.beginIntro();scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Combat solo · '+selection.label;music.setTrack(musicUrl(trainingVenue));}
  catch(error){trainingBusy=false;await stopTraining();throw error;}
  trainingBusy=false;await tickTraining();recordDiagnostic('training-load',{durationMs:Math.round(performance.now()-trainingLoadStarted),reused:reuseArena});
@@ -121,8 +121,8 @@ async function publishCraftCapture({id,bytes,error}) {
 
 const connectionNotice=document.createElement("div");connectionNotice.hidden=true;connectionNotice.setAttribute("role","status");connectionNotice.style.cssText="position:fixed;left:8px;bottom:190px;z-index:32;background:#211c2aee;color:#ffe7b0;padding:8px;max-width:calc(100vw - 32px);font:14px system-ui";document.body.append(connectionNotice);
 
-const mapTitle = map => map==='axis'?'Pilier Axis - Sommet':map==='custom'?'Map personnalisée':map==='hangar'?'Antérose · Lynx':map==='liberl'?'Liberl · Lynx':/^tower[1-4]$/.test(map)?map==="tower4"?"Tour d’Esmelas · Sommet":"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
-const musicUrl = map => map==='custom'?null:new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : map === "axis" ? "music/axis.ogg" : /^tower[1-4]$/.test(map) ? "music/esmelas.ogg" : "music/anterose.ogg",ASSETS);
+const mapTitle = map => map==='gehenna'?'Géhenne':map==='axis'?'Pilier Axis - Sommet':map==='custom'?'Map personnalisée':map==='hangar'?'Antérose · Lynx':map==='liberl'?'Liberl · Lynx':/^tower[1-4]$/.test(map)?map==="tower4"?"Tour d’Esmelas · Sommet":"Tour d’Esmelas · Etage "+map.slice(5):map === "rolent" ? "Rolent · Prop Hunt" : map === "arena" ? "Arène de Grancel" : "Restaurant Antérose";
+const musicUrl = map => map==='custom'?null:new URL(map === "arena" ? "music/arena.ogg?v=fc-tournament-20261009" : ['axis','gehenna'].includes(map) ? "music/axis.ogg" : /^tower[1-4]$/.test(map) ? "music/esmelas.ogg" : "music/anterose.ogg",ASSETS);
 const gameHud = document.createElement("div"), blindfold = document.createElement("div");
 gameHud.id="sky-prophunt"; gameHud.hidden=true;
 gameHud.style.cssText="position:fixed;right:16px;top:64px;z-index:22;padding:12px;color:#ffe7b0;background:#211c2aee;border:1px solid #b49760;border-radius:5px;font:16px AveriaSky,sans-serif;white-space:pre-line";
@@ -297,7 +297,7 @@ async function publier() {
   const result = response;
   if(trainingBusy)return;
   const requestedTraining=result.trainingRequest&&result.trainingRequest!==lastTrainingRequest;if(result.trainingRequest)lastTrainingRequest=result.trainingRequest;
-  if(training){terminal.setRequests(result.requests);if(result.map!=='arena'&&result.map!=='axis')return;await stopTraining(result.map);}
+  if(training){terminal.setRequests(result.requests);if(!['arena','axis','gehenna'].includes(result.map))return;await stopTraining(result.map);}
   terminal.setRequests(result.requests);
   const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
   etat.moi=ownPlayer;
@@ -329,7 +329,7 @@ async function publier() {
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
-  if(requestedTraining&&result.map!=='arena'&&result.map!=='axis')await startTraining();
+  if(requestedTraining&&!['arena','axis','gehenna'].includes(result.map))await startTraining();
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
     bandeau.textContent = "Votre personnage du jour : " + result.character;

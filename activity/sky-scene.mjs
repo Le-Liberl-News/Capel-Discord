@@ -92,7 +92,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inDungeon=map==='custom',floorNumber=Number(map.slice(5))||1,inTower=/^tower[1-4]$/.test(map)||inDungeon;
   // the two duel venues: Grancel ("arena") and the top of the Axis Pillar ("axis")
-  const isArena=map==='arena'||map==='axis',combatCamera=combatMoves.usesCombatFacing(map);
+  const isArena=map==='arena'||map==='axis'||map==='gehenna',combatCamera=combatMoves.usesCombatFacing(map);
   const canJump=inTower||isArena;
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
@@ -136,14 +136,14 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   );
   const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;
   if(map==="tower4")removeNativeBackdrop(model);
-  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena?await createAxisSky(THREE,scene,mapAssets,loading):null;
+  const rooftopSky=map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena&&map!=='gehenna'?await createAxisSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
   const teamPanel=inTower&&!inDungeon?createTowerTeam(ASSETS,catalogue):null;
   const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
   let terminalObject=null;
   if(terminal){const asset=await new GLTFLoader(loading).loadAsync(new URL(terminal.model,ASSETS).href);terminalObject=asset.scene;terminalObject.position.set(terminal.position.x,terminal.position.y,terminal.position.z);terminalObject.rotation.y=terminal.rotation;model.add(terminalObject);}
 
-  scene.add(model);
+  scene.add(model);if(map==='gehenna')scene.background=new THREE.Color(0x180d12);
   let lynxObject=null;
   if(map==='hangar'||map==='anterose'){
    const deck=new THREE.Group();if(map==='anterose')deck.position.set(airshipConfig.door.x,airshipConfig.door.y,airshipConfig.door.z+12);model.add(deck);
@@ -248,6 +248,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   const crosshair=document.createElement('div');crosshair.textContent='+';crosshair.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:28px monospace;color:#fff;text-shadow:0 0 3px #000;pointer-events:none;z-index:20';crosshair.hidden=true;document.body.append(crosshair);
   const altinaAim=()=>{const a=renneCombat?.current(localId);return altinaSword.aiming(a,performance.now()-(a?.localStart??0))?a:null;};
+  let altinaSteerAt=0;
   let altinaCameraBlend=0,altinaPreviousAim=false,altinaDivePending=false;const altinaCameraPosition=new THREE.Vector3(),altinaCameraQuaternion=new THREE.Quaternion();
   const fpsActive=()=>!!renneCombat&&(['Josette','Carna'].includes(avatars.get(localId)?.character)||!!altinaAim())&&!avatars.get(localId)?.dead&&!health.spectator&&!duelIntro?.active(performance.now());
   const altinaPrompt=document.createElement('button');altinaPrompt.textContent='Viser le sol : cliquer / toucher pour plonger';altinaPrompt.style.cssText='position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:28;padding:10px 16px;background:#231c39e8;color:#ffe9bc;border:1px solid #c5a7ef;border-radius:6px;font:16px AveriaSky;max-width:85vw';altinaPrompt.hidden=true;altinaPrompt.addEventListener('click',()=>altinaDive());document.body.append(altinaPrompt);
@@ -289,10 +290,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let juliaCombo=null;
   function cookingInput(phase,event){const me=avatars.get(localId);if(phase==='end'){const wasHeld=cookingHeld;cookingHeld=false;if(wasHeld){if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){cookingMechanics.cookingTick(me,Date.now());delete me.cooking;}else queueAction('attack',undefined,me?.position,undefined,{kind:'craft',cookPhase:'end'});}return me?.character==='Phyllis';}if(me?.character!=='Phyllis')return false;if(!connected||!movementAllowed||me.dead||health.spectator||!(map==='arena'||inTower))return true;if(cookingHeld)return true;const stock=me.foodStock??health.foodStock??[];if(stock.length&&!me.cooking&&!combatControls.ready('craft'))return true;const fromButton=!!event?.target?.closest?.('#sky-renne-actions'),direction=me.heading??{dx:0,dz:-1},length=Math.hypot(direction.dx,direction.dz)||1;const selected=stock.length?(fromButton?{x:me.position.x+(direction.dx||0)/length*14,y:me.position.y,z:me.position.z+(Math.hypot(direction.dx,direction.dz)>0?direction.dz:-1)/length*14}:aimForAttack(event??cursor,true)):null;if(stock.length&&!selected)return true;const aim=stock.length&&selected?renneMechanics.attackPoint(me.position,selected,'craft','Phyllis'):{...me.position};if(!aim)return true;if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){if(stock.length){const food=stock.shift(),attack={id:crypto.randomUUID(),actor:localId,character:'Phyllis',kind:'craft',food,origin:{...me.position},aim,started:Date.now(),impactAt:Date.now()+700,endsAt:Date.now()+2500,hits:[]};attack.foodShots=cookingMechanics.makeFoodShots(attack);renneCombat.receive([attack],Date.now());combatControls.started('craft','Phyllis');}else{cookingHeld=true;cookingMechanics.beginCooking(me,Date.now());}}else {const action=queueAction('attack',undefined,aim,undefined,{kind:'craft',cookPhase:'begin'});if(action){cookingHeld=!stock.length;if(stock.length)combatControls.started('craft','Phyllis');}}return true;}
   // movement direction from the keys / stick (camera relative), else the clicked path, else the facing
-  function movementDirection(me){
+  function movementDirection(me,onlyInput=false){
     const stick=combatControls.vector(),controls=movementKeys(keyboardLayout()),horizontal=Number(keys.has("arrowright")||keys.has(controls.right))-Number(keys.has("arrowleft")||keys.has(controls.left))+stick.x,vertical=Number(keys.has("arrowup")||keys.has(controls.up))-Number(keys.has("arrowdown")||keys.has(controls.down))-stick.y;
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
     let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
+    if(onlyInput&&!horizontal&&!vertical)return {x:0,z:0};
     if(!horizontal&&!vertical&&path.length){dx=path[0].x-me.position.x;dz=path[0].z-me.position.z;}
     if(Math.hypot(dx,dz)<1e-6){dx=me.heading?.dx??0;dz=me.heading?.dz??-1;}
     return {x:dx,z:dz};
@@ -445,6 +447,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const stick=combatControls.vector(),horizontal=Number(keys.has("arrowright")||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has("arrowleft")||keys.has(movementKeys(keyboardLayout()).left))+stick.x,vertical=Number(keys.has("arrowup")||keys.has(movementKeys(keyboardLayout()).up))-Number(keys.has("arrowdown")||keys.has(movementKeys(keyboardLayout()).down))-stick.y;
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
     let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
+    if(onlyInput&&!horizontal&&!vertical)return {x:0,z:0};
     if(!horizontal&&!vertical&&path.length){dx=path[0].x-me.position.x;dz=path[0].z-me.position.z;}const length=Math.hypot(dx,dz);const direction={dx:length?dx/length:0,dz:length?dz/length:0};
     combatSounds.play('jump');landedJump=null;const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
   }
@@ -719,7 +722,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   function keydown(rawEvent) {
     const mapped=remapKey(rawEvent),event={code:mapped.code,key:mapped.key,repeat:rawEvent.repeat,target:rawEvent.target,preventDefault:()=>rawEvent.preventDefault()};
-    if (!connected || (!movementAllowed&&!health.spectator)) return;
+    const surf=renneCombat?.current(localId),surfing=surf?.special==='altinaSword'&&performance.now()-surf.localStart<altinaSword.PHASE.surfEnd;
+    if (!connected || (!movementAllowed&&!health.spectator&&!surfing)) return;
     if (document.querySelector("#sky-terminal[open]") || event.target.closest?.("input,textarea,select,button,[contenteditable]"))
       return;
     if(event.code==="Escape"){juliaCombo=null;craftTarget=false;combatControls.targeting(null);marker.visible=false;return;}
@@ -762,7 +766,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     keys.clear();craftTarget=false;
     endDrag();touches.reset();disarmTouch();
   }
-  function altinaDive(){const a=altinaAim();if(!a||altinaDivePending)return !!a;const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);const hits=ray.intersectObject(model,true),point=hits.find(h=>h.point.y<=a.aim.y+1&&Math.hypot(h.point.x-a.aim.x,h.point.z-a.aim.z)<=14)?.point;if(!point)return true;const ground=collision.floor(point.x,point.z,point.y+.5);if(!Number.isFinite(ground))return true;queueAction('attack',undefined,{x:point.x,y:ground,z:point.z},undefined,{kind:'altinaDive'});altinaDivePending=true;setTimeout(()=>{altinaDivePending=false;},350);return true;}
+  function altinaLanding(){const a=altinaAim();if(!a)return null;const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);const point=ray.intersectObject(model,true).find(h=>h.point.y<=a.aim.y+1&&Math.hypot(h.point.x-a.aim.x,h.point.z-a.aim.z)<=14)?.point;if(!point)return null;const x=Math.round((point.x-grid.origin.x)/grid.step),z=Math.round((point.z-grid.origin.z)/grid.step);if(x<0||z<0||x>=grid.width||z>=grid.height||grid.cells[z*grid.width+x]===null)return null;const y=collision.floor(point.x,point.z,point.y+.5);if(!Number.isFinite(y))return null;const landing={x:point.x,y,z:point.z},from=altinaSword.perch(a);return collision.sweep({...from,y:from.y+.5},{...landing,y:y+.5},.2)?null:landing;}
+  function altinaDive(){const a=altinaAim();if(!a||altinaDivePending||altinaCameraBlend<1)return !!a;const aim=altinaLanding();if(!aim)return true;queueAction('attack',undefined,aim,undefined,{kind:'altinaDive'});altinaDivePending=true;setTimeout(()=>{altinaDivePending=false;},350);return true;}
   function click(event) {
     if (event.button !== 0) return;
     if(altinaDive())return;
@@ -962,12 +967,14 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
-    if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';}else altinaCameraBlend=0;
+    if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';altinaPrompt.disabled=altinaCameraBlend<1;}else altinaCameraBlend=0;
+    const surfEvent=renneCombat?.current(localId);if(me&&surfEvent?.special==='altinaSword'&&time-surfEvent.localStart<altinaSword.PHASE.surfEnd){const raw=movementDirection(me,true),length=Math.max(1,Math.hypot(raw.x,raw.z)),direction={x:raw.x/length,z:raw.z/length};if(time-altinaSteerAt>=70){altinaSteerAt=time;queueAction('attack',undefined,undefined,undefined,{kind:'altinaSteer',direction});}if(time-surfEvent.localStart>=altinaSword.PHASE.prep){let pos=surfEvent.localSurfPosition??surfEvent.surfPosition??surfEvent.origin;if(surfEvent.surfUpdatedAt!==surfEvent.localSurfRevision&&surfEvent.surfPosition){const server=surfEvent.surfPosition;pos=Math.hypot(pos.x-server.x,pos.z-server.z)>2?{...server}:{x:pos.x+(server.x-pos.x)*.35,y:server.y,z:pos.z+(server.z-pos.z)*.35};surfEvent.localSurfRevision=surfEvent.surfUpdatedAt;}surfEvent.localSurfPosition=altinaSword.moveSurf(pos,direction,seconds,p=>{const cell=nearestCell(walkingGrid,p);const x=Math.round((p.x-walkingGrid.origin.x)/walkingGrid.step),z=Math.round((p.z-walkingGrid.origin.z)/walkingGrid.step);return x>=0&&z>=0&&x<walkingGrid.width&&z<walkingGrid.height&&walkingGrid.cells[z*walkingGrid.width+x]!==null?collision.floor(p.x,p.z,p.y+.6):null;},collision);if(Math.hypot(direction.x,direction.z)>.001)surfEvent.surfHeading=direction;}}
     if(carnaHeld&&me?.character==='Carna'&&!renneCombat?.current(localId)&&combatControls.ready('basic'))startAttack('basic',cursor,true);const activeCarna=renneCombat?.current(localId);if(me?.character==='Carna'&&['basic','craft'].includes(activeCarna?.kind)&&time-activeCarna.localStart<renneMechanics.combatSpec('Carna',activeCarna.kind).fireDuration&&time-carnaAimAt>50){carnaAimAt=time;const direction=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));const ray={origin:{x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction:{x:direction.x,y:direction.y,z:direction.z}};queueAction('attack',undefined,undefined,undefined,{kind:'aim',ray});}
     const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(!altinaAiming&&me?.character!=='Carna'&&josetteBlend>.05);
     if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     camera.updateMatrixWorld();
+    if(altinaAiming){const valid=!!altinaLanding();crosshair.style.color=valid?'#fff':'#ff6666';altinaPrompt.disabled=altinaCameraBlend<1||!valid;altinaPrompt.title=valid?'Plonger ici':'Viser un sol libre, sans obstacle';}else crosshair.style.color='#fff';
     arenaAudience?.update(time,camera);
     cutaway?.update(camera, follow);
     const right = {
@@ -1060,7 +1067,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if (!avatar.prop) {
       const attack=avatar.dead||down?null:renneCombat?.current(id);if(avatar.character==='Loewe'){const visual=loeweMechanics.loeweVisual(attack);bodyScale=visual.scale;bodyOffsetX=visual.offsetX;}
 
-      if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
+      if(attack?.special==='altinaSword'&&attack.surfHeading)avatar.heading={dx:attack.surfHeading.x,dz:attack.surfHeading.z};
+      else if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
       if(combatCamera&&avatar===me&&!introPlaying&&!['flameSlash','altinaSword'].includes(attack?.special))avatar.heading=combatMoves.cameraFacing(yaw);
       avatar.direction = facing(
         avatar.heading.dx,

@@ -264,6 +264,7 @@ const activiteService = createActivityLobby({
       rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
       anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
       arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),
+      gehenna: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-gehenna.json")),
       axis: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-axis.json")),
     },
     store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
@@ -275,6 +276,14 @@ const activiteService = createActivityLobby({
       grid: require('./activity/assets/sky/arena/navigation.json'),
       residents: require('./activity/assets/sky/arena/residents.json'),
       geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/arena/anterose.gltf'), 'utf8'))),
+    },
+    gehenna: {
+      combatEnabled:true,
+      grid:require('./activity/assets/sky/gehenna/navigation.json'),
+      spectatorGrid:require('./activity/assets/sky/gehenna/spectator-navigation.json'),
+      spawns:[{x:0,y:0,z:-12},{x:0,y:0,z:12}],introDuration:16300,
+      residents:require('./activity/assets/sky/gehenna/residents.json'),
+      geometry:require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/gehenna/anterose.gltf'),'utf8'))),
     },
     // second duel venue, drawn one time in two: the top of the Axis Pillar, where Loewe is fought in SC
     axis: {

@@ -1,5 +1,5 @@
 // Shared choreography: native CS2 poses, authoritative movement and three AoE impacts.
-const CRAFT={name:'Flame Slash',key:'g',special:'flameSlash',targetRequired:true,windup:0,duration:3200,cooldown:12000,range:14,radius:2.6,damage:18,finalDamage:30,projectile:false,dash:true,dashDuration:3200,lockMovement:true};
+const CRAFT={name:'Flame Slash',key:'g',special:'flameSlash',groundTarget:true,shape:'line',windup:0,duration:3200,cooldown:12000,range:14,radius:2.6,damage:18,finalDamage:30,projectile:false,dash:true,dashDuration:3200,lockMovement:true};
 const clamp=t=>Math.max(0,Math.min(1,t));
 function flamePhases(a){
  const distance=Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z),prep=240,rush=Math.max(120,Math.min(800,Math.max(0,distance-1.2)/17*1000)),contact=prep+rush;

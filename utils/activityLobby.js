@@ -1,7 +1,7 @@
 const { randomBytes } = require("node:crypto");
 const { createActivityService, ActivityError } = require("./activityService");
 // Real Discord IDs stay inside the server. Every scene exposes random avatar IDs.
-function createActivityLobby({ arena, axis=null, random=Math.random, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
+function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.random, tower = [], rolent = null, airship = null, huntGame = null, store = null, worldStores = {}, onDuelEnd = async()=>{}, getArenaStreak=()=>0, now = Date.now, ...options }) {
   const sessions = new Map(), duels = new Map(), assignments = new Map();
   const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
   const trainingRequests=new Map();let trainingSequence=0;
@@ -18,16 +18,16 @@ function createActivityLobby({ arena, axis=null, random=Math.random, tower = [],
   const hangar=airship&&createActivityService({...options,grid:require('../activity/hangar-world.cjs').grid,residents:{npcs:[],disablePoms:true},geometry:null,onSay:event=>options.onSay?.({...event,map:'hangar'}),now,persistent:true,store:worldStores.hangar});
   // Duel venues: Grancel (client map "arena") and the top of the Axis Pillar (client map "axis").
   // Both keep the "arena" location and publication channel; each duel draws its venue once.
-  const venueConfig=duel=>duel?.venue==='axis'&&axis?axis:arena;
-  const venueOf=duel=>duel?.venue==='axis'&&axis?'axis':'arena';
-  const isArena=map=>map==='arena'||map==='axis';
+  const venueConfig=duel=>duel?.venue==='gehenna'&&gehenna?gehenna:duel?.venue==='axis'&&axis?axis:arena;
+  const venueOf=duel=>duel?.venue==='gehenna'&&gehenna?'gehenna':duel?.venue==='axis'&&axis?'axis':'arena';
+  const isArena=map=>map==='arena'||map==='axis'||map==='gehenna';
   const makeStadium=(venue,config)=>config&&createActivityService({ ...options, ...config, jumpEnabled:true, now, persistent: true, store: worldStores[venue],
     spawnFor: user => spectators.has(user) ? (config.spectatorGrid?.spawn ?? config.grid.spawn) : config.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? config.grid.spawn,
     onDefeat: finishDuel,
     onSay:event=>options.onSay?.({...event,map:"arena"}),
     navigationFor: user => spectators.has(user) ? (config.spectatorGrid ?? config.grid) : config.grid,
     playerPolicy: user => {const duel=duels.get(assignments.get(user)),protectedNow=!!config.introDuration&&!!duel&&(duel.readyAt===undefined||now()<duel.readyAt);const ended=!!duel?.result;return {spectator:spectators.has(user),canMove:!protectedNow&&!ended,duelProtected:protectedNow||ended,duelFinished:ended,noRespawn:ended,...(ended&&duel.result.loser===user?{hp:0,deadUntil:duel.result.at+10000}:{})};} });
-  const stadiums={arena:makeStadium('arena',arena),axis:makeStadium('axis',axis)};
+  const stadiums={arena:makeStadium('arena',arena),axis:makeStadium('axis',axis),gehenna:makeStadium('gehenna',gehenna)};
   const stadium=stadiums.arena,stadiumOf=duel=>stadiums[venueOf(duel)];
   const city = rolent && createActivityService({ ...options,...rolent,now,persistent:true,store:worldStores.rolent,
     onSay:event=>options.onSay?.({...event,map:"rolent"}),
@@ -122,7 +122,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, tower = [],
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
-    refreshCharacter(user) { for(const service of [tavern,hangar,stadium,stadiums.axis,city,skies,...towers])service?.refreshCharacter(user); },
+    refreshCharacter(user) { for(const service of [tavern,hangar,stadium,stadiums.axis,stadiums.gehenna,city,skies,...towers])service?.refreshCharacter(user); },
     duelCaptureFor(user,captureId){const completed=captureId&&completedCaptures.get(captureId);if(completed?.actors.includes(user)&&now()-completed.at<600000)return completed;const id=captureId?[...duels].find(([,d])=>d.result?.captureId===captureId&&d.players.includes(user))?.[0]:assignments.get(user),duel=duels.get(id);return duel?.players.includes(user)&&duel.result&&now()-duel.result.at<600000?{id,...duel.result,actors:duel.players}:null;},
     matchFor(user) { const target=destination(user),id=target.match?.replace(/^watch:/,'');const d=duels.get(id);return isArena(target.map)&&d?.players.every(p=>d.accepted?.includes(p))?id:null; },
     setDuelThread(id,thread) { const d=duels.get(id);if(d){d.thread=thread;persist();} },
@@ -157,7 +157,7 @@ function createActivityLobby({ arena, axis=null, random=Math.random, tower = [],
     createDuel({ id, channel, players, names = [] }) {
       prune(); if (!arena) throw new ActivityError("Arène indisponible.");
       for (const user of players) if (assignments.has(user)) throw new ActivityError("Un des personnages est déjà en duel.");
-      duels.set(id,makeDuel({channel,players,names,venue:axis&&random()<.5?'axis':'arena',accepted:[],expires:now()+30*60*1000})); persist();
+      duels.set(id,makeDuel({channel,players,names,venue:gehenna?['arena',...(axis?['axis']:[]),'gehenna'][Math.min(axis?2:1,Math.floor(random()*(axis?3:2)))]:axis&&random()<.5?'axis':'arena',accepted:[],expires:now()+30*60*1000})); persist();
     },
     joinDuel(id, user) {
       prune(); const duel=duels.get(id);
