@@ -191,7 +191,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const arenaSun=map==='arena'?createArenaSun(renderer,scene,model):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows,map==='axis'?[...AXIS_LIGHTS,...lampLayout.ARENA_LAMPS.axis]:lampLayout.ARENA_LAMPS[map]??(tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]));
-  const arenaAtmosphere=isArena?await createArenaAtmosphere(THREE,scene,ASSETS,map,dayNight,arenaSun,renderer,{override:__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('ambience'):undefined}):null;
+  const arenaAtmosphere=isArena?await createArenaAtmosphere(THREE,scene,ASSETS,map,dayNight,arenaSun,renderer,{floor:collision.floor,override:__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('ambience'):undefined}):null;
   mapDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
   const dungeonEffects=(inTower&&!inDungeon||isArena)?await createDungeonEffects(THREE,scene,ASSETS,isArena?{}:towerLayout):null;
