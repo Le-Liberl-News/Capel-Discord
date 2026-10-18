@@ -47,13 +47,13 @@ test('PomX, PompomX from 3h30, PomdeterX from 7 hours, each step announced once 
  let now=at('2026-10-25T09:00:00Z');
  const {r,said}=setup({now:()=>now});
  await r.infect('Tita');said.length=0;
- assert.equal(r.nameOf('Tita'),'PomTita');assert.equal(r.roleplay('Tita','Salut').avatarURL,'pom/Tita-1.png');
+ assert.equal(r.nameOf('Tita'),'Pomtita');assert.equal(r.roleplay('Tita','Salut').avatarURL,'pom/Tita-1.png');
  now+=3.5*HOUR;await r.tick();await r.tick();
- assert.deepEqual(said,[{text:'Quoi ? PomTita évolue ?!',files:['evolution Tita 1->2']}]);
- assert.equal(r.nameOf('Tita'),'PompomTita');
+ assert.deepEqual(said,[{text:'Quoi ? Pomtita évolue ?!',files:['evolution Tita 1->2']}]);
+ assert.equal(r.nameOf('Tita'),'Pompomtita');
  now+=3.5*HOUR;await r.tick();
- assert.deepEqual(said[1],{text:'Quoi ? PompomTita évolue ?!',files:['evolution Tita 2->3']});
- assert.equal(r.roleplay('Tita','Salut').username,'PomdeterTita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
+ assert.deepEqual(said[1],{text:'Quoi ? Pompomtita évolue ?!',files:['evolution Tita 2->3']});
+ assert.equal(r.roleplay('Tita','Salut').username,'Pomdetertita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
  await r.tick();assert.equal(said.length,2);
 });
 test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',async()=>{
@@ -62,7 +62,7 @@ test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',
  assert.equal(await r.message('Kloe','Bonjour'),null);
  await r.infect('Tita');now+=8*HOUR;
  const m=await r.message('Tita','Bonjour tout le monde');
- assert.equal(m.content,'');assert.equal(m.username,'PomdeterTita');assert.equal(m.avatarURL,'pom/Tita-3.png');
+ assert.equal(m.content,'');assert.equal(m.username,'Pomdetertita');assert.equal(m.avatarURL,'pom/Tita-3.png');
  assert.equal(m.files[0].name,'bulle 3');assert.match(m.files[0].text,/pom/i);
 });
 test('the gauges: capitals and "!" for rage, "?" and emojis for madness; pom, citrouille and full stops calm them',()=>{
@@ -76,7 +76,7 @@ test('rage: the pom bites someone who spoke lately, who may catch the illness',a
  await r.infect('Tita');said.length=0;
  await r.message('Kloe','Salut Tita.');
  for(let i=0;i<3;i++){await r.message('Tita','ARRÊTE DE ME REGARDER !!!!!');await r.after('Tita');}
- assert.equal(said[0].text,'Pris·e de rage, PomTita mord Kloe !');
+ assert.equal(said[0].text,'Pris·e de rage, Pomtita mord Kloe !');
  assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,['evolution Kloe 0->1']);
  assert.ok(r.isInfected('Kloe'));
  const before=said.length;await r.message('Tita','RAAAH !!!!!');await r.after('Tita');assert.equal(said.length,before);   // once an hour at most
@@ -86,7 +86,7 @@ test('madness: the pom hurts itself',async()=>{
  const {r,said}=setup({now:()=>now,random:()=>.99});
  await r.infect('Nial');said.length=0;now+=4*HOUR;
  for(let i=0;i<3;i++){await r.message('Nial','Hein ??? Quoi ??? 🎃🎃🎃🎃');await r.after('Nial');}
- assert.equal(said.length,1);assert.equal(said[0].text,'PompomNial se met à sautiller partout sans raison apparente.');
+ assert.equal(said.length,1);assert.equal(said[0].text,'Pompomnial se met à sautiller partout sans raison apparente.');
 });
 test('the sick stay sick after October 31, but nobody new falls ill',async()=>{
  let now=at('2026-10-31T10:00:00Z');

@@ -2,7 +2,7 @@
 // played that day starts turning into a pom-tiron; an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
 // (30% after an hour, 60% after 3h30, every word but one in eight after 7 hours) and are shown in a Sky bubble; its
-// avatar is a pom wearing the character's hair, in three stages: PomX at once, PompomX from 3h30, PomdeterX from 7 hours,
+// avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx from 3h30, Pomdeterx from 7 hours,
 // each step announced with a Pokémon-like evolution GIF. How the player writes feeds two gauges: rage (capitals, "!")
 // makes the pom bite whoever spoke lately, who may catch the illness; madness ("?", emojis) makes it hurt itself.
 // "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
@@ -62,7 +62,8 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  // 0 right after the first symptoms, 1 seven hours later; null when healthy
  function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since);}
  const level=character=>{const s=stage(character);return s==null?0:levelOf(s);};
- const nameOf=(character,lvl=level(character))=>PREFIX[lvl]+character;
+ // Pomestelle, Pompomestelle, Pomdeterestelle: the character's name runs on, without its capital
+const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(0).toLocaleLowerCase('fr')+character.slice(1):character;
  const avatarOf=(character,lvl=level(character))=>characterNames.includes(character)?pictures().avatarURL(character,lvl):AVATAR_URL;
  // a patient's book-keeping (gauges, last stage announced); one infected before this version starts where it is
  function patient(character){
