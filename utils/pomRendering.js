@@ -40,8 +40,8 @@ function layout(x,list,maxw,angrySize){
 function bubble(x,tex,tail,height,dx=0,dy=0){
  const h=height+24*2+6;
  x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=2;x.shadowOffsetX=2;x.shadowOffsetY=3;borderImage(x,tex,LEFT+dx,dy,W-LEFT-6,h);x.restore();
- const tw=tail.height*1.5,th=tail.width*1.5;   // tail.png points down: turned to point left
- x.save();x.translate(LEFT+4+dx-tw,h/2-th/2+dy);x.translate(tw,0);x.rotate(Math.PI/2);x.drawImage(tail,0,0,th,tw);x.restore();
+ const tw=tail.height*1.5,th=tail.width*1.5;   // tail.png points down: turned to point left, flipped to point up-left
+ x.save();x.translate(LEFT+4+dx-tw,h/2-th/2+dy);x.translate(0,th);x.scale(1,-1);x.translate(tw,0);x.rotate(Math.PI/2);x.drawImage(tail,0,0,th,tw);x.restore();
  return {h,ox:LEFT+24+dx,oy:25+dy};
 }
 function text(x,word,px,py,size,fill,shade='#000'){x.font=font(size);x.textBaseline='top';x.fillStyle=shade;x.fillText(word,px+1,py+2);x.fillStyle=fill;x.fillText(word,px,py);}
