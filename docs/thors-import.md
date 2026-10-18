@@ -12,6 +12,6 @@ npm run activity:build
 
 The importer preserves native mesh transforms and texture bindings, omits collision-only proxies and night/evening variants, then prunes unreachable geometry and textures. It does not change the installed game. The courtyard's walking grid covers X −18..18 and Z −18..14; scenery beyond that remains a backdrop. Native curbs and surfaces supply the actual heights.
 
-Access: Capel → `Tester Thors · Parvis`, with the Cold Steel I Discord role. This is a solo-combat test venue, in daylight, with an entrance shot and a wider default camera. It is not in the random arena pool or online duel rotation. The existing opponent spoiler-role filter still applies.
+Access: Capel → `Tester Thors · Parvis`, with the Cold Steel I Discord role. This is a solo-combat test venue, in daylight, with an entrance shot and the standard combat camera. It is not in the random arena pool or online duel rotation. The existing opponent spoiler-role filter still applies.
 
 Visual QA must preserve normal Math.random: fixing it to a constant gives Three.js duplicate UUIDs and corrupts glTF material/texture caches, producing false texture failures.

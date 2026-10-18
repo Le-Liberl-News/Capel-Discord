@@ -394,7 +394,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     pitch = CAMERA_PITCH,
     drag = null,
     restMoveHeld=false,restMoveAt=0,
-    zoom = map==="hangar"?8.5:map==='thors'?8:CAMERA_ZOOM,
+    zoom = map==="hangar"?8.5:CAMERA_ZOOM,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
     connected = true,
