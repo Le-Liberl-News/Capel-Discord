@@ -6,7 +6,7 @@ const {createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas');
 const {GIFEncoder,quantize,applyPalette}=require('gifenc');
 const SKY=path.join(__dirname,'../activity/assets/sky');
 const POM_BASE='https://leliberlnews.fr/activite/assets/sky/chat/pom';
-const BG='#313338',W=560,LEFT=34,LINE=31,EVOLUTION=256;
+const W=560,LEFT=34,LINE=31,EVOLUTION=256;
 GlobalFonts.registerFromPath(path.join(SKY,'dialogue/AveriaSansLibre-Regular.ttf'),'AveriaSky');
 const font=size=>`${size}px AveriaSky`;
 let assets=null;
@@ -46,25 +46,39 @@ function bubble(x,tex,tail,height,dx=0,dy=0){
 }
 function text(x,word,px,py,size,fill,shade='#000'){x.font=font(size);x.textBaseline='top';x.fillStyle=shade;x.fillText(word,px+1,py+2);x.fillStyle=fill;x.fillText(word,px,py);}
 function seeded(seed){let s=seed>>>0||1;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0,(s^s>>>14)>>>0)/4294967296);}
-// one GIF; each frame quantized on its own; once=true: no loop extension (plays once)
+// one GIF on a transparent background; each frame quantized on its own; once=true: no loop extension (plays once).
+// A GIF pixel is either opaque or transparent: the nearly transparent ones are dropped, the half transparent edges
+// (the frame's shadow, the glows) are blended onto Discord's dark grey.
+const [BR,BGG,BB]=[0x31,0x33,0x38];
+function flatten(data){
+ for(let i=0;i<data.length;i+=4){const a=data[i+3];if(a===255)continue;
+  if(a<96){data[i]=data[i+1]=data[i+2]=data[i+3]=0;continue;}
+  const k=a/255;data[i]=Math.round(data[i]*k+BR*(1-k));data[i+1]=Math.round(data[i+1]*k+BGG*(1-k));data[i+2]=Math.round(data[i+2]*k+BB*(1-k));data[i+3]=255;}
+ return data;
+}
 function encode(frames,delays,{once=false}={}){
  const gif=GIFEncoder();
- frames.forEach((c,i)=>{const {width:w,height:h}=c,data=c.getContext('2d').getImageData(0,0,w,h).data,palette=quantize(data,256);
-  gif.writeFrame(applyPalette(data,palette),w,h,{palette,delay:Array.isArray(delays)?delays[i]:delays,...(i===0?{repeat:once?-1:0}:{})});});
+ frames.forEach((c,i)=>{
+  const {width:w,height:h}=c,data=flatten(c.getContext('2d').getImageData(0,0,w,h).data);
+  const palette=quantize(data,255,{format:'rgba4444',oneBitAlpha:true}),index=applyPalette(data,palette,'rgba4444');
+  let transparentIndex=palette.findIndex(p=>p[3]===0);if(transparentIndex<0)transparentIndex=0;
+  gif.writeFrame(index,w,h,{palette,delay:Array.isArray(delays)?delays[i]:delays,transparent:true,transparentIndex,dispose:2,...(i===0?{repeat:once?-1:0}:{})});
+ });
  gif.finish();return Buffer.from(gif.bytes());
 }
 async function renderBubble(message,stage,seed=Date.now()){
  const {frame,tail,inverted}=await load(),list=words(message),probe=createCanvas(10,10).getContext('2d');
  if(stage<=1){
-  const {lines,height}=layout(probe,list,W-LEFT-54);const c=createCanvas(W,height+64),x=c.getContext('2d');x.fillStyle=BG;x.fillRect(0,0,W,c.height);
+  const {lines,height}=layout(probe,list,W-LEFT-54);const c=createCanvas(W,height+64),x=c.getContext('2d');
   const b=bubble(x,frame,tail,height);for(const [w,px,py] of lines)text(x,w,b.ox+px,b.oy+py,24,'#fff');
+  const img=x.getImageData(0,0,c.width,c.height);flatten(img.data);x.putImageData(img,0,0);   // the same opaque bubble as the GIFs
   return {attachment:c.toBuffer('image/png'),name:'pom.png'};
  }
  const rng=seeded(seed),frames=[];
  if(stage===2){
   const {lines,height}=layout(probe,list,W-LEFT-54,30);
   for(let f=0;f<10;f++){
-   const c=createCanvas(W,height+66),x=c.getContext('2d');x.fillStyle=BG;x.fillRect(0,0,W,c.height);
+   const c=createCanvas(W,height+66),x=c.getContext('2d');
    const sx=Math.round(rng()*6-3),sy=Math.round(rng()*4-2),b=bubble(x,frame,tail,height,sx,sy);
    for(const [w,px,py] of lines){
     if(isAngry(w))text(x,w,b.ox+px+Math.round(rng()*4-2),b.oy+py-3+Math.round(rng()*3-2),24+Math.round(2+rng()*4),'#ff6046');
@@ -76,7 +90,7 @@ async function renderBubble(message,stage,seed=Date.now()){
  }
  const {lines,height}=layout(probe,list,W-LEFT-54);
  for(let f=0;f<14;f++){
-  const c=createCanvas(W,height+66),x=c.getContext('2d');x.fillStyle=BG;x.fillRect(0,0,W,c.height);
+  const c=createCanvas(W,height+66),x=c.getContext('2d');
   const b=bubble(x,inverted,tail,height,Math.round(rng()*4-2));
   for(const [w,px,py] of lines){
    const core=w.replace(/[.!?…,\u00a0]/g,''),legible=core&&core===core.toLocaleUpperCase('fr')&&!/POM/.test(core);
@@ -134,7 +148,7 @@ function tinted(sprite,amount){
  x.globalCompositeOperation='source-atop';x.fillStyle=`rgba(255,255,255,${amount})`;x.fillRect(0,0,EVOLUTION,EVOLUTION);return c;
 }
 function evolutionFrame(sprite,{glow=0,flash=0,sparkles=null}={}){
- const c=createCanvas(EVOLUTION,EVOLUTION),x=c.getContext('2d');x.fillStyle=BG;x.fillRect(0,0,EVOLUTION,EVOLUTION);
+ const c=createCanvas(EVOLUTION,EVOLUTION),x=c.getContext('2d');
  if(sprite){x.save();if(glow){x.shadowColor='rgba(255,240,200,.95)';x.shadowBlur=glow;}x.drawImage(sprite,0,0);x.restore();}
  if(sparkles){x.lineWidth=2;for(const [sx,sy,r,a] of sparkles){x.strokeStyle=`rgba(255,250,220,${a})`;x.beginPath();x.moveTo(sx-r,sy);x.lineTo(sx+r,sy);x.moveTo(sx,sy-r);x.lineTo(sx,sy+r);x.stroke();}}
  if(flash){x.fillStyle=`rgba(255,255,255,${flash})`;x.fillRect(0,0,EVOLUTION,EVOLUTION);}
