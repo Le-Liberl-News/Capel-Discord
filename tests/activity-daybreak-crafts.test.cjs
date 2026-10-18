@@ -19,7 +19,7 @@ for(const name of Object.keys(CRAFTS)){
   assert.deepEqual(motion({character:name,origin:{x:0,y:0,z:0},aim:{x:5,y:0,z:0}},s.duration).position,{x:5,y:0,z:0});
  });
  test(`${name}: cancellation on stun/death cannot damage an enemy`,()=>{
-  for(const reason of ['stun','death']){const f=fixture(name);f.cast();f.tick(100);if(reason==='stun')f.actor.stunUntil=10000;else f.actor.hp=0;f.tick(20);assert.equal(f.target.hp,500);assert.equal(f.combat.snapshot().attacks[0].cancelled,true);f.tick(5000);assert.equal(f.target.hp,500);}
+  for(const reason of ['stun','death']){const f=fixture(name);f.cast();f.tick(600);if(reason==='stun')f.actor.stunUntil=10000;else f.actor.hp=0;f.tick(20);assert.equal(f.target.hp,500);assert.equal(f.combat.snapshot().attacks[0].cancelled,true);assert.equal(f.actor.y,0);f.tick(5000);assert.equal(f.target.hp,500);}
  });
 }
 test('dash lines hit crossed opponents once, preserving allies and vertical separation',()=>{

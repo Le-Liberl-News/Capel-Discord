@@ -1,11 +1,16 @@
 const {motion}=require('../activity/daybreak-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {applyStatus,immobilized}=require('../activity/combat-status.cjs');
-function tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt}){
+function tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt,floor}){
  if(a.resolved)return;
- if(immobilized(actor,time)){a.cancelled=true;a.resolved=true;actor.combatLockedUntil=time;return;}
+ if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator||immobilized(actor,time)){
+  a.cancelled=true;a.resolved=true;a.dashFinished=true;
+  if(actor&&actor.character===a.character){const ground=floor?.(actor);actor.y=Number.isFinite(ground)?ground:a.daybreakGroundY??a.origin.y;actor.combatLockedUntil=time;}
+  return;
+ }
  const age=time-a.started;
- Object.assign(actor,motion(a,age,s).position);actor.acceptedAt=time;actor.moving=false;
+ const p=motion(a,age,s).position,t=Math.max(0,Math.min(1,(age-s.moveStart)/(s.moveEnd-s.moveStart)));a.daybreakGroundY=a.origin.y+(a.aim.y-a.origin.y)*t;
+ Object.assign(actor,p);actor.acceptedAt=time;actor.moving=false;
  if(!a.nextHit&&age>=s.hitAt){
   a.nextHit=1;const at=a.started+s.hitAt;
   for(const target of room.values()){
