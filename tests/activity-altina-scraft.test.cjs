@@ -17,11 +17,14 @@ test('surf starts without any steering command',()=>{const f=fixture();f.send('c
 
 test('boarding has an airborne jump, native second pose, and forward launch independent of previous walking',()=>{const a={started:1000,origin:{x:0,y:0,z:0},aim:{x:0,y:0,z:0},mountPosition:{x:0,y:0,z:1},surfPosition:{x:0,y:0,z:1}};assert.ok(sword.motion(a,1000).position.y>.9);assert.equal(sword.pose(a,1000).bank,6);assert.equal(sword.motion(a,sword.PHASE.prep).position.y,.25);const f=fixture();f.actor.heading={dx:0,dz:-1};f.send('craft',null,{direction:{x:0,z:1}});drive(f,1400,1800,0);assert.ok(f.actor.z>3);});
 
-test('holding left or right cannot reverse the surf',()=>{for(const turn of [-1,1]){let h={x:0,z:1};for(let i=0;i<100;i++)h=sword.steerHeading(h,turn,.05,{x:0,z:1});assert.ok(h.z>=.49);assert.ok(Math.abs(h.x)>.8);}});
+test('holding left or right keeps rotating and releasing preserves the current forward heading',()=>{for(const turn of [-1,1]){let h={x:0,z:1};for(let i=0;i<10;i++)h=sword.steerHeading(h,turn,.05);const early={...h};for(let i=0;i<15;i++)h=sword.steerHeading(h,turn,.05);assert.ok(Math.hypot(h.x-early.x,h.z-early.z)>1);const released=sword.steerHeading(h,0,.1);assert.ok(Math.hypot(released.x-h.x,released.z-h.z)<1e-12);assert.ok(Math.abs(Math.hypot(h.x,h.z)-1)<1e-10);}});
+
 
 test('surf glides along a wall even head-on and remains steerable late in the phase',()=>{
  const wall={sweep:(a,b)=>b.z>1.8?{normal:{x:0,y:0,z:-1},point:{x:b.x,y:b.y,z:1.8}}:null},floor=()=>0;
  let p={x:0,y:0,z:1.7};for(let i=0;i<12;i++)p=sword.moveSurf(p,{x:0,z:1},.05,floor,wall);assert.ok(Math.abs(p.x)>2);assert.ok(p.z<=1.8);
  const f=fixture();f.send('craft');drive(f,1400,3900,0);const before={...f.actor};drive(f,3950,4700,1);assert.ok(f.actor.x<before.x-1);assert.ok(f.actor.z>before.z);
- let h={x:0,z:1};for(let i=0;i<50;i++)h=sword.steerHeading(h,1,.05,{x:0,z:1});for(let i=0;i<20;i++)h=sword.steerHeading(h,-1,.05,{x:0,z:1});assert.ok(h.x>0);assert.ok(h.z>0);
+ let h={x:0,z:1};for(let i=0;i<50;i++)h=sword.steerHeading(h,1,.05,{x:0,z:1});const previous={...h};for(let i=0;i<20;i++)h=sword.steerHeading(h,-1,.05,{x:0,z:1});assert.ok(Math.hypot(h.x-previous.x,h.z-previous.z)>1);assert.ok(Number.isFinite(h.z));
 });
+
+test('wall gliding never converts a nearby wall top into an upward movement',()=>{const geometry={sweep:(a,b)=>b.z>1.75?{normal:{x:0,y:.3,z:-1},point:b}:null},floor=p=>p.x*.5;let p={x:0,y:0,z:1.7};for(let i=0;i<20;i++)p=sword.moveSurf(p,{x:0,z:1},.05,floor,geometry);assert.equal(p.y,0);assert.ok(p.z<=1.75);});

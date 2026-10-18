@@ -31,3 +31,5 @@ Les arènes Grancel, Pilier Axis et Géhenne sont tirées à chances égales. G�
 ### Ambiances des arènes
 
 Grancel et le Pilier Axis alternent entre jour, nuit, coucher de soleil et pluie selon l’identifiant du combat : tous les participants obtiennent la même ambiance. La météo ne modifie ni les collisions ni les dégâts. La Géhenne conserve son éclairage et reçoit des flammes flottantes animées avec l’atlas natif Sky effects/fire-frames.png. En prévisualisation, ?ambience=day|night|sunset|rain permet de vérifier chaque variante.
+
+Les ambiances sombres disposent de torches vacillantes et de lumières de remplissage. À Grancel, les sprites reçoivent le soleil et les lumières ponctuelles ; leurs couleurs natives servent d’albédo. La Géhenne utilise aussi les textures originales Third m73ba6 et m73ba7 pour un bassin de lave et un fond animé reconstitué ; ils restent hors de la navigation.

@@ -33,9 +33,9 @@ export function createDayNight(THREE,model,map,shadows,extraSources=[]) {
       const declarations=sources.map((_,i)=>`uniform vec4 skyLight${i};uniform vec3 skyColor${i};`).join('\n');
       const lights=sources.map((_,i)=>`{float falloff = max(0.0,1.0-distance(vSkyWorld,skyLight${i}.xyz)/skyLight${i}.w);illumination += skyColor${i}*falloff*falloff*skyLamps;}`).join('\n');
       shader.fragmentShader='varying vec3 vSkyWorld;uniform vec3 skyTint;uniform float skyLamps;\n'+declarations+'\n'+photoDeclarations+'\n'+shader.fragmentShader;
-      shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`vec3 illumination=skyTint;${lights}\noutgoingLight *= illumination;${photoLight}\n#include <opaque_fragment>`);
+      shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`vec3 illumination=${material.userData?.solarLit||material.userData?.solarBillboard?'vec3(1.0)':'skyTint'};${material.userData?.solarLit||material.userData?.solarBillboard?'':lights}\noutgoingLight *= illumination;${photoLight}\n#include <opaque_fragment>`);
     };
-    material.customProgramCacheKey=()=>cache+'|sky-cycle-photo-1|'+sources.length;material.needsUpdate=true;
+    material.customProgramCacheKey=()=>cache+'|sky-cycle-photo-2|'+sources.length+'|'+!!(material.userData?.solarLit||material.userData?.solarBillboard);material.needsUpdate=true;
   }});}
   apply(model);
   return {apply,photo(flashes){for(let i=0;i<4;i++){const f=flashes[i];uniforms['skyPhoto'+i].value.set(f?.origin.x??0,f?.origin.y??0,f?.origin.z??0,f?.strength??0);uniforms['skyPhotoDir'+i].value.set(f?.direction.x??0,f?.direction.z??0);}},update(time=Date.now()) {state=skyTime((map==='arena'||map==='gehenna')?DAY_DURATION/2:horror?0:override??(time+clockOffset));if(atmosphere)state={...state,...atmosphere};uniforms.skyTint.value.set(...(atmosphere?atmosphere.tint:horror?horrorTint:(map.startsWith("tower")&&map!=="tower4")?[.105,.125,.14]:map==='axis'?state.tint.map((v,i)=>Math.max(v,AXIS_NIGHT[i])):state.tint));uniforms.skyLamps.value=horror?1:(map.startsWith("tower")&&map!=="tower4")?1:state.lamps;

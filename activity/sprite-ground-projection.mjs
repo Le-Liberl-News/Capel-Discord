@@ -5,8 +5,11 @@ function uniforms(THREE,material){
  if(states.has(material))return states.get(material);
  const u={spriteFloorY:{value:.01},spriteCamera:{value:new THREE.Vector3()},spriteDirection:{value:new THREE.Vector3()},spritePV:{value:new THREE.Matrix4()},spriteOrtho:{value:false}};states.set(material,u);
  material.userData.groundProjection=true;
- material.onBeforeCompile=shader=>{
+ const previousCompile=material.onBeforeCompile,previousKey=material.customProgramCacheKey();
+ material.onBeforeCompile=function(shader,renderer){
+  previousCompile.call(this,shader,renderer);
   Object.assign(shader.uniforms,u);
+  if(shader.vertexShader.includes('varying vec3 vGroundSpriteWorld;'))return;
   shader.vertexShader='varying vec3 vGroundSpriteWorld;\n'+shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvGroundSpriteWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');
   shader.fragmentShader='varying vec3 vGroundSpriteWorld;uniform float spriteFloorY;uniform vec3 spriteCamera;uniform vec3 spriteDirection;uniform mat4 spritePV;uniform bool spriteOrtho;\n'+shader.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
    gl_FragDepth=gl_FragCoord.z;
@@ -15,7 +18,7 @@ function uniforms(THREE,material){
     if(ray.y<-.03){vec3 ground=vGroundSpriteWorld+ray*((spriteFloorY-vGroundSpriteWorld.y)/ray.y);vec4 projected=spritePV*vec4(ground,1.0);gl_FragDepth=min(gl_FragCoord.z,projected.z/projected.w*.5+.5-.000001);}
    }`);
  };
- material.customProgramCacheKey=()=> 'cs2-ground-projection-v1';material.needsUpdate=true;return u;
+ material.customProgramCacheKey=()=> previousKey+'|cs2-ground-projection-v3';material.needsUpdate=true;return u;
 }
 export function attachSpriteGroundProjection(THREE,mesh){
  uniforms(THREE,mesh.material);const previous=mesh.onBeforeRender;

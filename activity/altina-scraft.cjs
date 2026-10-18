@@ -24,17 +24,18 @@ function pose(a,t){const p=phases(a);let bank=5,start=0,duration=400;
 }
 function aiming(a,t){return !!a&&!a.cancelled&&a.special==='altinaSword'&&t>=PHASE.aimStart&&t<phases(a).diveAt;}
 function surfDirection(input,previous={x:0,z:-1}){const requested=Math.hypot(input?.x??0,input?.z??0)>.08?input:previous,length=Math.hypot(requested.x,requested.z)||1;return Math.hypot(requested.x,requested.z)>.001?{x:requested.x/length,z:requested.z/length}:{x:0,z:-1};}
-function steerHeading(heading,turn,seconds,launchHeading){const h=surfDirection(null,heading),f=surfDirection(null,launchHeading??heading),angle=Math.max(-1,Math.min(1,turn||0))*Math.PI/3,c=Math.cos(angle),s=Math.sin(angle),target={x:f.x*c-f.z*s,z:f.x*s+f.z*c},blend=1-Math.exp(-seconds*9);return surfDirection({x:h.x+(target.x-h.x)*blend,z:h.z+(target.z-h.z)*blend},f);}
+function steerHeading(heading,turn,seconds){const h=surfDirection(null,heading),angle=Math.max(-1,Math.min(1,turn||0))*1.8*seconds,c=Math.cos(angle),s=Math.sin(angle);return {x:h.x*c-h.z*s,z:h.x*s+h.z*c};}
+
 
 function moveSurf(position,input,seconds,floor,geometry){
  if(seconds<=0)return {...position};const direction=surfDirection(input);let end={...position};
- const valid=next=>{const y=floor(next);return Number.isFinite(y)&&Math.abs(y-end.y)<=.45?{...next,y}:null;};
+ const valid=(next,sliding=false)=>{const y=floor(next),limit=sliding?.08:.16;return Number.isFinite(y)&&Math.abs(y-end.y)<=limit?{...next,y:sliding?end.y:y}:null;};
  for(let left=8*seconds;left>1e-6;){const step=Math.min(.1,left);left-=step;const next={x:end.x+direction.x*step,y:end.y,z:end.z+direction.z*step},from={...end,y:end.y+.8},hit=geometry?.sweep(from,{...next,y:next.y+.8},.25);let accepted=!hit&&valid(next);
   if(!accepted){const n=hit?.normal,normal=n&&Math.hypot(n.x,n.z)>.1?surfDirection({x:n.x,z:n.z}):null;
    let tangent=normal?{x:direction.x-normal.x*(direction.x*normal.x+direction.z*normal.z),z:direction.z-normal.z*(direction.x*normal.x+direction.z*normal.z)}:null;
    if(tangent&&Math.hypot(tangent.x,tangent.z)<.05)tangent={x:-normal.z,z:normal.x};
    const candidates=tangent?[tangent,{x:-tangent.x,z:-tangent.z}]:[{x:direction.x,z:0},{x:0,z:direction.z}].sort((a,b)=>Math.hypot(b.x,b.z)-Math.hypot(a.x,a.z));
-   for(const candidate of candidates){if(Math.hypot(candidate.x,candidate.z)<.01)continue;const d=surfDirection(candidate),point={x:end.x+d.x*step,y:end.y,z:end.z+d.z*step},ground=valid(point);if(ground&&!geometry?.sweep(from,{...point,y:point.y+.8},.25)){accepted=ground;break;}}
+   for(const candidate of candidates){if(Math.hypot(candidate.x,candidate.z)<.01)continue;const d=surfDirection(candidate),point={x:end.x+d.x*step,y:end.y,z:end.z+d.z*step},ground=valid(point,true);if(ground&&!geometry?.sweep(from,{...point,y:point.y+.8},.25)){accepted=ground;break;}}
   }if(!accepted)break;end=accepted;
  }return end;
 }
