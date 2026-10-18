@@ -1,3 +1,4 @@
+import altinaSword from './altina-scraft.cjs';
 import cs2 from './cs2-test-characters.cjs';
 import {catRicochetPlan} from './cat-ricochet-ai.mjs';
 import worldModule from '../utils/activityWorld.js';
@@ -47,7 +48,7 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
  const send=(command)=>world.action(ai,{id:ai.id+':action:'+ ++count,...command},players);
  function navigate(target){if(path.length&&goal&&Math.hypot(goal.x-target.x,goal.z-target.z)<1.5)return;goal={...target};path=smoothRoute(grid,ai,route(grid,ai,target));}
  function think(time){if(player.smokeHiddenUntil>time){path=[];return;}
-  if(ai.character==='Altina'&&ai.hp>0&&!status.immobilized(ai,time)){const cast=world.snapshot().combat.attacks.find(a=>a.actor===ai.id&&a.special==='altinaSword'&&!a.cancelled&&!a.resolved);if(cast&&time-cast.started<3900){const target=perceived(time),length=Math.hypot(target.x-ai.x,target.z-ai.z)||1;send({type:'attack',kind:'altinaSteer',direction:{x:(target.x-ai.x)/length,z:(target.z-ai.z)/length}});}if(cast&&!cast.diveAt&&time-cast.started>=5500)send({type:'attack',kind:'altinaDive',aim:aimAt(perceived(time))});}
+  if(ai.character==='Altina'&&ai.hp>0&&!status.immobilized(ai,time)){const cast=world.snapshot().combat.attacks.find(a=>a.actor===ai.id&&a.special==='altinaSword'&&!a.cancelled&&!a.resolved);if(cast&&time-cast.started<altinaSword.PHASE.surfEnd){const target=perceived(time),length=Math.hypot(target.x-ai.x,target.z-ai.z)||1;const h=cast.surfHeading??{x:0,z:1},dx=(target.x-ai.x)/length,dz=(target.z-ai.z)/length,turn=Math.atan2(h.x*dz-h.z*dx,h.x*dx+h.z*dz);send({type:'attack',kind:'altinaSteer',turn:Math.max(-1,Math.min(1,turn*2))});}if(cast&&!cast.diveAt&&time-cast.started>=altinaSword.PHASE.aimStart)send({type:'attack',kind:'altinaDive',aim:aimAt(perceived(time))});}
   if(ai.hp<=0||player.hp<=0||status.immobilized(ai,time)||time<(ai.combatLockedUntil??0))return;
   const target=perceived(time),snapshot=world.snapshot(),balls=snapshot.poms??[],held=balls.find(p=>p.owner===ai.id),distance=Math.hypot(ai.x-target.x,ai.z-target.z),busy=ai.attackBusyUntil>time;
   if(ai.guardianFor){

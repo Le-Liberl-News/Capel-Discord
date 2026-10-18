@@ -42,7 +42,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function action(player, command, room) {
 
     players=room;
-    if(command.kind==='altinaSteer'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.resolved&&!a.cancelled);return a?special.altina.steer(a,player,command.direction,now()):{error:'Surf indisponible.'};}
+    if(command.kind==='altinaSteer'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.resolved&&!a.cancelled);return a?special.altina.steer(a,player,command.turn,now()):{error:'Surf indisponible.'};}
     if(command.kind==='altinaDive'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.cancelled&&!a.resolved);return a?special.altina.choose(a,player,command.aim,now()):{error:'Plongeon indisponible.'};}
     if(player.character==='Carna'&&['aim','fireEnd'].includes(command.kind)){
       const active=[...attacks.values()].find(a=>a.actor===player.id&&a.character==='Carna'&&!a.cancelled&&now()<a.started+combatSpec('Carna',a.kind).fireDuration);
@@ -166,6 +166,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,tempo:spec.tempo,technique:spec.name,target:supportTarget?.id??(spec.targetRequired?command.target:undefined),effect:spec.effect,origin:fps?fps.origin:origin,ray:fps,obstacleImpact,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.persistentBuff?spec.buffDuration:spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
     if(spec.mobileProjectile)attack.projectileReleaseAt=time+spec.windup;
+    if(spec.special==='altinaSword'){const h=command.direction;if(h&&[h.x,h.z].every(Number.isFinite)&&Math.hypot(h.x,h.z)>.01&&Math.hypot(h.x,h.z)<=1.01)attack.launchHeading={...h};}
     if(player.character==='Carna'){attack.baseRay=fps;attack.impactAt=time;}
     if(food){attack.food=food;attack.technique=cooking.FOODS[food].name;player.foodStock.shift();}
 

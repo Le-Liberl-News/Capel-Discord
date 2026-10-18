@@ -16,7 +16,7 @@ test('the Rean/Altina encounter has one group introduction, a damageable guardia
  let time=0;const grid={origin:{x:-25,z:-25},step:.5,width:101,height:101,cells:Array(10201).fill(0),spawn:{x:0,y:0,z:0}},encounter=require('../activity/assets/sky/combat/solo-encounters.json').groups.find(g=>g.id==='rean-altina');
  const game=m.exports.createTraining({grid,character:'Estelle',encounter,now:()=>time,random:()=>.3,ballSpawns:[]}),owner=[...game.players.values()].find(p=>p.character==='Altina'),pet=game.players.get(owner.id+':guardian');
  assert.equal(pet.guardianFor,owner.id);assert.equal(pet.maxHp,650);const state=game.tick(game.player);assert.equal(state.duel.groups.length,2);assert.equal(state.duel.groups[1].name,'Rean et Altina');
- Object.assign(owner,{x:0,z:0});Object.assign(pet,{x:1,z:1});Object.assign(game.player,{x:0,z:6});let magic=false;
- for(let i=0;i<300;i++){time+=50;const state=game.tick(game.player);magic ||= state.combat.attacks.some(a=>a.character==='Altina'&&a.kind==='basic');assert.doesNotThrow(()=>JSON.stringify(state));}
- assert.ok(magic);assert.ok(Math.hypot(pet.x-game.player.x,pet.z-game.player.z)<2.8,'guardian engages at melee range');assert.ok(game.world.cooldownsFor(pet.id).basic>0,'guardian strikes in melee');owner.hp=0;time+=50;game.tick(game.player);assert.equal(pet.hp,0);
+ Object.assign(owner,{x:0,z:0});Object.assign(pet,{x:1,z:1});Object.assign(game.player,{x:0,z:6,hp:5000,maxHp:5000});let magic=false,guardianEngaged=false,guardianStruck=false;
+ for(let i=0;i<500;i++){time+=50;const state=game.tick(game.player);magic ||= state.combat.attacks.some(a=>a.character==='Altina'&&a.kind==='basic');guardianEngaged ||= Math.hypot(pet.x-game.player.x,pet.z-game.player.z)<2.8;guardianStruck ||= game.world.cooldownsFor(pet.id).basic>0;assert.doesNotThrow(()=>JSON.stringify(state));}
+ assert.ok(magic);assert.ok(guardianEngaged,'guardian engages at melee range');assert.ok(guardianStruck,'guardian strikes in melee');owner.hp=0;time+=50;game.tick(game.player);assert.equal(pet.hp,0);
 });

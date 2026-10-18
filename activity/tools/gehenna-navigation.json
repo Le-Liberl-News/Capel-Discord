@@ -5,10 +5,10 @@
   },
   "step": 0.25,
   "width": 217,
-  "height": 233,
+  "height": 461,
   "rayHeight": 40,
   "minY": -0.1,
-  "maxY": 0.35,
+  "maxY": 4,
   "spawn": {
     "x": 0,
     "z": -12
