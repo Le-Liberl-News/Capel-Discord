@@ -101,7 +101,7 @@ test('run and idle grounding never uses the bottom of a sword as a foot contact'
 });
 test('compressed native effect packs contain the correct source effects and bounded particle data',()=>{
  const fs=require('node:fs'),zlib=require('node:zlib'),path=require('node:path');
- for(const name of ['van','elaine','shizuna']){const p=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+name+'.vfxpack')));assert.equal(p.format,'horizon-vfx-1');
+ for(const name of ['van','elaine','shizuna']){const p=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+require('../activity/assets/sky/effects/horizon/catalogue.json')[name[0].toUpperCase()+name.slice(1)])));assert.equal(p.format,'horizon-vfx-1');
   for(const e of Object.values(p.effects))for(const frame of e.frames){assert.ok(frame.length<=128);for(const node of frame){assert.ok(node.every(Number.isFinite));assert.ok(p.textures[e.segments[node[0]].texture]);}}
   for(const file of Object.values(p.textures))assert.ok(fs.existsSync(path.join('activity/assets/sky',file)));
  }
@@ -170,3 +170,10 @@ test('Elaine green blade follows the sprite, stays visible through the pause and
  for(const t of [100,1000,2400,3300,5400,7000,8000]){view.draw(a,t,avatar,camera);assert.equal(view.size,1);assert.ok(scene.children[0].visible);const trail=scene.children[0].children[0];assert.ok(trail.geometry.drawRange.count<=48);assert.ok(Array.from(trail.geometry.attributes.position.array).every(Number.isFinite));}
  let disposed=false;scene.children[0].children[0].geometry.addEventListener('dispose',()=>disposed=true);view.remove(a.id);assert.ok(disposed);assert.equal(scene.children.length,0);view.dispose();
 });
+
+ test('Kaleido native pack preserves animated green tint, mask UVs, spiral trails and final slash mesh',()=>{
+ const fs=require('node:fs'),zlib=require('node:zlib'),files=require('../activity/assets/sky/effects/horizon/catalogue.json');const p=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+files.Elaine)));
+ assert.equal(p.tintCurves,true);const beam=p.effects.cr5110_20_2;for(const name of ['trail_rasen01','trail_rasen02','trail_rasen03'])assert.ok(beam.segments.some(s=>s.name===name&&s.faces.length>1));
+ assert.ok(p.effects.cr5110_20_4.segments.some(s=>s.name==='Slash_Core'&&s.maskTexture&&s.faces.length>20));assert.ok(p.effects.cr5110_20_6);
+ assert.ok(beam.frames.flat().some(n=>n.length===33&&n[22]>n[21]*2));assert.notDeepEqual(beam.frames[3],beam.frames[15]);
+ });

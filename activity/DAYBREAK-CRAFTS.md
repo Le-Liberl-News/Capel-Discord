@@ -21,3 +21,5 @@ Les atlas modifiés portent leur empreinte SHA-256 dans leur nom pour éviter de
 Outils locaux : `E:/dev/sky-activity-tools/atelier-sprites/export-zeroth-final.cjs`, `export-zeroth-sheath.cjs`, `export-elaine-salvo.cjs`, `bake-horizon-vfx.py`. La QA navigateur utilise la vraie scène et le serveur de combat.
 
 Validation : `npm run activity:test` ; `node --test tests/activity-training.test.cjs tests/activity-spoiler-access.test.cjs tests/activity-cs2-effects.test.mjs`.
+
+Elaine : le pack dédié conserve les courbes de teinte, les UV des deux textures et les trois traînées natives `trail_rasen*` (historique des matrices). La salve utilise aussi le faisceau natif `_2`, le développement de `_3`, puis le maillage du slash `_4` et son impact `_6`. Le remplissage vert uniforme ajouté autour de la lame a été retiré. Les shaders web reconstruisent teinte et masque ; ils ne reproduisent pas encore exactement les shaders, la distorsion et la simulation du moteur Horizon.
