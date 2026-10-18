@@ -42,7 +42,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
   function action(player, command, room) {
 
     players=room;
-    if(command.kind==='altinaSteer'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.resolved&&!a.cancelled);return a?special.altina.steer(a,player,command.turn,now()):{error:'Surf indisponible.'};}
+    if(command.kind==='altinaSteer'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.resolved&&!a.cancelled);return a?special.altina.steer(a,player,command.turn,now(),command.direction,command.facing):{error:'Surf indisponible.'};}
     if(command.kind==='altinaDive'){const a=[...attacks.values()].find(a=>a.actor===player.id&&a.special==='altinaSword'&&!a.cancelled&&!a.resolved);return a?special.altina.choose(a,player,command.aim,now()):{error:'Plongeon indisponible.'};}
     if(player.character==='Carna'&&['aim','fireEnd'].includes(command.kind)){
       const active=[...attacks.values()].find(a=>a.actor===player.id&&a.character==='Carna'&&!a.cancelled&&now()<a.started+combatSpec('Carna',a.kind).fireDuration);

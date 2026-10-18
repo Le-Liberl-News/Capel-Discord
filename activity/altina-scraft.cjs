@@ -24,6 +24,7 @@ function pose(a,t){const p=phases(a);let bank=5,start=0,duration=400;
 }
 function aiming(a,t){return !!a&&!a.cancelled&&a.special==='altinaSword'&&t>=PHASE.aimStart&&t<phases(a).diveAt;}
 function surfDirection(input,previous={x:0,z:-1}){const requested=Math.hypot(input?.x??0,input?.z??0)>.08?input:previous,length=Math.hypot(requested.x,requested.z)||1;return Math.hypot(requested.x,requested.z)>.001?{x:requested.x/length,z:requested.z/length}:{x:0,z:-1};}
+function cameraSurfDirection(yaw,side=0){const lateral=Math.max(-1,Math.min(1,side||0));return surfDirection({x:-Math.sin(yaw)+Math.cos(yaw)*lateral,z:Math.cos(yaw)+Math.sin(yaw)*lateral});}
 function steerHeading(heading,turn,seconds){const h=surfDirection(null,heading),angle=Math.max(-1,Math.min(1,turn||0))*1.8*seconds,c=Math.cos(angle),s=Math.sin(angle);return {x:h.x*c-h.z*s,z:h.x*s+h.z*c};}
 
 
@@ -40,4 +41,4 @@ function moveSurf(position,input,seconds,floor,geometry){
  }return end;
 }
 
-module.exports={CRAFT,PHASE,phases,perch,motion,pose,aiming,moveSurf,surfDirection,steerHeading};
+module.exports={CRAFT,PHASE,phases,perch,motion,pose,aiming,moveSurf,surfDirection,steerHeading,cameraSurfDirection};
