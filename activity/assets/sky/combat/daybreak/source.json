@@ -164,7 +164,20 @@
         "craftStart",
         "attack"
       ],
-      "weaponScale": 0.8
+      "weaponScale": 0.8,
+      "nativeCraftRevision": {
+        "motion": "chr5110_m_btl_craft02_2",
+        "loopMs": 400,
+        "preparationPose": "chr5110_m_btl_craft02_2_lp",
+        "timings": {
+          "capture": 650,
+          "flurryStart": 1750,
+          "flurryEnd": 3750,
+          "pauseEnd": 5750,
+          "finalHit": 6300,
+          "end": 7300
+        }
+      }
     },
     "Shizuna": {
       "id": "shizuna-daybreak1",

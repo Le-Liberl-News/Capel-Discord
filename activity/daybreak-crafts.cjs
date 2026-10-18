@@ -3,7 +3,7 @@
 const SHARED={key:'g',special:'daybreak',groundTarget:true,windup:0,cooldown:10000,range:8,projectile:false,dash:true,lockMovement:true};
 const CRAFTS={
  Van:{...SHARED,name:'Tir à la pièce',groundTarget:false,targetRequired:true,coinShot:true,projectile:true,dash:false,duration:2200,radius:.9,range:18,damage:40,throwAt:700,fireAt:1250,hitAt:1430,color:0xffd66b,stages:[{bank:5,frames:20,ms:400},{bank:6,frames:20,ms:800},{bank:7,frames:20,ms:150},{bank:8,frames:20,ms:400},{bank:9,frames:20,ms:450}]},
- Elaine:{...SHARED,name:'Kaleido Fencer',groundTarget:false,targetRequired:true,kaleido:true,dash:false,duration:3500,range:3,radius:3,damage:5,finalDamage:24,hitAt:500,hitTimes:[500,700,900,1100,1300,1500,1700,1900,2500],color:0x65d7b1,stages:[{bank:5,frames:20,ms:500},{bank:6,frames:24,ms:1600,loopMs:800},{bank:7,frames:24,ms:800},{bank:8,frames:20,ms:600}]},
+ Elaine:{...SHARED,name:'Kaleido Fencer',groundTarget:false,selfTarget:true,targetRequired:false,kaleido:true,dash:false,duration:7300,range:3,radius:3,captureAt:650,gatherEnd:1750,flurryEnd:3750,finishAt:5750,damage:5,finalDamage:24,hitAt:1800,hitTimes:[1800,2050,2300,2550,2800,3050,3300,3550,6300],color:0x65d7b1,stages:[{bank:5,frames:20,ms:650},{bank:9,frames:16,ms:1100,holdPose:8},{bank:6,frames:16,ms:2000,loopMs:400},{bank:7,frames:24,ms:2000,holdPose:0},{bank:7,frames:24,ms:900},{bank:8,frames:20,ms:650}]},
  Shizuna:{...SHARED,name:'Zeroth Gleam',groundTarget:false,targetRequired:true,zeroth:true,duration:4800,dashDuration:4800,range:12,radius:1.4,damage:22,finalDamage:42,hitAt:2400,hitTimes:[2400,4250],moveStart:2300,moveEnd:2400,line:true,cooldown:15000,color:0xff3655,stages:[{bank:5,frames:24,ms:1000},{bank:6,frames:12,ms:300},{bank:7,frames:24,ms:1000},{bank:8,frames:16,ms:100},{bank:9,frames:12,ms:150},{bank:10,frames:24,ms:700},{bank:11,frames:16,ms:450},{bank:12,frames:12,ms:150},{bank:13,frames:24,ms:550},{bank:14,frames:20,ms:400}]},
 };
 const clamp=t=>Math.max(0,Math.min(1,t));
@@ -14,7 +14,7 @@ function motion(a,time,s=CRAFTS[a.character]){
 }
 function pose(character,time){
  const stages=CRAFTS[character].stages;let t=Math.max(0,time);
- for(const stage of stages){if(t<stage.ms)return {bank:stage.bank,pose:Math.min(stage.frames-1,Math.floor((stage.loopMs?t%stage.loopMs/stage.loopMs:t/stage.ms)*stage.frames))};t-=stage.ms;}
+ for(const stage of stages){if(t<stage.ms)return {bank:stage.bank,pose:stage.holdPose??Math.min(stage.frames-1,Math.floor((stage.loopMs?t%stage.loopMs/stage.loopMs:t/stage.ms)*stage.frames))};t-=stage.ms;}
  const end=stages.at(-1);return {bank:end.bank,pose:end.frames-1};
 }
 // The coin rises ahead of Van; the shot travels through it before reaching the enemy.

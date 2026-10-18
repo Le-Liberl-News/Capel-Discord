@@ -4,7 +4,7 @@ const {combatSpec}=require('../activity/native-combat.cjs');
 const {CRAFTS,motion,pose}=require('../activity/daybreak-crafts.cjs');
 const grid={origin:{x:-20,z:-20},step:1,width:41,height:41,cells:Array(1681).fill(0),spawn:{x:0,y:0,z:0}};
 function fixture(character,extra={}){
- let time=1000;const actor={id:'a',character,x:0,y:0,z:0,hp:500,team:'blue'},target={id:'e',character:'Estelle',x:character==='Elaine'?2:5,y:0,z:0,hp:500,team:'red'},room=new Map([['a',actor],['e',target]]);
+ let time=1000;const actor={id:'a',character,x:0,y:0,z:0,hp:500,team:'blue',heading:{dx:1,dz:0}},target={id:'e',character:'Estelle',x:character==='Elaine'?2:5,y:0,z:0,hp:500,team:'red'},room=new Map([['a',actor],['e',target]]);
  const combat=createActivityCombat({grid,now:()=>time,canDamage:(a,b)=>a.team!==b.team,...extra});
  return {actor,target,room,combat,cast:()=>combat.action(actor,{id:'craft',kind:'craft',target:'e',aim:{x:target.x,y:0,z:0}},room),tick(ms){time+=ms;combat.tick(room);},get time(){return time;}};
 }
@@ -13,7 +13,7 @@ for(const name of Object.keys(CRAFTS)){
   const f=fixture(name),s=combatSpec(name,'craft');assert.equal(s.special,'daybreak');assert.ok(f.cast().combatId);
   f.tick(s.hitAt-1);assert.equal(f.target.hp,500);f.tick(1);assert.equal(f.target.hp,500-s.damage);assert.equal(f.actor.x,s.dash?7:0);assert.ok(Math.abs(f.actor.y)<1e-6);
   if(s.stun)assert.equal(f.target.stunUntil,f.time+s.stun);
-  f.tick(5000);assert.equal(f.target.hp,500-(s.hitTimes?(s.hitTimes.length-1)*s.damage+s.finalDamage:s.damage));assert.equal(f.actor.combatLockedUntil<=f.time,true);
+  f.tick(s.duration);assert.equal(f.target.hp,500-(s.hitTimes?(s.hitTimes.length-1)*s.damage+s.finalDamage:s.damage));assert.equal(f.actor.combatLockedUntil<=f.time,true);
   assert.equal(s.stages.reduce((a,b)=>a+b.ms,0),s.duration);assert.equal(pose(name,0).bank,5);
   for(let t=0;t<s.duration+50;t+=17){const p=pose(name,t),stage=s.stages.find(s=>s.bank===p.bank);assert.ok(p.pose>=0&&p.pose<stage.frames);}
   assert.deepEqual(motion({character:name,origin:{x:0,y:0,z:0},aim:{x:5,y:0,z:0}},s.duration).position,{x:s.dash?7:0,y:0,z:0});
@@ -26,7 +26,7 @@ test('dash lines hit crossed opponents once, preserving allies and vertical sepa
  for(const name of ['Elaine','Shizuna']){const f=fixture(name),s=CRAFTS[name];f.room.set('cross',{id:'cross',x:1.5,y:0,z:.2,hp:100,team:'red'});f.room.set('ally',{id:'ally',x:2,y:0,z:0,hp:100,team:'blue'});f.room.set('high',{id:'high',x:2,y:4,z:0,hp:100,team:'red'});f.cast();f.tick(s.duration);assert.equal(f.room.get('cross').hp,100-((s.hitTimes.length-1)*s.damage+s.finalDamage));assert.equal(f.room.get('ally').hp,100);assert.equal(f.room.get('high').hp,100);}
 });
 test('craft paths reject gaps and walls instead of teleporting through them',()=>{
- for(const name of ['Elaine','Shizuna']){
+ for(const name of ['Shizuna']){
   const cells=[...grid.cells];for(let z=0;z<41;z++)cells[z*41+22]=null;
   const gap=fixture(name,{grid:{...grid,cells}});assert.ok(gap.cast().error);assert.equal(gap.actor.x,0);
   const wall=fixture(name,{geometry:{floor:()=>0,sweep:()=>({point:{x:1,y:.8,z:0}})}});assert.ok(wall.cast().error);assert.equal(wall.actor.x,0);
@@ -62,16 +62,31 @@ test('Zeroth Gleam cannot teleport into a wall immediately behind its target',()
  const f=fixture('Shizuna',{geometry:{floor:()=>0,sweep:(from,to)=>to.x>5.6?{point:{x:5.6,y:.8,z:0}}:null}});
  assert.ok(f.cast().error);assert.equal(f.actor.x,0);
 });
-test('Kaleido Fencer requires melee range and gathers only the initially hit opponents',()=>{
+test('Kaleido Fencer activates without a target and slowly captures nearby opponents before its salvos',()=>{
  const f=fixture('Elaine'),s=CRAFTS.Elaine;
- f.target.x=5;assert.ok(f.cast().error);f.target.x=2;
  f.room.set('behind',{id:'behind',x:-1.5,y:0,z:0,hp:500,team:'red'});
  f.room.set('ally',{id:'ally',x:1,y:0,z:0,hp:500,team:'blue'});
  f.room.set('far',{id:'far',x:6,y:0,z:0,hp:500,team:'red'});
- assert.ok(f.cast().combatId);f.tick(s.hitAt);assert.equal(f.actor.x,0);
- for(const id of ['e','behind']){const p=f.room.get(id);assert.equal(p.hp,495);assert.ok(p.knockback);assert.ok(Math.abs(p.knockback.end.x-1.3)<.25);assert.equal(p.stunUntil,1000+s.hitTimes.at(-1)+180);}
- assert.equal(f.room.get('ally').hp,500);f.room.get('far').x=1;f.tick(s.duration);assert.equal(f.room.get('far').hp,500);assert.equal(f.target.hp,436);
+ assert.ok(f.combat.action(f.actor,{id:'craft',kind:'craft'},f.room).combatId);
+ f.tick(s.captureAt);assert.equal(f.actor.x,0);
+ for(const id of ['e','behind']){const p=f.room.get(id);assert.equal(p.hp,500);assert.ok(p.knockback);assert.equal(p.knockback.duration,s.gatherEnd-s.captureAt);assert.ok(Math.abs(p.knockback.end.x-1.3)<.25);assert.equal(p.stunUntil,1000+s.hitTimes.at(-1)+180);}
+ f.tick(400);assert.ok(f.target.x<2&&f.target.x>1.3);assert.equal(f.target.hp,500);
+ f.room.get('far').x=1;f.tick(s.hitAt-s.captureAt-400);assert.equal(f.target.hp,495);
+ f.tick(s.flurryEnd-s.hitAt);const hp=f.target.hp;assert.equal(hp,460);
+ f.tick(s.finishAt-s.flurryEnd);assert.equal(f.target.hp,hp,'pause has no extra damage');
+ f.tick(s.duration-s.finishAt);assert.equal(f.room.get('far').hp,500);assert.equal(f.target.hp,436);assert.equal(f.room.get('ally').hp,500);
 });
+test('Kaleido Fencer works empty and next to a wall without aiming at reachable ground',()=>{
+ const f=fixture('Elaine',{geometry:{floor:()=>0,sweep:()=>({point:{x:1,y:.8,z:0}})}});f.target.x=8;
+ assert.ok(f.combat.action(f.actor,{id:'craft',kind:'craft'},f.room).combatId);f.tick(CRAFTS.Elaine.duration);assert.equal(f.target.hp,500);assert.equal(f.actor.x,0);
+});
+test('Kaleido Fencer uses actual repeated thrusts, a separate preparation pose and a two-second pause',()=>{
+ const s=CRAFTS.Elaine;assert.equal(s.targetRequired,false);assert.equal(s.selfTarget,true);
+ assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,6);
+ assert.deepEqual(pose('Elaine',1825),pose('Elaine',2225));assert.notDeepEqual(pose('Elaine',1825),pose('Elaine',1925));
+ assert.deepEqual(pose('Elaine',4000),pose('Elaine',5600));
+});
+
 test('interrupting a captured multi-hit craft releases its own remaining stun and cancels later damage',()=>{
  for(const name of ['Elaine','Shizuna']){const f=fixture(name),s=CRAFTS[name];f.cast();f.tick(s.hitAt);const hp=f.target.hp;f.actor.stunUntil=f.time+1000;f.tick(20);assert.equal(f.target.stunUntil,f.time);f.tick(5000);assert.equal(f.target.hp,hp);}
 });
@@ -100,4 +115,9 @@ test('visual accents release their geometry on event removal and disposal',async
  const THREE=await import('three'),{createDaybreakCraftView}=await import('../activity/daybreak-craft-view.mjs'),scene=new THREE.Scene(),view=createDaybreakCraftView(THREE,scene);
  for(let i=0;i<30;i++){const event={id:String(i),character:'Van',actor:'a',origin:{x:0,y:0,z:0},aim:{x:5,y:0,z:0}};view.draw(event,CRAFTS.Van.hitAt+50,new Map());assert.equal(view.size,1);view.remove(event.id);assert.equal(scene.children.length,0);}
  view.dispose();assert.equal(view.size,0);
+});
+
+
+test('interrupting Elaine during gathering stops the pull without inflicting an early hit',()=>{
+ const f=fixture('Elaine'),s=CRAFTS.Elaine;f.cast();f.tick(s.captureAt);assert.ok(f.target.knockback);f.actor.stunUntil=f.time+1000;f.tick(100);const x=f.target.x;assert.equal(f.target.knockback,null);assert.equal(f.target.stunUntil,f.time);f.tick(2000);assert.equal(f.target.x,x);assert.equal(f.target.hp,500);
 });

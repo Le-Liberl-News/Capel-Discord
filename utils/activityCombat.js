@@ -87,6 +87,8 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if (!endpoint) return { error: "Visée invalide." };
 
+    if(spec.kaleido){const h=player.heading??{dx:0,dz:1},length=Math.hypot(h.dx,h.dz)||1;Object.assign(endpoint,{x:origin.x+h.dx/length*1.3,y:origin.y,z:origin.z+h.dz/length*1.3});}
+
     let supportTarget=null,obstacleImpact=false;
 
     if(spec.effect){supportTarget=spec.targetRequired?room.get(command.target):player;if(!supportTarget||supportTarget.enemy||supportTarget.hp<=0||supportTarget.spectator||(supportTarget.id!==player.id&&!dungeon)||Math.hypot(supportTarget.x-player.x,supportTarget.z-player.z)>spec.range||Math.abs((supportTarget.y??0)-origin.y)>3)return {error:'Cible de soutien indisponible.'};Object.assign(endpoint,{x:supportTarget.x,y:supportTarget.y??0,z:supportTarget.z});}
@@ -95,7 +97,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const airborneMelee=spec.special==='photo'||command.kind==='basic'&&!spec.projectile;
 
-    const ground = fps||spec.effect||airborneMelee||spec.fixedLength?endpoint.y:command.kind==='basic'?(floor(endpoint)??endpoint.y):floor(endpoint);
+    const ground = spec.kaleido?origin.y:fps||spec.effect||airborneMelee||spec.fixedLength?endpoint.y:command.kind==='basic'?(floor(endpoint)??endpoint.y):floor(endpoint);
 
     if (ground === null || !Number.isFinite(ground) || Math.abs(ground-endpoint.y)>1.2)
 
@@ -110,9 +112,9 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     const distance=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);
 
-    if((spec.effect||spec.chargeStun||spec.coinShot||spec.zeroth||spec.kaleido||spec.special==='flameSlash')&&hit&&Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2)return {error:'La cible est derrière un obstacle.'};
+    if((spec.effect||spec.chargeStun||spec.coinShot||spec.zeroth||spec.special==='flameSlash')&&hit&&Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2)return {error:'La cible est derrière un obstacle.'};
 
-    if(!spec.catLeap && spec.special!=='phoenix' && hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
+    if(!spec.kaleido && !spec.catLeap && spec.special!=='phoenix' && hit && Math.hypot(hit.point.x-from.x,hit.point.y-from.y,hit.point.z-from.z)<distance-.2) {
 
       obstacleImpact=!!fps;
       const stop=spec.dash?Math.max(0,Math.hypot(hit.point.x-origin.x,hit.point.z-origin.z)-.2):null;
@@ -313,11 +315,11 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
   }
 
-  // Only the confirmed first hit calls this: prediction and target selection cannot pull anyone.
-  function catchTarget(attack,actor,target,point,time){
+  // Called by confirmed hits or an authoritative nearby capture; prediction cannot pull anyone.
+  function catchTarget(attack,actor,target,point,time,duration=160){
     const direction={x:point.x-target.x,z:point.z-target.z},distance=Math.hypot(direction.x,direction.z);
     if(distance<.03||target.hp<=0||attack.cancelled)return;
-    const projection=project(attack,actor,target,{knockback:distance,knockbackDuration:160,comboCatch:true},direction,time);
+    const projection=project(attack,actor,target,{knockback:distance,knockbackDuration:duration,comboCatch:true},direction,time);
     if(projection){target.moving=false;target.movementCredit=0;if(target.enemy)target.path=[];}
     return projection;
   }

@@ -19,3 +19,12 @@ test('local light augments native shaders while keeping alpha, colours and clipp
   cycle.update(60000);assert.equal(shader.uniforms.skyLamps.value,0);assert.equal(shadow.opacity,.24);
   assert.equal(MAP_LIGHTS.anterose[0].id,'capel');cycle.dispose();
 });
+
+
+test('Gehenna embers stay in world space, drift quickly and release their geometry',async()=>{
+ const {createGehennaEmbers}=await import('../activity/gehenna-embers.mjs'),scene=new THREE.Scene(),view=createGehennaEmbers(THREE,scene),mesh=scene.getObjectByName('gehenna-world-embers');
+ assert.equal(view.count,640);assert.ok(mesh.isLineSegments);view.update(1000);const first=Array.from(mesh.geometry.attributes.position.array);
+ view.update(1000,{position:{x:1000,y:900,z:-900}});assert.deepEqual(Array.from(mesh.geometry.attributes.position.array),first);
+ view.update(1010);const moved=mesh.geometry.attributes.position.array;assert.ok(moved[3]-first[3]>=.039);assert.ok(Math.hypot(moved[3]-moved[0],moved[4]-moved[1],moved[5]-moved[2])<.6);
+ let disposed=false;mesh.geometry.addEventListener('dispose',()=>disposed=true);view.dispose();assert.ok(disposed);assert.equal(scene.children.length,0);
+});
