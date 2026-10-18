@@ -25,7 +25,9 @@ if ($authorization === '' && function_exists('getallheaders')) {
     }
 }
 $corps = file_get_contents('php://input');
-$requete = curl_init('http://127.0.0.1:3000' . $routes[$route]);
+// Training configuration is a distinct authenticated GET on the terminal route.
+$query = ($route === 'terminal' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && ($_GET['training'] ?? '') === '1') ? '?training=1' : '';
+$requete = curl_init('http://127.0.0.1:3000' . $routes[$route] . $query);
 curl_setopt_array($requete, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST',
