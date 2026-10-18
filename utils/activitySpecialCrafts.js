@@ -16,6 +16,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
  function detonate(actor,room){const a=activeSpire(actor.id);if(!a)return false;a.explodedAt=now();a.endsAt=now()+700;for(const target of room.values())if(target.stoneSource===a.id){target.stoneUntil=0;delete target.stoneSource;}damageArea(a,actor,room,a.aim,2.8,36,now());return true;}
  function setup(a,s,command,room){
   a.special=s.special;
+  if(s.special==='daybreak'){a.impactAt=a.started+s.hitAt;a.endsAt=a.started+s.duration+400;}
   if(s.special==='altinaSword'){altina.setup(a,room.get(a.actor));for(const other of attacks.values())if(other.actor===a.actor+':guardian')other.cancelled=true;}
   if(a.character==='Bleublanc'&&s.special==='dive')room.get(a.actor).projectileReflection={id:a.id,from:a.started+s.windup+1,until:a.started+s.windup+s.leapDuration};
   if(s.special==='flameSlash'){const p=require('../activity/rean-flame-slash.cjs').flamePhases(a);a.impactAt=a.started+p.first;a.endsAt=a.started+p.end+400;}
@@ -32,6 +33,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
   if(s.special==='altinaSword'){altina.tick(a,s,room.get(a.actor),room,time);return true;}
   if(a.cancelled)return true;
   const actor=room.get(a.actor);if(!actor||actor.hp<=0||actor.character!==a.character||actor.spectator){if(actor?.phoenixDashPending===a.id)delete actor.phoenixDashPending;a.cancelled=true;a.endsAt=time;return true;}
+  if(s.special==='daybreak'){require('./activityDaybreakCrafts').tickDaybreak(a,s,actor,room,time,{geometry,canDamage,hurt});return true;}
   if(s.special==='flameSlash'){require('./activityReanFlameSlash').tickFlameSlash(a,s,actor,room,time,{geometry,canDamage,hurt,catchTarget});return true;}
   if(s.special==='mueller'){
    const combo=require('../activity/mueller-combo.cjs'),p=combo.muellerPhases(a),age=time-a.started;

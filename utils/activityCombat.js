@@ -142,6 +142,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     }
 
+    if(spec.special==='daybreak'){const {motion}=require('../activity/daybreak-crafts.cjs');let previous={...origin,y:origin.y+.8};for(let t=0;t<=spec.moveEnd+40;t+=40){const p=motion({origin,aim:endpoint},Math.min(t,spec.moveEnd),spec).position,body={...p,y:p.y+.8};if(geometry?.sweep(previous,body,.16))return {error:'Le trajet est bloqué par un obstacle.'};previous=body;}}
     if(spec.catLeap){const {combatMotion}=require('../activity/combat-motion.cjs');let previous={...origin,y:origin.y+.5};for(let t=40;t<spec.leapDuration+40;t+=40){const p=combatMotion({origin,aim:endpoint},Math.min(t,spec.leapDuration),spec).position,body={...p,y:p.y+.5};if(geometry?.sweep(previous,body,.15))return {error:'Le bond est bloqué.'};previous=body;}}
     if(spec.special==='phoenix'){
       const gx=Math.round((endpoint.x-grid.origin.x)/grid.step),gz=Math.round((endpoint.z-grid.origin.z)/grid.step);

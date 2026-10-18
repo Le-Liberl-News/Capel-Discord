@@ -2,6 +2,7 @@ import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
 import {combatSpec} from './native-combat.cjs';
 import {releasedShots} from './gun-recoil.mjs';
 import moves from './combat-moves.cjs';
+import daybreakCrafts from './daybreak-crafts.cjs';
 import {playReanCraftSounds} from './rean-craft-sounds.mjs';
 // What makes the shared moves readable (combat-moves.cjs): combo hits shake the target and show the
 // combo counter, a missed swing puffs, a parried craft says so and blows up on its caster, a dodge
@@ -52,6 +53,7 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))sounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])sounds?.play(CRAFT_SOUNDS[event.character]);}
     const spec=combatSpec(event.character,event.kind);
     playReanCraftSounds(event,now,done,sounds);
+    if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of [['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8]]){const key='daybreak-sound:'+name,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)sounds?.play(name,{gain});}}}
     const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':event.character==='Josette'&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
     if(sound&&!event.cancelled&&!event.reflectedProjectile){
      for(const shot of releasedShots(event,spec,now)){

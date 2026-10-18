@@ -1073,7 +1073,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
 
       if(attack?.special==='altinaSword'&&attack.surfHeading){const facing=avatar===me?altinaSword.cameraSurfDirection(yaw):attack.surfFacing??attack.surfHeading;avatar.heading={dx:facing.x,dz:facing.z};}
       else if(attack&&renneMechanics.combatSpec(attack.character,attack.kind)?.special!=='smoke')avatar.heading={dx:attack.aim.x-attack.origin.x,dz:attack.aim.z-attack.origin.z};
-      if(combatCamera&&avatar===me&&!introPlaying&&!['flameSlash','altinaSword'].includes(attack?.special))avatar.heading=combatMoves.cameraFacing(yaw);
+      if(combatCamera&&avatar===me&&!introPlaying&&!['flameSlash','altinaSword','daybreak'].includes(attack?.special))avatar.heading=combatMoves.cameraFacing(yaw);
       avatar.direction = facing(
         avatar.heading.dx,
         avatar.heading.dz,

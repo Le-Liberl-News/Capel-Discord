@@ -390,5 +390,17 @@
   "Claiomh Solais": {
     "height": 1.01,
     "radius": 0.44
+  },
+  "Van": {
+    "height": 1.82,
+    "radius": 0.36
+  },
+  "Elaine": {
+    "height": 2.12,
+    "radius": 0.36
+  },
+  "Shizuna": {
+    "height": 1.76,
+    "radius": 0.36
   }
 }

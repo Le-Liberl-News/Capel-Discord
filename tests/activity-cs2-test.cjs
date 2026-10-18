@@ -4,7 +4,7 @@ test('CS2 prototypes exist in the Capel test catalogue, remain selectable, and d
  const fields=require('../activity/assets/sky/characters.json'),daily=require('../rpg/data/persos.json'),combat=require('../activity/native-combat.cjs');
  const choices=createTestCharacters({characters:fields,expires:0,permanent:TEST_CHARACTERS});
  assert.deepEqual(choices.menu('user').characters,TEST_CHARACTERS);
- for(const name of TEST_CHARACTERS){assert.ok(fs.existsSync('activity/assets/sky/'+fields[name].texture));assert.equal(daily[name],undefined);assert.ok(combat.combatSpec(name,'basic'));assert.equal(combat.combatSpec(name,'craft').special,name==='Rean'?'flameSlash':'altinaSword');choices.set('user',name);}
+ for(const name of TEST_CHARACTERS){assert.ok(fs.existsSync('activity/assets/sky/'+fields[name].texture));assert.equal(daily[name],undefined);assert.ok(combat.combatSpec(name,'basic'));assert.equal(combat.combatSpec(name,'craft').special,name==='Rean'?'flameSlash':name==='Altina'?'altinaSword':'daybreak');choices.set('user',name);}
 });
 test('a nearby living guardian takes damage, and a defeated or distant guardian cannot protect',()=>{
  const owner={id:'altina',hp:500,x:0,y:0,z:0},pet={id:'pet',hp:100,x:1,y:0,z:0,guardianFor:'altina'};protectWithGuardian(owner,pet);

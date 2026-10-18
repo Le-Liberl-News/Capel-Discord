@@ -1,5 +1,6 @@
 const {dashPosition}=require('./black-fang.cjs');
 function combatMotion(event,time,spec){
+ if(spec.special==='daybreak')return require('./daybreak-crafts.cjs').motion(event,time,spec);
  if(spec.special==='altinaSword')return require('./altina-scraft.cjs').motion(event,time);
  if(spec.special==='flameSlash')return require('./rean-flame-slash.cjs').flameMotion(event,time);
  if(spec.special==='mueller')return require('./mueller-combo.cjs').muellerMotion(event,time);
