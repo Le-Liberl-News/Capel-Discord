@@ -22,5 +22,6 @@ function pose(a,t){const p=phases(a);let bank=5,start=0,duration=400;
  const loop=bank===7||bank===11;return {bank,pose:Math.min(11,Math.floor((loop?(t-start)%duration:Math.max(0,t-start))/duration*12))};
 }
 function aiming(a,t){return !!a&&!a.cancelled&&a.special==='altinaSword'&&t>=PHASE.aimStart&&t<phases(a).diveAt;}
-function moveSurf(position,input,seconds,floor,geometry){const length=Math.hypot(input.x,input.z);if(!length||seconds<=0)return {...position};const direction={x:input.x/Math.max(1,length),z:input.z/Math.max(1,length)},distance=8*seconds*Math.min(1,length);return require('./combat-projection.cjs').projectionPath(position,direction,distance,floor,geometry)?.end??{...position};}
-module.exports={CRAFT,PHASE,phases,perch,motion,pose,aiming,moveSurf};
+function surfDirection(input,previous={x:0,z:-1}){const requested=Math.hypot(input?.x??0,input?.z??0)>.08?input:previous,length=Math.hypot(requested.x,requested.z)||1;return Math.hypot(requested.x,requested.z)>.001?{x:requested.x/length,z:requested.z/length}:{x:0,z:-1};}
+function moveSurf(position,input,seconds,floor,geometry){const direction=surfDirection(input),distance=8*seconds;if(seconds<=0)return {...position};return require('./combat-projection.cjs').projectionPath(position,direction,distance,floor,geometry)?.end??{...position};}
+module.exports={CRAFT,PHASE,phases,perch,motion,pose,aiming,moveSurf,surfDirection};

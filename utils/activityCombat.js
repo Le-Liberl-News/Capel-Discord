@@ -165,6 +165,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
     const travel = fps?Math.hypot(endpoint.x-fps.origin.x,endpoint.y-fps.origin.y,endpoint.z-fps.origin.z)/spec.projectileSpeed*1000:spec.leap?spec.leapDuration:spec.dash ? spec.dashDuration : !spec.projectile ? 0 : Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)/14*1000;
 
     const attack={id:command.id,actor:player.id,character:player.character,kind:command.kind,tempo:spec.tempo,technique:spec.name,target:supportTarget?.id??(spec.targetRequired?command.target:undefined),effect:spec.effect,origin:fps?fps.origin:origin,ray:fps,obstacleImpact,aim:endpoint,started:time,impactAt:time+spec.windup+travel,endsAt:time+Math.max(spec.duration,spec.windup+travel+(spec.persistentBuff?spec.buffDuration:spec.effectDuration??550)),resolved:false,nextHit:0,hits:[]};
+    if(spec.mobileProjectile)attack.projectileReleaseAt=time+spec.windup;
     if(player.character==='Carna'){attack.baseRay=fps;attack.impactAt=time;}
     if(food){attack.food=food;attack.technique=cooking.FOODS[food].name;player.foodStock.shift();}
 
@@ -373,6 +374,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(trinity.tick(attack,dashSpec,room,time))continue;
       if(dashSpec?.special==='loewe'){loewe.tick(attack,dashSpec,room,time);continue;}
       if(dashSpec?.special==='dimension'){dimension.tick(attack,dashSpec,room,time);continue;}
+      if(dashSpec?.mobileProjectile){require('./activityMobileProjectiles').tickMobileProjectile(attack,dashSpec,room.get(attack.actor),room,time,{geometry,canDamage,hurt});continue;}
       if(special.tickAttack(attack,dashSpec,room,time))continue;
 
       if(dashSpec?.lockOn&&!attack.resolved&&!attack.cancelled){

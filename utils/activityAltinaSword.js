@@ -13,12 +13,12 @@ function createAltinaSword({floor,geometry,grid,hurt,canDamage,project}){
  }
  function finish(a,actor,time,cancelled=false){a.resolved=true;a.dashFinished=true;a.cancelled=cancelled;delete actor.altinaSwordUntil;actor.combatLockedUntil=time;actor.attackBusyUntil=time;if(cancelled){const ground=safeFloor(actor);actor.y=Number.isFinite(ground)?ground:a.origin.y;actor.acceptedAt=time;}const guardian=actor._guardian;if(guardian){guardian.duelProtected=!!a.guardianWasProtected;guardian.x=actor.x;guardian.y=actor.y;guardian.z=actor.z;guardian.acceptedAt=time;}}
  function tick(a,s,actor,room,time){if(a.resolved)return;if(!actor)return;if(actor.hp<=0||actor.spectator||actor.character!=='Altina'||immobilized(actor,time)||a.cancelled){finish(a,actor,time,true);return;}
-  const stop=Math.min(time,a.started+sword.PHASE.surfEnd),elapsed=Math.max(0,Math.min(stop,a.surfInputUntil)-a.surfUpdatedAt);
-  if(elapsed>0){a.surfPosition=sword.moveSurf(a.surfPosition,a.surfInput,Math.min(.15,elapsed/1000),safeFloor,geometry);if(Math.hypot(a.surfInput.x,a.surfInput.z)>.001)a.surfHeading={...a.surfInput};}a.surfUpdatedAt=Math.max(a.surfUpdatedAt,stop);a.aim={...a.surfPosition};
+  const stop=Math.min(time,a.started+sword.PHASE.surfEnd),elapsed=Math.max(0,stop-a.surfUpdatedAt);a.surfHeading=sword.surfDirection(time<=a.surfInputUntil?a.surfInput:null,a.surfHeading);
+  if(elapsed>0){a.surfPosition=sword.moveSurf(a.surfPosition,a.surfHeading,Math.min(.15,elapsed/1000),safeFloor,geometry);}a.surfUpdatedAt=Math.max(a.surfUpdatedAt,stop);a.aim={...a.surfPosition};
   if(time-a.started>=sword.PHASE.surfEnd&&a.perchHeight===undefined){const ceiling=geometry?.sweep({...a.aim,y:a.aim.y+.8},{...a.aim,y:a.aim.y+7.8},.2);a.perchHeight=ceiling?Math.max(.3,ceiling.point.y-a.aim.y-1):7;}
   const age=time-a.started,p=sword.phases(a),previous=a.surfLast,at=sword.motion(a,Math.min(age,sword.PHASE.surfEnd)).position;
   if(age>=sword.PHASE.prep&&a.surfTime<sword.PHASE.surfEnd){for(const target of room.values()){
-   if(target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||a.surfHits.includes(target.id)||segmentDistance(target,previous,at)>1.15||Math.abs((target.y??0)-at.y)>1.6)continue;
+   if(target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target)||a.surfHits.includes(target.id)||segmentDistance(target,previous,at)>1.8||Math.abs((target.y??0)-at.y)>1.6)continue;
    if(geometry?.sweep({...at,y:at.y+.6},{x:target.x,y:(target.y??0)+.6,z:target.z},.1))continue;
    a.surfHits.push(target.id);const dealt=hurt(a,actor,target,s.damage,time,{point:{x:target.x,y:(target.y??0)+.8,z:target.z}});a.hits.push({id:target.id,at:time,phase:'surf',...dealt});if(dealt.damage&&target.hp>0)project(a,actor,target,{knockback:2.5,knockbackDuration:300},a.surfHeading,time);
   }}a.surfLast=at;a.surfTime=Math.min(age,sword.PHASE.surfEnd);if(a.cancelled){finish(a,actor,time,true);return;}

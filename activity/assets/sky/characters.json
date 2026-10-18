@@ -4147,6 +4147,7 @@
       "generatedWithAI": false
     },
     "bodyPixelHeight": 50,
-    "bodyRadiusPixels": 22
+    "bodyRadiusPixels": 22,
+    "sceneScale": 2
   }
 }
