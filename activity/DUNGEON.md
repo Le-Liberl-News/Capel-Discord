@@ -82,7 +82,7 @@ Les ponts sont surélevés de 0,06 unité, avec la même hauteur dans la navigat
 - Impulsion dans la direction du clavier/joystick ou du trajet en cours ; sans mouvement, saut sur place. Durée 1 s, portée 4,5 unités, hauteur 1,65. Le serveur valide le départ et calcule la trajectoire ; pas de double saut. Une chute ou un mur ramène au départ et enlève 20 PV.
 - Deux îlots par étage, sans pont, avec un vide de 2,2 unités et des ouvertures de départ dégagées.
 - Torches animées avec les frames FIRE natives et éclairage local vacillant, sur une ambiance sombre. La lumière locale utilise une atténuation par distance, sans ombre portée des torches.
-- Mishy : éventail plein de 117°, portée 1,9, préparation 420 ms, dégâts 10. Mishy ardent : sprite rose Azure `ch45400.itc`, trois boules de feu sans avertissement toutes les 650 ms, vitesse 8,5, dégâts 8 par boule.
+- Mishy : éventail plein de 117°, portée 1,9, préparation 420 ms, dégâts 10. Mishette : sprite rose Azure `ch45400.itc`, trois boules de feu sans avertissement toutes les 650 ms, vitesse 8,5, dégâts 8 par boule.
 - Deux pièges par étage : rangées de feu toutes les 3,2 s, vitesse 5, dégâts 15. Hauteur 0,45 pour sauter par-dessus ; hauteur 2,35 pour passer au sol. Trajectoires et collisions balayées en 3D, arrêt contre les murs. Aucun dégât entre équipiers.
 
 ## Combat mobile et plateformes

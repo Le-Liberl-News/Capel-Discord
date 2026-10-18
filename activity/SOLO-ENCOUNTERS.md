@@ -27,3 +27,7 @@ Les rencontres sont locales, sans notification Discord, classement ni PB. Une re
 Pour forcer un groupe dans l'aperçu local, utiliser `?opponent=rencontre-test` au lancement du combat solo.
 
 Les arènes Grancel, Pilier Axis et Géhenne sont tirées à chances égales. Géhenne reprend le modèle natif Third/m7309 : passerelle principale connectée, sol aligné à zéro, points de départ (0, -12) et (0, 12), garde-corps et décor conservés. Le sol de combat exclut les vides et les zones surélevées. La musique Axis est réutilisée pour le moment.
+
+### Ambiances des arènes
+
+Grancel et le Pilier Axis alternent entre jour, nuit, coucher de soleil et pluie selon l’identifiant du combat : tous les participants obtiennent la même ambiance. La météo ne modifie ni les collisions ni les dégâts. La Géhenne conserve son éclairage et reçoit des flammes flottantes animées avec l’atlas natif Sky effects/fire-frames.png. En prévisualisation, ?ambience=day|night|sunset|rain permet de vérifier chaque variante.

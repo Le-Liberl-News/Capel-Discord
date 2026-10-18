@@ -1,4 +1,5 @@
 import altinaSword from './altina-scraft.cjs';
+import {createArenaAtmosphere} from './arena-atmosphere.mjs';
 import {createOffscreenOpponents} from './offscreen-opponents.mjs';
 import {frameCombatCamera} from './combat-framing.mjs';
 import {createMapInteractions} from './map-interactions.mjs';
@@ -189,6 +190,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const arenaSun=map==='arena'?createArenaSun(renderer,scene,model):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows,map==='axis'?AXIS_LIGHTS:tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]);
+  const arenaAtmosphere=isArena?await createArenaAtmosphere(THREE,scene,ASSETS,map,dayNight,arenaSun,renderer,{override:__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('ambience'):undefined}):null;
   mapDecor?.install();
   const towerGates=inTower?await createTowerGates(THREE,scene,ASSETS,towerLayout,floorNumber):null;
   const dungeonEffects=(inTower&&!inDungeon||isArena)?await createDungeonEffects(THREE,scene,ASSETS,isArena?{}:towerLayout):null;
@@ -678,7 +680,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       initialTexture:texture,walkingTexture,walkingInfo:baseInfo.walk,craftTexture,craftInfo:baseInfo.craft,
       battleTextures:battle?new Map([...combatAssets.textures].map(([bank,base])=>{const clone=shareTexture(base);renderer.initTexture(clone);return [bank,clone];})):null,
       fallbackDeath: dead && !baseInfo.death && (!battle||!battle.banks["4"]),
-      info,
+      info,sceneScale:baseInfo.sceneScale??1,
       position: {
         x: player.x ?? spawn.x,
         y: player.y ?? spawn.y,
@@ -1100,7 +1102,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.perched=avatar.character==="Sieg"&&!avatar.dead&&!beating;
       avatar.mesh.material.map.offset.set((frame%info.columns)/info.columns,1-(Math.floor(frame/info.columns)+1)/info.rows);
       }
-      if(avatar.character==='Loewe')avatar.mesh.scale.setScalar(bodyScale);else if(avatar.info.sceneScale)avatar.mesh.scale.setScalar(avatar.info.sceneScale);
+      if(avatar.character==='Loewe')avatar.mesh.scale.setScalar(bodyScale);else if(avatar.sceneScale!==1)avatar.mesh.scale.setScalar(avatar.sceneScale??1);
       avatar.mesh.position.set(
         avatar.position.x+(avatar.introOffset?.x??0)+bodyOffsetX*right.x,
         avatar.position.y+(avatar.spriteFloorClearance??0)+(avatar.deathLift??0)-(avatar.footOffset??0)*(avatar.character==="Sieg"&&!avatar.perched?camera.matrixWorld.elements[5]:1)-(avatar.perched?Math.max(0,avatar.position.y-avatar.flightFloor):0),
@@ -1186,7 +1188,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       }
       const p = new THREE.Vector3(
         a.position.x,
-        a.position.y + (a.info.bodyHeight??a.info.height)*(a.info.sceneScale??1) + 0.15,
+        a.position.y + (a.info.bodyHeight??a.info.height)*(a.sceneScale??1) + 0.15,
         a.position.z,
       ).project(camera);
       label.style.left = ((p.x + 1) * viewport.width) / 2 + "px";
@@ -1224,7 +1226,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     horrorMembranes?.update(Date.now()+jumpClockOffset);
     mapDecor?.update(camera,avatars.get(localId)?.position);
     const lightState=dayNight.update();dayNight.photo(renneCombat?.photoFlashes()??[]);
-    rooftopSky?.update(camera,lightState);skyGlow?.update();
+    rooftopSky?.update(camera,lightState);arenaAtmosphere?.update(time,camera,avatars.get(localId)?.position);skyGlow?.update();
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     if(previewDrinkingClock){previewDrinkingClock.tick(environment.npcs);dialogues.receive(environment.npcs.filter(n=>n.utterance).map(n=>({...n.utterance,author:n.id})));}
     drinkingTable?.update(time,avatars);
@@ -1250,7 +1252,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     trainingGeometry:()=>({grid,geometry:collision}),
     playerCharacter:()=>avatars.get(localId)?.character,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,combatEffects:renneCombat?.effectStats(),triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { avatarSizes:()=>[...avatars.values()].filter(a=>a.character==='Claiomh Solais').map(a=>({character:a.character,sceneScale:a.sceneScale,renderScale:a.mesh.scale.x,bodyHeight:a.info.bodyHeight,sourcePixelRatio:a.info.sourcePixelRatio})),setAmbience:key=>arenaAtmosphere?.select('preview',key),ambience:()=>arenaAtmosphere?.state(),setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,combatEffects:renneCombat?.effectStats(),triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
     onRematch(callback){notifyRematch=callback;},
@@ -1348,6 +1350,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         }
     },
     async world(result) {
+      arenaAtmosphere?.select(result.duel?.id??'');
       teamPanel?.update(result.team);
       enemyEffects?.update(result.enemies??[],result.health?.serverTime??Date.now());
       dialogues.receive((result.enemies??[]).filter(e=>e.utterance&&e.hp>0).map(e=>({id:e.utterance.id,author:e.id,character:e.name,text:e.utterance.text})));
@@ -1479,7 +1482,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       removeEventListener("resize", resize);
       muellerTarget.geometry.dispose();muellerTarget.material.dispose();
       touches.reset();touchButton.remove();touchStyle.remove();
-      horrorMembranes?.dispose();mapDecor?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();arenaSun?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
+      arenaAtmosphere?.dispose();horrorMembranes?.dispose();mapDecor?.dispose();arenaAudience?.dispose();rooftopSky?.dispose();arenaSun?.dispose();dayNight.dispose();duelIntro?.dispose();duelFinish?.dispose();josetteView?.dispose();siegDiveView.dispose();combatControls.dispose();craftCapture?.dispose();renneCombat?.dispose();
       drinkingTable?.dispose();tavernTables?.dispose();crosshair.remove();blindness.remove();photoWhite.remove();for(const ghost of photoGhosts.values()){scene.remove(ghost);ghost.material.dispose();}teamPanel?.dispose();bossPanel.remove();enemyEffects?.dispose();movingPlatforms?.dispose();supportEffects.dispose();dungeonEffects?.dispose();towerGates?.dispose();jumpButton.remove();
       menu.remove();
       status.remove();

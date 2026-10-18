@@ -4111,11 +4111,11 @@
     "groundProjection": true
   },
   "Claiomh Solais": {
-    "texture": "claiomh-solais-cs2-run.png",
+    "texture": "combat/cs2/guardian-hd-field-f5292886eb.png",
     "columns": 8,
     "rows": 13,
-    "frameWidth": 60,
-    "frameHeight": 76,
+    "frameWidth": 120,
+    "frameHeight": 150,
     "frames": 104,
     "idle": [
       0
@@ -4136,18 +4136,20 @@
     ],
     "directions": 8,
     "fps": 12,
-    "pixelScale": 0.02,
-    "height": 1.52,
+    "pixelScale": 0.01,
+    "height": 1.5,
     "centerX": 0,
-    "centerY": 0.736,
-    "bodyHeight": 1,
+    "centerY": 0.7365,
+    "bodyHeight": 1.01,
     "source": {
       "model": "cold-steel2/gltf/C_NPC079/model.gltf",
       "tool": "atelier-sprites",
       "generatedWithAI": false
     },
-    "bodyPixelHeight": 50,
+    "sourcePixelRatio": 2,
+    "bodyPixelHeight": 101,
     "bodyRadiusPixels": 22,
+    "groundProjection": true,
     "sceneScale": 2
   }
 }

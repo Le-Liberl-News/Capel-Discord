@@ -51,7 +51,8 @@
     "directions": 8,
     "fps": 8,
     "height": 1.6,
-    "source": "Azure data/chr/ch45400.itc; original locomotion frames reused for attacks"
+    "source": "Azure data/chr/ch45400.itc; original locomotion frames reused for attacks",
+    "name": "Mishette"
   },
   "TowerCharger": {
     "texture": "enemies/charger.png",
