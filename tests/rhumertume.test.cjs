@@ -43,7 +43,7 @@ test('a day picked up after 13:00 gets no draw, an earlier one only times still 
  now=at('2026-10-22T09:30:00Z');await r.tick();
  assert.ok(store.load().schedule['2026-10-22'].every(m=>m>=11*60+30));
 });
-test('PomX, PompomX from 3h30, PompompomX from 7 hours, each step announced once like a Pokémon evolution',async()=>{
+test('PomX, PompomX from 3h30, PomdeterX from 7 hours, each step announced once like a Pokémon evolution',async()=>{
  let now=at('2026-10-25T09:00:00Z');
  const {r,said}=setup({now:()=>now});
  await r.infect('Tita');said.length=0;
@@ -53,7 +53,7 @@ test('PomX, PompomX from 3h30, PompompomX from 7 hours, each step announced once
  assert.equal(r.nameOf('Tita'),'PompomTita');
  now+=3.5*HOUR;await r.tick();
  assert.deepEqual(said[1],{text:'Quoi ? PompomTita évolue ?!',files:['evolution Tita 2->3']});
- assert.equal(r.roleplay('Tita','Salut').username,'PompompomTita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
+ assert.equal(r.roleplay('Tita','Salut').username,'PomdeterTita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
  await r.tick();assert.equal(said.length,2);
 });
 test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',async()=>{
@@ -62,7 +62,7 @@ test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',
  assert.equal(await r.message('Kloe','Bonjour'),null);
  await r.infect('Tita');now+=8*HOUR;
  const m=await r.message('Tita','Bonjour tout le monde');
- assert.equal(m.content,'');assert.equal(m.username,'PompompomTita');assert.equal(m.avatarURL,'pom/Tita-3.png');
+ assert.equal(m.content,'');assert.equal(m.username,'PomdeterTita');assert.equal(m.avatarURL,'pom/Tita-3.png');
  assert.equal(m.files[0].name,'bulle 3');assert.match(m.files[0].text,/pom/i);
 });
 test('the gauges: capitals and "!" for rage, "?" and emojis for madness; pom, citrouille and full stops calm them',()=>{

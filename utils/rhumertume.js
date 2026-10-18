@@ -2,7 +2,7 @@
 // played that day starts turning into a pom-tiron; an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
 // (30% after an hour, 60% after 3h30, every word but one in eight after 7 hours) and are shown in a Sky bubble; its
-// avatar is a pom wearing the character's hair, in three stages: PomX at once, PompomX from 3h30, PompompomX from 7 hours,
+// avatar is a pom wearing the character's hair, in three stages: PomX at once, PompomX from 3h30, PomdeterX from 7 hours,
 // each step announced with a Pokémon-like evolution GIF. How the player writes feeds two gauges: rage (capitals, "!")
 // makes the pom bite whoever spoke lately, who may catch the illness; madness ("?", emojis) makes it hurt itself.
 // "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
@@ -12,7 +12,7 @@ const WINDOW=[10*60,13*60];
 const CASES_PER_DAY=2;
 const PROGRESS=[[0,0],[HOUR,.3],[3.5*HOUR,.6],[7*HOUR,1]];
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
-const PREFIX=['','Pom','Pompom','Pompompom'];
+const PREFIX=['','Pom','Pompom','Pomdeter'];
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
 const RAGE=['Pris·e de rage, {perso} mord {victime} !','{perso} se jette sur {victime} en hurlant.'];
 const MADNESS=['{perso} se cogne la tête contre un mur en riant.','{perso} se met à sautiller partout sans raison apparente.'];
