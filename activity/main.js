@@ -1,7 +1,8 @@
 import {introDurationFor} from './duel-intro.mjs';
 import axisResidents from './assets/sky/axis/residents.json';
+import thorsLayout from './assets/sky/thors/layout.json';
 // training also takes place one time in two at the top of the Axis Pillar
-const TRAINING_VENUES={arena:{},thors:{spawns:[{x:0,y:-.25,z:9},{x:0,y:-.25,z:-10}],ballSpawns:[{x:-5,y:.075,z:0},{x:5,y:.075,z:0}]},gehenna:{spawns:[{x:0,y:0,z:-12},{x:0,y:0,z:12}],ballSpawns:[{x:0,y:.075,z:-4},{x:0,y:.075,z:4}]},axis:{spawns:[{x:0,z:-9.5},{x:0,z:9.5}],ballSpawns:axisResidents.ballSpawns}};let trainingVenue='arena';
+const TRAINING_VENUES={arena:{},thors:thorsLayout,gehenna:{spawns:[{x:0,y:0,z:-12},{x:0,y:0,z:12}],ballSpawns:[{x:0,y:.075,z:-4},{x:0,y:.075,z:4}]},axis:{spawns:[{x:0,z:-9.5},{x:0,z:9.5}],ballSpawns:axisResidents.ballSpawns}};let trainingVenue='arena';
 import {createTraining} from './training.mjs';
 import {pickSoloEncounter} from './solo-encounters.mjs';
 import trainingCombat from './native-combat.cjs';

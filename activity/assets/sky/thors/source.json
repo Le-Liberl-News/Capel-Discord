@@ -9,11 +9,16 @@
     "O_T00DOR02B",
     "O_T00DOR05"
   ],
+  "layout": "compact",
   "playableBounds": {
-    "minX": -18,
-    "maxX": 18,
-    "minZ": -18,
+    "minX": -12.5,
+    "maxX": 12.5,
+    "minZ": 0,
     "maxZ": 14
+  },
+  "spawn": {
+    "x": 0,
+    "z": 6
   },
   "note": "Native buildings, event ground, trees and entrance doors. Only the main-building forecourt is walkable."
 }

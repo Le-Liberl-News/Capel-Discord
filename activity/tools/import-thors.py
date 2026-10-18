@@ -1,7 +1,7 @@
 from pathlib import Path
 import json,base64,copy,shutil,re
 import argparse
-parser=argparse.ArgumentParser();parser.add_argument('--source',default='E:/dev/sky-activity-tools/cold-steel2/gltf');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--source',default='E:/dev/sky-activity-tools/cold-steel2/gltf');parser.add_argument('--layout',choices=['original','compact'],default='compact');args=parser.parse_args()
 root=Path(args.source);out=Path(__file__).resolve().parents[1]/'assets/sky/thors';out.mkdir(parents=True,exist_ok=True)
 g={'asset':{'version':'2.0','generator':'Native CS2 Thors courtyard import'},'scene':0,'scenes':[{'nodes':[]}],'nodes':[],'meshes':[],'materials':[],'textures':[],'images':[],'accessors':[],'bufferViews':[],'samplers':[{'wrapS':10497,'wrapT':10497,'magFilter':9728,'minFilter':9987}],'extensionsUsed':['KHR_materials_unlit']};data=bytearray()
 parts=[('M_T0000',None),('O_T00EVT28',None),('O_T00TRE00',None),('O_T00TRE01',None),('O_T00DOR02B',[0,.5,-24.424]),('O_T00DOR05',[0,0,19.125])]
@@ -50,8 +50,12 @@ for a in g['accessors']:a['bufferView']=remap[a['bufferView']]
 old=data;data=bytearray()
 for v in g['bufferViews']:
  data.extend(b'\0'*((-len(data))%4));offset=len(data);data.extend(old[v.get('byteOffset',0):v.get('byteOffset',0)+v['byteLength']]);v['byteOffset']=offset
+if args.layout=='compact':
+ from thors_compact import compact_campus
+ data=compact_campus(g,data)
 g['buffers']=[{'uri':'data:application/octet-stream;base64,'+base64.b64encode(data).decode(),'byteLength':len(data)}]
 (out/'anterose.gltf').write_text(json.dumps(g,separators=(',',':')),encoding='utf8')
+(out/'layout.json').write_text(json.dumps({'spawns':[{'x':0,'z':10},{'x':0,'z':2}] if args.layout=='compact' else [{'x':0,'z':9},{'x':0,'z':-10}],'ballSpawns':[{'x':-4,'y':.075,'z':6},{'x':4,'y':.075,'z':6}] if args.layout=='compact' else [{'x':-5,'y':.075,'z':0},{'x':5,'y':.075,'z':0}]}),encoding='utf8')
 (out/'residents.json').write_text(json.dumps({'npcs':[],'disablePoms':True}),encoding='utf8')
-(out/'source.json').write_text(json.dumps({'game':'Trails of Cold Steel II','map':'t0000','assets':[x[0] for x in parts],'playableBounds':{'minX':-18,'maxX':18,'minZ':-18,'maxZ':14},'note':'Native buildings, event ground, trees and entrance doors. Only the main-building forecourt is walkable.'},indent=2),encoding='utf8')
+(out/'source.json').write_text(json.dumps({'game':'Trails of Cold Steel II','map':'t0000','assets':[x[0] for x in parts],'layout':args.layout,'playableBounds':({'minX':-12.5,'maxX':12.5,'minZ':0,'maxZ':14} if args.layout=='compact' else {'minX':-18,'maxX':18,'minZ':-18,'maxZ':14}),'spawn':({'x':0,'z':6} if args.layout=='compact' else {'x':0,'z':4}),'note':'Native buildings, event ground, trees and entrance doors. Only the main-building forecourt is walkable.'},indent=2),encoding='utf8')
 print('packed',len(g['nodes']),'meshes',len(data),'bytes')
