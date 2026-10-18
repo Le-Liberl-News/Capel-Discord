@@ -59,8 +59,11 @@
         "run": "kai/gltf/chr0000_m_btl_run.glb",
         "attack": "kai/gltf/chr0000_m_btl_fattack1.glb",
         "death": "kai/gltf/chr0000_m_btl_dead.glb",
-        "craftStart": "kai/gltf/chr0000_m_btl_craft01_1.glb",
-        "craftEnd": "kai/gltf/chr0000_m_btl_craft01_1_ed.glb"
+        "craftPrepare": "kai/gltf/chr0000_m_btl_craft03_01.glb",
+        "craftToss": "kai/gltf/chr0000_m_btl_craft03_02.glb",
+        "craftFire": "kai/gltf/chr0000_m_btl_craft03_03.glb",
+        "craftHold": "kai/gltf/chr0000_m_btl_craft03_04.glb",
+        "craftRecover": "kai/gltf/chr0000_m_btl_craft03_04_ed.glb"
       },
       "notes": "Tenue Daybreak I, ancienne forme de visage Kai restaurée, couleur de peau issue de la texture Horizon.",
       "weapon": "kai/gltf/equ0000.glb",
@@ -69,8 +72,11 @@
         "run",
         "attack",
         "death",
-        "craftStart",
-        "craftEnd"
+        "craftPrepare",
+        "craftToss",
+        "craftFire",
+        "craftHold",
+        "craftRecover"
       ],
       "weaponScale": 0.8
     },
@@ -239,8 +245,11 @@
       "run": 0.666656494140625,
       "attack": 1.8000001907348633,
       "death": 3.333343505859375,
-      "craftStart": 1.666656494140625,
-      "craftEnd": 2.600006103515625
+      "craftPrepare": 1,
+      "craftToss": 1.6666679382324219,
+      "craftFire": 0.1999969482421875,
+      "craftHold": 1,
+      "craftRecover": 1.0000038146972656
     },
     "Elaine": {
       "idle": 6.6666669845581055,
