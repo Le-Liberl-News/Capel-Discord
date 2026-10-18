@@ -6,10 +6,10 @@ const {createActivityTerminal}=require('../utils/activityTerminal');
 const {createTestCharacters,TEST_CHARACTER_EXPIRY}=require('../utils/activityTestCharacters');
 const grid={origin:{x:0,z:0},step:1,width:10,height:10,cells:Array(100).fill(0),spawn:{x:2,y:0,z:2}};
 test('test character choice expires at its configured deadline, affects only its owner and keeps daily assignment intact',async()=>{
- let time=TEST_CHARACTER_EXPIRY-1,originalCalls=0;const choices=createTestCharacters({characters:{Sieg:{},Renne:{}},now:()=>time});const original=async()=>{originalCalls++;return 'Estelle';};
+ let time=9999,originalCalls=0;const choices=createTestCharacters({characters:{Sieg:{},Renne:{}},now:()=>time,expires:10000});const original=async()=>{originalCalls++;return 'Estelle';};
  choices.set('one','Sieg');assert.equal(await choices.resolve('one',original),'Sieg');assert.equal(await choices.resolve('two',original),'Estelle');assert.equal(originalCalls,1);
  assert.throws(()=>choices.set('one','Not a character'),{status:400});assert.equal(choices.menu('one').selected,'Sieg');
- time=TEST_CHARACTER_EXPIRY;assert.equal(choices.menu('one'),null);assert.equal(await choices.resolve('one',original),'Estelle');assert.throws(()=>choices.set('one','Renne'),{status:403});
+ time=10000;assert.equal(choices.menu('one'),null);assert.equal(await choices.resolve('one',original),'Estelle');assert.throws(()=>choices.set('one','Renne'),{status:403});
 });
 test('Capel choice requires authenticated proximity and updates the sprite immediately, with reset and expiry',async()=>{
  let time=0;const choices=createTestCharacters({characters:{Sieg:{},Renne:{}},now:()=>time,expires:10000});const resolver=id=>choices.resolve(id,async()=> 'Estelle');
@@ -75,3 +75,9 @@ test('Sieg perches on the actual restaurant furniture without falling through it
 });
 
 test('Sieg perch anchors use talons rather than the low tail in rear directions',()=>{const bird=require('../activity/assets/sky/characters.json').Sieg;assert.equal(bird.height,bird.frameHeight*.02);assert.equal(bird.footContactRows.length,8);assert.ok(bird.footContactRows[2]<bird.frameHeight-10);for(let i=0;i<8;i++)assert.ok(Math.abs(bird.footOffsets[i]+bird.footContactRows[i]/bird.frameHeight*bird.height-bird.height)<1e-9);});
+
+test('Capel character selection has no automatic expiry by default',async()=>{
+ assert.equal(TEST_CHARACTER_EXPIRY,null);let time=Date.parse('2026-10-18T08:00:00Z');const choices=createTestCharacters({characters:{Estelle:{},Carna:{},Rean:{}},now:()=>time,permanent:['Rean']});
+ choices.set('one','Carna');time+=365*86400000;assert.deepEqual(choices.menu('one').characters,['Estelle','Carna','Rean']);assert.equal(choices.menu('one').expires,null);assert.equal(await choices.resolve('one',async()=> 'Estelle'),'Carna');assert.equal(await choices.resolve('two',async()=> 'Estelle'),'Estelle');
+ choices.set('one','');assert.equal(await choices.resolve('one',async()=> 'Estelle'),'Estelle');
+});
