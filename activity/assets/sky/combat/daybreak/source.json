@@ -98,7 +98,11 @@
         "kaleidoStart": "kai/gltf/chr5110_m_btl_craft02_1.glb",
         "kaleidoFlurry": "kai/gltf/chr5110_m_btl_craft02_2_lp.glb",
         "kaleidoFinish": "kai/gltf/chr5110_m_btl_craft02_3.glb",
-        "kaleidoEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb"
+        "kaleidoEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb",
+        "kaleidoAimHold": "kai/gltf/chr5110_m_btl_craft02_1_lp.glb",
+        "kaleidoPause": "kai/gltf/chr5110_m_btl_craft02_3_lp.glb",
+        "kaleidoSalvoA": "kai/gltf/chr5110_m_btl_craft02_3.glb",
+        "kaleidoSalvoB": "kai/gltf/chr5110_m_btl_craft02_3.glb"
       },
       "chibi": {
         "legs": 0.48,
@@ -166,17 +170,43 @@
       ],
       "weaponScale": 0.8,
       "nativeCraftRevision": {
-        "motion": "chr5110_m_btl_craft02_2",
-        "loopMs": 400,
-        "preparationPose": "chr5110_m_btl_craft02_2_lp",
+        "initialThrust": "chr5110_m_btl_craft02_2",
+        "salvo": "chr5110_m_btl_craft02_3",
+        "salvoWindows": [
+          [
+            0,
+            0.5
+          ],
+          [
+            0.5,
+            1
+          ]
+        ],
+        "salvoFrames": 48,
+        "salvoDuration": 3400,
+        "pause": "chr5110_m_btl_craft02_3_lp",
+        "ending": "chr5110_m_btl_craft02_3_ed",
+        "repeatSalvo": false,
+        "launchDirection": "camera heading sent with command",
         "timings": {
           "capture": 650,
-          "flurryStart": 1750,
-          "flurryEnd": 3750,
-          "pauseEnd": 5750,
-          "finalHit": 6300,
-          "end": 7300
+          "gatherEnd": 1750,
+          "salvoStart": 2150,
+          "salvoEnd": 5550,
+          "pauseEnd": 7550,
+          "finalHit": 7700,
+          "end": 8550
         }
+      },
+      "clipWindows": {
+        "kaleidoSalvoA": [
+          0,
+          0.5
+        ],
+        "kaleidoSalvoB": [
+          0.5,
+          1
+        ]
       }
     },
     "Shizuna": {
@@ -325,7 +355,11 @@
       "kaleidoStart": 0.6666679382324219,
       "kaleidoFlurry": 3.3333282470703125,
       "kaleidoFinish": 3.4000244140625,
-      "kaleidoEnd": 1
+      "kaleidoEnd": 1,
+      "kaleidoAimHold": 3.3333282470703125,
+      "kaleidoPause": 3.333343505859375,
+      "kaleidoSalvoA": 3.4000244140625,
+      "kaleidoSalvoB": 3.4000244140625
     },
     "Shizuna": {
       "idle": 6.6666669845581055,

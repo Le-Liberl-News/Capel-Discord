@@ -80,11 +80,11 @@ test('Kaleido Fencer works empty and next to a wall without aiming at reachable 
  const f=fixture('Elaine',{geometry:{floor:()=>0,sweep:()=>({point:{x:1,y:.8,z:0}})}});f.target.x=8;
  assert.ok(f.combat.action(f.actor,{id:'craft',kind:'craft'},f.room).combatId);f.tick(CRAFTS.Elaine.duration);assert.equal(f.target.hp,500);assert.equal(f.actor.x,0);
 });
-test('Kaleido Fencer uses actual repeated thrusts, a separate preparation pose and a two-second pause',()=>{
+test('Kaleido Fencer plays the complete native salvo once, then its pause and ending clips',()=>{
  const s=CRAFTS.Elaine;assert.equal(s.targetRequired,false);assert.equal(s.selfTarget,true);
- assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,6);
- assert.deepEqual(pose('Elaine',1825),pose('Elaine',2225));assert.notDeepEqual(pose('Elaine',1825),pose('Elaine',1925));
- assert.deepEqual(pose('Elaine',4000),pose('Elaine',5600));
+ assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,11);assert.equal(pose('Elaine',3850).bank,10);
+ assert.notDeepEqual(pose('Elaine',2225),pose('Elaine',2625));assert.equal(pose('Elaine',5600).bank,7);assert.equal(pose('Elaine',7600).bank,8);
+ assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_m_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_m_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[0,.5]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.5,1]);
 });
 
 test('interrupting a captured multi-hit craft releases its own remaining stun and cancels later damage',()=>{
@@ -144,6 +144,14 @@ test('clients wait for the launch line instead of dashing down the stale intro l
 });
 test('changed Elaine craft atlases have content-addressed names, so old cached dimensions cannot be reused',()=>{
  const fs=require('node:fs'),crypto=require('node:crypto'),catalogue=require('../activity/assets/sky/combat/catalogue.json');
- for(const bank of [5,6,7,8,9]){const b=catalogue.Elaine.banks[bank],hash=crypto.createHash('sha256').update(fs.readFileSync('activity/assets/sky/'+b.texture)).digest('hex').slice(0,10);assert.ok(b.texture.endsWith('-'+hash+'.png'));const png=fs.readFileSync('activity/assets/sky/'+b.texture);assert.equal(png.readUInt32BE(16),b.columns*b.frameWidth);assert.equal(png.readUInt32BE(20),b.rows*b.frameHeight);}
- assert.equal(catalogue.Elaine.banks[6].rows,16);
+ for(const bank of [5,6,7,8,9,10,11]){const b=catalogue.Elaine.banks[bank],hash=crypto.createHash('sha256').update(fs.readFileSync('activity/assets/sky/'+b.texture)).digest('hex').slice(0,10);assert.ok(b.texture.endsWith('-'+hash+'.png'));const png=fs.readFileSync('activity/assets/sky/'+b.texture);assert.equal(png.readUInt32BE(16),b.columns*b.frameWidth);assert.equal(png.readUInt32BE(20),b.rows*b.frameHeight);}
+ assert.equal(catalogue.Elaine.banks[6].rows,24);
+});
+
+
+test('Elaine takes the camera launch heading, not the stale last movement heading',()=>{
+ const f=fixture('Elaine');f.actor.heading={dx:1,dz:0};
+ assert.ok(f.combat.action(f.actor,{id:'craft',kind:'craft',direction:{x:0,z:1}},f.room).combatId);
+ const a=f.combat.snapshot().attacks[0];assert.equal(a.aim.x,0);assert.equal(a.aim.z,1.3);assert.equal(f.actor.heading.dx,0);assert.equal(f.actor.heading.dz,1.3);
+ f.tick(CRAFTS.Elaine.captureAt);assert.ok(Math.abs(f.target.knockback.end.x)<.15);assert.ok(f.target.knockback.end.z>1.1);
 });

@@ -87,7 +87,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if (!endpoint) return { error: "Visée invalide." };
 
-    if(spec.kaleido){const h=player.heading??{dx:0,dz:1},length=Math.hypot(h.dx,h.dz)||1;Object.assign(endpoint,{x:origin.x+h.dx/length*1.3,y:origin.y,z:origin.z+h.dz/length*1.3});}
+    if(spec.kaleido){const d=command.direction,h=d&&Number.isFinite(d.x)&&Number.isFinite(d.z)&&Math.hypot(d.x,d.z)>.001?{dx:d.x,dz:d.z}:player.heading??{dx:0,dz:1},length=Math.hypot(h.dx,h.dz)||1;Object.assign(endpoint,{x:origin.x+h.dx/length*1.3,y:origin.y,z:origin.z+h.dz/length*1.3});}
 
     let supportTarget=null,obstacleImpact=false;
 

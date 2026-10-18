@@ -7,10 +7,10 @@ Les modèles, textures et mouvements proviennent de Horizon, avec les tenues ori
 | Personnage | Craft | Clips natifs |
 | --- | --- | --- |
 | Van | Coin Bullets : pièce puis tir et impact lumineux sur sa cible | `chr0000_m_btl_craft03_*` |
-| Elaine | Kaleido Fencer sans ciblage : capture proche, placement progressif devant son épée, estocades répétées, pause puis slash vert | `chr5110_m_btl_craft02_1`, `_2_lp` (préparation), `_2` (estocades), `_3`, `_3_ed` |
+| Elaine | Kaleido Fencer sans ciblage : capture proche, placement progressif devant son épée, estocades répétées, pause puis slash vert | `chr5110_m_btl_craft02_1`, `_2_lp` (préparation), `_2` (estocade initiale), `_3` (salve complète), `_3_lp` (pause), `_3_ed` |
 | Shizuna | Zeroth Gleam : pétales, vent, traversée, silhouettes noires, rengainage et seconde frappe rouge | `chr5117_m_btl_s_craft00_01` à `_07`, `_09`, `_10b`, `_11` |
 
-Les timings sont partagés entre serveur et affichage dans `daybreak-crafts.cjs`. Van et Shizuna nécessitent une cible, à 18 m et 12 m respectivement. Elaine se déclenche sans visée et capture les ennemis présents dans un rayon de 3 m après 650 ms. Ils sont immobilisés et amenés devant elle pendant 1,1 seconde, avant les premiers dégâts ; les nouveaux arrivants sont exclus. Une pause de deux secondes précède son dernier slash.
+Les timings sont partagés entre serveur et affichage dans `daybreak-crafts.cjs`. Van et Shizuna nécessitent une cible, à 18 m et 12 m respectivement. Elaine se déclenche sans visée et capture les ennemis présents dans un rayon de 3 m après 650 ms. Ils sont immobilisés et amenés devant elle pendant 1,1 seconde, avant les premiers dégâts ; les nouveaux arrivants sont exclus. La salve native `_3` est jouée une seule fois pendant 3,4 secondes, en deux banques consécutives de 24 poses. La transition `_2` est jouée une seule fois avant cette salve, au lieu de servir de boucle de tir. La pause native `_3_lp` dure deux secondes, puis `_3_ed` termine le mouvement. La direction de départ est celle de la caméra, transmise au serveur avec la commande, et reste fixe pendant le craft.
 
 Shizuna recalcule sa ligne à 2 300 ms depuis la position actuelle de sa cible et valide à nouveau tout le trajet. La ligne reste ensuite fixe ; tous les ennemis présents dessus peuvent être touchés. Elle termine 2 m derrière la cible. La variante native `_10b` fournit le rengainage : fourreau visible, lame masquée une fois rentrée. La seconde frappe arrive à 4 488 ms, sur la frame 18 de la banque 13. Les victimes restent étourdies jusqu'à la seconde frappe. Les alliés et adversaires protégés sont exclus ; une interruption libère les étourdissements de cette action.
 
@@ -18,6 +18,6 @@ Les graphes `.vfx` et textures natives sont adaptés en packs gzip `.vfxpack`. L
 
 Les atlas modifiés portent leur empreinte SHA-256 dans leur nom pour éviter de combiner une ancienne image en cache avec de nouvelles dimensions. La marche et la course sont calées sur les pieds, sans utiliser la pointe des armes. Les atlas ont huit directions et restent sous 4096 px de hauteur. Aucun recentrage cinématique n'est ajouté. Le bouton Thors est retiré du client et le serveur ne le propose plus dans le menu du Capel.
 
-Outils locaux : `E:/dev/sky-activity-tools/atelier-sprites/export-zeroth-final.cjs`, `export-zeroth-sheath.cjs`, `export-elaine-fixed.cjs`, `bake-horizon-vfx.py`. La QA navigateur utilise la vraie scène et le serveur de combat.
+Outils locaux : `E:/dev/sky-activity-tools/atelier-sprites/export-zeroth-final.cjs`, `export-zeroth-sheath.cjs`, `export-elaine-salvo.cjs`, `bake-horizon-vfx.py`. La QA navigateur utilise la vraie scène et le serveur de combat.
 
 Validation : `npm run activity:test` ; `node --test tests/activity-training.test.cjs tests/activity-spoiler-access.test.cjs tests/activity-cs2-effects.test.mjs`.
