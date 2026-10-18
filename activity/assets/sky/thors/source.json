@@ -1,0 +1,19 @@
+{
+  "game": "Trails of Cold Steel II",
+  "map": "t0000",
+  "assets": [
+    "M_T0000",
+    "O_T00EVT28",
+    "O_T00TRE00",
+    "O_T00TRE01",
+    "O_T00DOR02B",
+    "O_T00DOR05"
+  ],
+  "playableBounds": {
+    "minX": -18,
+    "maxX": 18,
+    "minZ": -18,
+    "maxZ": 14
+  },
+  "note": "Native buildings, event ground, trees and entrance doors. Only the main-building forecourt is walkable."
+}

@@ -1,6 +1,6 @@
 const {terminalNearby}=require("../activity/terminal-world.cjs");
 const {ActivityError}=require("./activityService");
-function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,now=Date.now}) {
+function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,trainingVenues=async()=>[],now=Date.now}) {
  const pending=new Map(),completed=new Map();
  async function nearby(token) {
   const identity=lobby.identity(token),p=await lobby.terminalPosition(token);
@@ -10,7 +10,7 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
  }
  async function menu(token) {
   const {id}=await nearby(token),own=await resolveCharacter(id),characters=await assignedCharacters();
-  return {testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
+  return {trainingVenues:await trainingVenues(id),testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
  }
  async function perform(token,body) {
   const {id}=lobby.identity(token);

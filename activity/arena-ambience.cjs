@@ -5,5 +5,5 @@ const PRESETS={
  rain:{label:'Pluie',tint:[.62,.69,.78],sky:[.38,.46,.56],daylight:.35,lamps:.6,sun:.45,ambient:1.25,sunColor:0xb8cbe1,fog:0x6b7d8c},
  flames:{label:'Géhenne · Flammes',tint:[1,1,1],sky:[1,1,1],daylight:1,lamps:.6}
 };
-function ambienceFor(map,match='',override){if(map==='gehenna')return 'flames';if(!['arena','axis'].includes(map))return null;if(['day','night','sunset','rain'].includes(override))return override;if(!match)return 'day';let hash=2166136261;for(const c of String(match))hash=Math.imul(hash^c.charCodeAt(0),16777619);return ['day','night','sunset','rain'][(hash>>>0)%4];}
+function ambienceFor(map,match='',override){if(map==='gehenna')return 'flames';if(map==='thors')return 'day';if(!['arena','axis','thors'].includes(map))return null;if(['day','night','sunset','rain'].includes(override))return override;if(!match)return 'day';let hash=2166136261;for(const c of String(match))hash=Math.imul(hash^c.charCodeAt(0),16777619);return ['day','night','sunset','rain'][(hash>>>0)%4];}
 module.exports={PRESETS,ambienceFor};

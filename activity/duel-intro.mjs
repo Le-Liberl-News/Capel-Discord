@@ -4,7 +4,7 @@ import axis from './assets/sky/axis/intro.json' with {type:'json'};
 // the fighter's title only (the win streak is no longer shown)
 export function fighterSubtitle(character,title){const value=title&&title!=='Titre à renseigner'?title:characterTitles[character]??'';return value;}
 export const DUEL_INTRO_DURATION=native.duration;
-export const venueTitle=venue=>venue==='gehenna'?'Géhenne':venue==='axis'?axis.title:native.title;
+export const venueTitle=venue=>venue==='thors'?'Académie Thors · Parvis':venue==='gehenna'?'Géhenne':venue==='axis'?axis.title:native.title;
 export const showsVenueTitle=phase=>['tower','overview'].includes(phase?.kind);
 export function duelHeading(from,to){return {dx:to.x-from.x,dz:to.z-from.z};}
 // Top of the Axis Pillar: far shot of the tower with its name, each fighter walks in, a fast orbit around the centre, then the fight.
@@ -16,13 +16,13 @@ function axisPhase(elapsed){
  return {kind:'begin',progress:(elapsed-tower-2*fighter-orbit)/axis.phases.begin};
 }
 const VENUES={arena:{duration:native.duration,boundaries:[8000,10000,13500,17000],audio:native.audio},axis:{duration:axis.duration,boundaries:[axis.phases.tower,axis.phases.tower+axis.phases.fighter,axis.phases.tower+2*axis.phases.fighter,axis.phases.tower+2*axis.phases.fighter+axis.phases.orbit],audio:null}};
-VENUES.gehenna={...VENUES.axis};
+VENUES.gehenna={...VENUES.axis};VENUES.thors={...VENUES.axis};
 const venueOf=name=>VENUES[name]?name:'arena';
 export const introDurationFor=venue=>VENUES[venueOf(venue)].duration;
 export function duelPhase(duel,time,venue=duel?.venue){
  if(!duel||!Number.isFinite(duel.startsAt)||!Number.isFinite(duel.readyAt)||time>=duel.readyAt)return null;
  const duration=duel.readyAt-duel.startsAt;if(duration<=0)return null;const elapsed=Math.max(0,time-duel.startsAt)/duration*VENUES[venueOf(venue)].duration;
- if(['axis','gehenna'].includes(venueOf(venue)))return axisPhase(elapsed);
+ if(['axis','gehenna','thors'].includes(venueOf(venue)))return axisPhase(elapsed);
  if(elapsed<8000)return {kind:'overview',progress:Math.max(0,(elapsed-2000)/6000),fade:Math.max(0,1-elapsed/2000)};
  if(elapsed<10000)return {kind:'wide',progress:(elapsed-8000)/2000};
  if(elapsed<17000){const side=elapsed<13500?0:1;return {kind:'fighter',side,progress:(elapsed-(side?13500:10000))/3500};}
@@ -62,7 +62,7 @@ export function createDuelIntro({assets=null,onSpeech=()=>{},onPhase=()=>{},venu
    const teams=duel.groups?.map(g=>g.players.map(id=>avatars.get(id)).filter(Boolean))??duel.players.map(id=>[avatars.get(id)].filter(Boolean)),players=teams.map(t=>t[0]),positions=teams.map(t=>t.length?{x:t.reduce((n,p)=>n+p.position.x,0)/t.length,y:t.reduce((n,p)=>n+p.position.y,0)/t.length,z:t.reduce((n,p)=>n+p.position.z,0)/t.length}:fallback);
    for(let i=0;i<teams.length;i++)for(const actor of teams[i]){actor.heading=duelHeading(actor.position,positions[1-i]);const walk=phase.kind==='fighter'?(phase.side>i?1:phase.side<i?0:Math.min(1,phase.progress/.6)):['versus','begin','orbit'].includes(phase.kind)?1:0,dx=positions[1-i].x-positions[i].x,dz=positions[1-i].z-positions[i].z,len=Math.hypot(dx,dz)||1;actor.introOffset={x:-dx/len*2*(1-walk),z:-dz/len*2*(1-walk)};actor.introWalking=phase.kind==='fighter'&&phase.side===i&&walk<1;if(phase.kind==='fighter'&&phase.side===i&&walk>=1&&!spoken.has(i)){spoken.add(i);if(duel.phrases?.[i])onSpeech({id:duel.id+':entrance:'+i,author:duel.players[i],character:actor.character,text:duel.phrases[i]});}}
    const centre={x:(positions[0].x+positions[1].x)/2,y:(positions[0].y+positions[1].y)/2,z:(positions[0].z+positions[1].z)/2};
-   let pose;if(phase.kind==='fighter')pose=fighterOrbit({...positions[phase.side],x:positions[phase.side].x+(players[phase.side]?.introOffset?.x??0),z:positions[phase.side].z+(players[phase.side]?.introOffset?.z??0)},positions[1-phase.side],phase.progress);else if(['overview','wide'].includes(phase.kind))pose=nativeArenaCamera(phase);else if(phase.kind==='tower')pose=venue==='gehenna'?{position:{x:18-8*phase.progress,y:16-7*phase.progress,z:centre.z-26+8*phase.progress},target:{...centre,y:centre.y+1},fov:48,zoom:1}:axisTowerCamera(phase.progress);else if(phase.kind==='orbit'||venue==='axis')pose=axisOrbit(centre,positions[0],positions[1],phase.kind==='orbit'?phase.progress:1);else pose={target:{...centre,y:centre.y+.8},position:{x:centre.x+14,y:centre.y+11,z:centre.z},fov:48,zoom:1};
+   let pose;if(phase.kind==='fighter')pose=fighterOrbit({...positions[phase.side],x:positions[phase.side].x+(players[phase.side]?.introOffset?.x??0),z:positions[phase.side].z+(players[phase.side]?.introOffset?.z??0)},positions[1-phase.side],phase.progress);else if(['overview','wide'].includes(phase.kind))pose=nativeArenaCamera(phase);else if(phase.kind==='tower')pose=venue==='thors'?{position:{x:26-10*phase.progress,y:23-8*phase.progress,z:35-12*phase.progress},target:{x:0,y:8,z:-25},fov:52,zoom:1}:venue==='gehenna'?{position:{x:18-8*phase.progress,y:16-7*phase.progress,z:centre.z-26+8*phase.progress},target:{...centre,y:centre.y+1},fov:48,zoom:1}:axisTowerCamera(phase.progress);else if(phase.kind==='orbit'||venue==='axis')pose=axisOrbit(centre,positions[0],positions[1],phase.kind==='orbit'?phase.progress:1);else pose={target:{...centre,y:centre.y+.8},position:{x:centre.x+14,y:centre.y+11,z:centre.z},fov:48,zoom:1};
    if(phase.kind==='fighter'&&duel.groups){const factor=1+.7*(teams[phase.side].length-1);for(const axis of ['x','y','z'])pose.position[axis]=pose.target[axis]+(pose.position[axis]-pose.target[axis])*factor;}
    camera.position.set(pose.position.x,pose.position.y,pose.position.z);camera.lookAt(pose.target.x,pose.target.y,pose.target.z);camera.zoom=pose.zoom;camera.fov=pose.fov;camera.updateProjectionMatrix();
    caption.style.display=['fighter','versus','begin','orbit'].includes(phase.kind)?'block':'none';placeName.style.display=showsVenueTitle(phase)?'block':'none';if(showsVenueTitle(phase))placeName.style.opacity=String(Math.max(0,Math.min(1,(phase.progress-.12)*5,(1-phase.progress)*6)));const names=players.map((p,i)=>duel.names?.[i]||p?.displayName||p?.character||'?'),titles=duel.titles??[];caption.style.opacity=phase.kind==='fighter'?String(Math.min(1,phase.progress*8,(1-phase.progress)*8)): '1';const elapsed=(time+offset-duel.startsAt)/(duel.readyAt-duel.startsAt)*place.duration,transition=Math.max(0,...place.boundaries.map(boundary=>1-Math.abs(elapsed-boundary)/350)),fade=Math.max(phase.fade??0,transition);overlay.style.backgroundColor=fade?'rgba(0,0,0,'+fade+')':'transparent';

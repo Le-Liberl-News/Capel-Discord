@@ -94,7 +94,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
   const inDungeon=map==='custom',floorNumber=Number(map.slice(5))||1,inTower=/^tower[1-4]$/.test(map)||inDungeon;
   // the two duel venues: Grancel ("arena") and the top of the Axis Pillar ("axis")
-  const isArena=map==='arena'||map==='axis'||map==='gehenna',combatCamera=combatMoves.usesCombatFacing(map);
+  const isArena=map==='arena'||map==='axis'||map==='gehenna'||map==='thors',combatCamera=combatMoves.usesCombatFacing(map);
   const canJump=inTower||isArena;
   const mapAssets = ["anterose","hangar"].includes(map) ? ASSETS : new URL(map + "/", ASSETS);
   const renderer = new THREE.WebGLRenderer({
@@ -188,7 +188,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const tavernTables=map==='anterose'?await createTavernTables(THREE,model,collision,ASSETS):null;
   const horrorMembranes=inDungeon?await createHorrorMembranes(model,ASSETS,towerLayout.membranes):null;
   const mapDecor=inDungeon?await createMapDecorView(model,ASSETS,towerLayout):null;
-  const arenaSun=map==='arena'?createArenaSun(renderer,scene,model):null;
+  const arenaSun=['arena','thors'].includes(map)?createArenaSun(renderer,scene,model):null;
   const mapShadows=createMapShadows(THREE,renderer,scene,model,map);
   const dayNight=createDayNight(THREE,model,map,mapShadows,map==='axis'?[...AXIS_LIGHTS,...lampLayout.ARENA_LAMPS.axis]:lampLayout.ARENA_LAMPS[map]??(tavernTables?tavernTables.lights:map==='hangar'?[{position:[-3.6,1.3,0],color:[1,.1,.1],radius:3,strength:.8},{position:[3.6,1.3,0],color:[.1,1,.3],radius:3,strength:.8}]:towerLayout?.lights??towerLayout?.torches??[]));
   const arenaAtmosphere=isArena?await createArenaAtmosphere(THREE,scene,ASSETS,map,dayNight,arenaSun,renderer,{floor:collision.floor,override:__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('ambience'):undefined}):null;
@@ -390,11 +390,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if (movementTrace.length > 1024) movementTrace.shift();
   };
   let path = [],
-    yaw = 0,
+    yaw = map==='thors'?Math.PI:0,
     pitch = CAMERA_PITCH,
     drag = null,
     restMoveHeld=false,restMoveAt=0,
-    zoom = map==="hangar"?8.5:CAMERA_ZOOM,
+    zoom = map==="hangar"?8.5:map==='thors'?8:CAMERA_ZOOM,
     follow = new THREE.Vector3(spawn.x, spawn.y, spawn.z),
     localId = null,
     connected = true,
