@@ -1444,6 +1444,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       };
     },
     acknowledgeMovement(sequence) {
+      if(!Number.isSafeInteger(sequence)||sequence<0)return;
+      movementSequence=Math.max(movementSequence,sequence);
       movementTrace = movementTrace.filter((p) => p.sequence > sequence);
     },
     screenPoint(point) {
