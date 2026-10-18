@@ -82,9 +82,9 @@ test('Kaleido Fencer works empty and next to a wall without aiming at reachable 
 });
 test('Kaleido Fencer plays the complete native salvo once, then its pause and ending clips',()=>{
  const s=CRAFTS.Elaine;assert.equal(s.targetRequired,false);assert.equal(s.selfTarget,true);
- assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,11);assert.equal(pose('Elaine',3850).bank,10);
- assert.notDeepEqual(pose('Elaine',2225),pose('Elaine',2625));assert.equal(pose('Elaine',5600).bank,7);assert.equal(pose('Elaine',7600).bank,8);
- assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_m_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_m_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[0,.5]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.5,1]);
+ assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,11);assert.equal(pose('Elaine',3500).bank,10);
+ assert.notDeepEqual(pose('Elaine',2225),pose('Elaine',2625));assert.equal(pose('Elaine',5000).bank,7);assert.equal(pose('Elaine',7800).bank,8);
+ assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_m_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_m_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[0,.39]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.39,.78]);assert.deepEqual(profile.clipWindows.kaleidoFinalCut,[.78,1]);assert.ok(profile.forwardThrustClips.includes('kaleidoSalvoA'));
 });
 
 test('interrupting a captured multi-hit craft releases its own remaining stun and cancels later damage',()=>{
@@ -144,8 +144,8 @@ test('clients wait for the launch line instead of dashing down the stale intro l
 });
 test('changed Elaine craft atlases have content-addressed names, so old cached dimensions cannot be reused',()=>{
  const fs=require('node:fs'),crypto=require('node:crypto'),catalogue=require('../activity/assets/sky/combat/catalogue.json');
- for(const bank of [5,6,7,8,9,10,11]){const b=catalogue.Elaine.banks[bank],hash=crypto.createHash('sha256').update(fs.readFileSync('activity/assets/sky/'+b.texture)).digest('hex').slice(0,10);assert.ok(b.texture.endsWith('-'+hash+'.png'));const png=fs.readFileSync('activity/assets/sky/'+b.texture);assert.equal(png.readUInt32BE(16),b.columns*b.frameWidth);assert.equal(png.readUInt32BE(20),b.rows*b.frameHeight);}
- assert.equal(catalogue.Elaine.banks[6].rows,24);
+ for(const bank of [5,6,7,8,9,10,11,12]){const b=catalogue.Elaine.banks[bank],hash=crypto.createHash('sha256').update(fs.readFileSync('activity/assets/sky/'+b.texture)).digest('hex').slice(0,10);assert.ok(b.texture.endsWith('-'+hash+'.png'));const png=fs.readFileSync('activity/assets/sky/'+b.texture);assert.equal(png.readUInt32BE(16),b.columns*b.frameWidth);assert.equal(png.readUInt32BE(20),b.rows*b.frameHeight);}
+ assert.equal(catalogue.Elaine.banks[6].rows,20);
 });
 
 
@@ -154,4 +154,19 @@ test('Elaine takes the camera launch heading, not the stale last movement headin
  assert.ok(f.combat.action(f.actor,{id:'craft',kind:'craft',direction:{x:0,z:1}},f.room).combatId);
  const a=f.combat.snapshot().attacks[0];assert.equal(a.aim.x,0);assert.equal(a.aim.z,1.3);assert.equal(f.actor.heading.dx,0);assert.equal(f.actor.heading.dz,1.3);
  f.tick(CRAFTS.Elaine.captureAt);assert.ok(Math.abs(f.target.knockback.end.x)<.15);assert.ok(f.target.knockback.end.z>1.1);
+});
+
+
+test('Elaine has a separate sword-cut animation at the final impact, before recovery',()=>{
+ const s=CRAFTS.Elaine,p=pose('Elaine',s.hitTimes.at(-1));assert.equal(p.bank,12);assert.equal(p.pose,5);assert.equal(pose('Elaine',s.finishAt-1).bank,7);assert.equal(pose('Elaine',7600).bank,8);
+});
+test('Elaine exports finite weapon endpoints for every craft frame and direction',()=>{
+ const c=require('../activity/assets/sky/combat/catalogue.json').Elaine;
+ for(const s of CRAFTS.Elaine.stages){const b=c.banks[s.bank];assert.equal(b.bladeAnchors.length,b.frames);for(const pair of b.bladeAnchors){assert.equal(pair.length,2);assert.ok(pair.flat().every(Number.isFinite));}}
+});
+test('Elaine green blade follows the sprite, stays visible through the pause and releases its trails',async()=>{
+ const THREE=await import('three'),{createElaineBladeView}=await import('../activity/elaine-blade-view.mjs'),scene=new THREE.Scene(),texture=new THREE.Texture(),api={...THREE,TextureLoader:class{async loadAsync(){return texture;}}},view=createElaineBladeView(api,scene,'http://test/assets/'),camera=new THREE.PerspectiveCamera();camera.position.set(0,4,-6);camera.lookAt(0,1,0);camera.updateMatrixWorld(true);
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(),new THREE.MeshBasicMaterial());mesh.position.set(2,0,3);mesh.quaternion.copy(camera.quaternion);const avatar={mesh,direction:6},a={id:'green',actor:'a',character:'Elaine'};await view.prepare();
+ for(const t of [100,1000,2400,3300,5400,7000,8000]){view.draw(a,t,avatar,camera);assert.equal(view.size,1);assert.ok(scene.children[0].visible);const trail=scene.children[0].children[0];assert.ok(trail.geometry.drawRange.count<=48);assert.ok(Array.from(trail.geometry.attributes.position.array).every(Number.isFinite));}
+ let disposed=false;scene.children[0].children[0].geometry.addEventListener('dispose',()=>disposed=true);view.remove(a.id);assert.ok(disposed);assert.equal(scene.children.length,0);view.dispose();
 });

@@ -102,7 +102,8 @@
         "kaleidoAimHold": "kai/gltf/chr5110_m_btl_craft02_1_lp.glb",
         "kaleidoPause": "kai/gltf/chr5110_m_btl_craft02_3_lp.glb",
         "kaleidoSalvoA": "kai/gltf/chr5110_m_btl_craft02_3.glb",
-        "kaleidoSalvoB": "kai/gltf/chr5110_m_btl_craft02_3.glb"
+        "kaleidoSalvoB": "kai/gltf/chr5110_m_btl_craft02_3.glb",
+        "kaleidoFinalCut": "kai/gltf/chr5110_m_btl_craft02_3.glb"
       },
       "chibi": {
         "legs": 0.48,
@@ -201,13 +202,27 @@
       "clipWindows": {
         "kaleidoSalvoA": [
           0,
-          0.5
+          0.39
         ],
         "kaleidoSalvoB": [
-          0.5,
+          0.39,
+          0.78
+        ],
+        "kaleidoFinalCut": [
+          0.78,
           1
         ]
-      }
+      },
+      "plantedCraftClips": [
+        "kaleidoSalvoA",
+        "kaleidoSalvoB",
+        "kaleidoFinalCut"
+      ],
+      "forwardThrustClips": [
+        "kaleidoSalvoA",
+        "kaleidoSalvoB"
+      ],
+      "illuminatedBlade": true
     },
     "Shizuna": {
       "id": "shizuna-daybreak1",
@@ -359,7 +374,8 @@
       "kaleidoAimHold": 3.3333282470703125,
       "kaleidoPause": 3.333343505859375,
       "kaleidoSalvoA": 3.4000244140625,
-      "kaleidoSalvoB": 3.4000244140625
+      "kaleidoSalvoB": 3.4000244140625,
+      "kaleidoFinalCut": 3.4000244140625
     },
     "Shizuna": {
       "idle": 6.6666669845581055,
@@ -383,5 +399,8 @@
       "zeroth11": 1.5,
       "zeroth10b": 4.066650390625
     }
+  },
+  "nativeCraftRevision": {
+    "Elaine": "Native _3 retargeted: battleIdle root/hips/legs, forward right-arm IK for seven varied thrusts; windows 0-.39, .39-.78, final cut .78-1 after a two-second pause. Final impact 7050ms, recovery _3_ed. Exported blade endpoints drive native efsl_a003 green trails."
   }
 }

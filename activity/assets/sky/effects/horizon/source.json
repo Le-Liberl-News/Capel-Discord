@@ -129,5 +129,11 @@
         "effects/horizon/efsm_a001.png"
       ]
     }
+  },
+  "elaineBladeTrail": {
+    "source": "vfx/battle/cr5110_20_0.vfx",
+    "texture": "efsl_a003.png",
+    "tint": "#19ffad",
+    "adaptation": "Frame-exported weapon endpoints; short world-space history ribbon. Native distortion shader simplified."
   }
 }
