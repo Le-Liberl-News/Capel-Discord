@@ -55,7 +55,7 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  function scheduledMinutes(date,minutes){
   const list=state.schedule[date]==null?[]:[].concat(state.schedule[date]),before=list.length;
   while(list.length<CASES_PER_DAY&&minutes<WINDOW[1]){const from=Math.max(WINDOW[0],minutes);list.push(from+Math.floor(random()*(WINDOW[1]-from+1)));}
-  if(list.length!==before||!Array.isArray(state.schedule[date])){state.schedule[date]=list.sort((a,b)=>a-b);save();}
+  if(list.length!==before||!Array.isArray(state.schedule[date])){state.schedule[date]=list.sort((a,b)=>a-b);save();log(`rhumertume: cas du ${date} à ${state.schedule[date].map(m=>`${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`).join(', ')}`);}
   return state.schedule[date];
  }
  // the day's cases so far; an old empty draw (nobody played yet, before cases waited) does not count
@@ -94,7 +94,8 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
  async function tick(){
   if(busy)return;busy=true;
   try{
-   await evolutions();
+   // an evolution that cannot be announced must not hold the day's cases back
+   await evolutions().catch(error=>log('rhumertume: evolution: '+error.message));
    const {date,minutes}=parisParts(now());
    if(date>LAST_DAY)return;
    const due=scheduledMinutes(date,minutes).filter(m=>m<=minutes).length;
@@ -105,7 +106,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
     const character=candidates[Math.floor(random()*candidates.length)],previous=drawnOn(date);
     state.drawn[date]=[...drawnOn(date),character];save();
     // if Discord is unreachable the draw is undone and retried on the next tick
-    try{await catches(character);}catch(error){state.drawn[date]=previous;save();throw error;}
+    try{await catches(character);log(`rhumertume: ${character} tombe malade`);}catch(error){state.drawn[date]=previous;save();throw error;}
    }
   }finally{busy=false;}
  }

@@ -117,3 +117,12 @@ test('a case due while nobody has a character yet waits for the first one played
  assert.equal(said.length,2);assert.deepEqual(store.load().drawn['2026-10-20'],['Tita','Kloe']);
  await r.tick();assert.equal(said.length,2);
 });
+test('an evolution that cannot be announced does not hold back the cases of the day',async()=>{
+ let fail=true;const said=[],logs=[];
+ const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,640]},drawn:{},infected:{Kloe:at('2026-10-20T00:00:00+02:00')},patients:{Kloe:{announced:1,rage:0,madness:0,updated:0,lastRage:0,lastMadness:0}}}),
+  now:()=>at('2026-10-20T11:00:00+02:00'),random:()=>.5,charactersOfTheDay:async()=>['Tita','Nial'],characterNames:names,render,log:l=>logs.push(l),
+  announce:async text=>{if(fail&&/évolue/.test(text))throw Error('Discord');said.push(text);}});
+ await r.tick();
+ assert.equal(said.filter(t=>/semble/.test(t)).length,2);assert.ok(logs.some(l=>/evolution: Discord/.test(l)));
+ fail=false;await r.tick();assert.ok(said.some(t=>/Pompomkloe évolue/.test(t)));
+});
