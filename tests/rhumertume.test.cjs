@@ -84,7 +84,7 @@ test('rage: the pom bites someone who spoke lately, who may catch the illness',a
 test('madness: the pom hurts itself',async()=>{
  let now=at('2026-10-26T09:00:00Z');
  const {r,said}=setup({now:()=>now,random:()=>.99});
- await r.infect('Nial');said.length=0;now+=4*HOUR;
+ await r.infect('Nial');said.length=0;now+=6*HOUR;   // random .99: stage 2 at about 5h30
  for(let i=0;i<3;i++){await r.message('Nial','Hein ??? Quoi ??? 🎃🎃🎃🎃');await r.after('Nial');}
  assert.equal(said.length,1);assert.equal(said[0].text,'Pompomnial se met à sautiller partout sans raison apparente.');
 });
@@ -140,4 +140,12 @@ test('three poms at stage 2 or 3 besiege three healthy characters once a day; th
  assert.ok(said.some(s=>s.text===`${escaped} parvient à s'enfuir… ${fallen.join(' et ')} tombent sous les morsures des poms.`));
  for(const c of fallen)assert.ok(r.isInfected(c));assert.ok(!r.isInfected(escaped));
  const before=said.length;await r.tick();assert.equal(sieges.length,1);assert.ok(said.slice(before).every(s=>!/encerclent/.test(s.text)));
+});
+test('stages 2 and 3 come within two hours of 3h30 and 7 hours, drawn for each patient',async()=>{
+ for(const [random,second,third] of [[0,1.5,5],[.5,3.5,7],[.999,5.5,9]]){
+  let now=at('2026-10-26T09:00:00Z');const start=now,{r}=setup({now:()=>now,random:()=>random});
+  await r.infect('Nial');
+  const level=h=>{now=start+h*HOUR;return r.level('Nial');};
+  assert.equal(level(second-.05),1);assert.equal(level(second+.05),2);assert.equal(level(third-.05),2);assert.equal(level(third+.05),3);
+ }
 });

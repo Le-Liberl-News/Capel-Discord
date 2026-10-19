@@ -1,8 +1,9 @@
 // Rhumertume (Halloween 2026): twice a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
 // played that day starts turning into a pom-tiron; an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
-// (30% after an hour, 60% after 3h30, every word but one in eight after 7 hours) and are shown in a Sky bubble; its
-// avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx from 3h30, Pomdeterx from 7 hours,
+// (30% after an hour, 60% after about 3h30, every word but one in eight after about 7 hours) and are shown in a Sky bubble; its
+// avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx after 3h30, Pomdeterx after 7 hours
+// (each patient's own times, drawn within two hours either side),
 // each step announced with a Pokémon-like evolution GIF. How the player writes feeds two gauges: rage (capitals, "!")
 // makes the pom bite whoever spoke lately, who may catch the illness; madness ("?", emojis) makes it hurt itself.
 // "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
@@ -12,7 +13,8 @@ const {PermissionFlagsBits}=require('discord.js');
 const HOUR=3600000,LAST_DAY='2026-10-31';
 const WINDOW=[10*60,13*60];
 const CASES_PER_DAY=2;
-const PROGRESS=[[0,0],[HOUR,.3],[3.5*HOUR,.6],[7*HOUR,1]];
+// stages 2 and 3 come after 3h30 and 7 hours, give or take two hours (drawn for each patient; the third at least an hour after the second)
+const STAGE_TIMES=[3.5*HOUR,7*HOUR],STAGE_SPREAD=2*HOUR;
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
 const PREFIX=['','Pom','Pompom','Pomdeter'];
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
@@ -31,8 +33,9 @@ function pomifyFinal(text,random=Math.random){
  return words(text,word=>{if(n%8===0)keep=n+Math.floor(random()*8);const out=n++===keep?word:pom(word);return random()<.22?out+['...','....','.....'][Math.floor(random()*3)]:out;});
 }
 // share of the words turned into "pom", time since the first symptoms
-function progress(elapsed){
- for(let i=1;i<PROGRESS.length;i++){const [t0,s0]=PROGRESS[i-1],[t1,s1]=PROGRESS[i];if(elapsed<t1)return s0+(s1-s0)*Math.max(0,elapsed-t0)/(t1-t0);}
+function progress(elapsed,[second,third]=STAGE_TIMES){
+ const points=[[0,0],[HOUR,.3],[second,.6],[third,1]];
+ for(let i=1;i<points.length;i++){const [t0,s0]=points[i-1],[t1,s1]=points[i];if(elapsed<t1)return s0+(s1-s0)*Math.max(0,elapsed-t0)/(t1-t0);}
  return 1;
 }
 const levelOf=share=>share>=1?3:share>=.6?2:1;
@@ -63,7 +66,7 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  // the day's cases so far; an old empty draw (nobody played yet, before cases waited) does not count
  const drawnOn=date=>state.drawn[date]==null?[]:[].concat(state.drawn[date]).filter(Boolean);
  // 0 right after the first symptoms, 1 seven hours later; null when healthy
- function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since);}
+ function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since,state.patients[character]?.times);}
  const level=character=>{const s=stage(character);return s==null?0:levelOf(s);};
  // Pomestelle, Pompomestelle, Pomdeterestelle: the character's name runs on, without its capital
 const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(0).toLocaleLowerCase('fr')+character.slice(1):character;
@@ -79,7 +82,8 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   await announce(text,files);
  }
  async function catches(character){
-  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastRage:0,lastMadness:0};save();
+  const spread=()=>(random()*2-1)*STAGE_SPREAD,second=STAGE_TIMES[0]+spread(),third=Math.max(second+HOUR,STAGE_TIMES[1]+spread());
+  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastRage:0,lastMadness:0,times:[second,third]};save();
   try{await announceWith(symptoms(character),()=>pictures().renderEvolution(character,0,1));}
   catch(error){delete state.infected[character];delete state.patients[character];save();throw error;}
  }
