@@ -416,7 +416,7 @@
     },
     "proceduralArmIK": false,
     "proceduralPlantedLegs": false,
-    "duration": 6150,
-    "finalHit": 5040
+    "duration": 5150,
+    "finalHit": 4040
   }
 }
