@@ -236,6 +236,9 @@ const adventure=require('./utils/adventure/discord').createAdventureDiscord({cli
 client.on('messageCreate',message=>{adventure.message(message);});
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
+// the board of the infections, every character's stage, kept up to date in its channel
+const rhumertumeBoard=require('./utils/rhumertumeBoard').createRhumertumeBoard({client,channelId:'1497953103713144863',store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume-board.json')),rhumertume,characterNames:require('./utils/characters').characterNames});
+setInterval(()=>{if(client.isReady())rhumertumeBoard.refresh().catch(e=>console.error('Rhumertume board:',e.message));},60000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
 const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
