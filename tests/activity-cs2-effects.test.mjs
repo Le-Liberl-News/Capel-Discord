@@ -20,3 +20,8 @@ test('every native craft pose carries its own eight-direction weapon attachment'
  for(let i=5;i<=10;i++){const bank=cat.Rean.banks[i];assert.equal(bank.effectAnchors.length,bank.frames);assert.ok(bank.effectAnchors.every(a=>a.length===4&&a.flat().every(Number.isFinite)));}
  for(const clip of Object.values(source.flameSlash.clips))assert.match(clip.source,/^BTL_S_CRAFT01_/);
 });
+
+test('native two-axis planes retain area when the unused X or Y axis is zero',async()=>{
+ const {horizonPlaneVertex}=await import('../activity/native-cs2-effects.mjs');const n=Array(17).fill(0);n[14]=0;n[15]=12;n[16]=1;
+ assert.deepEqual(horizonPlaneVertex(n,[.5,.5,0],true),[0,6,.5]);n[14]=18;n[15]=0;assert.deepEqual(horizonPlaneVertex(n,[.5,.5,0],true),[9,0,.5]);n[15]=2;assert.deepEqual(horizonPlaneVertex(n,[.5,.5,0],false),[9,1,0]);
+});

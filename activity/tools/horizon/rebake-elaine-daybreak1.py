@@ -15,6 +15,7 @@ for name in ['cr5110_20_'+str(i) for i in [1,2,3]]:
  effect,used=ns['bake'](name);raw=json.loads((ns['RAW']/(name+'.vfx')).read_text('utf-8'))['VFX'];renderers=[(e,m) for e in raw['Emitter'] for m in e['Module'] if m['type'] in ['MeshRenderer','GPUParticleRenderer'] and m.get('texture') and not e['name'].lower().startswith(('scrn','scr_')) and e['name'].lower() not in ['scr','black'] and (ns['OUT']/(m['texture'][0]['filename']+'.png')).exists()]
  for seg,(e,m) in zip(effect['segments'],renderers):
   seg['shader']=m['shader_name'];seg['sourceEmitter']=raw['Emitter'].index(e)
+  if name=='cr5110_20_2' and m.get('mesh_name')=='PlaneXY':seg['autoPlaneAxes']=True
   if name=='cr5110_20_3' and m.get('is_billboard') and m.get('mesh_name') in ['Cylinder','HemiCylinder']:
    # Native billboard cylinder is a flat annular wave, not a zero-height cylinder side wall.
    import math
@@ -61,5 +62,23 @@ for key,effect in pack['effects'].items():
   effect['frames'][i]=other[:128-len(trails)]+trails
 salvo=pack['effects']['cr5110_20_2'];salvo['excludedCinematicBackdrop']=['cylinder_base','cylinder_base_multi']
 salvo['frames']=[[n for n in frame if salvo['segments'][int(n[0])]['name'] not in salvo['excludedCinematicBackdrop']] for frame in salvo['frames']]
+# Gameplay thrust pass: retain native white/green lances, spiral trails and impact particles,
+# separating the very large cinematic speed tunnel from the sword-to-target emission.
+import copy
+thrust=copy.deepcopy(pack['effects']['cr5110_20_2'])
+keep={'giza','Motion_line_white','Motion_line_midori','trail_rasen01','trail_rasen02','trail_rasen03','par_spread'}
+thrust['frames']=[[n for n in frame if thrust['segments'][int(n[0])]['name'] in keep] for frame in thrust['frames'][:19]]
+for seg in thrust['segments']:
+ if seg['name']=='par_spread':seg['procedural']=False;seg['faces']=[[[-.5,-.5,0,0,1],[.5,-.5,0,1,1],[.5,.5,0,1,0],[-.5,.5,0,0,0]]]
+# Preserve source hues; balance HDR contribution per layer rather than washing all layers white.
+for frame in thrust['frames']:
+ for n in frame:
+  name=thrust['segments'][int(n[0])]['name'];energy=1.4 if name=='giza' else .1 if name=='glow' else 1 if name=='Motion_line_midori' else .12 if name=='Motion_line_white' else .2
+  n[17:20]=[x*energy for x in n[17:20]]
+  if name=='giza':n[2]*=.25;n[4]*=.25;n[15]*=.25
+  if name=='par_spread':n[1]=1;n[14:17]=[x*.3 for x in n[14:17]]
+thrust['sourcePass']='Native Daybreak I white/green thrust and spiral layers; cinematic tunnel excluded'
+thrust['webCalibration']='Source hues retained; HDR green lance/core/trail energy balanced against Daybreak reference'
+pack['effects']['cr5110_20_2_thrust']=thrust
 data=gzip.compress(json.dumps(pack,separators=(',',':')).encode(),mtime=0);h=hashlib.sha256(data).hexdigest()[:10];file='elaine-native-'+h+'.vfxpack';(out/file).write_bytes(data);print(file)
 (out/'catalogue.json').write_text(json.dumps({'Elaine':file,'Van':'van.vfxpack','Shizuna':'shizuna.vfxpack'},indent=2),encoding='utf-8')

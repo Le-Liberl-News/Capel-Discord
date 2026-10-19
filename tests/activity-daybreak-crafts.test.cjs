@@ -194,3 +194,9 @@ test('native blade charge keeps late emitter branches within the effect budget',
  const fs=require('node:fs'),zlib=require('node:zlib'),files=require('../activity/assets/sky/effects/horizon/catalogue.json'),pack=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+files.Elaine))),e=pack.effects.cr5110_20_3;
  const visible=new Set(e.frames.flat().map(n=>e.segments[n[0]].sourceEmitter));assert.ok(visible.has(34));assert.ok(visible.has(38));const wave=e.segments.find(s=>s.name==='wave');assert.equal(wave.billboardAxes,'xz');const f=wave.faces[0];assert.ok(Math.abs(f[0][0]*f[1][2]+f[1][0]*f[2][2]+f[2][0]*f[0][2]-f[1][0]*f[0][2]-f[2][0]*f[1][2]-f[0][0]*f[2][2])>1e-6);assert.ok(e.instanceCount<512);assert.ok(e.frames.every(f=>f.length<=128));
 });
+
+test('Daybreak thrust pass retains the native green giza planes without the cinematic tunnel',()=>{
+ const fs=require('node:fs'),zlib=require('node:zlib'),files=require('../activity/assets/sky/effects/horizon/catalogue.json'),pack=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+files.Elaine))),e=pack.effects.cr5110_20_2_thrust;
+ const nodes=e.frames.flat(),names=new Set(nodes.map(n=>e.segments[n[0]].name));assert.ok(names.has('giza'));assert.ok(names.has('Motion_line_midori'));assert.ok(!names.has('cylinder_base'));assert.ok(!names.has('wind_base'));assert.ok(nodes.some(n=>e.segments[n[0]].name==='giza'&&e.segments[n[0]].autoPlaneAxes&&n[14]===0&&n[15]>0&&n[16]>0));assert.ok(e.frames.every(f=>f.length<=128));
+ const particle=e.segments.find(s=>s.name==='par_spread');assert.equal(particle.procedural,false);assert.equal(particle.faces[0].length,4);
+});
