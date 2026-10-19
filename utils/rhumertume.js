@@ -213,6 +213,6 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   return true;
  }
  return {tick,infect,stage,level,nameOf,roleplay,message,after,handle,gauges:c=>state.patients[c]&&{rage:state.patients[c].rage,madness:state.patients[c].madness},
-  isInfected:character=>stage(character)!=null,since:character=>state.infected[character]??null,infected:()=>Object.keys(state.infected)};
+  isInfected:character=>stage(character)!=null,infected:()=>Object.keys(state.infected)};
 }
 module.exports={createRhumertume,pomify,pomifyFinal,progress,moods,parisParts,AVATAR_URL,LAST_DAY};
