@@ -4,9 +4,9 @@
 // A command is a verb and nouns ("ouvre la porte avec la clé"): the actions of the JSON whose verb and nouns match,
 // in this room, are tried in order; the first whose conditions hold is done (objects used are lost, tools kept,
 // triggers set, objects given, text shown); if none holds, the first one's failure text is shown.
-const STOPWORDS=new Set(['le','la','les','l','un','une','des','du','de','d','au','aux','a','vers','sur','dans','avec','en','et','ce','cet','cette','ces','mon','ma','mes','son','sa','ses','the','y','par']);
-const DEFAULT_DIRECTIONS={nord:['n','nord'],sud:['s','sud'],est:['e','est'],ouest:['o','w','ouest'],haut:['monter','haut','h'],bas:['descendre','bas','b']};
-const DEFAULT_COMMANDS={inventaire:['inventaire','inv','i','sac'],regarder:['regarder','regarde','r','observer'],aide:['aide','help','?'],aller:['aller','va','vais','allez','marcher','avancer','entrer','entre','go']};
+const STOPWORDS=new Set(['le','la','les','l','un','une','des','du','de','d','au','aux','a','vers','sur','dans','avec','en','et','ce','cet','cette','ces','mon','ma','mes','son','sa','ses','y','par']);
+const DEFAULT_DIRECTIONS={nord:['n','nord'],sud:['s','sud'],est:['e','est'],ouest:['o','ouest'],haut:['monter','haut','h'],bas:['descendre','bas','b']};
+const DEFAULT_COMMANDS={inventaire:['inventaire','inv','i'],regarder:['regarder','regarde','r','observer'],aide:['aide','help','?'],aller:['aller','va','vais','marcher','avancer','entrer','entre','go']};
 // "Ouvre-la porte, avec l'énorme clé !" -> ['ouvre','porte','enorme','cle'] (no accents, no articles)
 function words(text){
  return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[^a-z0-9?\s-]/g,' ').replace(/-/g,' ')
@@ -41,6 +41,7 @@ function createAdventure(data){
   for(const o of a.use||[]){const i=state.inventory.indexOf(String(o));if(i>=0)state.inventory.splice(i,1);}
   for(const t of a.effect||[])if(!state.triggers.includes(String(t)))state.triggers.push(String(t));
   for(const o of a.give||[])if(!state.inventory.includes(String(o)))state.inventory.push(String(o));
+  if a.to{go(state,a.to};
  }
  // moving: through one of the room's exits, if its conditions hold; returns the new room's description
  function go(state,direction){
