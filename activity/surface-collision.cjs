@@ -33,6 +33,7 @@ function createSurfaceCollision(THREE, scene) {
       closest = {
         distance: hit.distance,
         normal,
+        surfacePoint:{x:from.x+x+direction.x*hit.distance,y:from.y+y+direction.y*hit.distance,z:from.z+z+direction.z*hit.distance},
         point: {
           x: from.x + direction.x * Math.max(0, hit.distance - 0.005),
           y: from.y + direction.y * Math.max(0, hit.distance - 0.005),

@@ -1,3 +1,4 @@
+import {prepareDonHammer} from './don-hammer-sprite.mjs';
 import cannon from './don-cannon.cjs';
 import {createDonCannonView} from './don-cannon-view.mjs';
 import daybreakCrafts from './daybreak-crafts.cjs';
@@ -58,8 +59,9 @@ export async function createRenneCombat(THREE,scene,assets) {
   ]);
   const textures=new Map();
   const loaded=new Map();
-  const metadataFor=character=>COMBAT[character];
-  async function load(character){await ensureEffects(character);if(warmRenderer&&character==='Loewe'&&!warmLoewe){loeweView.warmup(warmRenderer,warmCamera);warmLoewe=true;}if(warmRenderer&&character==='Estelle'&&!warmEarth){earthBank.warmup(warmRenderer,scene,warmCamera);warmEarth=true;}if(!metadataFor(character))return null;if(!loaded.has(character))loaded.set(character,(async()=>{const meta=metadataFor(character),maps=character==='Renne'?textures:new Map();await Promise.all(Object.entries(meta.banks).map(async([bank,info])=>{const texture=await loader.loadAsync(new URL(info.texture,assets).href);texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.repeat.set(1/info.columns,1/info.rows);maps.set(+bank,texture);}));return {metadata:meta,textures:maps};})());return loaded.get(character);}
+  const customMetadata=new Map();
+  const metadataFor=character=>customMetadata.get(character)??COMBAT[character];
+  async function load(character){await ensureEffects(character);if(warmRenderer&&character==='Loewe'&&!warmLoewe){loeweView.warmup(warmRenderer,warmCamera);warmLoewe=true;}if(warmRenderer&&character==='Estelle'&&!warmEarth){earthBank.warmup(warmRenderer,scene,warmCamera);warmEarth=true;}if(!metadataFor(character))return null;if(!loaded.has(character))loaded.set(character,(async()=>{const meta=metadataFor(character),maps=character==='Renne'?textures:new Map();await Promise.all(Object.entries(meta.banks).map(async([bank,info])=>{const texture=await loader.loadAsync(new URL(info.texture,assets).href);texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.repeat.set(1/info.columns,1/info.rows);maps.set(+bank,texture);}));let prepared=meta;if(character==='Don'){const gun=await loader.loadAsync(new URL('combat/don-gun.png',assets).href);prepared=prepareDonHammer(THREE,meta,maps,gun.image);gun.dispose();}if(character==='Don')customMetadata.set(character,prepared);return {metadata:prepared,textures:maps};})());return loaded.get(character);}
   let warmRenderer=null,warmCamera=null,warmLoewe=false,warmEarth=false;
   for(const texture of [ringTexture,vortexTexture,fireTexture])texture.colorSpace=THREE.SRGBColorSpace;
   const yellowTracer=createYellowTracerTexture(THREE);

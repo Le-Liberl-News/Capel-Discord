@@ -35,8 +35,8 @@ export async function createJosetteView(THREE,assets){
    const dx=length>1e-6?direction.x/length:-Math.sin(yaw),dz=length>1e-6?direction.z/length:Math.cos(yaw);
    // Keep the travelling directly behind the original aiming axis.
    end.set(position.x-dx*3.1,position.y+1.85,position.z-dz*3.1);
-   if(character==='Don'){const p=craft.event.origin;end.set(p.x-dx*9.5,p.y+4.5,p.z-dz*9.5);}
-   look.set(position.x,position.y+.95,position.z);if(character==='Don'){const p=craft.event.origin;look.set(p.x+dx*.8,p.y+2.5,p.z+dz*.8);}matrix.lookAt(end,look,camera.up);third.setFromRotationMatrix(matrix);
+   if(character==='Don'){const p=craft.event.origin;end.set(p.x-dx*6.8,p.y+3.6,p.z-dz*6.8);}
+   look.set(position.x,position.y+.95,position.z);if(character==='Don'){const p=craft.event.origin;look.set(p.x+dx*.8,p.y+2,p.z+dz*.8);}matrix.lookAt(end,look,camera.up);third.setFromRotationMatrix(matrix);
    if(character==='Carna')third.copy(first);
    camera.position.lerpVectors(eye,end,blend);camera.quaternion.copy(first).slerp(third,blend);
   }

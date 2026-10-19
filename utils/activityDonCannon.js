@@ -31,15 +31,15 @@ function tickDon(a,s,actor,room,time,{geometry,floor,canDamage,hurt,project}){
  if(!a.projectile){
   a.projectile={...cannon.launch({...a.ray.origin,x:actor.x,y:(actor.y??0)+1.45,z:actor.z},a.ray.direction),started:a.started+s.windup};
   project(a,actor,actor,{knockback:1.3,knockbackDuration:220},{x:-a.ray.direction.x,z:-a.ray.direction.z},a.projectile.started);
-  const wall=geometry?.sweep({...actor,y:(actor.y??0)+1.45},a.projectile.origin,.14);if(wall){blast(wall.point,a.projectile.started);return;}
+  const wall=geometry?.sweep({...actor,y:(actor.y??0)+1.45},a.projectile.origin,.14);if(wall){blast(wall.surfacePoint??wall.point,a.projectile.started);return;}
  }
  const until=Math.min(cannon.MAX_FLIGHT,time-a.projectile.started);let prevTime=a.flightTime??0,prev=cannon.ballPoint(a.projectile,prevTime);
  while(prevTime<until){
   const nextTime=Math.min(until,prevTime+1000/60),next=cannon.ballPoint(a.projectile,nextTime),delta={x:next.x-prev.x,y:next.y-prev.y,z:next.z-prev.z},length=Math.hypot(delta.x,delta.y,delta.z),dir={x:delta.x/(length||1),y:delta.y/(length||1),z:delta.z/(length||1)};
-  let contact=geometry?.sweep(prev,next,.14)?.point,nearest=contact?Math.hypot(contact.x-prev.x,contact.y-prev.y,contact.z-prev.z):Infinity;
-  const ground=floor({...next,y:Math.max(prev.y,next.y)+.3});if(Number.isFinite(ground)&&next.y<=ground+.12){const t=Math.max(0,Math.min(1,(prev.y-ground-.12)/(prev.y-next.y||1))),p={x:prev.x+delta.x*t,y:ground,z:prev.z+delta.z*t},d=Math.hypot(p.x-prev.x,p.y-prev.y,p.z-prev.z);if(d<nearest){contact=p;nearest=d;}}
-  for(const target of room.values())if(target.id!==a.actor&&target.hp>0&&!target.spectator&&!target.duelProtected&&canDamage(actor,target)){const hit=rayBody(prev,dir,target,length,.14);if(hit&&hit.distance<nearest){contact=hit.point;nearest=hit.distance;}}
-  if(contact){blast(contact,a.projectile.started+prevTime+(nextTime-prevTime)*Math.min(1,nearest/(length||1)));return;}
+  const surface=geometry?.sweep(prev,next,.14);let contact=surface?.point,impactPoint=surface?.surfacePoint??contact,nearest=contact?Math.hypot(contact.x-prev.x,contact.y-prev.y,contact.z-prev.z):Infinity;
+  const ground=floor({...next,y:Math.max(prev.y,next.y)+.3});if(Number.isFinite(ground)&&next.y<=ground+.12){const t=Math.max(0,Math.min(1,(prev.y-ground-.12)/(prev.y-next.y||1))),p={x:prev.x+delta.x*t,y:ground,z:prev.z+delta.z*t},d=Math.hypot(p.x-prev.x,p.y-prev.y,p.z-prev.z);if(d<nearest){contact=p;impactPoint=p;nearest=d;}}
+  for(const target of room.values())if(target.id!==a.actor&&target.hp>0&&!target.spectator&&!target.duelProtected&&canDamage(actor,target)){const hit=rayBody(prev,dir,target,length,.14);if(hit&&hit.distance<nearest){contact=hit.point;impactPoint=hit.point;nearest=hit.distance;}}
+  if(contact){blast(impactPoint,a.projectile.started+prevTime+(nextTime-prevTime)*Math.min(1,nearest/(length||1)));return;}
   prevTime=nextTime;prev=next;
  }
  a.flightTime=until;if(until>=cannon.MAX_FLIGHT){a.resolved=true;a.expired=true;a.endsAt=time;}
