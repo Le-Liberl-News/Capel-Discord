@@ -3,7 +3,7 @@
 const SHARED={key:'g',special:'daybreak',groundTarget:true,windup:0,cooldown:10000,range:8,projectile:false,dash:true,lockMovement:true};
 const CRAFTS={
  Van:{...SHARED,name:'Tir à la pièce',groundTarget:false,targetRequired:true,coinShot:true,projectile:true,dash:false,duration:2200,radius:.9,range:18,damage:40,throwAt:700,fireAt:1250,hitAt:1430,color:0xffd66b,stages:[{bank:5,frames:20,ms:400},{bank:6,frames:20,ms:800},{bank:7,frames:20,ms:150},{bank:8,frames:20,ms:400},{bank:9,frames:20,ms:450}]},
- Elaine:{...SHARED,name:'Kaleido Fencer',groundTarget:false,selfTarget:true,targetRequired:false,kaleido:true,dash:false,duration:5150,range:3,radius:3,captureAt:650,gatherEnd:1750,salvoAt:1900,flurryEnd:2850,finishAt:3850,damage:5,finalDamage:24,hitAt:1840,hitTimes:[1840,1980,2120,2260,2400,2540,2700,2810,4040],color:0x65d7b1,stages:[{bank:5,frames:20,ms:650},{bank:9,frames:8,ms:1100},{bank:11,frames:16,ms:150},{bank:6,frames:20,ms:500},{bank:10,frames:20,ms:450},{bank:7,frames:8,ms:1000,loopMs:1000},{bank:12,frames:20,ms:700},{bank:8,frames:20,ms:600}]},
+ Elaine:{...SHARED,name:'Kaleido Fencer',groundTarget:false,selfTarget:true,targetRequired:false,kaleido:true,dash:false,duration:5150,range:3,radius:3,captureAt:650,gatherEnd:1750,salvoAt:1900,flurryEnd:2850,finishAt:3850,damage:5,finalDamage:24,hitAt:1840,hitTimes:[1840,1980,2120,2260,2400,2540,2700,2810,3985],color:0x65d7b1,stages:[{bank:5,frames:20,ms:650},{bank:9,frames:8,ms:1100},{bank:11,frames:16,ms:150},{bank:6,frames:20,ms:500},{bank:10,frames:20,ms:450},{bank:7,frames:8,ms:1000,loopMs:1000},{bank:12,frames:20,ms:700},{bank:8,frames:20,ms:600}]},
  Shizuna:{...SHARED,name:'Zeroth Gleam',groundTarget:false,targetRequired:true,zeroth:true,duration:5100,dashDuration:5100,range:12,radius:1.4,damage:22,finalDamage:42,hitAt:2400,hitTimes:[2400,4488],moveStart:2300,moveEnd:2400,line:true,cooldown:15000,color:0xff3655,stages:[{bank:5,frames:22,ms:1000},{bank:6,frames:12,ms:300},{bank:7,frames:24,ms:1000},{bank:8,frames:16,ms:100},{bank:9,frames:12,ms:150},{bank:10,frames:24,ms:700},{bank:11,frames:16,ms:450},{bank:12,frames:12,ms:150},{bank:13,frames:24,ms:850},{bank:14,frames:20,ms:400,holdPose:0}]},
 };
 const clamp=t=>Math.max(0,Math.min(1,t));
@@ -33,11 +33,4 @@ function zerothPath(origin,aim,{floor,grid,geometry}){
 }
 function gatherPoint(a){const dx=a.aim.x-a.origin.x,dz=a.aim.z-a.origin.z,d=Math.hypot(dx,dz)||1;return {x:a.origin.x+dx/d*1.3,y:a.origin.y,z:a.origin.z+dz/d*1.3};}
 function blackened(events,id,elapsed){return [...events].some(a=>!a.cancelled&&CRAFTS[a.character]?.zeroth&&elapsed(a)>=CRAFTS[a.character].hitAt&&elapsed(a)<CRAFTS[a.character].hitTimes.at(-1)+180&&a.hits?.some(h=>h.id===id&&h.damage>0));}
-// A short local light pulse per thrust, independent of the final slash and UI.
-function kaleidoFlash(a,time){
- if(a.cancelled||a.character!=='Elaine'||a.kind!=='craft')return null;
- const s=CRAFTS.Elaine;if(time<s.hitAt||time>s.flurryEnd+180)return null;
- const age=Math.min(...s.hitTimes.slice(0,-1).map(t=>time>=t?time-t:Infinity));if(age>220)return null;
- const p=gatherPoint(a);return {origin:{x:p.x,y:p.y+.65,z:p.z},direction:{x:0,z:1},color:[.025,1,.22],radius:2.7,omni:true,strength:.32*Math.exp(-age/85)};
-}
-module.exports={CRAFTS,kaleidoFlash,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};
+module.exports={CRAFTS,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};

@@ -84,7 +84,7 @@ test('Kaleido Fencer plays the complete native salvo once, then its pause and en
  const s=CRAFTS.Elaine;assert.equal(s.targetRequired,false);assert.equal(s.selfTarget,true);
  assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,11);assert.equal(pose('Elaine',2500).bank,10);
  assert.notDeepEqual(pose('Elaine',2025),pose('Elaine',2325));assert.equal(pose('Elaine',3300).bank,7);assert.equal(pose('Elaine',5000).bank,8);
- assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_mot_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_mot_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[.12,.36]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.36,.6]);assert.deepEqual(profile.clipWindows.kaleidoFinalCut,[.6,1]);assert.deepEqual(profile.forwardThrustClips,[]);assert.deepEqual(profile.plantedCraftClips,[]);assert.deepEqual(profile.clipWindows.kaleidoPause,[.6,.60001]);
+ assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_mot_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_mot_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[.12,.36]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.36,29/55]);assert.deepEqual(profile.clipWindows.kaleidoFinalCut,[29/55,1]);assert.deepEqual(profile.forwardThrustClips,[]);assert.deepEqual(profile.plantedCraftClips,[]);assert.deepEqual(profile.clipWindows.kaleidoPause,[29/55,29/55+.00001]);
 });
 
 test('interrupting a captured multi-hit craft releases its own remaining stun and cancels later damage',()=>{
@@ -158,7 +158,7 @@ test('Elaine takes the camera launch heading, not the stale last movement headin
 
 
 test('Elaine has a separate sword-cut animation at the final impact, before recovery',()=>{
- const s=CRAFTS.Elaine,p=pose('Elaine',s.hitTimes.at(-1));assert.equal(p.bank,12);assert.equal(p.pose,5);assert.equal(pose('Elaine',s.finishAt-1).bank,7);assert.equal(pose('Elaine',4700).bank,8);
+ const s=CRAFTS.Elaine,p=pose('Elaine',s.hitTimes.at(-1));assert.equal(p.bank,12);assert.equal(p.pose,3);assert.equal(pose('Elaine',s.finishAt-1).bank,7);assert.equal(pose('Elaine',4700).bank,8);
 });
 test('Elaine exports finite weapon endpoints for every craft frame and direction',()=>{
  const c=require('../activity/assets/sky/combat/catalogue.json').Elaine;
@@ -184,13 +184,13 @@ test('Elaine uses the Daybreak I thrust clip without procedural arm or leg overr
  const read=file=>JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+file)));const old=read('elaine-native-57d3820fdb.vfxpack'),now=read(files.Elaine);assert.deepEqual(now.effects.cr5110_20_4,old.effects.cr5110_20_4);assert.deepEqual(now.effects.cr5110_20_6,old.effects.cr5110_20_6);assert.ok(now.textures.db1_efsl_a002);assert.ok(now.effects.cr5110_20_2.frames.every(frame=>frame.every(n=>!['cylinder_base','cylinder_base_multi'].includes(now.effects.cr5110_20_2.segments[n[0]].name))));
 });
 
-test('Kaleido lights each thrust locally in green and releases light for the pause, final slash and interruption',()=>{
- const {kaleidoFlash,CRAFTS}=require('../activity/daybreak-crafts.cjs'),s=CRAFTS.Elaine,a={character:'Elaine',kind:'craft',origin:{x:1,y:2,z:3},aim:{x:1,y:2,z:8}};
- assert.equal(kaleidoFlash(a,s.hitAt-1),null);const on=kaleidoFlash(a,s.hitAt),fade=kaleidoFlash(a,s.hitAt+70);assert.ok(on.strength>fade.strength);assert.ok(on.color[1]>on.color[0]*10&&on.color[1]>on.color[2]*3);assert.equal(on.origin.x,1);assert.ok(on.origin.z>3&&on.origin.z<8);assert.ok(on.radius<3);
- assert.equal(kaleidoFlash(a,s.flurryEnd+221),null);assert.equal(kaleidoFlash(a,s.hitTimes.at(-1)),null);assert.equal(kaleidoFlash({...a,cancelled:true},s.hitAt),null);assert.equal(kaleidoFlash({...a,kind:'basic'},s.hitAt),null);assert.equal(kaleidoFlash({...a,character:'Van'},s.hitAt),null);
+test('Elaine pauses before the full native cut and impacts on source frame 34',()=>{
+ const source=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine.clipWindows,s=CRAFTS.Elaine;
+ assert.equal(source.kaleidoSalvoB[1],source.kaleidoPause[0]);assert.equal(source.kaleidoPause[0],source.kaleidoFinalCut[0]);
+ assert.ok(Math.abs(source.kaleidoFinalCut[0]*55-29)<1e-9);assert.ok(Math.abs((s.hitTimes.at(-1)-s.finishAt)/700*26+29-34)<.05);
 });
-test('shared local-light uniforms retain Dorothy white flash defaults and clear craft lighting',async()=>{
- const THREE=await import('three'),{createDayNight}=await import('../activity/day-night.mjs'),model=new THREE.Group(),mesh=new THREE.Mesh(new THREE.PlaneGeometry(),new THREE.MeshBasicMaterial());model.add(mesh);const light=createDayNight(THREE,model,'arena'),shader={uniforms:{},vertexShader:'#include <project_vertex>',fragmentShader:'#include <opaque_fragment>'};mesh.material.onBeforeCompile(shader,{});
- light.photo([{origin:{x:1,y:0,z:2},direction:{x:0,z:1},strength:.5}]);assert.deepEqual(shader.uniforms.skyPhotoColor0.value.toArray(),[1,1,1]);assert.deepEqual(shader.uniforms.skyPhotoConfig0.value.toArray(),[18,0]);
- light.photo([{origin:{x:1,y:0,z:2},color:[.025,1,.22],radius:2.7,omni:true,strength:.3}]);assert.deepEqual(shader.uniforms.skyPhotoConfig0.value.toArray(),[2.7,1]);assert.equal(shader.uniforms.skyPhotoColor0.value.y,1);light.photo([]);assert.equal(shader.uniforms.skyPhoto0.value.w,0);light.dispose();mesh.geometry.dispose();mesh.material.dispose();
+
+test('native blade charge keeps late emitter branches within the effect budget',()=>{
+ const fs=require('node:fs'),zlib=require('node:zlib'),files=require('../activity/assets/sky/effects/horizon/catalogue.json'),pack=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+files.Elaine))),e=pack.effects.cr5110_20_3;
+ const visible=new Set(e.frames.flat().map(n=>e.segments[n[0]].sourceEmitter));assert.ok(visible.has(34));assert.ok(visible.has(38));const wave=e.segments.find(s=>s.name==='wave');assert.equal(wave.billboardAxes,'xz');const f=wave.faces[0];assert.ok(Math.abs(f[0][0]*f[1][2]+f[1][0]*f[2][2]+f[2][0]*f[0][2]-f[1][0]*f[0][2]-f[2][0]*f[1][2]-f[0][0]*f[2][2])>1e-6);assert.ok(e.instanceCount<512);assert.ok(e.frames.every(f=>f.length<=128));
 });

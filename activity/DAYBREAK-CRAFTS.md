@@ -30,4 +30,6 @@ La séquence dure 5 150 ms : 650 ms d’introduction, 1 100 ms de préparation/p
 
 Le flash natif `_2` est déclenché à chaque estocade, avec trois instances réutilisées et un recouvrement borné, plutôt qu’une lecture continue dont seule la traîne bleue restait visible entre les coups.
 
-Les effets d’estocades `_2` et `_3` ont une émission HDR verte et un bloom sélectif renforcés dans le lecteur web. Un éclairage local vert à décroissance rapide accompagne chaque estocade sur les surfaces et sprites ; il s’éteint pendant la pause et lors d’une interruption. Cette calibration du rendu est une adaptation, pas le shader original de Daybreak. Les effets du slash final et les timings ne changent pas.
+Correction : la pause tient la frame native 29/55, avant le slash, au lieu de la frame 33 qui interrompait le geste. Le coup reprend à cette même frame et son impact correspond à la frame 34. Le graphe Daybreak I `_3` de préparation circulaire est attaché aux points exportés de la lame avant le coup, et non étiré sur les cibles pendant les estocades. Les gains HDR, recoloration verte et flashs locaux ajoutés ont été retirés ; les limites de conversion des matériaux et graphes natifs subsistent.
+
+Le convertisseur répartit le budget de particules entre les branches du graphe `_3` pour préserver les émetteurs tardifs. Les cylindres plats orientés vers la caméra conservent leurs coordonnées X/Z (au lieu de les aplatir sur X/Y). La préparation suit le ralenti natif avant le coup.

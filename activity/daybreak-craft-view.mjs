@@ -1,6 +1,6 @@
 import effectFiles from './assets/sky/effects/horizon/catalogue.json' with {type:'json'};
 import crafts from './daybreak-crafts.cjs';
-import {createElaineBladeView} from './elaine-blade-view.mjs';
+import {createElaineBladeView,elaineBladeEndpoints} from './elaine-blade-view.mjs';
 import {loadCs2Effects} from './native-cs2-effects.mjs';
 // Native Horizon effects with a lightweight coin and a fallback while no asset bank is available.
 export function createDaybreakCraftView(THREE,scene,assets){
@@ -10,18 +10,26 @@ export function createDaybreakCraftView(THREE,scene,assets){
  function prepare(character){if(!assets)return Promise.resolve();if(!jobs.has(character))jobs.set(character,Promise.all([loadCs2Effects(THREE,assets,'effects/horizon/'+effectFiles[character]),character==='Elaine'?bladeView.prepare():Promise.resolve()]).then(([bank])=>{if(disposed)bank.dispose();else banks.set(character,bank);}));return jobs.get(character);}
 
  const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),quaternion=new THREE.Quaternion(),scale=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
- function nativeDraw(a,time,camera){const bank=banks.get(a.character);if(!bank||!camera)return false;let list=nativeViews.get(a.id);if(!list){list=Object.fromEntries(ids[a.character].map(id=>[id,bank.create(id.split(':')[0],scene,a.character==='Elaine'&&/^cr5110_20_[23](?::|$)/.test(id)?{bloom:.75,gain:3,color:0x15ff72}:/sc5117_00_(08|09|16)$/.test(id)?{bloom:.35,gain:2.5,color:0xff4466}:{bloom:.25})]));nativeViews.set(a.id,list);}for(const fx of Object.values(list))fx.hide();if(a.cancelled)return true;
+ function nativeDraw(a,time,camera,avatar){const bank=banks.get(a.character);if(!bank||!camera)return false;let list=nativeViews.get(a.id);if(!list){list=Object.fromEntries(ids[a.character].map(id=>[id,bank.create(id.split(':')[0],scene,id==='cr5110_20_3'?{bloom:.25,depthTest:false,renderOrder:6}:/sc5117_00_(08|09|16)$/.test(id)?{bloom:.35,gain:2.5,color:0xff4466}:{bloom:.25})]));nativeViews.set(a.id,list);}for(const fx of Object.values(list))fx.hide();if(a.cancelled)return true;
   const spec=crafts.CRAFTS[a.character],yaw=Math.atan2(a.aim.x-a.origin.x,a.aim.z-a.origin.z),end=spec.zeroth?crafts.exitPoint(a):a.aim,center={x:(a.origin.x+end.x)/2,y:a.origin.y+.65,z:(a.origin.z+end.z)/2},length=Math.hypot(end.x-a.origin.x,end.z-a.origin.z);
   const play=(id,start,finish,point,size=.5,rate=1,stretch=1,loop=false)=>{if(time<start||time>finish)return;matrix.compose(position.set(point.x,point.y,point.z),quaternion.setFromAxisAngle(up,yaw),scale.set(size,size,size*stretch));list[id].draw(loop?((time-start)/1000*rate)%(typeof loop==='number'?loop:1.7):(time-start)/1000*rate,matrix,camera,{scale:size,opacity:Math.min(1,(finish-time)/120)});};
   if(spec.coinShot){const coin=crafts.coinPoint(a,spec.fireAt),hit={...a.aim,y:a.aim.y+.8};play('cr0000_30_2',spec.throwAt,spec.fireAt+120,coin,.25);play('cr0000_30_3',spec.fireAt,spec.fireAt+650,coin,.4);play('cr0000_30_4',spec.hitAt-40,spec.hitAt+750,hit,.5);play('cr0000_30_5',spec.hitAt,spec.hitAt+850,a.aim,.38);}
-  else if(spec.kaleido){const front=crafts.gatherPoint(a),sword={x:a.origin.x+Math.sin(yaw)*.75,y:a.origin.y+1.05,z:a.origin.z+Math.cos(yaw)*.75};play('cr5110_20_1',spec.captureAt,spec.gatherEnd,sword,.32,1,1,.8);play('cr5110_20_2',spec.gatherEnd-150,spec.salvoAt,sword,.45);for(let slot=0;slot<3;slot++){const hits=spec.hitTimes.slice(0,-1).filter((_,i)=>i%3===slot),hit=hits.findLast(t=>time>=t-70);if(hit!=null)play('cr5110_20_2:'+slot,hit-70,hit+350,sword,.45);}play('cr5110_20_3',spec.salvoAt,spec.flurryEnd,{...front,y:front.y+.75},.85,1,1,2.25);play('cr5110_20_4',spec.hitTimes.at(-1)-80,spec.hitTimes.at(-1)+750,{...front,y:front.y+.65},.9);play('cr5110_20_6',spec.hitTimes.at(-1),spec.duration,{...front,y:front.y+.65},.65);}
+  else if(spec.kaleido){const front=crafts.gatherPoint(a),sword={x:a.origin.x+Math.sin(yaw)*.75,y:a.origin.y+1.05,z:a.origin.z+Math.cos(yaw)*.75};play('cr5110_20_1',spec.captureAt,spec.gatherEnd,sword,.32,1,1,.8);play('cr5110_20_2',spec.gatherEnd-150,spec.salvoAt,sword,.45);for(let slot=0;slot<3;slot++){const hits=spec.hitTimes.slice(0,-1).filter((_,i)=>i%3===slot),hit=hits.findLast(t=>time>=t-70);if(hit!=null)play('cr5110_20_2:'+slot,hit-70,hit+350,sword,.45);}// Native frame 25: circular blade charge. Hold before frame 29, then play the complete cut.
+   const chargeStart=spec.flurryEnd-150,chargeEnd=spec.hitTimes.at(-1),endpoints=elaineBladeEndpoints(THREE,time,avatar);
+   if(endpoints&&time>=chargeStart&&time<chargeEnd){
+    const [hilt,tip]=endpoints,blade=tip.clone().sub(hilt).normalize(),normal=new THREE.Vector3();camera.getWorldDirection(normal);
+    const side=blade.clone().cross(normal).normalize(),depth=side.clone().cross(blade).normalize();
+    matrix.makeBasis(side,blade,depth).scale(scale.setScalar(.9));matrix.setPosition(hilt.clone().lerp(tip,.3).addScaledVector(normal,-.04));
+    list.cr5110_20_3.draw(((Math.min(time,spec.finishAt)-chargeStart)*.2+Math.max(0,time-spec.finishAt))/1000,matrix,camera,{scale:.9,opacity:1});
+   }
+   play('cr5110_20_4',spec.hitTimes.at(-1)-80,spec.hitTimes.at(-1)+750,{...front,y:front.y+.65},.9);play('cr5110_20_6',spec.hitTimes.at(-1),spec.duration,{...front,y:front.y+.65},.65);}
   else if(spec.zeroth){const blade={x:a.origin.x+Math.sin(yaw)*.7,y:a.origin.y+.95,z:a.origin.z+Math.cos(yaw)*.7};play('sc5117_00_13',0,spec.hitAt+200,{...a.origin,y:a.origin.y+1.5},.55,1,1,true);play('sc5117_00_14',0,spec.hitAt+450,{...a.origin,y:a.origin.y+1.5},.5,1,1,true);play('sc5117_00_02',1600,spec.hitAt+100,blade,.32);play('sc5117_00_04',spec.moveStart,spec.hitAt+550,a.origin,.48);play('sc5117_00_08',spec.hitAt,spec.hitAt+1100,center,1.65,.8,Math.max(1,length/5));play('sc5117_00_11',spec.hitAt,spec.hitAt+1200,center,1.15);play('sc5117_00_09',spec.hitTimes[1],spec.hitTimes[1]+1050,center,1.65,.8,Math.max(1,length/5));play('sc5117_00_16',spec.hitTimes[1],spec.hitTimes[1]+1100,end,1.1);}
   return true;
  }
 
  function remove(id){bladeView.remove(id);const n=nativeViews.get(id);if(n){for(const fx of Object.values(n))fx.dispose();nativeViews.delete(id);}const v=views.get(id);if(!v)return;scene.remove(v);v.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});views.delete(id);}
  function draw(a,time,avatars,camera){
-  const s=crafts.CRAFTS[a.character],native=nativeDraw(a,time,camera);if(s.kaleido)bladeView.draw(a,time,avatars?.get(a.actor),camera);let root=views.get(a.id);
+  const s=crafts.CRAFTS[a.character],native=nativeDraw(a,time,camera,avatars?.get(a.actor));if(s.kaleido)bladeView.draw(a,time,avatars?.get(a.actor),camera);let root=views.get(a.id);
   if(!root&&s.coinShot){root=new THREE.Group();const coin=new THREE.Mesh(new THREE.CylinderGeometry(.105,.105,.025,16),new THREE.MeshBasicMaterial({color:0xeebc50}));coin.name='van-coin';root.add(coin);for(const name of ['van-shot-to-coin','van-ricochet']){const beam=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,1,8),new THREE.MeshBasicMaterial({color:0xffd66b,transparent:true,opacity:0,depthWrite:false}));beam.name=name;root.add(beam);}scene.add(root);views.set(a.id,root);}
   if(!root){root=new THREE.Group();const material=new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
    const slash=new THREE.Mesh(new THREE.RingGeometry(.9,1.05,40,1,0,Math.PI*1.35),material);slash.name='daybreak-slash';root.add(slash);

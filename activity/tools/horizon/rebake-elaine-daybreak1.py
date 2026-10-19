@@ -4,12 +4,25 @@ p=Path(__file__).with_name('bake-horizon-vfx.py');s=p.read_text('utf-8');s=s[:s.
 # Execute only definitions (the existing extract phase uses locally cached textures/models).
 s=s.replace("if age<0 or age>=life or i not in renderers", "if 0<=age<life and 'TrailRenderer' in mods[i]:TRAILTRACE.setdefault((name,frame),[]).append((instances.index(inst),i,age,life,matrix.copy()))\n   if age<0 or age>=life or i not in renderers")
 s=s.replace("*add,*uv]", "*add,*uv,*curve(renderer['texture'][1].get('uv_info') if len(renderer['texture'])>1 else None,t,[0,0,1,1])]")
-ns={'TRAILTRACE':{}};exec(compile(s,str(p),'exec'),ns);ns['RAW']=Path('E:/dev/sky-activity-tools/daybreak1/vfx/battle');ns['OUT']=Path(__file__).resolve().parents[2]/'assets/sky/effects/horizon/daybreak1'
+# Keep every charge emitter represented: early recursive particle chains must not starve the circular flash.
+s=s.replace("if len(instances)>=512 or i in chain:return", "if len(instances)>=512 or i in chain:return\n  if name=='cr5110_20_3' and sum(v['i']==i for v in instances)>=8:return")
+s=s.replace("if len(instances)>=512:return", "if len(instances)>=512:return\n    if name=='cr5110_20_3' and sum(v['i']==i for v in instances)>=8:return")
+s=s.replace("or len(nodes)>=128", "or (name!='cr5110_20_3' and len(nodes)>=128)")
+s=s.replace("  frames.append(nodes)", "  if name=='cr5110_20_3':\n   buckets={}\n   for node in nodes:buckets.setdefault(node[0],[]).append(node)\n   nodes=[bucket[j] for j in range(max(map(len,buckets.values()),default=0)) for bucket in buckets.values() if j<len(bucket)][:128]\n  frames.append(nodes)")
+ns={'TRAILTRACE':{},'__file__':str(p)};exec(compile(s,str(p),'exec'),ns);ns['RAW']=Path('E:/dev/sky-activity-tools/daybreak1/vfx/battle');ns['OUT']=Path(__file__).resolve().parents[2]/'assets/sky/effects/horizon/daybreak1'
 pack={'tintCurves':True,'fps':30,'format':'horizon-vfx-1','textures':{},'effects':{},'source':'Native Kaleido Fencer .vfx graphs; source curves, models and textures','unsupported':['screen distortion','native shader lighting'],'limits':{'instances':512,'visibleNodes':128,'spawnCount':32}}
 for name in ['cr5110_20_'+str(i) for i in [1,2,3]]:
  effect,used=ns['bake'](name);raw=json.loads((ns['RAW']/(name+'.vfx')).read_text('utf-8'))['VFX'];renderers=[(e,m) for e in raw['Emitter'] for m in e['Module'] if m['type'] in ['MeshRenderer','GPUParticleRenderer'] and m.get('texture') and not e['name'].lower().startswith(('scrn','scr_')) and e['name'].lower() not in ['scr','black'] and (ns['OUT']/(m['texture'][0]['filename']+'.png')).exists()]
  for seg,(e,m) in zip(effect['segments'],renderers):
   seg['shader']=m['shader_name'];seg['sourceEmitter']=raw['Emitter'].index(e)
+  if name=='cr5110_20_3' and m.get('is_billboard') and m.get('mesh_name') in ['Cylinder','HemiCylinder']:
+   # Native billboard cylinder is a flat annular wave, not a zero-height cylinder side wall.
+   import math
+   seg['billboardAxes']='xz';inner=max(0,min(1,m.get('shape_param',{}).get('x',.7)))*.5;faces=[]
+   for j in range(32):
+    a=j/32*math.tau;b=(j+1)/32*math.tau
+    faces.append([[math.sin(t)*radius,0,math.cos(t)*radius,u,w] for t,radius,u,w in [(a,inner,j/32,1),(a,.5,j/32,0),(b,.5,(j+1)/32,0),(b,inner,(j+1)/32,1)]])
+   seg['faces']=faces
   if len(m['texture'])>1 and 'alpha' in m['shader_name']:
    seg['maskTexture']=m['texture'][1]['filename'];used.add(seg['maskTexture'])
  histories={}

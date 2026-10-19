@@ -1,6 +1,13 @@
 import native from './native-combat.cjs';
 import crafts from './daybreak-crafts.cjs';
 import {setBloomEmission} from './map-bloom.mjs';
+// Shared exported weapon endpoints: the charge effect follows the animated blade too.
+export function elaineBladeEndpoints(THREE,time,avatar){
+ if(!avatar?.mesh)return null;
+ const p=crafts.pose('Elaine',time),pair=native.COMBAT.Elaine.banks[p.bank].bladeAnchors?.[p.pose*8+(avatar.direction??0)%8];
+ if(!pair)return null;avatar.mesh.updateMatrixWorld(true);
+ return pair.map(([x,y])=>new THREE.Vector3(x,y,0).applyMatrix4(avatar.mesh.matrixWorld));
+}
 // cr5110_20_0: source trail texture and green tint, attached to the exported weapon endpoints.
 export function createElaineBladeView(THREE,scene,assets){
  const views=new Map();let texture=null,job=null,disposed=false;

@@ -167,38 +167,14 @@
         "run",
         "kaleidoStart",
         "craftStart",
-        "attack"
+        "attack",
+        "kaleidoAimHold",
+        "kaleidoPause",
+        "kaleidoSalvoA",
+        "kaleidoSalvoB",
+        "kaleidoFinalCut"
       ],
       "weaponScale": 0.8,
-      "nativeCraftRevision": {
-        "initialThrust": "chr5110_m_btl_craft02_2",
-        "salvo": "chr5110_m_btl_craft02_3",
-        "salvoWindows": [
-          [
-            0,
-            0.5
-          ],
-          [
-            0.5,
-            1
-          ]
-        ],
-        "salvoFrames": 48,
-        "salvoDuration": 3400,
-        "pause": "chr5110_m_btl_craft02_3_lp",
-        "ending": "chr5110_m_btl_craft02_3_ed",
-        "repeatSalvo": false,
-        "launchDirection": "camera heading sent with command",
-        "timings": {
-          "capture": 650,
-          "gatherEnd": 1750,
-          "salvoStart": 2150,
-          "salvoEnd": 5550,
-          "pauseEnd": 7550,
-          "finalHit": 7700,
-          "end": 8550
-        }
-      },
       "clipWindows": {
         "kaleidoSalvoA": [
           0.12,
@@ -206,10 +182,10 @@
         ],
         "kaleidoSalvoB": [
           0.36,
-          0.6
+          0.5272727272727272
         ],
         "kaleidoFinalCut": [
-          0.6,
+          0.5272727272727272,
           1
         ],
         "craftStrike": [
@@ -217,13 +193,20 @@
           0.12
         ],
         "kaleidoPause": [
-          0.6,
-          0.60001
+          0.5272727272727272,
+          0.5272827272727272
         ]
       },
+      "illuminatedBlade": true,
       "plantedCraftClips": [],
       "forwardThrustClips": [],
-      "illuminatedBlade": true
+      "nativeCraftRevision": {
+        "source": "Daybreak I chr5110_mot_btl_craft02_3",
+        "pauseSourceFrame": 29,
+        "impactSourceFrame": 34,
+        "fps": 30,
+        "launchDirection": "camera heading sent with command"
+      }
     },
     "Shizuna": {
       "id": "shizuna-daybreak1",
@@ -417,6 +400,13 @@
     "proceduralArmIK": false,
     "proceduralPlantedLegs": false,
     "duration": 5150,
-    "finalHit": 4040
+    "finalHit": 3985
+  },
+  "elaineFinalCutMarkers": {
+    "fps": 30,
+    "pauseFrame": 29,
+    "impactFrame": 34,
+    "clipFrames": 55,
+    "bladeChargeFrame": 25
   }
 }
