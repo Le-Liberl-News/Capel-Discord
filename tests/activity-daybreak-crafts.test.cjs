@@ -82,9 +82,9 @@ test('Kaleido Fencer works empty and next to a wall without aiming at reachable 
 });
 test('Kaleido Fencer plays the complete native salvo once, then its pause and ending clips',()=>{
  const s=CRAFTS.Elaine;assert.equal(s.targetRequired,false);assert.equal(s.selfTarget,true);
- assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,11);assert.equal(pose('Elaine',3500).bank,10);
- assert.notDeepEqual(pose('Elaine',2225),pose('Elaine',2625));assert.equal(pose('Elaine',5000).bank,7);assert.equal(pose('Elaine',7800).bank,8);
- assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_m_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_m_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[0,.39]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.39,.78]);assert.deepEqual(profile.clipWindows.kaleidoFinalCut,[.78,1]);assert.ok(profile.forwardThrustClips.includes('kaleidoSalvoA'));
+ assert.equal(pose('Elaine',1000).bank,9);assert.equal(pose('Elaine',1750).bank,11);assert.equal(pose('Elaine',2500).bank,10);
+ assert.notDeepEqual(pose('Elaine',2025),pose('Elaine',2325));assert.equal(pose('Elaine',3300).bank,7);assert.equal(pose('Elaine',6000).bank,8);
+ assert.equal(s.stages.find(s=>s.bank===6).loopMs,undefined);assert.equal(s.stages.find(s=>s.bank===10).loopMs,undefined);const profile=require('../activity/assets/sky/combat/daybreak/source.json').profiles.Elaine;assert.ok(profile.motions.kaleidoSalvoA.endsWith('chr5110_mot_btl_craft02_3.glb'));assert.ok(profile.motions.kaleidoSalvoB.endsWith('chr5110_mot_btl_craft02_3.glb'));assert.deepEqual(profile.clipWindows.kaleidoSalvoA,[.12,.36]);assert.deepEqual(profile.clipWindows.kaleidoSalvoB,[.36,.6]);assert.deepEqual(profile.clipWindows.kaleidoFinalCut,[.6,1]);assert.deepEqual(profile.forwardThrustClips,[]);assert.deepEqual(profile.plantedCraftClips,[]);assert.deepEqual(profile.clipWindows.kaleidoPause,[.6,.60001]);
 });
 
 test('interrupting a captured multi-hit craft releases its own remaining stun and cancels later damage',()=>{
@@ -158,7 +158,7 @@ test('Elaine takes the camera launch heading, not the stale last movement headin
 
 
 test('Elaine has a separate sword-cut animation at the final impact, before recovery',()=>{
- const s=CRAFTS.Elaine,p=pose('Elaine',s.hitTimes.at(-1));assert.equal(p.bank,12);assert.equal(p.pose,5);assert.equal(pose('Elaine',s.finishAt-1).bank,7);assert.equal(pose('Elaine',7600).bank,8);
+ const s=CRAFTS.Elaine,p=pose('Elaine',s.hitTimes.at(-1));assert.equal(p.bank,12);assert.equal(p.pose,5);assert.equal(pose('Elaine',s.finishAt-1).bank,7);assert.equal(pose('Elaine',5700).bank,8);
 });
 test('Elaine exports finite weapon endpoints for every craft frame and direction',()=>{
  const c=require('../activity/assets/sky/combat/catalogue.json').Elaine;
@@ -167,7 +167,7 @@ test('Elaine exports finite weapon endpoints for every craft frame and direction
 test('Elaine green blade follows the sprite, stays visible through the pause and releases its trails',async()=>{
  const THREE=await import('three'),{createElaineBladeView}=await import('../activity/elaine-blade-view.mjs'),scene=new THREE.Scene(),texture=new THREE.Texture(),api={...THREE,TextureLoader:class{async loadAsync(){return texture;}}},view=createElaineBladeView(api,scene,'http://test/assets/'),camera=new THREE.PerspectiveCamera();camera.position.set(0,4,-6);camera.lookAt(0,1,0);camera.updateMatrixWorld(true);
  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(),new THREE.MeshBasicMaterial());mesh.position.set(2,0,3);mesh.quaternion.copy(camera.quaternion);const avatar={mesh,direction:6},a={id:'green',actor:'a',character:'Elaine'};await view.prepare();
- for(const t of [100,1000,2400,3300,5400,7000,8000]){view.draw(a,t,avatar,camera);assert.equal(view.size,1);assert.ok(scene.children[0].visible);const trail=scene.children[0].children[0];assert.ok(trail.geometry.drawRange.count<=48);assert.ok(Array.from(trail.geometry.attributes.position.array).every(Number.isFinite));}
+ for(const t of [100,1000,2100,2500,3300,5000,6000]){view.draw(a,t,avatar,camera);assert.equal(view.size,1);assert.ok(scene.children[0].visible);const trail=scene.children[0].children[0];assert.ok(trail.geometry.drawRange.count<=48);assert.ok(Array.from(trail.geometry.attributes.position.array).every(Number.isFinite));}
  let disposed=false;scene.children[0].children[0].geometry.addEventListener('dispose',()=>disposed=true);view.remove(a.id);assert.ok(disposed);assert.equal(scene.children.length,0);view.dispose();
 });
 
@@ -177,3 +177,9 @@ test('Elaine green blade follows the sprite, stays visible through the pause and
  assert.ok(p.effects.cr5110_20_4.segments.some(s=>s.name==='Slash_Core'&&s.maskTexture&&s.faces.length>20));assert.ok(p.effects.cr5110_20_6);
  assert.ok(beam.frames.flat().some(n=>n.length===33&&n[22]>n[21]*2));assert.notDeepEqual(beam.frames[3],beam.frames[15]);
  });
+
+test('Elaine uses the Daybreak I thrust clip without procedural arm or leg overrides and preserves the approved final VFX',()=>{
+ const fs=require('node:fs'),zlib=require('node:zlib'),source=require('../activity/assets/sky/combat/daybreak/source.json'),files=require('../activity/assets/sky/effects/horizon/catalogue.json');
+ assert.ok(source.clipDurations.Elaine.kaleidoSalvoA>1.8&&source.clipDurations.Elaine.kaleidoSalvoA<1.9);assert.deepEqual(source.profiles.Elaine.forwardThrustClips,[]);assert.deepEqual(source.profiles.Elaine.plantedCraftClips,[]);
+ const read=file=>JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+file)));const old=read('elaine-native-57d3820fdb.vfxpack'),now=read(files.Elaine);assert.deepEqual(now.effects.cr5110_20_4,old.effects.cr5110_20_4);assert.deepEqual(now.effects.cr5110_20_6,old.effects.cr5110_20_6);assert.ok(now.textures.db1_efsl_a002);assert.ok(now.effects.cr5110_20_2.frames.every(frame=>frame.every(n=>!['cylinder_base','cylinder_base_multi'].includes(now.effects.cr5110_20_2.segments[n[0]].name))));
+});

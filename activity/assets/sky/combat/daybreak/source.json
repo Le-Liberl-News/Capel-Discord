@@ -93,17 +93,17 @@
         "attack": "kai/gltf/chr5110_m_btl_fattack1.glb",
         "death": "kai/gltf/chr5110_m_btl_dead.glb",
         "craftStart": "kai/gltf/chr5110_m_btl_craft02_1.glb",
-        "craftStrike": "kai/gltf/chr5110_m_btl_craft02_2.glb",
+        "craftStrike": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_3.glb",
         "craftEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb",
-        "kaleidoStart": "kai/gltf/chr5110_m_btl_craft02_1.glb",
-        "kaleidoFlurry": "kai/gltf/chr5110_m_btl_craft02_2_lp.glb",
+        "kaleidoStart": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_1.glb",
+        "kaleidoFlurry": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_2.glb",
         "kaleidoFinish": "kai/gltf/chr5110_m_btl_craft02_3.glb",
-        "kaleidoEnd": "kai/gltf/chr5110_m_btl_craft02_3_ed.glb",
+        "kaleidoEnd": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_3_ed.glb",
         "kaleidoAimHold": "kai/gltf/chr5110_m_btl_craft02_1_lp.glb",
-        "kaleidoPause": "kai/gltf/chr5110_m_btl_craft02_3_lp.glb",
-        "kaleidoSalvoA": "kai/gltf/chr5110_m_btl_craft02_3.glb",
-        "kaleidoSalvoB": "kai/gltf/chr5110_m_btl_craft02_3.glb",
-        "kaleidoFinalCut": "kai/gltf/chr5110_m_btl_craft02_3.glb"
+        "kaleidoPause": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_3.glb",
+        "kaleidoSalvoA": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_3.glb",
+        "kaleidoSalvoB": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_3.glb",
+        "kaleidoFinalCut": "daybreak1/asset/common/model/chr5110_mot_btl_craft02_3.glb"
       },
       "chibi": {
         "legs": 0.48,
@@ -201,27 +201,28 @@
       },
       "clipWindows": {
         "kaleidoSalvoA": [
-          0,
-          0.39
+          0.12,
+          0.36
         ],
         "kaleidoSalvoB": [
-          0.39,
-          0.78
+          0.36,
+          0.6
         ],
         "kaleidoFinalCut": [
-          0.78,
+          0.6,
           1
+        ],
+        "craftStrike": [
+          0,
+          0.12
+        ],
+        "kaleidoPause": [
+          0.6,
+          0.60001
         ]
       },
-      "plantedCraftClips": [
-        "kaleidoSalvoA",
-        "kaleidoSalvoB",
-        "kaleidoFinalCut"
-      ],
-      "forwardThrustClips": [
-        "kaleidoSalvoA",
-        "kaleidoSalvoB"
-      ],
+      "plantedCraftClips": [],
+      "forwardThrustClips": [],
       "illuminatedBlade": true
     },
     "Shizuna": {
@@ -365,17 +366,17 @@
       "attack": 1.33331298828125,
       "death": 3.3333282470703125,
       "craftStart": 0.6666679382324219,
-      "craftStrike": 0.466644287109375,
+      "craftStrike": 1.8333320617675781,
       "craftEnd": 1,
       "kaleidoStart": 0.6666679382324219,
-      "kaleidoFlurry": 3.3333282470703125,
+      "kaleidoFlurry": 1.3333320617675781,
       "kaleidoFinish": 3.4000244140625,
       "kaleidoEnd": 1,
       "kaleidoAimHold": 3.3333282470703125,
-      "kaleidoPause": 3.333343505859375,
-      "kaleidoSalvoA": 3.4000244140625,
-      "kaleidoSalvoB": 3.4000244140625,
-      "kaleidoFinalCut": 3.4000244140625
+      "kaleidoPause": 1.8333320617675781,
+      "kaleidoSalvoA": 1.8333320617675781,
+      "kaleidoSalvoB": 1.8333320617675781,
+      "kaleidoFinalCut": 1.8333320617675781
     },
     "Shizuna": {
       "idle": 6.6666669845581055,
@@ -401,6 +402,21 @@
     }
   },
   "nativeCraftRevision": {
-    "Elaine": "Native _3 retargeted: battleIdle root/hips/legs, forward right-arm IK for seven varied thrusts; windows 0-.39, .39-.78, final cut .78-1 after a two-second pause. Final impact 7050ms, recovery _3_ed. Exported blade endpoints drive native efsl_a003 green trails."
+    "Elaine": "Daybreak I original craft02 clips, no arm IK and no planted bone overrides; first 60% of craft02_3 for thrusts, pose at 60% held for pause, remaining 40% for final cut. Horizon body/face profile retained."
+  },
+  "elaineDaybreak1": {
+    "script": "script_en/ani/chr5110.dat",
+    "function": "AniBtlCraft02",
+    "sourceGame": "Trails through Daybreak",
+    "clips": {
+      "craft02_1": "9af0587d3ec968e6233fc0616dd59baac89585c5f88021dba9eebee9ad1818c5",
+      "craft02_2": "578c877a5a3384f477285a694cf2e0541de5161f4ca26798a6c722e2d110393b",
+      "craft02_3": "f0f39c91ef9fa60eb7a4857e15bb4298113bea23731b73f09d913042ebd58adb",
+      "craft02_3_ed": "b64a063bde1115e9012adea3793e2a29a48e0bf49b248f9cb6e78b4046cbda45"
+    },
+    "proceduralArmIK": false,
+    "proceduralPlantedLegs": false,
+    "duration": 6150,
+    "finalHit": 5040
   }
 }

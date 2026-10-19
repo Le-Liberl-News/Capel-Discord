@@ -50,8 +50,8 @@
       ]
     },
     "elaine": {
-      "pack": "elaine-native-57d3820fdb.vfxpack",
-      "sha256": "57d3820fdb9812fcaf45342043cd37e046a327705b633ad1299c8b9555173a55",
+      "pack": "elaine-native-1e0d760fe3.vfxpack",
+      "sha256": "1e0d760fe324eb144a7f089010947031de631b67d5e4573259a543222d89fda7",
       "sources": [
         "vfx/battle/cr5110_20_1.vfx",
         "vfx/battle/cr5110_20_2.vfx",
@@ -62,6 +62,35 @@
         "vfx/battle/cr5110_20_7.vfx"
       ],
       "textures": [
+        "effects/horizon/daybreak1/efsh_a006.png",
+        "effects/horizon/daybreak1/efvi_a013.png",
+        "effects/horizon/daybreak1/efsl_a008.png",
+        "effects/horizon/daybreak1/efsl_z008.png",
+        "effects/horizon/daybreak1/effl_a005.png",
+        "effects/horizon/daybreak1/efsl_a012.png",
+        "effects/horizon/daybreak1/effl_a003.png",
+        "effects/horizon/daybreak1/efsh_a003.png",
+        "effects/horizon/daybreak1/effl_a020.png",
+        "effects/horizon/daybreak1/effl_a000.png",
+        "effects/horizon/daybreak1/efvi_a011.png",
+        "effects/horizon/daybreak1/efsl_a007.png",
+        "effects/horizon/daybreak1/efvi_a035.png",
+        "effects/horizon/daybreak1/effi_a013.png",
+        "effects/horizon/daybreak1/efsh_a005.png",
+        "effects/horizon/daybreak1/efsh_a002.png",
+        "effects/horizon/daybreak1/efvi_a012.png",
+        "effects/horizon/daybreak1/efsh_a013.png",
+        "effects/horizon/daybreak1/efvi_a014.png",
+        "effects/horizon/daybreak1/effl_a008.png",
+        "effects/horizon/daybreak1/efvi_a015.png",
+        "effects/horizon/daybreak1/efsm_a009.png",
+        "effects/horizon/daybreak1/efsh_a004.png",
+        "effects/horizon/daybreak1/efsl_a002.png",
+        "effects/horizon/daybreak1/efsh_a019.png",
+        "effects/horizon/daybreak1/efsh_a015.png",
+        "effects/horizon/daybreak1/efsl_a005.png",
+        "effects/horizon/daybreak1/efsh_a001.png",
+        "effects/horizon/daybreak1/efvi_a024.png",
         "effects/horizon/efsl_a012.png",
         "effects/horizon/effl_a003.png",
         "effects/horizon/efsh_a006.png",
@@ -164,6 +193,25 @@
       "screen distortion",
       "native shader lighting",
       "bounded and approximated emitter simulation"
+    ]
+  },
+  "elaineDaybreak1": {
+    "source": "Trails through Daybreak / vfx.p3a",
+    "effects": [
+      "cr5110_20_1",
+      "cr5110_20_2",
+      "cr5110_20_3"
+    ],
+    "preservedHorizonFinal": [
+      "cr5110_20_4",
+      "cr5110_20_6"
+    ],
+    "script": "script_en/ani/chr5110.dat / AniBtlCraft02",
+    "motionDuration": 1.8333320617675781,
+    "horizonMotionDuration": 3.4000244140625,
+    "omittedBackdrop": [
+      "cylinder_base",
+      "cylinder_base_multi"
     ]
   }
 }
