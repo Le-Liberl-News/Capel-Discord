@@ -1,0 +1,101 @@
+{
+ "Estelle": {
+  "texture": "chat/run/ch00000.png",
+  "frameWidth": 64,
+  "frameHeight": 91,
+  "anchor": [
+   32,
+   88
+  ]
+ },
+ "Joshua": {
+  "texture": "chat/run/ch00010.png",
+  "frameWidth": 60,
+  "frameHeight": 97,
+  "anchor": [
+   30,
+   91
+  ]
+ },
+ "Scherazard": {
+  "texture": "chat/run/ch00020.png",
+  "frameWidth": 58,
+  "frameHeight": 96,
+  "anchor": [
+   29,
+   93
+  ]
+ },
+ "Olivier": {
+  "texture": "chat/run/ch00030.png",
+  "frameWidth": 62,
+  "frameHeight": 97,
+  "anchor": [
+   32,
+   93
+  ]
+ },
+ "Kloe": {
+  "texture": "chat/run/ch00040.png",
+  "frameWidth": 62,
+  "frameHeight": 93,
+  "anchor": [
+   31,
+   89
+  ]
+ },
+ "Agate": {
+  "texture": "chat/run/ch00050.png",
+  "frameWidth": 58,
+  "frameHeight": 101,
+  "anchor": [
+   29,
+   93
+  ]
+ },
+ "Tita": {
+  "texture": "chat/run/ch00060.png",
+  "frameWidth": 84,
+  "frameHeight": 84,
+  "anchor": [
+   42,
+   80
+  ]
+ },
+ "Zin": {
+  "texture": "chat/run/ch00070.png",
+  "frameWidth": 84,
+  "frameHeight": 124,
+  "anchor": [
+   42,
+   117
+  ]
+ },
+ "Julia": {
+  "texture": "chat/run/ch03580.png",
+  "frameWidth": 76,
+  "frameHeight": 98,
+  "anchor": [
+   38,
+   91
+  ]
+ },
+ "Mueller": {
+  "texture": "chat/run/ch03570.png",
+  "frameWidth": 87,
+  "frameHeight": 113,
+  "anchor": [
+   44,
+   103
+  ]
+ },
+ "Don": {
+  "texture": "chat/run/ch03760.png",
+  "frameWidth": 65,
+  "frameHeight": 103,
+  "anchor": [
+   32,
+   95
+  ]
+ }
+}

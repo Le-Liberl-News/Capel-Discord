@@ -3,7 +3,7 @@ const {createRhumertume,pomify,pomifyFinal,progress,moods,parisParts}=require('.
 const memory=(data=null)=>({load:()=>data&&JSON.parse(JSON.stringify(data)),save:d=>{data=JSON.parse(JSON.stringify(d));}});
 const at=s=>Date.parse(s),HOUR=3600000;
 // pictures without canvas: their names tell what was drawn
-const render={avatarURL:(c,l)=>`pom/${c}-${l}.png`,renderEvolution:async(c,f,t)=>({name:`evolution ${c} ${f}->${t}`}),renderBubble:async(text,l)=>({name:`bulle ${l}`,text})};
+const render={avatarURL:(c,l)=>`pom/${c}-${l}.png`,renderEvolution:async(c,f,t)=>({name:`evolution ${c} ${f}->${t}`}),renderBubble:async(text,l)=>({name:`bulle ${l}`,text}),renderBite:async(c,l,v,vl)=>({name:`morsure ${c} ${l} ${v} ${vl}`})};
 const names=['Kloe','Tita','Nial','Joshua'];
 function setup({now,random=()=>.5,cases=['Tita'],data=null}){
  const said=[],store=memory(data);
@@ -76,7 +76,7 @@ test('rage: the pom bites someone who spoke lately, who may catch the illness',a
  await r.infect('Tita');said.length=0;
  await r.message('Kloe','Salut Tita.');
  for(let i=0;i<3;i++){await r.message('Tita','ARRÊTE DE ME REGARDER !!!!!');await r.after('Tita');}
- assert.equal(said[0].text,'Pris·e de rage, Pomtita mord Kloe !');
+ assert.equal(said[0].text,'Pomtita rentre dans une rage incontrôlable.\nPris·e de rage, Pomtita mord Kloe !');assert.deepEqual(said[0].files,['morsure Tita 1 Kloe 0']);
  assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,['evolution Kloe 0->1']);
  assert.ok(r.isInfected('Kloe'));
  const before=said.length;await r.message('Tita','RAAAH !!!!!');await r.after('Tita');assert.equal(said.length,before);   // once an hour at most

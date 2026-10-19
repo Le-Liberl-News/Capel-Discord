@@ -73,7 +73,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
  // an announcement with its GIF; the text alone if the picture fails
  async function announceWith(text,picture){
   let files=[];
-  try{files=[await picture()];}catch(error){log('rhumertume: picture: '+error.message);}
+  try{files=[await picture()].filter(Boolean);}catch(error){log('rhumertume: picture: '+error.message);}
   await announce(text,files);
  }
  async function catches(character){
@@ -143,7 +143,9 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
    const victims=[...recent].filter(([name,at])=>name!==character&&name!=='Pom'&&t-at<=RECENT).map(([name])=>name);
    if(victims.length){
     const victim=pick(victims);p.lastRage=t;p.rage=AFTER_ACTION;save();
-    await announce(fill(pick(RAGE),{perso:nameOf(character),victime:stage(victim)==null?victim:nameOf(victim)}),[]);
+    // the rage, the bite, then the GIF of the pom jumping on its victim
+    await announceWith(`${nameOf(character)} rentre dans une rage incontrôlable.\n${fill(pick(RAGE),{perso:nameOf(character),victime:stage(victim)==null?victim:nameOf(victim)})}`,
+     ()=>pictures().renderBite(character,level(character),victim,level(victim)));
     if(stage(victim)==null&&random()<CONTAGION)await catches(victim);
    }
   }

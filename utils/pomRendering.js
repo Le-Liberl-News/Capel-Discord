@@ -171,4 +171,98 @@ async function renderEvolution(character,from,to,seed=Date.now()){
  add(evolutionFrame(young),2500);
  return {attachment:encode(frames,delays,{once:true}),name:'evolution.gif'};
 }
-module.exports={renderBubble,renderEvolution,avatarURL,slug,words};
+// the bite (rage): the pom runs in from the left, leaps on its victim — blood —, crawls over the body while the victim
+// shakes, stops to bite (more blood), then the victim runs off to the right with the pom still hanging on.
+// Blood: the tiles of Third/mgblood (the texture of Antoine's bite, msc0601).
+const BITE_W=520,BITE_H=260,GROUND=238,BLOOD=path.join(SKY,'effects/native/effects/Third/mgblood.png');
+const SOUTH_WEST=7,EAST=4;
+// the game's running animation (SC chip after the walking one), for the characters that have one: chat/run/index.json
+function runSheetOf(character){
+ const index=path.join(SKY,'chat/run/index.json'),sheet=fs.existsSync(index)&&JSON.parse(fs.readFileSync(index,'utf8'))[character];
+ return sheet?loadImage(fs.readFileSync(path.join(SKY,sheet.texture))).then(tex=>({sheet,tex})):null;
+}
+async function sheetOf(character){
+ const sheet=JSON.parse(fs.readFileSync(path.join(SKY,'characters.json'),'utf8'))[character];
+ return sheet?.texture?{sheet,tex:await loadImage(fs.readFileSync(path.join(SKY,sheet.texture)))}:null;
+}
+// one frame of the sheet: columns are the 8 directions, rows the run frames
+function sheetFrame({sheet,tex},direction,frame){
+ const c=createCanvas(sheet.frameWidth,sheet.frameHeight);
+ c.getContext('2d').drawImage(tex,direction*sheet.frameWidth,frame*sheet.frameHeight,sheet.frameWidth,sheet.frameHeight,0,0,sheet.frameWidth,sheet.frameHeight);return c;
+}
+// blood tiles (x, y, size on the 256 texture): splashes, drops, a big burst
+const SPLASH=[[0,32,32],[32,32,32]],DROPS=[[0,192,32],[32,192,32],[64,192,32],[96,192,32],[64,224,32],[96,224,32]],BURST=[[128,192,64],[192,192,64]];
+async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
+ const rng=seeded(seed),blood=await loadImage(fs.readFileSync(BLOOD));
+ const sheet=victimStage?null:await sheetOf(victim),running=victimStage?null:await runSheetOf(victim);
+ const victimPom=victimStage?await pomSprite(victim,victimStage):null;
+ if(!sheet&&!victimPom)return null;
+ const pom=await pomSprite(character,stage),[px0,py0,px1,py1]=bounds(pom);
+ // the victim twice as big as its sprite (pixel art), the pom about a third of its height
+ const VS=2,vh=sheet?sheet.sheet.frameHeight*VS:120,vw=sheet?sheet.sheet.frameWidth*VS:120*(victimPom.width/victimPom.height);
+ const ph=Math.round(vh*.36),pw=Math.round(ph*(px1-px0)/(py1-py0));
+ const frames=[],delays=[],particles=[];
+ let flash=0;
+ const spray=(x,y,n,force=1)=>{for(let i=0;i<n;i++){const a=-Math.PI*(.1+.8*rng()),v=(2+rng()*5)*force;
+  particles.push({x,y,vx:Math.cos(a)*v*(rng()<.5?-1:1),vy:Math.sin(a)*v,tile:rng()<.7?SPLASH[Math.floor(rng()*2)]:DROPS[1+Math.floor(rng()*2)],size:8+rng()*12,spin:rng()*6.3,life:1});}};
+ const bursts=[];
+ const burst=(x,y,big)=>bursts.push({x,y,t:0,tile:big?BURST[Math.floor(rng()*2)]:SPLASH[Math.floor(rng()*2)],size:big?130:60});
+ function draw({vx,vframe,vdir,shake=0,pom:pp,squash=1,bob=0,lean=0,run=false}){
+  const c=createCanvas(BITE_W,BITE_H),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+  if(vx!=null){
+   const dx=shake?Math.round((rng()*2-1)*shake):0;
+   if(run){const {sheet:r}=running;x.drawImage(sheetFrame(running,vdir,vframe),Math.round(vx+dx-r.anchor[0]*VS),GROUND-r.anchor[1]*VS,r.frameWidth*VS,r.frameHeight*VS);}
+   else if(sheet){x.save();x.translate(Math.round(vx+dx),GROUND-bob);x.transform(1,0,-lean,1,0,0);x.drawImage(sheetFrame(sheet,vdir,vframe),-Math.round(vw/2),-vh,vw,vh);x.restore();}
+   else{x.imageSmoothingEnabled=true;x.drawImage(victimPom,Math.round(vx-vw/2+dx),GROUND-vh,vw,vh);x.imageSmoothingEnabled=false;}
+  }
+  if(pp){x.imageSmoothingEnabled=true;const w=pw*(2-squash),h=ph*squash;x.drawImage(pom,px0,py0,px1-px0,py1-py0,Math.round(pp[0]-w/2),Math.round(pp[1]-h),Math.round(w),Math.round(h));x.imageSmoothingEnabled=false;}
+  for(const b of bursts){const [tx,ty,ts]=b.tile,k=.5+b.t*.7,s=b.size*k;x.globalAlpha=Math.max(0,1-b.t);x.drawImage(blood,tx,ty,ts,ts,b.x-s/2,b.y-s/2,s,s);}
+  for(const p of particles){const [tx,ty,ts]=p.tile;x.globalAlpha=Math.min(1,p.life*1.5);x.save();x.translate(p.x,p.y);x.rotate(p.spin);x.drawImage(blood,tx,ty,ts,ts,-p.size/2,-p.size/2,p.size,p.size);x.restore();}
+  x.globalAlpha=1;
+  if(flash){x.fillStyle=`rgba(255,40,30,${flash})`;x.fillRect(0,0,BITE_W,BITE_H);}
+  return c;
+ }
+ function step(){
+  for(const b of bursts)b.t+=.18;for(let i=bursts.length-1;i>=0;i--)if(bursts[i].t>=1)bursts.splice(i,1);
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=.9;p.life-=.03;
+   if(p.y>=GROUND-2)p.life=0;}
+  for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);
+  flash=Math.max(0,flash-.25);
+ }
+ const add=(state,ms=60)=>{frames.push(draw(state));delays.push(ms);step();};
+ const VX=360,chest=[VX-4,GROUND-vh*.42],idle={vx:VX,vframe:0,vdir:sheet?SOUTH_WEST:0};
+ const hop=(t,height)=>Math.abs(Math.sin(t*Math.PI))*height;
+ // 1. face to face
+ add({...idle,pom:[70,GROUND]},500);
+ // 2. the pom runs in, hopping
+ for(let i=0;i<=12;i++){const t=i/12,x0=70+t*160;add({...idle,pom:[x0,GROUND-hop(t*4,14)],squash:i%2?.9:1.05});}
+ // 3. the leap onto the chest
+ for(let i=1;i<=7;i++){const t=i/7,x0=230+(chest[0]-230)*t,y0=GROUND+(chest[1]+ph*.5-GROUND)*t-Math.sin(t*Math.PI)*70;add({...idle,pom:[x0,y0],squash:1.1});}
+ // 4. bam
+ burst(chest[0],chest[1],true);spray(chest[0],chest[1],16,1.2);flash=.55;
+ for(let i=0;i<6;i++)add({...idle,shake:6,pom:[chest[0],chest[1]+ph*.5],squash:i<2?.8:1},i?60:90);
+ // 5. the pom crawls over the body, the victim shakes, blood drips
+ const path3=[[chest[0],chest[1]+ph*.5],[VX+18,GROUND-vh*.55],[VX+10,GROUND-vh*.75],[VX-14,GROUND-vh*.84],[VX-22,GROUND-vh*.62],[VX+16,GROUND-vh*.6]];
+ for(let k=0;k<path3.length-1;k++)for(let i=1;i<=5;i++){const t=i/5,a=path3[k],b=path3[k+1];
+  if(rng()<.35)spray(a[0],a[1]-ph*.4,2,.6);
+  add({...idle,shake:3,pom:[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t-hop(t,6)],squash:i%2?.92:1.04});}
+ // 6. it stops and bites, three times
+ const neck=path3.at(-1);
+ for(let n=0;n<3;n++){
+  for(let i=0;i<3;i++)add({...idle,shake:2,pom:neck,squash:1+i*.04},70);
+  burst(neck[0]+6,neck[1]-ph*.5,n===2);spray(neck[0],neck[1]-ph*.5,8+n*3,.9);flash=n===2?.4:.2;
+  for(let i=0;i<4;i++)add({...idle,shake:7,pom:[neck[0],neck[1]+2],squash:.85},60);
+ }
+ // 7. the victim runs off to the right, the pom hanging on: the game's run when it has one, else its walk sped up
+ // (legs twice as fast, long strides, a bounce, leaning forward)
+ const off=[neck[0]-VX,neck[1]];
+ for(let i=0,x0=VX;x0-vw<BITE_W+pw;i++,x0+=Math.min(running?20:22,8+i*3)){
+  const bob=running?0:Math.abs(Math.sin(i*Math.PI/2))*5,lean=running?0:Math.min(.12,i*.03);
+  if(i%2===0)spray(x0+off[0],off[1]-ph*.4-bob,3,.7);
+  add({vx:x0,vframe:running?i%8:(i*2)%8,vdir:sheet?EAST:0,bob,lean,run:Boolean(running),pom:[x0+off[0]+lean*(vh-(GROUND-off[1]))+(running?6:0),off[1]-bob+(running?4:0)-(sheet?0:hop(i/4,8))],squash:i%2?.96:1.02},running?55:45);
+ }
+ // 8. the last drops fall
+ for(let i=0;i<8;i++)add({},60);
+ return {attachment:encode(frames,delays,{once:true}),name:'morsure.gif'};
+}
+module.exports={renderBubble,renderEvolution,renderBite,avatarURL,slug,words};
