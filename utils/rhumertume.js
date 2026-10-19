@@ -6,6 +6,8 @@
 // each step announced with a Pokémon-like evolution GIF. How the player writes feeds two gauges: rage (capitals, "!")
 // makes the pom bite whoever spoke lately, who may catch the illness; madness ("?", emojis) makes it hurt itself.
 // "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
+// Once a day, when three poms are at stage 2 or 3, they corner three healthy characters (the siege, utils/pomSiege.js);
+// those who fall catch the illness.
 const {PermissionFlagsBits}=require('discord.js');
 const HOUR=3600000,LAST_DAY='2026-10-31';
 const WINDOW=[10*60,13*60];
@@ -44,9 +46,9 @@ function moods(text){
  return [rage-calm,madness-calm];
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
-function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,log=()=>{}}){
- const state={schedule:{},drawn:{},infected:{},patients:{},...(store.load()??{})};
- state.patients??={};
+function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,renderSiege,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
+ const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},...(store.load()??{})};
+ state.patients??={};state.sieges??={};
  const save=()=>store.save(state);
  const pictures=()=>render??(render=require('./pomRendering'));
  const drawsOver=()=>parisParts(now()).date>LAST_DAY;
@@ -108,7 +110,39 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
     // if Discord is unreachable the draw is undone and retried on the next tick
     try{await catches(character);log(`rhumertume: ${character} tombe malade`);}catch(error){state.drawn[date]=previous;save();throw error;}
    }
+   await siege(date,minutes);
   }finally{busy=false;}
+ }
+ // the siege: once a day (10:00-22:00), when three poms are at stage 2 or 3, three of them corner three healthy characters
+ // of the day; the GIF shows how it ends (utils/pomSiege.js), then the outcome is told and those who fell catch it
+ const SIEGE_HOURS=[WINDOW[0],22*60],OUTCOME_TEXT={
+  repel:d=>`${list(d.defenders)} repoussent l'assaut : les poms s'envolent au loin !`,
+  rescue:d=>`Un pom s'accroche, mais les autres viennent à la rescousse : ${list(d.defenders)} s'en sortent indemnes !`,
+  flee:d=>`${d.escaped} parvient à s'enfuir… ${list(d.fallen)} tombent sous les morsures des poms.`,
+  devour:d=>`${list(d.fallen)} tombent sous les morsures des poms.`};
+ const list=names=>names.length<2?names.join(''):names.slice(0,-1).join(', ')+' et '+names.at(-1);
+ const shuffled=items=>items.map(v=>[random(),v]).sort((a,b)=>a[0]-b[0]).map(([,v])=>v);
+ async function siege(date,minutes){
+  if(state.sieges[date]||minutes<SIEGE_HOURS[0]||minutes>=SIEGE_HOURS[1])return;
+  const poms=Object.keys(state.infected).filter(c=>level(c)>=2);
+  if(poms.length<3)return;
+  const healthy=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]);
+  if(healthy.length<3)return;
+  const attackers=shuffled(poms).slice(0,3),defenders=shuffled(healthy).slice(0,3);
+  let outcome=['repel','rescue','flee','devour'][Math.floor(random()*4)],result=null;
+  try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:level(character)})),outcome,Math.floor(random()*2**31));}
+  catch(error){log('rhumertume: siege: '+error.message);}
+  // without the picture, the draw alone decides who falls
+  outcome=result?.outcome??outcome;
+  const escaped=result?.escaped??(outcome==='flee'?defenders[0]:null);
+  const fallen=result?.fallen??(outcome==='devour'?defenders:outcome==='flee'?defenders.slice(1):[]);
+  state.sieges[date]={attackers,defenders,outcome,fallen};save();
+  try{await announce(`${list(attackers.map(c=>nameOf(c)))} encerclent ${list(defenders)}, acculé·es dos à dos !`,result?[{attachment:result.attachment,name:result.name}]:[]);}
+  catch(error){delete state.sieges[date];save();throw error;}
+  log(`rhumertume: siège (${outcome}) de ${attackers.join(', ')} contre ${defenders.join(', ')}`);
+  await wait(result?.duration??0);
+  await announce(OUTCOME_TEXT[outcome]({defenders,fallen,escaped}),[]);
+  for(const character of fallen)if(!state.infected[character])await catches(character);
  }
  // an administrator's choice, announced like a draw
  async function infect(character){

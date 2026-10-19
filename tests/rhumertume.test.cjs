@@ -126,3 +126,18 @@ test('an evolution that cannot be announced does not hold back the cases of the 
  assert.equal(said.filter(t=>/semble/.test(t)).length,2);assert.ok(logs.some(l=>/evolution: Discord/.test(l)));
  fail=false;await r.tick();assert.ok(said.some(t=>/Pompomkloe évolue/.test(t)));
 });
+test('three poms at stage 2 or 3 besiege three healthy characters once a day; those who fall catch it',async()=>{
+ const said=[],sieges=[],t0=at('2026-10-20T08:00:00+02:00');let now=at('2026-10-20T09:00:00+02:00');
+ const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,601]},drawn:{'2026-10-20':['Nial','Tita']},infected:{Nial:t0,Tita:t0,Kloe:t0},patients:{}}),
+  now:()=>now,random:()=>.6,charactersOfTheDay:async()=>['Estelle','Joshua','Olivier','Nial'],characterNames:names,render,wait:async()=>{},
+  renderSiege:async(defenders,attackers,outcome)=>{sieges.push({defenders,attackers,outcome});return {attachment:Buffer.from('gif'),name:'siege.gif',outcome,fallen:defenders.slice(1).map(d=>d.character),escaped:defenders[0].character,duration:6000};},
+  announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
+ await r.tick();assert.equal(sieges.length,0);                       // before 10:00
+ now=at('2026-10-20T15:00:00+02:00');await r.tick();
+ assert.equal(sieges.length,1);assert.equal(sieges[0].outcome,'flee');assert.ok(sieges[0].attackers.every(a=>a.stage>=2));
+ const intro=said.find(s=>/encerclent/.test(s.text));assert.deepEqual(intro.files,['siege.gif']);assert.match(intro.text,/acculé·es dos à dos/);
+ const [escaped,...fallen]=sieges[0].defenders.map(d=>d.character);
+ assert.ok(said.some(s=>s.text===`${escaped} parvient à s'enfuir… ${fallen.join(' et ')} tombent sous les morsures des poms.`));
+ for(const c of fallen)assert.ok(r.isInfected(c));assert.ok(!r.isInfected(escaped));
+ const before=said.length;await r.tick();assert.equal(sieges.length,1);assert.ok(said.slice(before).every(s=>!/encerclent/.test(s.text)));
+});

@@ -265,4 +265,6 @@ async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
  for(let i=0;i<8;i++)add({},60);
  return {attachment:encode(frames,delays,{once:true}),name:'morsure.gif'};
 }
-module.exports={renderBubble,renderEvolution,renderBite,avatarURL,slug,words};
+module.exports={renderBubble,renderEvolution,renderBite,avatarURL,slug,words,
+ // shared with the siege (utils/pomSiege.js)
+ parts:{SKY,BLOOD,SPLASH,DROPS,BURST,seeded,bounds,encode,pomSprite,sheetOf,runSheetOf,sheetFrame}};
