@@ -18,9 +18,16 @@ export function createGunRecoil(specFor,random=Math.random){
   for(const shot of releasedShots(event,specFor(character,event.kind),now)){
    if(seen.has(shot.index))continue;seen.add(shot.index);
    if(shot.age>150)continue;
-   kick.pitch-=character==='Don'?.2:character==='Carna'?(event.kind==='basic'?.008:.005):.065;
+   kick.pitch-=character==='Don'?.4:character==='Carna'?(event.kind==='basic'?.008:.005):.065;
    kick.yaw+=(random()*2-1)*(character==='Don'?.08:character==='Carna'?(event.kind==='basic'?.006:.004):.025);
   }
   return kick;
  };
+}
+
+// Transient camera vibration is applied to the rendered camera, never accumulated in aim.
+export function donShotShake(event,now){
+ if(!event||event.character!=='Don'||event.kind!=='basic'||event.cancelled)return {x:0,y:0,roll:0};
+ const age=now-event.localStart-140;if(age<0||age>=320)return {x:0,y:0,roll:0};
+ const k=(1-age/320)**2;return {x:Math.sin(age*.16)*.065*k,y:Math.sin(age*.21)*.045*k,roll:Math.sin(age*.13)*.018*k};
 }

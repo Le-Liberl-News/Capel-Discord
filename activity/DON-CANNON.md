@@ -11,3 +11,7 @@ Effets : SC/sc000_10._ef à la bouche, SC/msc0640._ef pour le boulet, SC/sc006_1
 Les personnages étourdis affichent le même SC/paralyze._ef que l’Olivier de l’Antérose, au-dessus de leur tête, jusqu’à la fin du statut. Les effets sont supprimés à la libération/défaite/disparition. La synchronisation des captifs reçus par le client est également complétée pour les effets d’Elaine.
 
 Extraction : tools/export-don.py, tools/export-sounds.py, tools/export-playable-effects.py --only=SC/msc0640._ef,SC/sc000_10._ef,SC/sc006_17._ef et tools/bake-combat-effects.cjs --only=sc-msc0640,sc-sc000_10. Tests : tests/activity-don.test.cjs et contrôle en scène du FPS, du saut, de l’impact et des statuts.
+
+Correction des impacts : la recherche du sol part du haut du segment balistique pour détecter même un plan fin déjà franchi. L'explosion est décalée visuellement vers le haut pour ne pas enterrer sa moitié inférieure, et démarre à sa réception si la confirmation est tardive. Le son d'explosion tolère 1,5 s de retard. Le recul vertical passe à 0,4 rad avec une vibration amortie de 320 ms qui ne s'accumule pas dans la visée.
+
+Le craft dure désormais 2,8 s, atteint 3,8 m, conserve sa hauteur pendant 700 ms puis frappe à 1,9 s. L'impact est au sol 2,1 m devant Don, rayon 4,5 m, effet de taille 10. La caméra conserve la vue troisième personne pendant la retombée. Les poses restent une approximation native (levée, descente inversée, accroupissement tenu) ; une vraie pose de canon à deux mains frappant vers le bas n'est pas disponible.

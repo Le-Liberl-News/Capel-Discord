@@ -26,7 +26,7 @@ import {recordCorrection,recordDiagnostic} from './diagnostics.mjs';
 import playerHealth from './player-health.cjs';
 import {attachSpriteGroundProjection} from './sprite-ground-projection.mjs';
 import spriteFrames from './combat-sprite-frame.cjs';
-import {createGunRecoil} from './gun-recoil.mjs';
+import {createGunRecoil,donShotShake} from './gun-recoil.mjs';
 import {createAltinaCompanionView} from './altina-companion-view.mjs';
 import {createJosetteView,combatKeyAction,fpsMouseLook} from './josette-view.mjs';
 import projectionMechanics from './combat-projection.cjs';
@@ -983,6 +983,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(!altinaAiming&&me?.character!=='Carna'&&josetteBlend>.05);
     if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
+    if(isFPS&&!introPlaying&&josetteBlend<.01){const shake=donShotShake(localAttack,time);camera.translateX(shake.x);camera.translateY(shake.y);camera.rotateZ(shake.roll);}
     camera.updateMatrixWorld();
     if(altinaAiming){const valid=!!altinaLanding();crosshair.style.color=valid?'#fff':'#ff6666';altinaPrompt.disabled=altinaCameraBlend<1||!valid;altinaPrompt.title=valid?'Plonger ici':'Viser un sol libre, sans obstacle';}else crosshair.style.color='#fff';
     arenaAudience?.update(time,camera);

@@ -5,7 +5,7 @@ function startDon(player,command,spec,time,{validateRay}){
  const origin={x:player.x,y:player.y??0,z:player.z};let ray=null;
  if(command.kind==='basic'){ray=validateRay(player,command.ray);if(!ray)return {error:'Visée invalide.'};}
  const h=ray?.direction??{x:player.heading?.dx??0,z:player.heading?.dz??1},n=Math.hypot(h.x,h.z)||1;
- return {id:command.id,actor:player.id,character:'Don',kind:command.kind,special:'donCannon',technique:spec.name,origin,aim:{x:origin.x+h.x/n*.8,y:origin.y,z:origin.z+h.z/n*.8},ray,started:time,impactAt:time+(command.kind==='craft'?spec.impactAt:spec.windup+cannon.MAX_FLIGHT),endsAt:time+(command.kind==='craft'?spec.duration+1300:spec.windup+cannon.MAX_FLIGHT+1300),hits:[],resolved:false,nextHit:0};
+ return {id:command.id,actor:player.id,character:'Don',kind:command.kind,special:'donCannon',technique:spec.name,origin,aim:{x:origin.x+h.x/n*2.1,y:origin.y,z:origin.z+h.z/n*2.1},ray,started:time,impactAt:time+(command.kind==='craft'?spec.impactAt:spec.windup+cannon.MAX_FLIGHT),endsAt:time+(command.kind==='craft'?spec.duration+1300:spec.windup+cannon.MAX_FLIGHT+1300),hits:[],resolved:false,nextHit:0};
 }
 function tickDon(a,s,actor,room,time,{geometry,floor,canDamage,hurt,project}){
  const age=time-a.started;if(a.resolved){if(a.kind==='craft'&&age>=s.duration)a.dashFinished=true;return;}
@@ -24,7 +24,7 @@ function tickDon(a,s,actor,room,time,{geometry,floor,canDamage,hurt,project}){
  }
  if(a.kind==='craft'){
   Object.assign(actor,cannon.motion(a,age).position);actor.acceptedAt=time;actor.moving=false;
-  if(age>=s.impactAt){actor.y=a.origin.y;blast(a.aim,a.started+s.impactAt);}
+  if(age>=s.impactAt){actor.y=a.origin.y;const ground=floor({...a.aim,y:a.origin.y+.5});blast({...a.aim,y:Number.isFinite(ground)?ground:a.origin.y},a.started+s.impactAt);}
   return;
  }
  if(age<s.windup)return;
@@ -37,7 +37,7 @@ function tickDon(a,s,actor,room,time,{geometry,floor,canDamage,hurt,project}){
  while(prevTime<until){
   const nextTime=Math.min(until,prevTime+1000/60),next=cannon.ballPoint(a.projectile,nextTime),delta={x:next.x-prev.x,y:next.y-prev.y,z:next.z-prev.z},length=Math.hypot(delta.x,delta.y,delta.z),dir={x:delta.x/(length||1),y:delta.y/(length||1),z:delta.z/(length||1)};
   let contact=geometry?.sweep(prev,next,.14)?.point,nearest=contact?Math.hypot(contact.x-prev.x,contact.y-prev.y,contact.z-prev.z):Infinity;
-  const ground=floor(next);if(Number.isFinite(ground)&&next.y<=ground+.12){const t=Math.max(0,Math.min(1,(prev.y-ground-.12)/(prev.y-next.y||1))),p={x:prev.x+delta.x*t,y:ground,z:prev.z+delta.z*t},d=Math.hypot(p.x-prev.x,p.y-prev.y,p.z-prev.z);if(d<nearest){contact=p;nearest=d;}}
+  const ground=floor({...next,y:Math.max(prev.y,next.y)+.3});if(Number.isFinite(ground)&&next.y<=ground+.12){const t=Math.max(0,Math.min(1,(prev.y-ground-.12)/(prev.y-next.y||1))),p={x:prev.x+delta.x*t,y:ground,z:prev.z+delta.z*t},d=Math.hypot(p.x-prev.x,p.y-prev.y,p.z-prev.z);if(d<nearest){contact=p;nearest=d;}}
   for(const target of room.values())if(target.id!==a.actor&&target.hp>0&&!target.spectator&&!target.duelProtected&&canDamage(actor,target)){const hit=rayBody(prev,dir,target,length,.14);if(hit&&hit.distance<nearest){contact=hit.point;nearest=hit.distance;}}
   if(contact){blast(contact,a.projectile.started+prevTime+(nextTime-prevTime)*Math.min(1,nearest/(length||1)));return;}
   prevTime=nextTime;prev=next;
