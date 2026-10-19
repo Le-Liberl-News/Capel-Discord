@@ -12,8 +12,8 @@ export function createReanFlameView(THREE,scene,assets){
   if(!bank)return;let v=views.get(a.id);if(!v){v=make();views.set(a.id,v);}if(a.cancelled){for(const fx of Object.values(v))fx.hide();return;}
   const p=flame.flamePhases(a),owner=avatars?.get(a.actor),frame=owner?.renderFrame,anchors=frame?.info.effectAnchors?.[frame.frame],pixel=frame?.info.pixelScale??.02,yaw=Math.atan2(a.aim.x-a.origin.x,a.aim.z-a.origin.z),path=flame.flamePath(a);
   const play=(fx,nativeTime,start,end,point,size)=>{if(time<start||time>end)fx.hide();else fx.draw(nativeTime,placement(point,yaw,size),camera,{scale:size,opacity:Math.min(1,(end-time)/180)});};
-  play(v.first,(time-p.first)/1000*1.4+.14,p.first-90,p.first+480,{...a.aim,y:a.aim.y+.6},.47);
-  play(v.second,(time-p.second)/1000*1.4+2.1,p.second-90,p.second+480,{...a.aim,y:a.aim.y+.6},.47);
+  play(v.first,(time-p.first)/1000*1.4+.14,p.first-90,p.first+480,{...path.approach,y:path.approach.y+.75},.47);
+  play(v.second,(time-p.second)/1000*1.4+2.1,p.second-90,p.second+480,{...path.approach,y:path.approach.y+.75},.47);
   play(v.impact,(time-p.third)/1000*1.8+.06,p.third-30,p.third+1450,a.aim,.26);
   play(v.rush,(time-p.prep)/1000,p.prep,p.contact+500,flame.flameMotion(a,p.prep+80).position,.42);
   play(v.dash,(time-p.dashStart)/1000,p.dashStart,p.dashEnd+550,flame.flameMotion(a,p.dashStart+100).position,.42);

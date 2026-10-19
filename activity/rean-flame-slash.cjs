@@ -1,6 +1,18 @@
 // Shared choreography: native CS2 poses, authoritative movement and three AoE impacts.
-const CRAFT={name:'Flame Slash',key:'g',special:'flameSlash',groundTarget:true,shape:'line',windup:0,duration:3200,cooldown:12000,range:14,radius:2.6,damage:18,finalDamage:30,projectile:false,dash:true,dashDuration:3200,lockMovement:true};
+const CRAFT={name:'Flame Slash',key:'g',special:'flameSlash',groundTarget:true,shape:'line',windup:0,duration:3200,cooldown:12000,range:14,lineRadius:.7,radius:2.6,damage:18,finalDamage:30,projectile:false,dash:true,dashDuration:3200,lockMovement:true};
 const clamp=t=>Math.max(0,Math.min(1,t));
+// Lock the contact point on the chosen line, at the first enemy along it. Never bend or follow the line.
+function flameContact(origin,end,targets,eligible=()=>true){
+ const dx=end.x-origin.x,dz=end.z-origin.z,length=Math.hypot(dx,dz);if(length<.001)return {...end};
+ const ux=dx/length,uz=dz/length;let nearest=length,found=false;
+ for(const target of targets){
+  if(target.hp<=0||target.spectator||target.duelProtected||!eligible(target)||Math.abs((target.y??0)-origin.y)>1.5)continue;
+  const x=target.x-origin.x,z=target.z-origin.z,along=x*ux+z*uz;
+  if(along<0||along>nearest||Math.abs(x*uz-z*ux)>CRAFT.lineRadius+(target.boss?1:0))continue;
+  nearest=along;found=true;
+ }
+ return found?{x:origin.x+ux*nearest,y:origin.y+(end.y-origin.y)*nearest/length,z:origin.z+uz*nearest}:{...end};
+}
 function flamePhases(a){
  const distance=Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z),prep=240,rush=Math.max(120,Math.min(800,Math.max(0,distance-1.2)/17*1000)),contact=prep+rush;
  return {prep,rush,contact,first:contact+220,second:contact+720,raise:contact+940,finalStart:contact+1320,dashStart:contact+1500,third:contact+1640,dashEnd:contact+1870,end:contact+2120};
@@ -34,4 +46,4 @@ function flamePose(a,time){
  if(time<p.finalStart)return sample(9,time-p.raise,380,10);
  return sample(10,time-p.finalStart,800,24);
 }
-module.exports={CRAFT,flamePhases,flameSpec,flamePath,safeFlamePath,flameMotion,flamePose};
+module.exports={CRAFT,flameContact,flamePhases,flameSpec,flamePath,safeFlamePath,flameMotion,flamePose};

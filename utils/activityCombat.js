@@ -104,6 +104,12 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       return { error: "Visez le sol." };
 
     endpoint.y=ground;
+    if(spec.special==='flameSlash'){
+      const contact=require('../activity/rean-flame-slash.cjs').flameContact(origin,endpoint,room.values(),target=>target.id!==player.id&&canDamage(player,target)),contactFloor=floor(contact);
+      if(!Number.isFinite(contactFloor))return {error:'Visez le sol.'};
+      Object.assign(endpoint,contact,{y:contactFloor});
+    }
+
     if(Math.hypot(endpoint.x-origin.x,endpoint.z-origin.z)>.001)player.heading={dx:endpoint.x-origin.x,dz:endpoint.z-origin.z};
 
     const from=fps?fps.origin:{...origin,y:origin.y+.85},to=fps?endpoint:{...endpoint,y:endpoint.y+.85};

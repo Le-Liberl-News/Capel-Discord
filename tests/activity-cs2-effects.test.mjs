@@ -29,3 +29,8 @@ test('native two-axis planes retain area when the unused X or Y axis is zero',as
 test('effect edge masking uses the surface bounds of cropped and repeating atlas panels',async()=>{
  const {effectSurfaceBounds}=await import('../activity/native-cs2-effects.mjs');assert.deepEqual(effectSurfaceBounds(pack.effects.scre01_1.segments[13]),[.25,.25,.25,.25]);assert.deepEqual(effectSurfaceBounds(pack.effects.scre01_1.segments[29]),[0,0,2,1]);
 });
+
+test('both Rean slash phases retain the actual non-planar native model rather than a billboard',()=>{
+ const e=pack.effects.scre01_1;for(const index of [23,27]){const s=e.segments[index];assert.equal(s.texture,'E_EFOBJ038');assert.equal(s.procedural,true);assert.equal(s.faces.length,260);const z=s.faces.flat().map(v=>v[2]);assert.ok(Math.max(...z)-Math.min(...z)>4);}
+ for(const frame of [4,63])assert.ok(e.frames[frame].some(n=>e.segments[n[0]].texture==='E_EFOBJ038'&&n[1]===0&&n[14]>1));
+});
