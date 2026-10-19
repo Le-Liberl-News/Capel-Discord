@@ -6,7 +6,7 @@
 // triggers set, objects given, text shown); if none holds, the first one's failure text is shown.
 const STOPWORDS=new Set(['le','la','les','l','un','une','des','du','de','d','au','aux','a','vers','sur','dans','avec','en','et','ce','cet','cette','ces','mon','ma','mes','son','sa','ses','the','y','par']);
 const DEFAULT_DIRECTIONS={nord:['n','nord'],sud:['s','sud'],est:['e','est'],ouest:['o','w','ouest'],haut:['monter','haut','h'],bas:['descendre','bas','b']};
-const DEFAULT_COMMANDS={inventaire:['inventaire','inv','i','sac'],regarder:['regarder','regarde','r','observer'],aide:['aide','help','?'],carte:['carte','plan','map'],aller:['aller','va','vais','allez','marcher','avancer','entrer','entre','go']};
+const DEFAULT_COMMANDS={inventaire:['inventaire','inv','i','sac'],regarder:['regarder','regarde','r','observer'],aide:['aide','help','?'],aller:['aller','va','vais','allez','marcher','avancer','entrer','entre','go']};
 // "Ouvre-la porte, avec l'énorme clé !" -> ['ouvre','porte','enorme','cle'] (no accents, no articles)
 function words(text){
  return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[^a-z0-9?\s-]/g,' ').replace(/-/g,' ')
@@ -67,9 +67,8 @@ function createAdventure(data){
   if(!w.length)return {replies:[messages.unknown]};
   const said=w.map(x=>nouns.get(x)??directions.get(x)??x),first=commands.get(w[0])??verbs.get(w[0])??w[0];
   if(first==='inventaire'&&w.length===1)return {replies:[inventory(state)]};
-  if(first==='aide')return {replies:[messages.help||'Écrivez ce que vous voulez faire : « nord », « prendre la clé », « ouvrir la porte avec la clé ». « inventaire » liste vos objets, « regarder » décrit la salle, « carte » montre le plan.']};
-  if(first==='carte')return {replies:[],map:true};
-  if(first==='regarder'&&w.length===1)return {replies:[describe(state)],map:true};
+  if(first==='aide')return {replies:[messages.help||'Écrivez ce que vous voulez faire : « nord », « prendre la clé », « ouvrir la porte avec la clé ». « inventaire » liste vos objets, « regarder » décrit la salle.']};
+  if(first==='regarder'&&w.length===1)return {replies:[describe(state)],look:true};
   // a direction alone, or "aller nord"
   const direction=directions.get(w[0])??(first==='aller'&&w[1]?directions.get(w[1]):undefined);
   const verb=verbs.get(w[0])??w[0];

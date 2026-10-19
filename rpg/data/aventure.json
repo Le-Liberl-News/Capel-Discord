@@ -16,51 +16,18 @@
   "victory": "Ensemble, vous arrachez l'antidote à la créature. Vous avez réussi !",
   "closing": "Les aventuriers ont arraché l'antidote à la créature du manoir. L'aventure est terminée."
  },
- "floors": [
-  {
-   "id": "rdc",
-   "name": "Rez-de-chaussée",
-   "size": [
-    475,
-    317
-   ]
-  },
-  {
-   "id": "etage",
-   "name": "Étage",
-   "size": [
-    368,
-    279
-   ]
-  }
- ],
  "rooms": [
   {
    "id": 1,
    "name": "Devant l'entrée",
-   "floor": "rdc",
-   "rect": [
-    159,
-    281,
-    158,
-    36
-   ],
    "exits": {
     "nord": 2
    },
-   "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit.",
-   "color": "#d9cfb8"
+   "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
   },
   {
    "id": 2,
    "name": "Hall d'entrée",
-   "floor": "rdc",
-   "rect": [
-    159,
-    169,
-    158,
-    110
-   ],
    "exits": {
     "sud": 1,
     "ouest": 3,
@@ -78,13 +45,6 @@
   {
    "id": 3,
    "name": "Salon",
-   "floor": "rdc",
-   "rect": [
-    0,
-    81,
-    159,
-    198
-   ],
    "exits": {
     "est": 2,
     "nord": 5
@@ -94,13 +54,6 @@
   {
    "id": 4,
    "name": "Bureau",
-   "floor": "rdc",
-   "rect": [
-    367,
-    0,
-    108,
-    76
-   ],
    "exits": {
     "ouest": 6,
     "sud": 7
@@ -118,13 +71,6 @@
   {
    "id": 5,
    "name": "Cuisine",
-   "floor": "rdc",
-   "rect": [
-    0,
-    0,
-    159,
-    81
-   ],
    "exits": {
     "sud": 3,
     "est": 11
@@ -134,31 +80,16 @@
   {
    "id": 6,
    "name": "Jardin",
-   "floor": "rdc",
-   "rect": [
-    159,
-    31,
-    208,
-    138
-   ],
    "exits": {
     "sud": 2,
     "nord": 30,
     "est": 4
    },
-   "description": "Vous êtes dans une cour intérieur. Le soleil peine a trouver sa voie entre les hauts murs du manoir. Des mauvaises herbes, quelques buissons et du lierre sont la seule trace de vie qui reste en ces lieux. Une statue imposante se dresse au milieu de la cour.",
-   "color": "#68ab68"
+   "description": "Vous êtes dans une cour intérieur. Le soleil peine a trouver sa voie entre les hauts murs du manoir. Des mauvaises herbes, quelques buissons et du lierre sont la seule trace de vie qui reste en ces lieux. Une statue imposante se dresse au milieu de la cour."
   },
   {
    "id": 7,
    "name": "Bibliothèque",
-   "floor": "rdc",
-   "rect": [
-    317,
-    76,
-    158,
-    203
-   ],
    "exits": {
     "ouest": 2,
     "nord": 4
@@ -168,13 +99,6 @@
   {
    "id": 11,
    "name": "Garde-manger",
-   "floor": "rdc",
-   "rect": [
-    159,
-    0,
-    77,
-    31
-   ],
    "exits": {
     "ouest": 5,
     "est": 30
@@ -184,13 +108,6 @@
   {
    "id": 30,
    "name": "Escaliers",
-   "floor": "rdc",
-   "rect": [
-    236,
-    0,
-    131,
-    31
-   ],
    "exits": {
     "ouest": 11,
     "sud": 6,
@@ -202,7 +119,6 @@
   {
    "id": 8,
    "name": "Cave",
-   "floor": "cave",
    "exits": {
     "haut": 30,
     "est": 9
@@ -212,7 +128,6 @@
   {
    "id": 9,
    "name": "Cellules",
-   "floor": "cave",
    "exits": {
     "ouest": 8
    },
@@ -221,13 +136,6 @@
   {
    "id": 14,
    "name": "Palier",
-   "floor": "etage",
-   "rect": [
-    159,
-    0,
-    76,
-    31
-   ],
    "exits": {
     "bas": 30,
     "ouest": 16,
@@ -238,29 +146,14 @@
   {
    "id": 31,
    "name": "Débarras",
-   "floor": "etage",
-   "rect": [
-    235,
-    0,
-    133,
-    31
-   ],
    "exits": {
     "ouest": 14
    },
-   "description": "Une petite pièce encombrée de caisses vides.",
-   "label": false
+   "description": "Une petite pièce encombrée de caisses vides."
   },
   {
    "id": 16,
    "name": "Salle de projection",
-   "floor": "etage",
-   "rect": [
-    0,
-    0,
-    159,
-    82
-   ],
    "exits": {
     "est": 14,
     "sud": 15,
@@ -271,7 +164,6 @@
   {
    "id": 12,
    "name": "Sommet de la tour",
-   "floor": "tour",
    "exits": {
     "bas": 16
    },
@@ -280,13 +172,6 @@
   {
    "id": 10,
    "name": "Chambre du prof",
-   "floor": "etage",
-   "rect": [
-    0,
-    82,
-    64,
-    72
-   ],
    "exits": {
     "est": 15
    },
@@ -295,32 +180,17 @@
   {
    "id": 15,
    "name": "Couloir",
-   "floor": "etage",
-   "rect": [
-    64,
-    82,
-    32,
-    72
-   ],
    "exits": {
     "nord": 16,
     "ouest": 10,
     "est": 13,
     "sud": 17
    },
-   "description": "Vous êtes dans un couloir étroit. Deux porte sont entrebaillées, une à l'ouest, une à l'est. Le couloir se pousuit vers le sud.",
-   "label": false
+   "description": "Vous êtes dans un couloir étroit. Deux porte sont entrebaillées, une à l'ouest, une à l'est. Le couloir se pousuit vers le sud."
   },
   {
    "id": 13,
    "name": "Chambre d'enfant",
-   "floor": "etage",
-   "rect": [
-    96,
-    82,
-    63,
-    72
-   ],
    "exits": {
     "ouest": 15
    },
@@ -329,13 +199,6 @@
   {
    "id": 17,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "nord": 15,
     "est": 20,
@@ -346,134 +209,71 @@
   {
    "id": 20,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "ouest": 17,
     "nord": 21,
     "est": 22
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 21,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "sud": 20,
     "est": 23
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 22,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "ouest": 20,
     "sud": 24
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 23,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "ouest": 21,
     "sud": 25
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 24,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "nord": 22,
     "est": 26
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 25,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "nord": 23,
     "sud": 26
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 26,
    "name": "Couloirs infinis",
-   "floor": "etage",
-   "rect": [
-    0,
-    154,
-    159,
-    80
-   ],
    "exits": {
     "nord": 25,
     "ouest": 24,
     "sud": 19
    },
-   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
-   "label": false
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
   },
   {
    "id": 19,
    "name": "Antichambre",
-   "floor": "etage",
-   "rect": [
-    0,
-    234,
-    159,
-    45
-   ],
    "exits": {
     "nord": 17,
     "est": 32
@@ -483,13 +283,6 @@
   {
    "id": 32,
    "name": "Labo",
-   "floor": "etage",
-   "rect": [
-    159,
-    169,
-    81,
-    110
-   ],
    "exits": {
     "ouest": 19,
     "est": 18
@@ -499,32 +292,10 @@
   {
    "id": 18,
    "name": "Salle du trône",
-   "floor": "etage",
-   "rect": [
-    240,
-    169,
-    128,
-    110
-   ],
    "exits": {
     "ouest": 32
    },
    "description": "Vous entrez dans une salle... qui n'en est plus vraiment une. Elle n'a plus de plafond, et un vent glaçant s'infiltre au milieu des brèches béantes formées dans les murs à divers endroits. Vous posez les pieds sur un tapis rouge, qui quelque pas plus loin, après avoir monté quelques marches, se coupe nettement en une forme d'arc de cercle inversé. Vous relevez les yeux pour jauger le trône monumental qui vous fait face. La créature qui y siège ne vous regarde pas. Son cou, long comme celui d'un flammand, est courbé vers les hauteurs, tout comme ses yeux écarquillés. Ses membres filiformes rappellent davantage des plantes grimpantes que quoi que ce soit d'animal.\nLa créature se balance lentement de gauche à droite. Sa peau est sombre comme la nuit, mais on ne la distingue clairement qu'autour de ses yeux, brillants comme des étoiles.\nDe droite à gauche. Tout le reste de son corps est couvert d'une épaisse toison cuivrée rougeoyante, luisant comme si elle était trempée.\nDe gauche à droite. Dans sa paume gauche, elle sert quelque chose. Et ce quelque chose... c'est ce qui vous a attiré ici, vous en êtes certain. Vous tentez de le lui arracher de toutes vos forces, mais ça ne suffit pas.\nDe haut en bas... La créature vous accorde un regard intrigué, la tête penchée sur le côté, mais se désintéresse vite.\nDe bas en haut.\nVous aurez besoin de la force conjointe de vos congénères pour arracher à cette créature l'antidote que vous êtes venu chercher. Il ne peut en être autrement."
-  },
-  {
-   "id": "vide",
-   "name": "",
-   "floor": "etage",
-   "rect": [
-    159,
-    31,
-    209,
-    138
-   ],
-   "exits": {},
-   "description": "",
-   "color": "#68ab68",
-   "label": false
   }
  ],
  "objects": [

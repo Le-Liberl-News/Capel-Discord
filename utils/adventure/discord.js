@@ -3,8 +3,12 @@
 // `allowed` may play (the button checks it; a DM is only read from someone who started through the button).
 // When `final.players` players stand in the final room, each of them gets the victory text and the roleplay
 // channel the closing one. Players' states survive restarts (store).
+// Everything is text; a room may have a picture (its "image", a file of rpg/data/aventure/), sent on entering it
+// and with « regarder ».
 const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('discord.js');
+const path=require('node:path'),fs=require('node:fs');
 const {createAdventure}=require('./engine');
+const FILES=path.join(__dirname,'../../rpg/data/aventure');
 const BUTTON='aventure:jouer',LIMIT=1900;
 // Discord refuses messages over 2000 characters: cut between paragraphs, then lines, then words
 function chunks(text){
@@ -15,19 +19,20 @@ function chunks(text){
  }
  if(rest)out.push(rest);return out;
 }
-function createAdventureDiscord({client,data,store,channelId,closingChannelId,allowed=[],renderMap,log=console.error}){
+function createAdventureDiscord({client,data,store,channelId,closingChannelId,allowed=[],files=FILES,log=console.error}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
  const save=()=>store.save(state);
  const queues=new Map();
  const mayPlay=interaction=>allowed.includes(interaction.user.id)||Boolean(interaction.memberPermissions?.has(PermissionFlagsBits.Administrator));
- // a reply: its texts, then the plan when the player moved (or asked for it)
+ // a reply: its texts, then the room's picture when the player enters or looks at it
  async function send(channel,result,player){
   const parts=chunks(result.replies.filter(Boolean).join('\n\n'));
-  const map=(result.moved||result.map)&&renderMap?await renderMap(data,player.room).catch(e=>{log('Aventure, plan :',e);return null;}):null;
-  if(!parts.length&&!map)return;
-  for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&map?{files:[map]}:{}),allowedMentions:{parse:[]}});
-  if(!parts.length)await channel.send({files:[map]});
+  const image=(result.moved||result.look)&&game.room(player.room)?.image;
+  const file=image&&fs.existsSync(path.join(files,image))?{attachment:path.join(files,image),name:path.basename(image)}:null;
+  if(image&&!file)log('Aventure, image absente :',image);
+  for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&file?{files:[file]}:{}),allowedMentions:{parse:[]}});
+  if(!parts.length&&file)await channel.send({files:[file]});
  }
  async function reach(userId){
   if(state.reached.includes(userId))return;
@@ -58,7 +63,7 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
   const player=known||game.fresh();
   try{
    const dm=await interaction.user.createDM();
-   if(known)await send(dm,{replies:[data.messages?.resume||'Vous reprenez votre aventure.',game.describe(player)],map:true},player);
+   if(known)await send(dm,{replies:[data.messages?.resume||'Vous reprenez votre aventure.',game.describe(player)],look:true},player);
    else await send(dm,game.start(player),player);
   }catch(e){
    log('Aventure, MP :',e.code??e);

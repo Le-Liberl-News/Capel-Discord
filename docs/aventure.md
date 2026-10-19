@@ -1,7 +1,8 @@
 # Aventure textuelle d'Halloween
 
 Le Capel publie l'invitation avec `/aventure` (administrateurs) dans le salon 889835278494203915. Le bouton ouvre la
-partie en MP ; chaque MP du joueur est ensuite une commande. Pour l'instant, seuls les administrateurs et
+partie en MP ; chaque MP du joueur est ensuite une commande. Le jeu est entièrement textuel, avec au plus une image
+par salle. Pour l'instant, seuls les administrateurs et
 744964573249011712 peuvent jouer (`allowed` dans `index.js`).
 
 Tout le contenu est dans `rpg/data/aventure.json` ; le moteur (`utils/adventure/engine.js`) ne fait que l'appliquer.
@@ -17,11 +18,10 @@ Les parties sont gardées dans `.runtime/aventure.json` : la supprimer remet tou
 | `inventory` | objets au départ (facultatif) |
 | `final` | `{room, players, victory, closing}` : quand `players` joueurs sont dans la salle `room`, chacun reçoit `victory` en MP et `closing` est posté dans le salon roleplay (une seule fois) |
 | `messages` | textes du moteur à remplacer : `unknown`, `fail`, `noexit`, `empty`, `inventory`, `help`, `resume`, `over` |
-| `floors` | étages dessinés : `{id, name, size:[l,h], image?}` |
 | `rooms`, `objects`, `actions` | voir plus bas |
 | `verbs`, `nouns`, `directions`, `commands` | synonymes : `{"prendre": ["prends", "ramasse"]}` ; chaque mot de la liste vaut la clé |
 
-Les commandes intégrées : `inventaire` (`inv`, `i`, `sac`), `regarder` (`r`), `aide`, `carte` (`plan`), `aller`
+Les commandes intégrées : `inventaire` (`inv`, `i`, `sac`), `regarder` (`r`), `aide`, `aller`
 (« aller au nord »), et les directions `nord`/`n`, `sud`/`s`, `est`/`e`, `ouest`/`o`, `haut`/`monter`,
 `bas`/`descendre`. Accents, majuscules, articles et ponctuation sont ignorés : « Ouvre la porte avec la clé ! » =
 `ouvre porte cle`.
@@ -29,7 +29,7 @@ Les commandes intégrées : `inventaire` (`inv`, `i`, `sac`), `regarder` (`r`), 
 ## Salles
 
 ```json
-{"id": 2, "name": "Hall d'entrée", "floor": "rdc", "rect": [159, 169, 158, 110],
+{"id": 2, "name": "Hall d'entrée", "image": "hall.png",
  "description": "Vous êtes dans le hall d'entrée…",
  "exits": {"sud": 1, "nord": {"to": 6, "must": ["porte_cour_ouverte"], "fail": "La porte est fermée à clé."}},
  "details": [{"mustnot": ["cle_prise"], "text": "Une petite clé rouillée traîne sur les documents."}]}
@@ -38,11 +38,8 @@ Les commandes intégrées : `inventaire` (`inv`, `i`, `sac`), `regarder` (`r`), 
 - `exits` : direction → id de salle, ou objet `{to, must, mustnot, use, tool, fail, text}` (une sortie peut demander
   un déclencheur ou un objet ; `text` s'affiche en passant).
 - `details` : phrases ajoutées à la description tant que leurs conditions tiennent (un objet encore là…).
-- `floor` et `rect` (`[x, y, largeur, hauteur]` sur le plan de l'étage) servent au plan envoyé à chaque changement
-  de salle. Sans `rect`, pas de plan pour cette salle. `color` change la couleur, `label: false` cache le nom.
-  Plusieurs salles peuvent partager un même rectangle (le labyrinthe des couloirs infinis).
-- Pour utiliser un vrai dessin d'étage : mettre l'image dans `rpg/data/aventure/` et son nom dans l'étage
-  (`"image": "etage.png"`) ; les rectangles se placent alors sur l'image (à l'échelle de `size`).
+- `image` (facultatif) : une illustration de la salle, fichier de `rpg/data/aventure/`, envoyée avec la description
+  quand le joueur entre dans la salle et quand il tape « regarder ». Tout le reste est du texte.
 
 ## Objets
 
