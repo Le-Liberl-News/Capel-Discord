@@ -29,3 +29,5 @@ Les effets de préparation et de salve `_1`, `_2`, `_3` utilisent les graphes et
 La séquence dure 5 150 ms : 650 ms d’introduction, 1 100 ms de préparation/placement, 1 100 ms d’estocades, 1 000 ms de pause, 700 ms de slash et 600 ms de récupération.
 
 Le flash natif `_2` est déclenché à chaque estocade, avec trois instances réutilisées et un recouvrement borné, plutôt qu’une lecture continue dont seule la traîne bleue restait visible entre les coups.
+
+Les effets d’estocades `_2` et `_3` ont une émission HDR verte et un bloom sélectif renforcés dans le lecteur web. Un éclairage local vert à décroissance rapide accompagne chaque estocade sur les surfaces et sprites ; il s’éteint pendant la pause et lors d’une interruption. Cette calibration du rendu est une adaptation, pas le shader original de Daybreak. Les effets du slash final et les timings ne changent pas.

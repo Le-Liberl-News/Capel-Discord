@@ -33,4 +33,11 @@ function zerothPath(origin,aim,{floor,grid,geometry}){
 }
 function gatherPoint(a){const dx=a.aim.x-a.origin.x,dz=a.aim.z-a.origin.z,d=Math.hypot(dx,dz)||1;return {x:a.origin.x+dx/d*1.3,y:a.origin.y,z:a.origin.z+dz/d*1.3};}
 function blackened(events,id,elapsed){return [...events].some(a=>!a.cancelled&&CRAFTS[a.character]?.zeroth&&elapsed(a)>=CRAFTS[a.character].hitAt&&elapsed(a)<CRAFTS[a.character].hitTimes.at(-1)+180&&a.hits?.some(h=>h.id===id&&h.damage>0));}
-module.exports={CRAFTS,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};
+// A short local light pulse per thrust, independent of the final slash and UI.
+function kaleidoFlash(a,time){
+ if(a.cancelled||a.character!=='Elaine'||a.kind!=='craft')return null;
+ const s=CRAFTS.Elaine;if(time<s.hitAt||time>s.flurryEnd+180)return null;
+ const age=Math.min(...s.hitTimes.slice(0,-1).map(t=>time>=t?time-t:Infinity));if(age>220)return null;
+ const p=gatherPoint(a);return {origin:{x:p.x,y:p.y+.65,z:p.z},direction:{x:0,z:1},color:[.025,1,.22],radius:2.7,omni:true,strength:.32*Math.exp(-age/85)};
+}
+module.exports={CRAFTS,kaleidoFlash,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};

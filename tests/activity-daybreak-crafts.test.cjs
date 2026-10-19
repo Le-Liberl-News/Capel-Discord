@@ -183,3 +183,14 @@ test('Elaine uses the Daybreak I thrust clip without procedural arm or leg overr
  assert.ok(source.clipDurations.Elaine.kaleidoSalvoA>1.8&&source.clipDurations.Elaine.kaleidoSalvoA<1.9);assert.deepEqual(source.profiles.Elaine.forwardThrustClips,[]);assert.deepEqual(source.profiles.Elaine.plantedCraftClips,[]);
  const read=file=>JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+file)));const old=read('elaine-native-57d3820fdb.vfxpack'),now=read(files.Elaine);assert.deepEqual(now.effects.cr5110_20_4,old.effects.cr5110_20_4);assert.deepEqual(now.effects.cr5110_20_6,old.effects.cr5110_20_6);assert.ok(now.textures.db1_efsl_a002);assert.ok(now.effects.cr5110_20_2.frames.every(frame=>frame.every(n=>!['cylinder_base','cylinder_base_multi'].includes(now.effects.cr5110_20_2.segments[n[0]].name))));
 });
+
+test('Kaleido lights each thrust locally in green and releases light for the pause, final slash and interruption',()=>{
+ const {kaleidoFlash,CRAFTS}=require('../activity/daybreak-crafts.cjs'),s=CRAFTS.Elaine,a={character:'Elaine',kind:'craft',origin:{x:1,y:2,z:3},aim:{x:1,y:2,z:8}};
+ assert.equal(kaleidoFlash(a,s.hitAt-1),null);const on=kaleidoFlash(a,s.hitAt),fade=kaleidoFlash(a,s.hitAt+70);assert.ok(on.strength>fade.strength);assert.ok(on.color[1]>on.color[0]*10&&on.color[1]>on.color[2]*3);assert.equal(on.origin.x,1);assert.ok(on.origin.z>3&&on.origin.z<8);assert.ok(on.radius<3);
+ assert.equal(kaleidoFlash(a,s.flurryEnd+221),null);assert.equal(kaleidoFlash(a,s.hitTimes.at(-1)),null);assert.equal(kaleidoFlash({...a,cancelled:true},s.hitAt),null);assert.equal(kaleidoFlash({...a,kind:'basic'},s.hitAt),null);assert.equal(kaleidoFlash({...a,character:'Van'},s.hitAt),null);
+});
+test('shared local-light uniforms retain Dorothy white flash defaults and clear craft lighting',async()=>{
+ const THREE=await import('three'),{createDayNight}=await import('../activity/day-night.mjs'),model=new THREE.Group(),mesh=new THREE.Mesh(new THREE.PlaneGeometry(),new THREE.MeshBasicMaterial());model.add(mesh);const light=createDayNight(THREE,model,'arena'),shader={uniforms:{},vertexShader:'#include <project_vertex>',fragmentShader:'#include <opaque_fragment>'};mesh.material.onBeforeCompile(shader,{});
+ light.photo([{origin:{x:1,y:0,z:2},direction:{x:0,z:1},strength:.5}]);assert.deepEqual(shader.uniforms.skyPhotoColor0.value.toArray(),[1,1,1]);assert.deepEqual(shader.uniforms.skyPhotoConfig0.value.toArray(),[18,0]);
+ light.photo([{origin:{x:1,y:0,z:2},color:[.025,1,.22],radius:2.7,omni:true,strength:.3}]);assert.deepEqual(shader.uniforms.skyPhotoConfig0.value.toArray(),[2.7,1]);assert.equal(shader.uniforms.skyPhotoColor0.value.y,1);light.photo([]);assert.equal(shader.uniforms.skyPhoto0.value.w,0);light.dispose();mesh.geometry.dispose();mesh.material.dispose();
+});
