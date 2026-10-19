@@ -1119,6 +1119,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(avatar.character==="Sieg"&&!avatar.dead&&!avatar.perched)avatar.mesh.quaternion.copy(camera.quaternion);
       else if(avatar.character==="Sieg")avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),0);
       else avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),avatar.mesh.rotation.z);
+      const captive=!avatar.dead&&!down&&!falling&&renneCombat?.kaleidoCaptive(id);
+      if(captive){
+        const tilted=camera.quaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),35*Math.PI/180));avatar.mesh.quaternion.slerp(tilted,Math.min(1,captive.angle/(35*Math.PI/180)));
+        const pivot=new THREE.Vector3(0,.8,0),rotated=pivot.clone().applyQuaternion(avatar.mesh.quaternion);avatar.mesh.position.add(pivot.sub(rotated));avatar.mesh.position.y+=captive.lift;
+      }
       if(craftTilt){
         const m=camera.matrixWorld.elements,sx=craftTilt.x*m[0]+craftTilt.y*m[1]+craftTilt.z*m[2],sy=craftTilt.x*m[4]+craftTilt.y*m[5]+craftTilt.z*m[6],targetAngle=-Math.atan2(sx,sy);
         const previous=avatar.craftTiltAngle??targetAngle,angle=previous+Math.atan2(Math.sin(targetAngle-previous),Math.cos(targetAngle-previous))*(1-Math.exp(-seconds*12));avatar.craftTiltAngle=angle;

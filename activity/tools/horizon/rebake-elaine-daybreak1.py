@@ -75,10 +75,12 @@ for frame in thrust['frames']:
  for n in frame:
   name=thrust['segments'][int(n[0])]['name'];energy=1.4 if name=='giza' else .1 if name=='glow' else 1 if name=='Motion_line_midori' else .12 if name=='Motion_line_white' else .2
   n[17:20]=[x*energy for x in n[17:20]]
-  if name=='giza':n[2]*=.25;n[4]*=.25;n[15]*=.25
+  if name=='giza':
+   n[2]*=.25;n[4]*=.25;n[15]*=.25
+   peak=max(n[17:20]);tint=max(n[21:24]);n[17:20]=[peak*x for x in [.195,1,.65]];n[21:24]=[tint]*3
   if name=='par_spread':n[1]=1;n[14:17]=[x*.3 for x in n[14:17]]
 thrust['sourcePass']='Native Daybreak I white/green thrust and spiral layers; cinematic tunnel excluded'
-thrust['webCalibration']='Source hues retained; HDR green lance/core/trail energy balanced against Daybreak reference'
+thrust['webCalibration']='Native animation and HDR layers; giza hue matched to Elaine turquoise final slash at user request'
 pack['effects']['cr5110_20_2_thrust']=thrust
 data=gzip.compress(json.dumps(pack,separators=(',',':')).encode(),mtime=0);h=hashlib.sha256(data).hexdigest()[:10];file='elaine-native-'+h+'.vfxpack';(out/file).write_bytes(data);print(file)
 (out/'catalogue.json').write_text(json.dumps({'Elaine':file,'Van':'van.vfxpack','Shizuna':'shizuna.vfxpack'},indent=2),encoding='utf-8')

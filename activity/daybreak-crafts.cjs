@@ -33,4 +33,14 @@ function zerothPath(origin,aim,{floor,grid,geometry}){
 }
 function gatherPoint(a){const dx=a.aim.x-a.origin.x,dz=a.aim.z-a.origin.z,d=Math.hypot(dx,dz)||1;return {x:a.origin.x+dx/d*1.3,y:a.origin.y,z:a.origin.z+dz/d*1.3};}
 function blackened(events,id,elapsed){return [...events].some(a=>!a.cancelled&&CRAFTS[a.character]?.zeroth&&elapsed(a)>=CRAFTS[a.character].hitAt&&elapsed(a)<CRAFTS[a.character].hitTimes.at(-1)+180&&a.hits?.some(h=>h.id===id&&h.damage>0));}
-module.exports={CRAFTS,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};
+// Visual lift only: gameplay/collision stays on the floor during Kaleido's confirmed capture.
+function kaleidoCaptive(events,id,elapsed){
+ for(const a of events){
+  if(a.character!=='Elaine'||a.cancelled||!a.caught?.includes(id))continue;
+  const t=elapsed(a),s=CRAFTS.Elaine,end=s.hitTimes.at(-1)+180;if(t<s.captureAt||t>=end)continue;
+  const ease=x=>{x=clamp(x);return x*x*(3-2*x);},amount=Math.min(ease((t-s.captureAt)/180),ease((end-t)/180));
+  return {angle:35*Math.PI/180*amount,lift:(.28+.025*Math.sin((t-s.captureAt)/180))*amount};
+ }
+ return null;
+}
+module.exports={CRAFTS,kaleidoCaptive,motion,pose,coinPoint,exitPoint,zerothPath,gatherPoint,blackened};

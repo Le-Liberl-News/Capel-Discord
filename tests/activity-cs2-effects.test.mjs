@@ -25,3 +25,7 @@ test('native two-axis planes retain area when the unused X or Y axis is zero',as
  const {horizonPlaneVertex}=await import('../activity/native-cs2-effects.mjs');const n=Array(17).fill(0);n[14]=0;n[15]=12;n[16]=1;
  assert.deepEqual(horizonPlaneVertex(n,[.5,.5,0],true),[0,6,.5]);n[14]=18;n[15]=0;assert.deepEqual(horizonPlaneVertex(n,[.5,.5,0],true),[9,0,.5]);n[15]=2;assert.deepEqual(horizonPlaneVertex(n,[.5,.5,0],false),[9,1,0]);
 });
+
+test('effect edge masking uses the surface bounds of cropped and repeating atlas panels',async()=>{
+ const {effectSurfaceBounds}=await import('../activity/native-cs2-effects.mjs');assert.deepEqual(effectSurfaceBounds(pack.effects.scre01_1.segments[13]),[.25,.25,.25,.25]);assert.deepEqual(effectSurfaceBounds(pack.effects.scre01_1.segments[29]),[0,0,2,1]);
+});

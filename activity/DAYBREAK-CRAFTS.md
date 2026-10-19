@@ -38,3 +38,5 @@ Les estocades utilisent maintenant une passe dédiée `_2_thrust`, extraite du g
 Les textures, teintes et courbes natives sont conservées. La luminosité HDR et les contributions relatives des couches sont calibrées pour le rendu web d’après la référence vidéo : il ne s’agit pas d’une reproduction certifiée du shader Daybreak. Chaque instance garde la phase verte complète au lieu de disparaître à son apparition ; trois instances bornent le chevauchement. Le slash final et sa pause ne changent pas.
 
 La profondeur des estocades est réduite à un quart du cadrage source pour concentrer les faisceaux sur les cibles rassemblées devant Elaine ; leur largeur et leur animation sont conservées.
+
+La palette des faisceaux giza est maintenant turquoise, assortie au slash final et à la tenue d’Elaine. Les cibles confirmées dans `caught` s’inclinent de 35 degrés et flottent de 0,28 m avec entrée/sortie progressives ; cet effet visuel ne modifie pas les collisions ni la hauteur utilisée pour les dégâts et disparaît lors d’une interruption ou libération.

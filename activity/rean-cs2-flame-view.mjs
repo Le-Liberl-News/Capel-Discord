@@ -7,7 +7,7 @@ export function createReanFlameView(THREE,scene,assets){
  const prepare=()=>loading??=loadCs2Effects(THREE,assets,definition.pack).then(value=>{if(disposed){value.dispose();return null;}return bank=value;});
  const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scaleVector=new THREE.Vector3(),right=new THREE.Vector3(),forward=new THREE.Vector3(),xAxis=new THREE.Vector3(),yAxis=new THREE.Vector3(),zAxis=new THREE.Vector3(),upAxis=new THREE.Vector3(0,1,0);
  const placement=(point,yaw,size)=>matrix.compose(position.set(point.x,point.y,point.z),rotation.setFromAxisAngle(upAxis,yaw),scaleVector.setScalar(size));
- function make(){const create=id=>bank.create(id,scene);return {weapon:create('scre01_3'),first:create('scre01_1'),second:create('scre01_1'),impact:create('scre01_7'),rush:create('scre00_5'),dash:create('scre00_5'),embers:create('scre01_6')};}
+ function make(){const create=id=>bank.create(id,scene,{textureMaskedAdd:true,edgeFadeTextures:['I_EFTEX000','I_EFTEX065','I_EFTEX063']});return {weapon:create('scre01_3'),first:create('scre01_1'),second:create('scre01_1'),impact:create('scre01_7'),rush:create('scre00_5'),dash:create('scre00_5'),embers:create('scre01_6')};}
  function draw(a,time,avatars,camera){
   if(!bank)return;let v=views.get(a.id);if(!v){v=make();views.set(a.id,v);}if(a.cancelled){for(const fx of Object.values(v))fx.hide();return;}
   const p=flame.flamePhases(a),owner=avatars?.get(a.actor),frame=owner?.renderFrame,anchors=frame?.info.effectAnchors?.[frame.frame],pixel=frame?.info.pixelScale??.02,yaw=Math.atan2(a.aim.x-a.origin.x,a.aim.z-a.origin.z),path=flame.flamePath(a);

@@ -200,3 +200,15 @@ test('Daybreak thrust pass retains the native green giza planes without the cine
  const nodes=e.frames.flat(),names=new Set(nodes.map(n=>e.segments[n[0]].name));assert.ok(names.has('giza'));assert.ok(names.has('Motion_line_midori'));assert.ok(!names.has('cylinder_base'));assert.ok(!names.has('wind_base'));assert.ok(nodes.some(n=>e.segments[n[0]].name==='giza'&&e.segments[n[0]].autoPlaneAxes&&n[14]===0&&n[15]>0&&n[16]>0));assert.ok(e.frames.every(f=>f.length<=128));
  const particle=e.segments.find(s=>s.name==='par_spread');assert.equal(particle.procedural,false);assert.equal(particle.faces[0].length,4);
 });
+
+test('Kaleido lifts and tilts only confirmed captives, easing in and releasing on interruption or final hit',()=>{
+ const {kaleidoCaptive}=require('../activity/daybreak-crafts.cjs'),f=fixture('Elaine');f.cast();f.tick(CRAFTS.Elaine.captureAt);const a=f.combat.snapshot().attacks[0],at=t=>kaleidoCaptive([a],'e',()=>t);
+ assert.ok(a.caught.includes('e'));assert.equal(at(CRAFTS.Elaine.captureAt-1),null);assert.equal(at(CRAFTS.Elaine.captureAt).lift,0);
+ const held=at(CRAFTS.Elaine.captureAt+250);assert.ok(Math.abs(held.angle-35*Math.PI/180)<1e-9);assert.ok(held.lift>.25&&held.lift<.31);
+ assert.equal(kaleidoCaptive([a],'outsider',()=>1000),null);assert.equal(kaleidoCaptive([{...a,cancelled:true}],'e',()=>1000),null);assert.equal(at(CRAFTS.Elaine.hitTimes.at(-1)+180),null);
+ assert.ok(at(CRAFTS.Elaine.hitTimes.at(-1)+150).lift<held.lift);
+});
+test('Elaine thrust palette matches the softer turquoise green instead of lime',()=>{
+ const fs=require('node:fs'),zlib=require('node:zlib'),files=require('../activity/assets/sky/effects/horizon/catalogue.json'),pack=JSON.parse(zlib.gunzipSync(fs.readFileSync('activity/assets/sky/effects/horizon/'+files.Elaine))),e=pack.effects.cr5110_20_2_thrust;
+ const beams=e.frames.flat().filter(n=>e.segments[n[0]].name==='giza'&&n[18]*n[22]>.05);assert.ok(beams.length);for(const n of beams){const green=n[18]*n[22],blue=n[19]*n[23];assert.ok(blue>green*.6&&blue<green*.7);}
+});
