@@ -58,7 +58,8 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
   if(list.length!==before||!Array.isArray(state.schedule[date])){state.schedule[date]=list.sort((a,b)=>a-b);save();}
   return state.schedule[date];
  }
- const drawnOn=date=>state.drawn[date]===undefined?[]:[].concat(state.drawn[date]);
+ // the day's cases so far; an old empty draw (nobody played yet, before cases waited) does not count
+ const drawnOn=date=>state.drawn[date]==null?[]:[].concat(state.drawn[date]).filter(Boolean);
  // 0 right after the first symptoms, 1 seven hours later; null when healthy
  function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since);}
  const level=character=>{const s=stage(character);return s==null?0:levelOf(s);};
@@ -89,7 +90,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
    p.announced=lvl;save();
   }
  }
- let busy=false;
+ let busy=false,waiting=null;
  async function tick(){
   if(busy)return;busy=true;
   try{
@@ -99,11 +100,12 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
    const due=scheduledMinutes(date,minutes).filter(m=>m<=minutes).length;
    while(drawnOn(date).length<due){
     const candidates=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]);
-    if(!candidates.length){state.drawn[date]=[...drawnOn(date),null];save();log('rhumertume: no healthy character today');continue;}
-    const character=candidates[Math.floor(random()*candidates.length)],previous=state.drawn[date];
+    // nobody has a character yet today (none is given before its player's first message): the case waits for one
+    if(!candidates.length){if(waiting!==date){waiting=date;log('rhumertume: no healthy character yet, the case waits');}break;}
+    const character=candidates[Math.floor(random()*candidates.length)],previous=drawnOn(date);
     state.drawn[date]=[...drawnOn(date),character];save();
     // if Discord is unreachable the draw is undone and retried on the next tick
-    try{await catches(character);}catch(error){if(previous===undefined)delete state.drawn[date];else state.drawn[date]=previous;save();throw error;}
+    try{await catches(character);}catch(error){state.drawn[date]=previous;save();throw error;}
    }
   }finally{busy=false;}
  }

@@ -108,3 +108,12 @@ test('/pomifier is for administrators and announces the new case',async()=>{
  c=call(true,'Inconnu');await r.handle(c.interaction);assert.match(c.out.reply,/inconnu/);
  assert.equal(await r.handle({commandName:'duel'}),false);
 });
+test('a case due while nobody has a character yet waits for the first one played, even one lost before',async()=>{
+ const cases=[],{r,said,store}=setup({now:()=>at('2026-10-20T12:59:00+02:00'),cases,data:{schedule:{'2026-10-20':[600,640]},drawn:{'2026-10-20':[null]},infected:{},patients:{}}});
+ await r.tick();await r.tick();assert.equal(said.length,0);
+ cases.push('Tita');await r.tick();
+ assert.equal(said.length,1);assert.match(said[0].text,/Tita semble/);
+ cases.push('Kloe');await r.tick();
+ assert.equal(said.length,2);assert.deepEqual(store.load().drawn['2026-10-20'],['Tita','Kloe']);
+ await r.tick();assert.equal(said.length,2);
+});
