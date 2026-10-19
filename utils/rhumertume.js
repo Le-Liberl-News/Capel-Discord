@@ -4,9 +4,9 @@
 // (30% after an hour, 60% after about 3h30, every word but one in eight after about 7 hours) and are shown in a Sky bubble; its
 // avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx after 3h30, Pomdeterx after 7 hours
 // (each patient's own times, drawn within two hours either side),
-// each step announced with a Pokémon-like evolution GIF. How the player writes feeds two gauges: rage (capitals, "!")
-// makes the pom bite whoever spoke lately, who may catch the illness; madness ("?", emojis) makes it hurt itself.
-// "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
+// each step announced with a Pokémon-like evolution GIF. Once a day at most, at random, a pom flies into a rage and bites
+// whoever spoke lately, who may catch the illness. How the player writes feeds two gauges, rage (capitals, "!") and
+// madness ("?", emojis, which makes the pom hurt itself); "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
 // Once a day, when three poms are at stage 2 or 3, they corner three healthy characters (the siege, utils/pomSiege.js);
 // those who fall catch the illness.
 const {PermissionFlagsBits}=require('discord.js');
@@ -18,6 +18,8 @@ const STAGE_TIMES=[3.5*HOUR,7*HOUR],STAGE_SPREAD=2*HOUR;
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
 const PREFIX=['','Pom','Pompom','Pomdeter'];
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
+// the bite: a chance on each message of a pom, until one has bitten that day (Paris)
+const BITE_CHANCE=.1;
 const RAGE=['Pris·e de rage, {perso} mord {victime} !','{perso} se jette sur {victime} en hurlant.'];
 const MADNESS=['{perso} se cogne la tête contre un mur en riant.','{perso} se met à sautiller partout sans raison apparente.'];
 const parisFormat=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
@@ -50,8 +52,8 @@ function moods(text){
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
 function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,renderSiege,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
- const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},...(store.load()??{})};
- state.patients??={};state.sieges??={};
+ const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},...(store.load()??{})};
+ state.patients??={};state.sieges??={};state.bites??={};
  const save=()=>store.save(state);
  const pictures=()=>render??(render=require('./pomRendering'));
  const drawsOver=()=>parisParts(now()).date>LAST_DAY;
@@ -73,7 +75,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
  const avatarOf=(character,lvl=level(character))=>characterNames.includes(character)?pictures().avatarURL(character,lvl):AVATAR_URL;
  // a patient's book-keeping (gauges, last stage announced); one infected before this version starts where it is
  function patient(character){
-  return state.patients[character]??={announced:level(character),rage:0,madness:0,updated:now(),lastRage:0,lastMadness:0};
+  return state.patients[character]??={announced:level(character),rage:0,madness:0,updated:now(),lastMadness:0};
  }
  // an announcement with its GIF; the text alone if the picture fails
  async function announceWith(text,picture){
@@ -83,7 +85,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
  }
  async function catches(character){
   const spread=()=>(random()*2-1)*STAGE_SPREAD,second=STAGE_TIMES[0]+spread(),third=Math.max(second+HOUR,STAGE_TIMES[1]+spread());
-  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastRage:0,lastMadness:0,times:[second,third]};save();
+  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastMadness:0,times:[second,third]};save();
   try{await announceWith(symptoms(character),()=>pictures().renderEvolution(character,0,1));}
   catch(error){delete state.infected[character];delete state.patients[character];save();throw error;}
  }
@@ -173,14 +175,16 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
  }
  const fill=(template,values)=>template.replace(/\{(\w+)\}/g,(_,k)=>values[k]);
  const pick=list=>list[Math.floor(random()*list.length)];
- // after the pom's message: a bite when the rage is high (the victim may catch it), a self-inflicted mishap when madness is
+ // after the pom's message: now and then a bite (once a day at most; the victim may catch it), a self-inflicted mishap
+ // when madness is high
  async function after(character){
   if(stage(character)==null)return;
   const p=patient(character),t=now();
-  if(p.rage>=ACTION_AT&&t-p.lastRage>=HOUR){
+  const today=parisParts(t).date;
+  if(!state.bites[today]&&random()<BITE_CHANCE){
    const victims=[...recent].filter(([name,at])=>name!==character&&name!=='Pom'&&t-at<=RECENT).map(([name])=>name);
    if(victims.length){
-    const victim=pick(victims);p.lastRage=t;p.rage=AFTER_ACTION;save();
+    const victim=pick(victims);state.bites[today]={pom:character,victim};save();
     // the rage, the bite, then the GIF of the pom jumping on its victim
     await announceWith(`${nameOf(character)} rentre dans une rage incontrôlable.\n${fill(pick(RAGE),{perso:nameOf(character),victime:stage(victim)==null?victim:nameOf(victim)})}`,
      ()=>pictures().renderBite(character,level(character),victim,level(victim)));

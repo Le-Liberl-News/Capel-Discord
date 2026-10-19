@@ -70,16 +70,20 @@ test('the gauges: capitals and "!" for rage, "?" and emojis for madness; pom, ci
  assert.ok(moods('Quoi ???? 🎃🎃 :smile:')[1]>=40);
  assert.ok(moods('pom pom citrouille. Calme.')[0]<0);
 });
-test('rage: the pom bites someone who spoke lately, who may catch the illness',async()=>{
- let now=at('2026-10-26T09:00:00Z');
- const {r,said}=setup({now:()=>now,random:()=>0});
+test('the bite: now and then a pom bites someone who spoke lately, who may catch it; once a day at most',async()=>{
+ let now=at('2026-10-26T09:00:00Z'),roll=.5;
+ const {r,said}=setup({now:()=>now,random:()=>roll});
  await r.infect('Tita');said.length=0;
  await r.message('Kloe','Salut Tita.');
- for(let i=0;i<3;i++){await r.message('Tita','ARRÊTE DE ME REGARDER !!!!!');await r.after('Tita');}
+ await r.message('Tita','Bonjour.');await r.after('Tita');assert.equal(said.length,0);   // not this time
+ roll=0;await r.message('Tita','Bonjour.');await r.after('Tita');
  assert.equal(said[0].text,'Pomtita rentre dans une rage incontrôlable.\nPris·e de rage, Pomtita mord Kloe !');assert.deepEqual(said[0].files,['morsure Tita 1 Kloe 0']);
  assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,['evolution Kloe 0->1']);
  assert.ok(r.isInfected('Kloe'));
- const before=said.length;await r.message('Tita','RAAAH !!!!!');await r.after('Tita');assert.equal(said.length,before);   // once an hour at most
+ await r.infect('Nial');await r.message('Joshua','Coucou.');
+ const before=said.length;await r.message('Nial','Pom.');await r.after('Nial');assert.equal(said.length,before);   // once a day
+ now=at('2026-10-27T09:00:00Z');const next=said.length;await r.message('Joshua','Coucou.');await r.message('Nial','Pom.');await r.after('Nial');
+ assert.ok(said.slice(next).some(x=>/rage incontrôlable/.test(x.text)&&/Joshua/.test(x.text)));   // a new day
 });
 test('madness: the pom hurts itself',async()=>{
  let now=at('2026-10-26T09:00:00Z');
