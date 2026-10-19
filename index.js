@@ -134,6 +134,7 @@ client.on('interactionCreate', async interaction => {
     if (await activiteDuels.handle(interaction)) return;
     if (await activitePropHunt.handle(interaction)) return;
     if (await rhumertume.handle(interaction)) return;
+    if (await adventure.handle(interaction)) return;
     if (interaction.isButton()) {
         if (await patchReleaseService.handleButton(interaction)) return;
         return handleButtons(interaction, sheets);
@@ -230,6 +231,9 @@ const testCharacters=require("./utils/activityTestCharacters").createTestCharact
 const capelModel=require("./activity/assets/sky/capel.json");
 // until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
 const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
+// Halloween text adventure: invitation in the adventure channel, played in DMs (admins and 744964573249011712 for now)
+const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',closingChannelId:process.env.ROLEPLAY_ID,allowed:['744964573249011712'],renderMap:require('./utils/adventure/map').renderMap});
+client.on('messageCreate',message=>{adventure.message(message);});
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});

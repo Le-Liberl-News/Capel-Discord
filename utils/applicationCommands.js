@@ -5,6 +5,7 @@ const commands = [
         .addStringOption(o => o.setName("personnage").setDescription("Personnage de votre adversaire du jour").setRequired(true).setAutocomplete(true)),
     new SlashCommandBuilder().setName('pomifier').setDescription('Transmettre la rhumertume à un personnage').setDMPermission(false).setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addStringOption(o => o.setName('personnage').setDescription('Personnage à pomifier').setRequired(true).setAutocomplete(true)),
+    new SlashCommandBuilder().setName('aventure').setDescription("Publier l'invitation à l'aventure d'Halloween").setDMPermission(false).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     new SlashCommandBuilder().setName('test1').setDescription('Parse la TABLE'),
     new SlashCommandBuilder().setName('runtrad').setDescription('Cherche une réplique à traduire'),
     new SlashCommandBuilder().setName('trad').setDescription('Soumettre une traduction anonyme'),

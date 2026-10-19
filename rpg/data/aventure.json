@@ -1,0 +1,624 @@
+{
+ "_note": "Première version tirée du plan et de descriptions.txt : sorties déduites du plan, l'énigme de la clé est un exemple. Format : docs/aventure.md.",
+ "post": {
+  "text": "Une étrange lettre est arrivée à la rédaction : un manoir oublié renfermerait l'antidote à la rhumertume. Qui osera y entrer ?",
+  "button": "Entrer dans le manoir"
+ },
+ "intro": "Vous avez rétréci. Pour retrouver votre taille, il vous faut l'antidote caché quelque part dans ce manoir. (Tapez « aide » pour savoir comment jouer.)",
+ "messages": {
+  "resume": "Vous reprenez votre aventure.",
+  "over": "Votre aventure est terminée. Merci d’avoir joué !"
+ },
+ "start": 1,
+ "final": {
+  "room": 18,
+  "players": 3,
+  "victory": "Ensemble, vous arrachez l'antidote à la créature. Vous avez réussi !",
+  "closing": "Les aventuriers ont arraché l'antidote à la créature du manoir. L'aventure est terminée."
+ },
+ "floors": [
+  {
+   "id": "rdc",
+   "name": "Rez-de-chaussée",
+   "size": [
+    475,
+    317
+   ]
+  },
+  {
+   "id": "etage",
+   "name": "Étage",
+   "size": [
+    368,
+    279
+   ]
+  }
+ ],
+ "rooms": [
+  {
+   "id": 1,
+   "name": "Devant l'entrée",
+   "floor": "rdc",
+   "rect": [
+    159,
+    281,
+    158,
+    36
+   ],
+   "exits": {
+    "nord": 2
+   },
+   "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit.",
+   "color": "#d9cfb8"
+  },
+  {
+   "id": 2,
+   "name": "Hall d'entrée",
+   "floor": "rdc",
+   "rect": [
+    159,
+    169,
+    158,
+    110
+   ],
+   "exits": {
+    "sud": 1,
+    "ouest": 3,
+    "est": 7,
+    "nord": {
+     "to": 6,
+     "must": [
+      "porte_cour_ouverte"
+     ],
+     "fail": "La porte qui donne sur la cour est fermée à clé."
+    }
+   },
+   "description": "Vous êtes dans le hall d'entrée. Une grande armoire est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considéré comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle."
+  },
+  {
+   "id": 3,
+   "name": "Salon",
+   "floor": "rdc",
+   "rect": [
+    0,
+    81,
+    159,
+    198
+   ],
+   "exits": {
+    "est": 2,
+    "nord": 5
+   },
+   "description": "Vous êtes dans une grande salle de réception. Deux tables parcourent toute la longueur de la pièce, bordées de chaises au dossier de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloche sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique, posée sur une petite table ronde."
+  },
+  {
+   "id": 4,
+   "name": "Bureau",
+   "floor": "rdc",
+   "rect": [
+    367,
+    0,
+    108,
+    76
+   ],
+   "exits": {
+    "ouest": 6,
+    "sud": 7
+   },
+   "description": "Vous êtes dans un bureau. Quelques documents sont posés sur la table de travail. Vous pouvez voir un arbuste aux feuilles séchées par la fenêtre.",
+   "details": [
+    {
+     "mustnot": [
+      "cle_prise"
+     ],
+     "text": "Une petite clé rouillée traîne sur les documents."
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "Cuisine",
+   "floor": "rdc",
+   "rect": [
+    0,
+    0,
+    159,
+    81
+   ],
+   "exits": {
+    "sud": 3,
+    "est": 11
+   },
+   "description": "Vous êtes dans la cuisine. Comme il n'y a pas de fenêtre, vous ne voyez presque rien, si ce n'est des tas de laine à l'apparence poisseuse, posés sur les tables et traînant par terre. Une petite lumière attire votre œil vers le mur est de la salle."
+  },
+  {
+   "id": 6,
+   "name": "Jardin",
+   "floor": "rdc",
+   "rect": [
+    159,
+    31,
+    208,
+    138
+   ],
+   "exits": {
+    "sud": 2,
+    "nord": 30,
+    "est": 4
+   },
+   "description": "Vous êtes dans une cour intérieur. Le soleil peine a trouver sa voie entre les hauts murs du manoir. Des mauvaises herbes, quelques buissons et du lierre sont la seule trace de vie qui reste en ces lieux. Une statue imposante se dresse au milieu de la cour.",
+   "color": "#68ab68"
+  },
+  {
+   "id": 7,
+   "name": "Bibliothèque",
+   "floor": "rdc",
+   "rect": [
+    317,
+    76,
+    158,
+    203
+   ],
+   "exits": {
+    "ouest": 2,
+    "nord": 4
+   },
+   "description": "Vous êtes dans une immense bibliothèque. Des étagères recouvrent tous les murs, mis à part devant deux grandes fenêtres au nord de la pièce. Un écriteau indique la répartition des différentes sections thématiques."
+  },
+  {
+   "id": 11,
+   "name": "Garde-manger",
+   "floor": "rdc",
+   "rect": [
+    159,
+    0,
+    77,
+    31
+   ],
+   "exits": {
+    "ouest": 5,
+    "est": 30
+   },
+   "description": "Vous êtes dans le garde-manger. Le mur nord, fissuré, laisse passer assez de lumière pour constater qu'il ne reste plus rien dans les rayons. Pas même une miette de nourriture. Seules restent les étiquettes de ce qui s'y trouvait stocké."
+  },
+  {
+   "id": 30,
+   "name": "Escaliers",
+   "floor": "rdc",
+   "rect": [
+    236,
+    0,
+    131,
+    31
+   ],
+   "exits": {
+    "ouest": 11,
+    "sud": 6,
+    "haut": 14,
+    "bas": 8
+   },
+   "description": "Vous êtes au pied d'un escalier. Une volée de marches monte vers l'étage, une autre descend vers la cave."
+  },
+  {
+   "id": 8,
+   "name": "Cave",
+   "floor": "cave",
+   "exits": {
+    "haut": 30,
+    "est": 9
+   },
+   "description": "Vous êtes dans la cave. Des tonneau sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor. Une odeur indescriptible arrive jusqu'à vos narines : fûmante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
+  },
+  {
+   "id": 9,
+   "name": "Cellules",
+   "floor": "cave",
+   "exits": {
+    "ouest": 8
+   },
+   "description": "Vous êtes devant des barreaux. Une femme se trouve de l'autre côté. Vous ne la voyez pas très bien à la lumière vacillante de votre torche, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine baignée d'une matière visqueuse."
+  },
+  {
+   "id": 14,
+   "name": "Palier",
+   "floor": "etage",
+   "rect": [
+    159,
+    0,
+    76,
+    31
+   ],
+   "exits": {
+    "bas": 30,
+    "ouest": 16,
+    "est": 31
+   },
+   "description": "Vous êtes dans une pièce aux murs blancs jaunis par le temps. Une table basse se trouve à côté d'une porte ouverte vers le sud."
+  },
+  {
+   "id": 31,
+   "name": "Débarras",
+   "floor": "etage",
+   "rect": [
+    235,
+    0,
+    133,
+    31
+   ],
+   "exits": {
+    "ouest": 14
+   },
+   "description": "Une petite pièce encombrée de caisses vides.",
+   "label": false
+  },
+  {
+   "id": 16,
+   "name": "Salle de projection",
+   "floor": "etage",
+   "rect": [
+    0,
+    0,
+    159,
+    82
+   ],
+   "exits": {
+    "est": 14,
+    "sud": 15,
+    "haut": 12
+   },
+   "description": "Une maigre lumière s'infiltre au travers des rideaux, mais elle ne vous permet que de distinguer quelques reflets vitreux à différents endroits de la salle."
+  },
+  {
+   "id": 12,
+   "name": "Sommet de la tour",
+   "floor": "tour",
+   "exits": {
+    "bas": 16
+   },
+   "description": "Vous êtes au sommet de la tour. Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans."
+  },
+  {
+   "id": 10,
+   "name": "Chambre du prof",
+   "floor": "etage",
+   "rect": [
+    0,
+    82,
+    64,
+    72
+   ],
+   "exits": {
+    "est": 15
+   },
+   "description": "Vous êtes dans une chambre. Le sol s'est effondré sur le rebord de la pièce. Des arbrisseaux poussent dans des pots posés à même le sol et accrochés aux murs par des cordelettes. Ils sont si nombreux qu'il est difficile d'accéder au lit, seul ameublement de cet endroit."
+  },
+  {
+   "id": 15,
+   "name": "Couloir",
+   "floor": "etage",
+   "rect": [
+    64,
+    82,
+    32,
+    72
+   ],
+   "exits": {
+    "nord": 16,
+    "ouest": 10,
+    "est": 13,
+    "sud": 17
+   },
+   "description": "Vous êtes dans un couloir étroit. Deux porte sont entrebaillées, une à l'ouest, une à l'est. Le couloir se pousuit vers le sud.",
+   "label": false
+  },
+  {
+   "id": 13,
+   "name": "Chambre d'enfant",
+   "floor": "etage",
+   "rect": [
+    96,
+    82,
+    63,
+    72
+   ],
+   "exits": {
+    "ouest": 15
+   },
+   "description": "Vous êtes dans une chambre au sol immaculé. Le lit est fait impeccablement. Le papier-peint représente la savane lointaine, dans des couleurs chaudes et réconfortantes. En dehors du lit, seul un coffre est posé au coin de la pièce."
+  },
+  {
+   "id": 17,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "nord": 15,
+    "est": 20,
+    "sud": 19
+   },
+   "description": "Vous êtes désormais dans un couloir en ligne droite, plongé dans l'obscurité. Tout ce que vous distinguez, c'est l'embrasure d'une porte à l'est, de l'autre côté du couloir."
+  },
+  {
+   "id": 20,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "ouest": 17,
+    "nord": 21,
+    "est": 22
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 21,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "sud": 20,
+    "est": 23
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 22,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "ouest": 20,
+    "sud": 24
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 23,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "ouest": 21,
+    "sud": 25
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 24,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "nord": 22,
+    "est": 26
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 25,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "nord": 23,
+    "sud": 26
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 26,
+   "name": "Couloirs infinis",
+   "floor": "etage",
+   "rect": [
+    0,
+    154,
+    159,
+    80
+   ],
+   "exits": {
+    "nord": 25,
+    "ouest": 24,
+    "sud": 19
+   },
+   "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?",
+   "label": false
+  },
+  {
+   "id": 19,
+   "name": "Antichambre",
+   "floor": "etage",
+   "rect": [
+    0,
+    234,
+    159,
+    45
+   ],
+   "exits": {
+    "nord": 17,
+    "est": 32
+   },
+   "description": "Vous êtes dans une antichambre étroite. Une porte s'ouvre à l'est."
+  },
+  {
+   "id": 32,
+   "name": "Labo",
+   "floor": "etage",
+   "rect": [
+    159,
+    169,
+    81,
+    110
+   ],
+   "exits": {
+    "ouest": 19,
+    "est": 18
+   },
+   "description": "Vous êtes dans un laboratoire. Des fioles brisées jonchent le sol."
+  },
+  {
+   "id": 18,
+   "name": "Salle du trône",
+   "floor": "etage",
+   "rect": [
+    240,
+    169,
+    128,
+    110
+   ],
+   "exits": {
+    "ouest": 32
+   },
+   "description": "Vous entrez dans une salle... qui n'en est plus vraiment une. Elle n'a plus de plafond, et un vent glaçant s'infiltre au milieu des brèches béantes formées dans les murs à divers endroits. Vous posez les pieds sur un tapis rouge, qui quelque pas plus loin, après avoir monté quelques marches, se coupe nettement en une forme d'arc de cercle inversé. Vous relevez les yeux pour jauger le trône monumental qui vous fait face. La créature qui y siège ne vous regarde pas. Son cou, long comme celui d'un flammand, est courbé vers les hauteurs, tout comme ses yeux écarquillés. Ses membres filiformes rappellent davantage des plantes grimpantes que quoi que ce soit d'animal.\nLa créature se balance lentement de gauche à droite. Sa peau est sombre comme la nuit, mais on ne la distingue clairement qu'autour de ses yeux, brillants comme des étoiles.\nDe droite à gauche. Tout le reste de son corps est couvert d'une épaisse toison cuivrée rougeoyante, luisant comme si elle était trempée.\nDe gauche à droite. Dans sa paume gauche, elle sert quelque chose. Et ce quelque chose... c'est ce qui vous a attiré ici, vous en êtes certain. Vous tentez de le lui arracher de toutes vos forces, mais ça ne suffit pas.\nDe haut en bas... La créature vous accorde un regard intrigué, la tête penchée sur le côté, mais se désintéresse vite.\nDe bas en haut.\nVous aurez besoin de la force conjointe de vos congénères pour arracher à cette créature l'antidote que vous êtes venu chercher. Il ne peut en être autrement."
+  },
+  {
+   "id": "vide",
+   "name": "",
+   "floor": "etage",
+   "rect": [
+    159,
+    31,
+    209,
+    138
+   ],
+   "exits": {},
+   "description": "",
+   "color": "#68ab68",
+   "label": false
+  }
+ ],
+ "objects": [
+  {
+   "id": "cle",
+   "name": "une petite clé rouillée"
+  }
+ ],
+ "verbs": {
+  "prendre": [
+   "prends",
+   "prenez",
+   "ramasser",
+   "ramasse",
+   "attraper",
+   "attrape"
+  ],
+  "ouvrir": [
+   "ouvre",
+   "ouvrez"
+  ]
+ },
+ "nouns": {
+  "cle": [
+   "clé",
+   "clef",
+   "cles"
+  ]
+ },
+ "actions": [
+  {
+   "place": [
+    4
+   ],
+   "verb": "prendre",
+   "noun": [
+    "cle"
+   ],
+   "mustnot": [
+    "cle_prise"
+   ],
+   "effect": [
+    "cle_prise"
+   ],
+   "give": [
+    "cle"
+   ],
+   "text": "Vous prenez la petite clé rouillée."
+  },
+  {
+   "place": [
+    4
+   ],
+   "verb": "prendre",
+   "noun": [
+    "cle"
+   ],
+   "must": [
+    "cle_prise"
+   ],
+   "text": "Il n'y a plus de clé ici."
+  },
+  {
+   "place": [
+    2
+   ],
+   "verb": "ouvrir",
+   "noun": [
+    "porte"
+   ],
+   "mustnot": [
+    "porte_cour_ouverte"
+   ],
+   "use": [
+    "cle"
+   ],
+   "effect": [
+    "porte_cour_ouverte"
+   ],
+   "text": "La clé tourne dans la serrure : la porte de la cour s'ouvre au nord.",
+   "fail": "La porte est fermée à clé."
+  },
+  {
+   "place": [
+    2
+   ],
+   "verb": "ouvrir",
+   "noun": [
+    "porte"
+   ],
+   "must": [
+    "porte_cour_ouverte"
+   ],
+   "text": "La porte est déjà ouverte."
+  }
+ ]
+}
