@@ -5,6 +5,7 @@ from pathlib import Path
 SOURCE = Path('E:/dev/sky-activity-tools/sons')
 OUTPUT = Path(__file__).resolve().parents[1] / 'assets/sky/sounds/se'
 SOUNDS = {
+    'don-shot': 'SC/ed6se487.wav', 'don-explosion': 'FC/ed6se585.wav', 'don-slam': 'FC/ed6se602.wav',
     'schera-whip': 'FC/ed6se502.wav', 'carna-shot': 'SC/ed6se689.wav', 'josette-shot': 'FC/ed6se855.wav',  # use -> extracted file
     'miss': 'FC/ed6se132.wav', 'fight': 'FC/ed6se155.wav', 'jump': 'FC/ed6se163.wav', 'olivier': 'FC/ed6se190.wav',
     'block': 'FC/ed6se214.wav', 'antoine': 'FC/ed6se402.wav', 'axis-ambience': 'FC/ed6se451.wav', 'joshua': 'FC/ed6se504.wav',

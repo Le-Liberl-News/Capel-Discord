@@ -511,5 +511,19 @@
     "lastVisibleFrame": 14,
     "duration": 1000,
     "size": 4
+  },
+  "sc/msc0640._ef": {
+    "name": "sc-msc0640",
+    "frames": 90,
+    "lastVisibleFrame": 23,
+    "duration": 1000,
+    "size": 4
+  },
+  "sc/sc000_10._ef": {
+    "name": "sc-sc000_10",
+    "frames": 90,
+    "lastVisibleFrame": 17,
+    "duration": 1000,
+    "size": 4
   }
 }

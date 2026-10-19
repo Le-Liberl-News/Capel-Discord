@@ -113,7 +113,7 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
       messages:result.messages?.map(m=>({...m,id:alias(m.id),author:alias(m.author)})),
       enemies:result.enemies?.map(p=>({...cat(p),owner:alias(p.owner)})),
       pom:pom(result.pom), poms:result.poms?.map(pom),
-      combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
+      combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),caught:a.caught?.map(alias),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
     attachQueue(queue){arenaQueue=queue;},

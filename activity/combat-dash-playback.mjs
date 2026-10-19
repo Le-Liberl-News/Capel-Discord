@@ -6,7 +6,7 @@ export function dashPlayback(actions,actor,elapsed,specFor){
  for(const event of [...actions.values()].reverse()){
   const spec=specFor(event);
   if(event.actor!==actor||event.cancelled||!(spec?.dash||spec?.leap))continue;
-  if(['trinity','phoenix','flameSlash','altinaSword','daybreak'].includes(spec.special)){
+  if(['donCannon','trinity','phoenix','flameSlash','altinaSword','daybreak'].includes(spec.special)){
    if(event.localDashFinished)return null;
    const time=event.dashFinished?Math.max(elapsed(event),spec.windup+(spec.leapDuration??spec.dashDuration)):elapsed(event);
    if(spec.zeroth&&event.accepted&&!event.lineLocked&&time>=spec.moveStart)return {event,active:true,position:{...event.origin}};

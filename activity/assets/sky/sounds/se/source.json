@@ -15,7 +15,10 @@
   "hit2": "FC/ed6se553.wav",
   "hit3": "FC/ed6se554.wav",
   "hit4": "FC/ed6se555.wav",
-  "dash": "FC/ed6se571.wav"
+  "dash": "FC/ed6se571.wav",
+  "don-shot": "SC/ed6se487.wav",
+  "don-explosion": "FC/ed6se585.wav",
+  "don-slam": "FC/ed6se602.wav"
  },
  "archives": "ED6_DT08 (FC), ED6_DT28 (SC, 3rd)"
 }

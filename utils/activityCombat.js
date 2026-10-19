@@ -75,6 +75,13 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
 
     if (attacks.has(command.id)) return { error: "Attaque déjà reçue." };
 
+    if(spec.special==='donCannon'){
+      const a=require('./activityDonCannon').startDon(player,command,spec,time,{validateRay});if(a.error)return a;
+      attacks.set(a.id,a);const cooldown=cooldowns.get(player.id)??{};cooldown[command.kind]=time+spec.cooldown;cooldowns.set(player.id,cooldown);player.attackBusyUntil=time+spec.duration;
+      if(spec.lockMovement)player.combatLockedUntil=time+spec.duration;
+      if(command.kind==='craft'){player.combatDash=a.id;player.jump=null;onCraft({...a});}
+      return {combatId:a.id};
+    }
     if(spec.special==='summon'&&[...special.entities.values()].filter(e=>e.owner===player.id&&e.hp>0).length>=3)return {error:'Trois tomates sont déjà actives.'};
 
     const fps=spec.fps?validateRay(player,command.ray):null;if(spec.fps&&!fps)return {error:'Visée invalide.'};
@@ -355,6 +362,7 @@ function createActivityCombat({ now = Date.now, geometry = null, grid, onCraft =
       if(time>attack.endsAt+5000){if(attack.special==='dimension')dimension.cancel(attack,room);if(attack.special==='altinaSword')special.altina.cancel(attack,room.get(attack.actor),time);attacks.delete(id);driveContacts.delete(id);continue;}
 
       const dashSpec=combatSpec(attack.character,attack.kind);
+      if(dashSpec?.special==='donCannon'){require('./activityDonCannon').tickDon(attack,dashSpec,room.get(attack.actor),room,time,{geometry,floor,canDamage,hurt,project});continue;}
       if(dashSpec?.special==='smoke'){attack.resolved=true;continue;}
       if(dashSpec?.special==='photo'){if(!attack.resolved&&time>=attack.impactAt){const actor=room.get(attack.actor);if(!actor||actor.hp<=0||immobilized(actor,time)){attack.cancelled=true;}else require('../activity/dorothy-photo.cjs').resolvePhoto(attack,actor,room,canDamage,geometry);attack.resolved=true;}continue;}
 

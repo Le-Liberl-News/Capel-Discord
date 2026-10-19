@@ -1,0 +1,14 @@
+{
+  "gun": "Don as00290 bank 2, direction 4, pose 0; native black/gold cannon cutout",
+  "projectile": "Existing native-cannon.png: Third effalp0._DS, crop [64,0,96,32]",
+  "sounds": {
+    "don-shot": "SC/ed6se487",
+    "don-explosion": "FC/ed6se585",
+    "don-slam": "FC/ed6se602"
+  },
+  "effects": [
+    "SC/msc0640._ef",
+    "SC/sc000_10._ef",
+    "SC/sc006_17._ef"
+  ]
+}

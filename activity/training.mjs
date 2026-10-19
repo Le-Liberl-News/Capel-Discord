@@ -1,3 +1,4 @@
+import donCannon from './don-cannon.cjs';
 import altinaSword from './altina-scraft.cjs';
 import cs2 from './cs2-test-characters.cjs';
 import {catRicochetPlan} from './cat-ricochet-ai.mjs';
@@ -91,7 +92,7 @@ export function createTraining({grid,geometry,character,opponent,encounter=null,
     const aim=spec.effect?{x:ai.x,y:ai.y,z:ai.z}:aimAt(target,spec.projectileSpeed??0);
     const command={type:'attack',kind,aim,target:spec.effect?ai.id:player.id};
     if(ai.character==='Sieg'){const length=Math.hypot(aim.x-ai.x,aim.y-ai.y,aim.z-ai.z);command.type='sieg_dive';command.direction={x:(aim.x-ai.x)/length,y:(aim.y-ai.y)/length,z:(aim.z-ai.z)/length};}
-    if(spec.fps){const origin={x:ai.x,y:ai.y+1.25,z:ai.z},end={...aim,y:player.y+bodyHeight(player)*.7},length=Math.hypot(end.x-origin.x,end.y-origin.y,end.z-origin.z);command.ray={origin,direction:{x:(end.x-origin.x)/length,y:(end.y-origin.y)/length,z:(end.z-origin.z)/length}};}
+    if(spec.fps){const origin={x:ai.x,y:ai.y+1.25,z:ai.z},end={...aim,y:player.y+bodyHeight(player)*.7},length=Math.hypot(end.x-origin.x,end.y-origin.y,end.z-origin.z);command.ray={origin,direction:ai.character==='Don'?donCannon.aimDirection({...origin,y:ai.y+1.45},end):{x:(end.x-origin.x)/length,y:(end.y-origin.y)/length,z:(end.z-origin.z)/length}};}
     if(spec.special==='trinity'){const origin={x:ai.x,y:ai.y,z:ai.z},dx=target.x-ai.x,dz=target.z-ai.z,len=Math.hypot(dx,dz)||1,first=place({x:target.x+dx/len*2-dz/len*3,z:target.z+dz/len*2+dx/len*3}),second=place({x:target.x+dx/len*2+dz/len*3,z:target.z+dz/len*2-dx/len*3});command.aim=first;if(!send(command).error){trinity={points:[second,origin],until:time+spec.comboWindow};path=[];return;}continue;}
     if(!send(command).error){delete ready[kind];break;}
    }

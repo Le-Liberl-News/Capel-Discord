@@ -1,6 +1,6 @@
 // Game sound effects (tools/export-sounds.py). Web Audio: overlapping, low latency, and one gain for
 // the "Effets" volume of the settings. The context starts on the first touch or key, as browsers require.
-const NAMES=['schera-whip','carna-shot','josette-shot','miss','fight','jump','olivier','block','antoine','axis-ambience','joshua','hit1','hit2','hit3','hit4','dash'];
+const NAMES=['don-shot','don-explosion','don-slam','schera-whip','carna-shot','josette-shot','miss','fight','jump','olivier','block','antoine','axis-ambience','joshua','hit1','hit2','hit3','hit4','dash'];
 let volume=.5;try{const saved=localStorage.getItem('sky-sfx-volume');if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(1,Number(saved)));}catch{}
 const listeners=new Set();
 export function effectsVolume(){return volume;}

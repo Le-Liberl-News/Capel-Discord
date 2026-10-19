@@ -53,6 +53,11 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))sounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])sounds?.play(CRAFT_SOUNDS[event.character]);}
     const spec=combatSpec(event.character,event.kind);
     playReanCraftSounds(event,now,done,sounds);
+    if(event.character==='Don'&&event.special==='donCannon'&&!event.cancelled){
+      const elapsed=now-event.localStart,marks=event.kind==='basic'?[['don-shot',140],...(event.explodedAt==null?[]:[['don-explosion',event.explodedAt-event.started]])]:[['don-slam',900]];
+      for(const [sound,at]of marks)if(elapsed>=at&&!done.has(sound)){done.add(sound);if(elapsed-at<200)sounds?.play(sound);}
+    }
+
     if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of (spec.coinShot?[['block',spec.throwAt,.25],['josette-shot',spec.fireAt,.75]]:spec.zeroth?[['block',1900,.35],['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8],['hit4',spec.hitTimes[1],.8]]:spec.hitTimes.map((at,i)=>['hit'+(i%4+1),at,i===spec.hitTimes.length-1?.65:.35]))){const key='daybreak-sound:'+name+':'+at,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)sounds?.play(name,{gain});}}}
     const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':event.character==='Josette'&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
     if(sound&&!event.cancelled&&!event.reflectedProjectile){
