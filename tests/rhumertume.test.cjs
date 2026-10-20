@@ -192,3 +192,9 @@ test("a wizard pom's bite is a spell: the victim fades away and falls ill a few 
   if(!ill)assert.ok(said.slice(intro+2).some(s=>/Kloe semble développer/.test(s.text)));
  }
 });
+test('a pom already shown at the usual second stage keeps the usual form at the third',async()=>{
+ const start=at('2026-10-26T09:00:00Z');let now=start+6*3600000;
+ const {r,said}=setup({now:()=>now,random:()=>0,cases:[],data:{infected:{Tita:start},patients:{Tita:{announced:2,rage:0,madness:0,updated:start,lastMadness:0,times:[2*3600000,5*3600000]}}}});
+ await r.tick();
+ assert.equal(r.nameOf('Tita'),'Pomdetertita');assert.ok(said.some(s=>s.text==='Quoi ? Pompomtita évolue ?!'&&s.files[0]==='evolution Tita 2->3'));
+});

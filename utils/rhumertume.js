@@ -110,7 +110,8 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   for(const character of Object.keys(state.infected)){
    const p=patient(character),lvl=level(character);
    if(lvl<=p.announced)continue;
-   if(lvl>=2&&!p.variant){p.variant=random()<ASPI_CHANCE?'aspi':'pompom';save();}
+   // the form is drawn on reaching the second stage; a pom already shown at that stage keeps the usual form
+   if(lvl>=2&&!p.variant){p.variant=p.announced<2&&random()<ASPI_CHANCE?'aspi':'pompom';save();}
    await announceWith(`Quoi ? ${nameOf(character,lvl-1)} évolue ?!`,()=>pictures().renderEvolution(character,spriteOf(character,lvl-1),spriteOf(character,lvl)));
    p.announced=lvl;save();
   }
