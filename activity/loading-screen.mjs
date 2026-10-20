@@ -4,8 +4,9 @@
 import * as THREE from 'three';
 const PICTURES={arena:'loading/arena.jpg',axis:'loading/axis.jpg',gehenna:'loading/gehenna.jpg',tower1:'loading/tower.jpg',tower2:'loading/tower.jpg',tower3:'loading/tower.jpg',tower4:'loading/tower.jpg'};
 export function createLoadingScreen({assets}){
- const root=document.createElement('div');root.id='sky-loading';root.hidden=true;
- root.style.cssText='position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#120e0c;color:#ffe7b0;font:16px system-ui;overflow:hidden';
+ // shown and hidden through `display` (an inline display beats the hidden attribute)
+ const root=document.createElement('div');root.id='sky-loading';
+ root.style.cssText='position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#120e0c;color:#ffe7b0;font:16px system-ui;overflow:hidden';
  const blur=document.createElement('div');blur.style.cssText='position:absolute;inset:-40px;background:#120e0c center/cover no-repeat;filter:blur(18px) brightness(.45)';
  const card=document.createElement('div');card.style.cssText='position:relative;width:min(84vw,640px);aspect-ratio:16/9;border-radius:10px;border:2px solid #b49760;background:#201b18 center/cover no-repeat;box-shadow:0 10px 40px #000c';
  const title=document.createElement('p');title.style.cssText='position:relative;margin:0;font:26px Cinzel,Georgia,serif;letter-spacing:.04em;text-shadow:0 2px 10px #000';
@@ -23,13 +24,13 @@ export function createLoadingScreen({assets}){
   // map: the stage being loaded (arena, axis, gehenna, tower1…); name: the title shown
   show(map,name){
    const picture=PICTURES[map],url=picture?'url('+JSON.stringify(new URL(picture,assets).href)+')':'none';
-   blur.style.backgroundImage=url;card.style.backgroundImage=url;card.hidden=!picture;title.textContent=name??'';
-   shown=true;best=.03;done=total=0;draw();root.hidden=false;
+   blur.style.backgroundImage=url;card.style.backgroundImage=url;card.style.display=picture?'':'none';title.textContent=name??'';
+   shown=true;best=.03;done=total=0;draw();root.style.display='flex';
    // between the files it can count (data, set-up) the bar still creeps on, slower and slower, up to 60 %
    clearInterval(creep);creep=setInterval(()=>{if(best<.6){best+=(.6-best)*.04;draw();}},200);
   },
   // the bar fills, then the screen goes
-  hide(){if(!shown)return;shown=false;clearInterval(creep);best=1;draw();setTimeout(()=>{if(!shown)root.hidden=true;},300);},
+  hide(){if(!shown)return;shown=false;clearInterval(creep);best=1;draw();setTimeout(()=>{if(!shown)root.style.display='none';},300);},
   get visible(){return shown;}
  };
 }

@@ -52,8 +52,8 @@ function moods(text){
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
 function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,renderSiege,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
- const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},...(store.load()??{})};
- state.patients??={};state.sieges??={};state.bites??={};
+ const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},pending:{},...(store.load()??{})};
+ state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
  const save=()=>store.save(state);
  const pictures=()=>render??(render=require('./pomRendering'));
  const drawsOver=()=>parisParts(now()).date>LAST_DAY;
@@ -83,11 +83,20 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   try{files=[await picture()].filter(Boolean);}catch(error){log('rhumertume: picture: '+error.message);}
   await announce(text,files);
  }
- async function catches(character){
-  const spread=()=>(random()*2-1)*STAGE_SPREAD,second=STAGE_TIMES[0]+spread(),third=Math.max(second+HOUR,STAGE_TIMES[1]+spread());
-  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastMadness:0,times:[second,third]};save();
+ // a new case: noted as pending, announced, then made real; a case cut short (the bot restarting while the GIF is drawn)
+ // is announced again on the next tick (pendingCases), never kept unannounced. cause: what gave it (logged and kept)
+ async function catches(character,cause,retry=false){
+  state.pending[character]={cause,at:now()};save();
+  // a new case that cannot be announced is dropped (its draw is undone); a case being announced again stays pending
   try{await announceWith(symptoms(character),()=>pictures().renderEvolution(character,0,1));}
-  catch(error){delete state.infected[character];delete state.patients[character];save();throw error;}
+  catch(error){if(!retry){delete state.pending[character];save();}throw error;}
+  const spread=()=>(random()*2-1)*STAGE_SPREAD,second=STAGE_TIMES[0]+spread(),third=Math.max(second+HOUR,STAGE_TIMES[1]+spread());
+  delete state.pending[character];
+  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastMadness:0,times:[second,third],cause};save();
+  log(`rhumertume: ${character} tombe malade (${cause})`);
+ }
+ async function pendingCases(){
+  for(const [character,{cause}] of Object.entries(state.pending))if(!state.infected[character])await catches(character,cause.endsWith('annonce reprise')?cause:cause+', annonce reprise',true);else{delete state.pending[character];save();}
  }
  // a stage reached since the last announcement: "Quoi ? PomX évolue ?!" and the GIF
  async function evolutions(){
@@ -104,17 +113,18 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   try{
    // an evolution that cannot be announced must not hold the day's cases back
    await evolutions().catch(error=>log('rhumertume: evolution: '+error.message));
+   await pendingCases().catch(error=>log('rhumertume: annonce reprise: '+error.message));
    const {date,minutes}=parisParts(now());
    if(date>LAST_DAY)return;
    const due=scheduledMinutes(date,minutes).filter(m=>m<=minutes).length;
    while(drawnOn(date).length<due){
-    const candidates=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]);
+    const candidates=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]&&!state.pending[name]);
     // nobody has a character yet today (none is given before its player's first message): the case waits for one
     if(!candidates.length){if(waiting!==date){waiting=date;log('rhumertume: no healthy character yet, the case waits');}break;}
     const character=candidates[Math.floor(random()*candidates.length)],previous=drawnOn(date);
     state.drawn[date]=[...drawnOn(date),character];save();
     // if Discord is unreachable the draw is undone and retried on the next tick
-    try{await catches(character);log(`rhumertume: ${character} tombe malade`);}catch(error){state.drawn[date]=previous;save();throw error;}
+    try{await catches(character,'tirage du jour');}catch(error){state.drawn[date]=previous;save();throw error;}
    }
    await siege(date,minutes);
   }finally{busy=false;}
@@ -132,7 +142,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   if(state.sieges[date]||minutes<SIEGE_HOURS[0]||minutes>=SIEGE_HOURS[1])return;
   const poms=Object.keys(state.infected).filter(c=>level(c)>=2);
   if(poms.length<3)return;
-  const healthy=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]);
+  const healthy=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]&&!state.pending[name]);
   if(healthy.length<3)return;
   const attackers=shuffled(poms).slice(0,3),defenders=shuffled(healthy).slice(0,3);
   let outcome=['repel','rescue','flee','devour'][Math.floor(random()*4)],result=null;
@@ -148,13 +158,13 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   log(`rhumertume: siège (${outcome}) de ${attackers.join(', ')} contre ${defenders.join(', ')}`);
   await wait(result?.duration??0);
   await announce(OUTCOME_TEXT[outcome]({defenders,fallen,escaped}),[]);
-  for(const character of fallen)if(!state.infected[character])await catches(character);
+  for(const character of fallen)if(!state.infected[character])await catches(character,'siège');
  }
  // an administrator's choice, announced like a draw
  async function infect(character){
   if(drawsOver())throw Error('La rhumertume ne fait plus de nouvelles victimes.');
   if(state.infected[character])throw Error(`${character} est déjà atteint·e.`);
-  await catches(character);
+  await catches(character,'/pomifier');
  }
  const textOf=(character,text)=>level(character)===3?pomifyFinal(text,random):pomify(text,stage(character),random);
  // the activity's roleplay: text, avatar and name only
@@ -188,7 +198,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
     // the rage, the bite, then the GIF of the pom jumping on its victim
     await announceWith(`${nameOf(character)} rentre dans une rage incontrôlable.\n${fill(pick(RAGE),{perso:nameOf(character),victime:stage(victim)==null?victim:nameOf(victim)})}`,
      ()=>pictures().renderBite(character,level(character),victim,level(victim)));
-    if(stage(victim)==null&&random()<CONTAGION)await catches(victim);
+    if(stage(victim)==null&&random()<CONTAGION)await catches(victim,'morsure de '+character);
    }
   }
   if(p.madness>=ACTION_AT&&t-p.lastMadness>=HOUR){

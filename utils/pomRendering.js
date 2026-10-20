@@ -31,10 +31,25 @@ function borderImage(x,tex,dx,dy,w,h,s=32,b=24){
 }
 const isAngry=w=>/!/.test(w)||(w===w.toLocaleUpperCase('fr')&&w!==w.toLocaleLowerCase('fr'));
 // French punctuation stays with the word before it
-function words(text){const out=[];for(const t of String(text).split(/\s+/).filter(Boolean)){if(out.length&&/^[?!:;»]+$/.test(t))out[out.length-1]+='\u00a0'+t;else out.push(t);}return out;}
-function layout(x,list,maxw,angrySize){
+function words(text){const out=[];for(const t of String(text).split(/\s+/).filter(Boolean)){if(out.length&&/^[?!:;»]+$/.test(t)&&!EMOJI.test(out[out.length-1]))out[out.length-1]+='\u00a0'+t;else out.push(t);}return out;}
+// the server's custom emojis (<:name:id>, <a:name:id>) are drawn as their pictures, the size of a letter
+const EMOJI=/^<a?:(\w+):(\d+)>$/,EMOJI_SIZE=27;
+async function emojiPictures(list){
+ const pictures=new Map();
+ await Promise.all([...new Set(list.map(w=>w.match(EMOJI)?.[2]).filter(Boolean))].map(async id=>{
+  try{const r=await fetch(`https://cdn.discordapp.com/emojis/${id}.png?size=64`);if(r.ok)pictures.set(id,await loadImage(Buffer.from(await r.arrayBuffer())));}catch{}
+ }));
+ return pictures;
+}
+// a word, or an emoji: its picture, else its name between colons
+function put(x,pictures,w,px,py,draw){
+ const m=w.match(EMOJI),picture=m&&pictures.get(m[2]);
+ if(picture){x.drawImage(picture,px,py+1,EMOJI_SIZE,EMOJI_SIZE);return;}
+ draw(m?`:${m[1]}:`:w);
+}
+function layout(x,list,maxw,angrySize,pictures=new Map()){
  const out=[];let px=0,py=0;x.font=font(24);const space=x.measureText(' ').width;
- for(const w of list){x.font=font(angrySize&&isAngry(w)?angrySize:24);const width=x.measureText(w).width;if(px+width>maxw&&px>0){px=0;py+=LINE;}out.push([w,px,py]);px+=width+space;}
+ for(const w of list){x.font=font(angrySize&&isAngry(w)?angrySize:24);const m=w.match(EMOJI),width=m&&pictures.get(m[2])?EMOJI_SIZE:x.measureText(m?`:${m[1]}:`:w).width;if(px+width>maxw&&px>0){px=0;py+=LINE;}out.push([w,px,py]);px+=width+space;}
  return {lines:out,height:py+LINE};
 }
 function bubble(x,tex,tail,height,dx=0,dy=0){
@@ -67,32 +82,34 @@ function encode(frames,delays,{once=false}={}){
  gif.finish();return Buffer.from(gif.bytes());
 }
 async function renderBubble(message,stage,seed=Date.now()){
- const {frame,tail,inverted}=await load(),list=words(message),probe=createCanvas(10,10).getContext('2d');
+ const {frame,tail,inverted}=await load(),list=words(message),probe=createCanvas(10,10).getContext('2d'),pictures=await emojiPictures(list);
  if(stage<=1){
-  const {lines,height}=layout(probe,list,W-LEFT-54);const c=createCanvas(W,height+64),x=c.getContext('2d');
-  const b=bubble(x,frame,tail,height);for(const [w,px,py] of lines)text(x,w,b.ox+px,b.oy+py,24,'#fff');
+  const {lines,height}=layout(probe,list,W-LEFT-54,0,pictures);const c=createCanvas(W,height+64),x=c.getContext('2d');
+  const b=bubble(x,frame,tail,height);for(const [w,px,py] of lines)put(x,pictures,w,b.ox+px,b.oy+py,t=>text(x,t,b.ox+px,b.oy+py,24,'#fff'));
   const img=x.getImageData(0,0,c.width,c.height);flatten(img.data);x.putImageData(img,0,0);   // the same opaque bubble as the GIFs
   return {attachment:c.toBuffer('image/png'),name:'pom.png'};
  }
  const rng=seeded(seed),frames=[];
  if(stage===2){
-  const {lines,height}=layout(probe,list,W-LEFT-54,30);
+  const {lines,height}=layout(probe,list,W-LEFT-54,30,pictures);
   for(let f=0;f<10;f++){
    const c=createCanvas(W,height+66),x=c.getContext('2d');
    const sx=Math.round(rng()*6-3),sy=Math.round(rng()*4-2),b=bubble(x,frame,tail,height,sx,sy);
    for(const [w,px,py] of lines){
-    if(isAngry(w))text(x,w,b.ox+px+Math.round(rng()*4-2),b.oy+py-3+Math.round(rng()*3-2),24+Math.round(2+rng()*4),'#ff6046');
+    if(w.match(EMOJI))put(x,pictures,w,b.ox+px,b.oy+py,t=>text(x,t,b.ox+px,b.oy+py,24,'#fff'));
+    else if(isAngry(w))text(x,w,b.ox+px+Math.round(rng()*4-2),b.oy+py-3+Math.round(rng()*3-2),24+Math.round(2+rng()*4),'#ff6046');
     else text(x,w,b.ox+px,b.oy+py,24,'#fff');
    }
    frames.push(c);
   }
   return {attachment:encode(frames,70),name:'pom.gif'};
  }
- const {lines,height}=layout(probe,list,W-LEFT-54);
+ const {lines,height}=layout(probe,list,W-LEFT-54,0,pictures);
  for(let f=0;f<14;f++){
   const c=createCanvas(W,height+66),x=c.getContext('2d');
   const b=bubble(x,inverted,tail,height,Math.round(rng()*4-2));
   for(const [w,px,py] of lines){
+   if(w.match(EMOJI)){put(x,pictures,w,b.ox+px,b.oy+py,t=>text(x,t,b.ox+px,b.oy+py,24,'#18081e','#fff5e6'));continue;}
    const core=w.replace(/[.!?…,\u00a0]/g,''),legible=core&&core===core.toLocaleUpperCase('fr')&&!/POM/.test(core);
    const tx=b.ox+px+Math.round(rng()*2-1),ty=b.oy+py+Math.round(rng()*2-1);
    text(x,w,tx,ty,24,legible?'#820018':'#18081e','#fff5e6');

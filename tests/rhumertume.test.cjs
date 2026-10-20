@@ -153,3 +153,14 @@ test('stages 2 and 3 come within two hours of 3h30 and 7 hours, drawn for each p
   assert.equal(level(second-.05),1);assert.equal(level(second+.05),2);assert.equal(level(third-.05),2);assert.equal(level(third+.05),3);
  }
 });
+test('a case cut short before its announcement is announced on the next tick, never kept silent',async()=>{
+ const said=[];let fail=true;
+ const store=memory({schedule:{'2026-10-20':[600,640]},drawn:{'2026-10-20':['Anelace','Kloe']},infected:{Kloe:at('2026-10-20T10:40:00+02:00')},patients:{},pending:{Anelace:{cause:'tirage du jour',at:0}}});
+ const r=createRhumertume({store,now:()=>at('2026-10-20T11:00:00+02:00'),random:()=>.5,charactersOfTheDay:async()=>['Anelace','Kloe'],characterNames:names,render,
+  announce:async(text,files=[])=>{if(fail)throw Error('Discord');said.push(text);}});
+ assert.equal(r.isInfected('Anelace'),false);                      // pending: not ill until announced
+ await r.tick().catch(()=>{});assert.equal(r.isInfected('Anelace'),false);
+ fail=false;await r.tick();
+ assert.ok(said.some(t=>/Anelace semble développer/.test(t)));assert.equal(r.isInfected('Anelace'),true);
+ assert.equal(store.load().pending.Anelace,undefined);assert.match(store.load().patients.Anelace.cause,/tirage du jour/);
+});

@@ -5,8 +5,9 @@
 const BUTTON='display:block;width:min(78vw,340px);margin:10px auto;font:20px Cinzel,Georgia,serif;padding:14px 18px;border-radius:7px;border:1px solid #b49760;background:#3a2c22;color:#ffe7b0;cursor:pointer;box-shadow:0 3px 14px #0007';
 const QUIET='display:block;margin:18px auto 0;font:15px Cinzel,Georgia,serif;background:none;border:none;color:#c9b48a;cursor:pointer;text-decoration:underline';
 export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownCharacter=()=>null}){
- const root=document.createElement('div');root.id='sky-home';root.hidden=true;
- root.style.cssText='position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 35%,#3a2c22 0%,#201b18 60%,#120e0c 100%);color:#ffe7b0;text-align:center;font:16px system-ui;overflow:auto';
+ // shown and hidden through `display` (an inline display beats the hidden attribute)
+ const root=document.createElement('div');root.id='sky-home';
+ root.style.cssText='position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 35%,#3a2c22 0%,#201b18 60%,#120e0c 100%);color:#ffe7b0;text-align:center;font:16px system-ui;overflow:auto';
  const panel=document.createElement('div');panel.style.cssText='padding:24px 16px;max-width:92vw';root.append(panel);
  let page='main',busy=false;
  const title=(text,size=34)=>{const h=document.createElement('h1');h.textContent=text;h.style.cssText=`margin:0 0 6px;font:${size}px Cinzel,Georgia,serif;letter-spacing:.04em;text-shadow:0 2px 12px #000`;return h;};
@@ -24,7 +25,8 @@ export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownChara
  draw();document.body.append(root);
  return {
   // shown at home; hidden during a fight, in the tower, in a duel
-  show(atHome){if(root.hidden===!atHome)return;root.hidden=!atHome;if(atHome)draw();},
+  show(atHome){const display=atHome?'flex':'none';if(root.style.display===display)return;root.style.display=display;if(atHome)draw();},
+  get visible(){return root.style.display!=='none';},
   refresh:draw,
   dispose(){root.remove();}
  };
