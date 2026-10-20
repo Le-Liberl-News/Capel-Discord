@@ -7,6 +7,9 @@ $routes = [
     'profile' => '/api/profile',
     'terminal' => '/api/terminal',
     'craft-capture' => '/api/craft-capture',
+    // the solo combat against a player: the challenge, then each choice of character or stage
+    'solo/challenge' => '/api/solo/challenge',
+    'solo/pick' => '/api/solo/pick',
 ];
 
 $route = $_GET['r'] ?? '';
