@@ -1,3 +1,4 @@
+import {applyPhoenixFire} from './cassius-phoenix-view.mjs';
 import motion from './special-crafts.cjs';
 import {bakedEffectSprite} from './baked-effects.mjs';
 import {nativeWorldEffect} from './native-effects.mjs';
@@ -12,10 +13,10 @@ export async function createSpecialCraftView(THREE,scene,assets,banks,fireTextur
   if(s.special==='spire'){projectile=new THREE.Group();for(const g of geometries)projectile.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:salt,side:THREE.DoubleSide,transparent:true})));group.add(projectile);}
   if(s.special==='boomerang'){projectile=new THREE.Sprite(new THREE.SpriteMaterial({map:scythe,transparent:true,depthWrite:false}));projectile.scale.set(1.8,1.2,1);group.add(projectile);}
   if(s.special==='fireball'){const map=shareTexture(fireTexture);map.repeat.set(.25,1);projectile=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));projectile.scale.setScalar(.8);group.add(projectile);}
-  if(s.special==='crescent'){const player=native.get('third/sc009_05._ef');if(player){assembly=nativeWorldEffect(THREE,player);projectile=new THREE.Group();projectile.add(assembly.group);projectile.scale.setScalar(.5);group.add(projectile);}}
+  if(s.special==='crescent'){const player=native.get('third/sc009_05._ef');if(player){assembly=nativeWorldEffect(THREE,player,{parts:[2],anchorPart:2});applyPhoenixFire(assembly.group,.45);projectile=new THREE.Group();projectile.add(assembly.group);projectile.scale.setScalar(.25);group.add(projectile);}}
   const bomb=banks.get(s.special==='spire'?'sc/sc480_03._ef':s.special==='crescent'?s.explosionEffect.toLowerCase():'third/btbomb00._ef'),explosion=bomb?bakedEffectSprite(THREE,bomb,s.special==='spire'?5:s.special==='crescent'?2.8:4):null;if(explosion)group.add(explosion.sprite);
   const frost=banks.get('sc/mg022_0._ef'),fog=s.special==='spire'&&frost?bakedEffectSprite(THREE,frost,5):null;if(fog)group.add(fog.sprite);
-  const trailBank=banks.get('sc/cr153_00._ef'),trails=s.special==='boomerang'&&trailBank?Array.from({length:7},()=>{const fx=bakedEffectSprite(THREE,trailBank,1.6);group.add(fx.sprite);return fx;}):[];
+  const trailBank=banks.get(s.special==='crescent'?s.trailEffect.toLowerCase():'sc/cr153_00._ef'),trails=['boomerang','crescent'].includes(s.special)&&trailBank?Array.from({length:7},()=>{const fx=bakedEffectSprite(THREE,s.special==='crescent'?{...trailBank,bloom:.5}:trailBank,s.special==='crescent'?1.45:1.6);if(s.special==='crescent')applyPhoenixFire(fx.sprite,.65);group.add(fx.sprite);return fx;}):[];
   const impactPlayer=native.get(s.special==='dive'?'third/sc009_06._ef':'');const impactFx=impactPlayer?nativeWorldEffect(THREE,impactPlayer,s.special==='spire'?{parts:[4,5,8,13],anchorPart:5}:{}):null;if(impactFx){impactFx.group.scale.setScalar(s.special==='spire'?.7:s.special==='dive'?.16:.13);group.add(impactFx.group);if(explosion)explosion.sprite.visible=false;}const chargeBank=banks.get('sc/cr153_00._ef'),charge=s.special==='dive'&&chargeBank?bakedEffectSprite(THREE,chargeBank,2.4):null;if(charge)group.add(charge.sprite);const impactOffset=s.special==='spire'&&impactPlayer?Math.min(...impactPlayer.instances.filter(i=>i.part.index===5).map(i=>i.start)):0;const v={group,projectile,assembly,explosion,impactFx,impactOffset,fog,trails,charge};views.set(a.id,v);return v;
  }
  return {draw(a,s,time,avatars){
@@ -25,8 +26,8 @@ export async function createSpecialCraftView(THREE,scene,assets,banks,fireTextur
    else {const end=a.flightEndsAt?a.flightEndsAt-a.started:s.windup+(s.special==='boomerang'?2200:Math.hypot(a.aim.x-a.origin.x,a.aim.z-a.origin.z)/(s.projectileSpeed??10)*1000),p=motion.projectilePosition({...a,started:0},s,time,owner);v.projectile.visible=time>=s.windup&&time<end&&!a.explodedAt&&!a.resolved&&!a.cancelled;v.projectile.position.set(p.x,p.y,p.z);
     if(s.special==='boomerang')v.projectile.material.rotation=time*.022;
     if(s.special==='fireball')v.projectile.material.map.offset.x=(Math.floor(time/60)%4)/4;
-    if(v.assembly){const phase=200+(time-s.windup)%600;v.assembly.draw(phase);v.assembly.group.position.z=-phase*.02;v.projectile.rotation.y=Math.atan2(a.aim.x-a.origin.x,a.aim.z-a.origin.z);}
-    for(const [i,trail]of v.trails.entries()){const age=time-(i+1)*35,p=motion.projectilePosition({...a,started:0},s,age,owner);trail.sprite.visible=v.projectile.visible&&age>=s.windup;trail.sprite.position.set(p.x,p.y,p.z);trail.sprite.material.opacity=1-i/8;trail.draw(200+(time%500));}
+    if(v.assembly){const phase=200+(time-s.windup)%600;v.assembly.draw(phase);v.projectile.rotation.y=Math.atan2(a.aim.x-a.origin.x,a.aim.z-a.origin.z);}
+    for(const [i,trail]of v.trails.entries()){const age=time-(i+1)*35,p=motion.projectilePosition({...a,started:0},s,age,owner);trail.sprite.visible=v.projectile.visible&&age>=s.windup;trail.sprite.position.set(p.x,p.y,p.z);trail.sprite.material.opacity=(s.special==='crescent'?.65:1)*(1-i/8);trail.draw(s.special==='crescent'?150+(i*25+time)%300:200+(time%500));}
    }
   }
   if(v.charge){v.charge.sprite.visible=time>=400&&time<impact;v.charge.sprite.position.set(owner.x,owner.y+.8,owner.z);v.charge.draw(200+(time%500));}

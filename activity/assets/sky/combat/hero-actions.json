@@ -500,7 +500,7 @@
       "special": "crescent",
       "shape": "line",
       "groundTarget": true,
-      "projectileSpeed": 9,
+      "projectileSpeed": 18,
       "range": 12,
       "radius": 2,
       "damage": 30,
@@ -514,7 +514,9 @@
         {
           "id": "Third/sc009_06._ef"
         }
-      ]
+      ],
+      "lineRadius": 0.7,
+      "trailEffect": "Third/ms04671l._ef"
     }
   },
   "Ray": {

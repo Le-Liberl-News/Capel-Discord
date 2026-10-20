@@ -2,17 +2,17 @@ import phoenix from './cassius-phoenix.cjs';
 import {nativeWorldEffect} from './native-effects.mjs';
 import {bakedEffectSprite} from './baked-effects.mjs';
 
-function orange(group){group.traverse(object=>{if(!object.material)return;object.material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace(/#include <map_(?:particle_)?fragment>/,'$&\n diffuseColor.rgb = vec3(max(max(diffuseColor.r,diffuseColor.g),diffuseColor.b))*vec3(1.0,0.35,0.035);');};object.material.customProgramCacheKey=()=> 'cassius-orange';});}
+export function applyPhoenixFire(group,strength=1){group.traverse(object=>{if(!object.material)return;object.material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace(/#include <map_(?:particle_)?fragment>/,'$&\n diffuseColor.rgb = vec3(max(max(diffuseColor.r,diffuseColor.g),diffuseColor.b))*vec3(1.0,0.35,0.035)*'+strength.toFixed(3)+';');};object.material.customProgramCacheKey=()=> 'cassius-orange:'+strength;});}
 export function createPhoenixView(THREE,scene,banks,native){
  const views=new Map(),forward=new THREE.Vector3(0,0,1),up=new THREE.Vector3(0,1,0),direction=new THREE.Vector3();
  function create(a,s){
   const group=new THREE.Group(),spin=nativeWorldEffect(THREE,native.get(s.nativeEffect.toLowerCase()),{parts:[2,3,4,6,7],startBefore:200,nativeAxes:true,helix:true});
-  spin.group.scale.setScalar(.55);orange(spin.group);
+  spin.group.scale.setScalar(.55);applyPhoenixFire(spin.group);
   const bird=nativeWorldEffect(THREE,native.get(s.phoenixEffect.toLowerCase()),{parts:[9],anchorPart:9,nativeAxes:true,animate:true,animationSpeed:1.5}),flight=new THREE.Group();flight.add(bird.group);bird.group.scale.setScalar(.23*1.6);
   // The original effect expands two textured spheres, rather than a camera-facing picture.
   const explosion=nativeWorldEffect(THREE,native.get(s.explosionEffect.toLowerCase()),{parts:[2,3,13],startBefore:2200,nativeAxes:true,spatial:true});
   const rings=nativeWorldEffect(THREE,native.get(s.shockwaveEffect.toLowerCase()),{parts:[6,12,13,14],nativeAxes:true,spatial:true});rings.group.scale.setScalar(.075);
-  const trails=Array.from({length:10},()=>{const fx=bakedEffectSprite(THREE,banks.get(s.trailEffect.toLowerCase()),1.9);orange(fx.sprite);return fx;});
+  const trails=Array.from({length:10},()=>{const fx=bakedEffectSprite(THREE,banks.get(s.trailEffect.toLowerCase()),1.9);applyPhoenixFire(fx.sprite);return fx;});
   group.add(spin.group,flight,explosion.group,rings.group,...trails.map(t=>t.sprite));scene.add(group);const v={group,spin,bird,flight,explosion,rings,trails};views.set(a.id,v);return v;
  }
  function draw(a,s,time,avatars){

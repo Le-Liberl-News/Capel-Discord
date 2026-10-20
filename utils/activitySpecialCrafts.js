@@ -1,3 +1,4 @@
+const {rayBody}=require('../activity/fps-combat.cjs');
 const {projectilePosition,divePosition}=require('../activity/special-crafts.cjs');
 const {segmentDistance}=require('../activity/combat-projection.cjs');
 const {immobilized,applyStatus}=require('../activity/combat-status.cjs');
@@ -5,9 +6,9 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
  const altina=require('./activityAltinaSword').createAltinaSword({floor,geometry,grid,hurt,canDamage,project});
  const entities=new Map(),highlights=new Map();let last=now();
  const activeSpire=id=>[...attacks.values()].find(a=>a.actor===id&&a.special==='spire'&&!a.explodedAt&&!a.cancelled&&now()>=a.impactAt&&now()<a.objectExpiresAt);
- function damageArea(a,actor,room,point,radius,damage,time,freeze=false){
+ function damageArea(a,actor,room,point,radius,damage,time,freeze=false,exclude=null){
   for(const target of room.values()){
-   if(target.hp<=0||target.spectator||target.duelProtected||target.id===actor.id||!canDamage(actor,target)||Math.hypot(target.x-point.x,target.z-point.z)>radius+(target.boss?1:0)||Math.abs((target.y??0)-point.y)>2)continue;
+   if(target.id===exclude||target.hp<=0||target.spectator||target.duelProtected||target.id===actor.id||!canDamage(actor,target)||Math.hypot(target.x-point.x,target.z-point.z)>radius+(target.boss?1:0)||Math.abs((target.y??0)-point.y)>2)continue;
    const wall=geometry?.sweep({...point,y:point.y+.8},{x:target.x,y:(target.y??0)+.8,z:target.z},.08);if(wall)continue;
    if(freeze){applyStatus(target,{status:'stone',statusDuration:5000},time);target.stoneSource=a.id;a.hits.push({id:target.id,at:time,frozen:true});}
    else {const dealt=hurt(a,actor,target,damage,time,{point:{x:target.x,y:(target.y??0)+.8,z:target.z}});a.hits.push({id:target.id,at:time,...dealt});}
@@ -74,8 +75,15 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
   }
   if(a.resolved||time<a.started+s.windup)return true;
   const end=projectilePosition(a,s,Math.min(time,a.flightEndsAt),{x:actor.x,y:actor.y??0,z:actor.z}),from=a.projectile??{...a.origin,y:a.origin.y+.9};
-  const wall=geometry?.sweep(from,end,.12);let collision=wall?.point;
-  for(const target of room.values()){
+  const wall=geometry?.sweep(from,end,s.special==='crescent'?.65:.12);let collision=wall?.point,directTarget=null;
+  if(s.special==='crescent'){
+   const dx=end.x-from.x,dy=end.y-from.y,dz=end.z-from.z,length=Math.hypot(dx,dy,dz),direction={x:dx/(length||1),y:dy/(length||1),z:dz/(length||1)};
+   let nearest=wall?wall.distance??Math.hypot(collision.x-from.x,collision.y-from.y,collision.z-from.z):length;
+   for(const target of room.values()){
+    if(target.id===actor.id||target.hp<=0||target.spectator||target.duelProtected||!canDamage(actor,target))continue;
+    const body=rayBody(from,direction,target,length,.65);if(body&&body.distance<=nearest){nearest=body.distance;collision=body.point;directTarget=target;}
+   }
+  }else for(const target of room.values()){
    if(target.hp<=0||target.spectator||target.duelProtected||target.id===actor.id||!canDamage(actor,target)||Math.abs((target.y??0)+.8-end.y)>1.5||segmentDistance(target,from,end)>(s.special==='crescent'?.65:s.radius??.4)+(target.boss?1:0))continue;
    if(geometry?.sweep(from,{x:target.x,y:(target.y??0)+.8,z:target.z},.08))continue;
    if(s.special==='boomerang'){
@@ -83,7 +91,7 @@ function createSpecialCrafts({now,geometry,floor,canDamage,hurt,attacks,onCraft=
    }else {collision={x:target.x,y:(target.y??0)+.8,z:target.z};break;}
   }
   a.projectile=collision??end;
-  if(collision||time>=a.flightEndsAt){a.resolved=true;a.explodedAt=s.special==='boomerang'?undefined:time;a.explosionPoint={...a.projectile,y:(a.projectile.y??0)-.8};if(s.special!=='boomerang')damageArea(a,actor,room,a.explosionPoint,s.special==='crescent'?2:s.radius,s.damage,time);a.endsAt=time+700;}
+  if(collision||time>=a.flightEndsAt){a.resolved=true;a.explodedAt=s.special==='boomerang'?undefined:time;a.explosionPoint={...a.projectile,y:s.special==='crescent'?(floor(a.projectile)??a.projectile.y-.8):a.projectile.y-.8};if(s.special==='crescent'&&directTarget){const dealt=hurt(a,actor,directTarget,s.damage,time,{point:{...collision}});a.hits.push({id:directTarget.id,at:time,...dealt});}if(s.special!=='boomerang'&&!a.cancelled)damageArea(a,actor,room,a.explosionPoint,s.special==='crescent'?2:s.radius,s.damage,time,false,directTarget?.id);a.endsAt=time+700;}
   return true;
  }
  function tickEntities(room){const time=now(),dt=Math.max(0,Math.min(.1,(time-last)/1000));last=time;
