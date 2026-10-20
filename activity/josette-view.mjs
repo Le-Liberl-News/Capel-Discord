@@ -1,3 +1,4 @@
+import {donCraftGunPose} from './don-craft-camera.mjs';
 export function muzzleFrame(elapsed){return elapsed==null||elapsed<0||elapsed>=220?null:Math.min(89,Math.floor(elapsed/220*90));}
 export function combatKeyAction(code,character){return ['Josette','Carna','Don'].includes(character)&&code==='KeyF'?null:({KeyF:'basic',KeyG:'craft',KeyC:'art',KeyV:'parry'}[code]??null);}
 export function fpsMouseLook(yaw,pitch,dx,dy){return {yaw:yaw+dx*.006,pitch:Math.max(-1.48,Math.min(1.48,pitch+dy*.006))};}
@@ -35,8 +36,7 @@ export async function createJosetteView(THREE,assets){
    const dx=length>1e-6?direction.x/length:-Math.sin(yaw),dz=length>1e-6?direction.z/length:Math.cos(yaw);
    // Keep the travelling directly behind the original aiming axis.
    end.set(position.x-dx*3.1,position.y+1.85,position.z-dz*3.1);
-   if(character==='Don'){const p=craft.event.origin;end.set(p.x-dx*6.8,p.y+3.6,p.z-dz*6.8);}
-   look.set(position.x,position.y+.95,position.z);if(character==='Don'){const p=craft.event.origin;look.set(p.x+dx*.8,p.y+2,p.z+dz*.8);}matrix.lookAt(end,look,camera.up);third.setFromRotationMatrix(matrix);
+   look.set(position.x,position.y+.95,position.z);matrix.lookAt(end,look,camera.up);third.setFromRotationMatrix(matrix);
    if(character==='Carna')third.copy(first);
    camera.position.lerpVectors(eye,end,blend);camera.quaternion.copy(first).slerp(third,blend);
   }
@@ -45,7 +45,8 @@ export async function createJosetteView(THREE,assets){
    const elapsed=attack?.kind==='basic'?time-attack.localStart-(character==='Don'?140:0):null,firing=character==='Carna'&&elapsed!==null&&elapsed<3000&&!attack.fireStoppedAt;const pose=gunPose(firing?elapsed%100:elapsed),bob=moving?Math.sin(time*.012)*3:Math.sin(time*.002)*.7;
    const reload=character==='Carna'&&(elapsed>=3000||!!attack?.fireStoppedAt)&&elapsed<5000;
    const carnaGun=character==='Carna',gunScale=character==='Don'?4.5:carnaGun?4.8:3.6;
-   context.clearRect(0,0,176,164);context.save();context.translate(168+pose.recoil*8,(carnaGun?24:42)+bob+pose.recoil*15+(reload?30:0));context.rotate(.28-pose.recoil*.1+(reload?.35:0));context.scale(-gunScale,gunScale);context.drawImage(character==='Don'?don:carnaGun?carna:image,pose.frame*40,0,40,30,0,0,40,30);const flash=muzzleFrame(firing?elapsed%100:character==='Carna'?null:elapsed);if(flash!==null){context.globalCompositeOperation='lighter';context.drawImage(character==='Don'?donSpark:carnaGun?carnaSpark.image:spark,flash%8*128,Math.floor(flash/8)*128,128,128,27,-5,26,26);}context.restore();
+   const hammer=donCraftGunPose(character==='Don'&&attack?.kind==='craft'&&!attack.cancelled?time-attack.localStart:null);
+   context.clearRect(0,0,176,164);context.save();context.translate(168+pose.recoil*8,(carnaGun?24:42)+bob+pose.recoil*15+(reload?30:0)+hammer.lift);context.rotate(.28-pose.recoil*.1+(reload?.35:0)+hammer.angle);context.scale(-gunScale,gunScale);context.drawImage(character==='Don'?don:carnaGun?carna:image,pose.frame*40,0,40,30,0,0,40,30);const flash=muzzleFrame(firing?elapsed%100:character==='Carna'?null:elapsed);if(flash!==null){context.globalCompositeOperation='lighter';context.drawImage(character==='Don'?donSpark:carnaGun?carnaSpark.image:spark,flash%8*128,Math.floor(flash/8)*128,128,128,27,-5,26,26);}context.restore();
    if(reload){context.font='bold 12px sans-serif';context.fillStyle='white';context.fillText('Rechargement…',12,155);}
   }
   return blend;

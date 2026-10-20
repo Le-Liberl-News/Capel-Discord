@@ -1,3 +1,4 @@
+import {createDonCraftCamera} from './don-craft-camera.mjs';
 import {createStunView} from './stun-view.mjs';
 import altinaSword from './altina-scraft.cjs';
 import {createArenaAtmosphere} from './arena-atmosphere.mjs';
@@ -239,6 +240,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const duelFinish=isArena?createDuelFinish(THREE,renderer,scene,ASSETS,event=>notifyCapture(event),()=>queueAction("leave_duel"),model,id=>notifyRematch(id)):null;
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const gunRecoil=createGunRecoil(renneMechanics.combatSpec);
+  const donCraftCamera=createDonCraftCamera();
   const altinaCompanion=await createAltinaCompanionView(THREE,scene,ASSETS,catalogue);
   const stunView=renneCombat?await createStunView(THREE,scene,ASSETS):null;
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
@@ -976,6 +978,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(hit){const length=Math.hypot(desired.x-target.x,desired.y-target.y,desired.z-target.z),fraction=Math.max(.01,(hit.distance-.12)/length);camera.position.set(target.x+(desired.x-target.x)*fraction,target.y+(desired.y-target.y)*fraction,target.z+(desired.z-target.z)*fraction);}
     }
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
+    pitch=donCraftCamera(isFPS&&!introPlaying?renneCombat?.current(localId):null,time,pitch,me?.position);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';altinaPrompt.disabled=altinaCameraBlend<1;}else altinaCameraBlend=0;
     const surfEvent=renneCombat?.current(localId);if(me&&surfEvent?.special==='altinaSword'&&time-surfEvent.localStart<altinaSword.PHASE.surfEnd){const turn=Math.max(-1,Math.min(1,Number(keys.has('arrowright')||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has('arrowleft')||keys.has(movementKeys(keyboardLayout()).left))+combatControls.vector().x)),direction=altinaSword.cameraSurfDirection(yaw,time-surfEvent.localStart>=altinaSword.PHASE.prep?turn:0);surfEvent.surfHeading=direction;surfEvent.surfFacing=altinaSword.cameraSurfDirection(yaw);if(time-altinaSteerAt>=70){altinaSteerAt=time;queueAction('attack',undefined,undefined,undefined,{kind:'altinaSteer',direction,facing:surfEvent.surfFacing});}if(time-surfEvent.localStart>=altinaSword.PHASE.prep){let pos=surfEvent.localSurfPosition??surfEvent.surfPosition??surfEvent.origin;if(surfEvent.surfUpdatedAt!==surfEvent.localSurfRevision&&surfEvent.surfPosition){const server=surfEvent.surfPosition;pos=Math.hypot(pos.x-server.x,pos.z-server.z)>2?{...server}:{x:pos.x+(server.x-pos.x)*.35,y:server.y,z:pos.z+(server.z-pos.z)*.35};surfEvent.localSurfRevision=surfEvent.surfUpdatedAt;}surfEvent.localSurfPosition=altinaSword.moveSurf(pos,direction,seconds,p=>{const cell=nearestCell(walkingGrid,p);const x=Math.round((p.x-walkingGrid.origin.x)/walkingGrid.step),z=Math.round((p.z-walkingGrid.origin.z)/walkingGrid.step);return x>=0&&z>=0&&x<walkingGrid.width&&z<walkingGrid.height&&walkingGrid.cells[z*walkingGrid.width+x]!==null?collision.floor(p.x,p.z,p.y+.6):null;},collision);if(Math.hypot(direction.x,direction.z)>.001)surfEvent.surfHeading=direction;}}

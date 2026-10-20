@@ -37,3 +37,12 @@ test('the blast is placed at the surface itself, not at the swept sphere centre'
  const geometry={floor:()=>0,sweep:(a,b)=>a.z<=4&&b.z>4?{point:{x:0,y:a.y,z:3.86},surfacePoint:{x:0,y:a.y,z:4}}:null},f=fixture(geometry);
  f.send();for(let t=140;t<600;t+=20)f.tick(t);assert.equal(f.event().explosionPoint.z,4);
 });
+
+test('Don stays in FPS, tilts toward the ground during descent and keeps that pitch after landing',async()=>{
+ const {createDonCraftCamera}=await import('../activity/don-craft-camera.mjs'),update=createDonCraftCamera(),event={id:'slam',character:'Don',kind:'craft',localStart:0,origin:{x:0,y:0,z:0},aim:{x:0,y:0,z:2.1}};
+ assert.equal(cannon.ACTIONS.craft.thirdPersonCraft,false);assert.equal(update(event,800,-.1,{x:0,y:2.6,z:0}),-.1);
+ const during=update(event,1100,-.1,{x:0,y:cannon.hop(1100),z:0});assert.ok(during>0&&during<1.3);
+ const landed=update(event,1250,during,{x:0,y:0,z:0});assert.ok(Math.abs(landed-Math.atan2(1.45,2.1))<1e-9);
+ assert.equal(update(null,2300,landed,{x:0,y:0,z:0}),landed);
+ assert.equal(cannon.pose(event,1100).bank,2);assert.equal(cannon.pose(event,1400).pose,5);
+});
