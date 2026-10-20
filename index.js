@@ -383,6 +383,27 @@ app.post('/api/state', async (req, res) => {
 });
 app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');if(req.query.training==='1'){const {id}=activiteService.identity(activiteBearer(req)),allowedCharacters=await activitySpoilerAccess.characters(id);const registry=require('./utils/characters');res.json({allowedCharacters,allowedVenues:['arena','axis','gehenna',...(allowedCharacters.includes('Rean')?['thors']:[])],entrances:Object.fromEntries(registry.characterNames.map(name=>[name,require("./rpg/data/persos.json")[name].entree])),titles:Object.fromEntries(registry.characterNames.map(name=>[name,registry.characterTitle(name)]))});}else res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
 app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
+// the solo combat against a player: found by their Discord name; both pick among the characters that both players' game
+// roles unlock, then the first to pick sets the stage
+async function findGuildMember(name){
+ const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),wanted=String(name??'').trim().replace(/^@/,'').toLocaleLowerCase('fr');
+ if(!wanted)throw Object.assign(Error('Indiquez le pseudo Discord du joueur.'),{status:400});
+ const found=[...(await guild.members.search({query:wanted,limit:25})).values()].filter(m=>[m.user.username,m.user.globalName,m.nickname,m.displayName].some(n=>n&&n.toLocaleLowerCase('fr')===wanted));
+ if(!found.length)throw Object.assign(Error('Joueur introuvable : vérifiez son pseudo Discord.'),{status:404});
+ if(found.length>1)throw Object.assign(Error("Plusieurs membres portent ce nom : utilisez son nom d'utilisateur Discord."),{status:409});
+ return found[0];
+}
+app.post('/api/solo/challenge',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
+ const target=await findGuildMember(req.body?.name),guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),me=await guild.members.fetch(id);
+ const [mine,theirs]=await Promise.all([activitySpoilerAccess.characters(id),activitySpoilerAccess.characters(target.id)]);
+ const allowed=mine.filter(name=>theirs.includes(name)&&name in require('./activity/assets/sky/characters.json'));
+ const duel=await activiteDuels.soloChallenge(id,target.id,{allowed,labels:[me.displayName,target.displayName]},client);
+ res.json({id:duel,opponent:target.displayName});}
+ catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:'Défi impossible pour le moment.'});}});
+app.post('/api/solo/pick',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
+ const {duel,character,venue,cancel}=req.body??{};if(cancel){activiteDuels.decline(String(duel),id);return res.json({selection:null});}
+ res.json({selection:await activiteDuels.pick(String(duel),id,{character:character??undefined,venue:venue??undefined},client)});}
+ catch(error){res.status(error.status||400).json({erreur:error.status?error.message:'Choix impossible pour le moment.'});}});
 app.post('/api/craft-capture',async(req,res)=>{
   try{const {id}=activiteService.identity(activiteBearer(req));const replay=activiteService.duelCaptureFor(id,req.body?.id);if(replay)activityRoleplay.finish(replay);res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}
   catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Publication roleplay temporairement indisponible.'});}

@@ -5,6 +5,8 @@ import thorsLayout from './assets/sky/thors/layout.json';
 const TRAINING_VENUES={arena:{},thors:thorsLayout,gehenna:{spawns:[{x:0,y:0,z:-12},{x:0,y:0,z:12}],ballSpawns:[{x:0,y:.075,z:-4},{x:0,y:.075,z:4}]},axis:{spawns:[{x:0,z:-9.5},{x:0,z:9.5}],ballSpawns:axisResidents.ballSpawns}};let trainingVenue='arena';
 import {createTraining} from './training.mjs';
 import {pickSoloEncounter} from './solo-encounters.mjs';
+import {createSoloMenu} from './solo-menu.mjs';
+import spoilerAccess from './assets/sky/combat/spoiler-access.json';
 import trainingCombat from './native-combat.cjs';
 import {createCapturePublisher} from "./capture-publisher.mjs";
 import {downloadDiagnostics,recordDiagnostic} from './diagnostics.mjs';
@@ -53,7 +55,7 @@ const perfHud=document.createElement('div');perfHud.id='sky-perf';perfHud.hidden
 let perfTick=0;setInterval(()=>{const stats=scene?.performanceStats?.();if(!stats)return;const ping=training?null:pingMedian();perfHud.textContent=stats.fps+' fps · '+stats.cpuMs+' ms/image'+(ping==null?'':' · ping '+ping+' ms')+(stats.softwareGpu?' · GPU logiciel':'');if(++perfTick%5===0)recordDiagnostic('perf',{map:etat.map,...stats,ping,hidden:document.hidden});},1000);
 const trainingResult=document.createElement('div');trainingResult.hidden=true;trainingResult.style.cssText='position:fixed;top:35%;left:50%;transform:translateX(-50%);z-index:35;background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;padding:20px;text-align:center;font:22px AveriaSky,sans-serif';
 const trainingWinner=document.createElement('p'),trainingAgain=document.createElement('button'),trainingExit=document.createElement('button');trainingAgain.textContent='Rejouer';trainingExit.textContent='Retour';for(const b of [trainingAgain,trainingExit])b.style.cssText='font:inherit;padding:8px;margin:5px;background:#ead29c;color:#241b15;border:1px solid #b49760;border-radius:4px';trainingResult.append(trainingWinner,trainingAgain,trainingExit);document.body.append(trainingResult);
-trainingAgain.onclick=()=>void startTraining();trainingExit.onclick=()=>void stopTraining();
+trainingAgain.onclick=()=>void startTraining(null,soloChoice?.venue??null,soloChoice?.character??null);trainingExit.onclick=()=>void stopTraining();
 // Capture the flag: same local loop as the training (ctf.mjs), three a side, flag in the middle.
 const CTF_VENUES={arena:{red:{x:-1,z:3.25},blue:{x:-1,z:-16.25},centre:{x:-1,z:-6.5}},axis:{red:{x:0,z:-9.5},blue:{x:0,z:9.5},centre:{x:0,z:0}}};
 let trainingMode='duel';
@@ -80,15 +82,61 @@ async function startCaptureTheFlag(){
  catch(error){trainingBusy=false;await stopTraining();throw error;}
  trainingBusy=false;await tickTraining();
 }
-async function startTraining(forcedEncounter=null,forcedVenue=null){
+async function startTraining(forcedEncounter=null,forcedVenue=null,chosenCharacter=null){
  if(trainingBusy)return;trainingMode='duel';const trainingLoadStarted=performance.now();trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
- let titles={},entrances={},allowedCharacters=null;try{if(!apercuLocal){const config=await fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});titles=config.titles;entrances=config.entrances;allowedCharacters=config.allowedCharacters;if(forcedVenue&&!(config.allowedVenues??[]).includes(forcedVenue))throw Error('Cette arène nécessite le rôle du jeu correspondant.');if(!Array.isArray(allowedCharacters)||!allowedCharacters.length)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer les adversaires du combat solo.');}}catch(error){trainingBusy=false;throw error;}
+ let titles={},entrances={},allowedCharacters=null;try{if(!apercuLocal){const config=await trainingConfig();titles=config.titles;entrances=config.entrances;allowedCharacters=config.allowedCharacters;if(forcedVenue&&!(config.allowedVenues??[]).includes(forcedVenue))throw Error('Cette arène nécessite le rôle du jeu correspondant.');if(!Array.isArray(allowedCharacters)||!allowedCharacters.length)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer les adversaires du combat solo.');}}catch(error){trainingBusy=false;throw error;}
  const reuseArena=!!training&&(!forcedVenue||forcedVenue===trainingVenue);training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=forcedVenue||(__ACTIVITY_PREVIEW__&&new URLSearchParams(location.search).get('venue'))||['arena','axis','gehenna'][Math.floor(Math.random()*3)];}
- try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}const forced=forcedEncounter??(__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('opponent'):null),selection=pickSoloEncounter(scene.catalogue,{forced,allowedCharacters});training=createTraining({...scene.trainingGeometry(),...TRAINING_VENUES[trainingVenue],character:trainingReturn.player.character,...selection,titles,entrances,introDuration:introDurationFor(trainingVenue)});scene.retainCombatCharacters(training.characters);bindScene();await Promise.all([scene.me(training.player),...training.characters.map(name=>scene.prepareCombat(name))]);training.beginIntro();scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Combat solo · '+selection.label;music.setTrack(musicUrl(trainingVenue));}
+ try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}const forced=forcedEncounter??(__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('opponent'):null),selection=pickSoloEncounter(scene.catalogue,{forced,allowedCharacters});training=createTraining({...scene.trainingGeometry(),...TRAINING_VENUES[trainingVenue],character:chosenCharacter??trainingReturn.player.character,...selection,titles,entrances,introDuration:introDurationFor(trainingVenue)});scene.retainCombatCharacters(training.characters);bindScene();await Promise.all([scene.me(training.player),...training.characters.map(name=>scene.prepareCombat(name))]);training.beginIntro();scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Combat solo · '+selection.label;music.setTrack(musicUrl(trainingVenue));}
  catch(error){trainingBusy=false;await stopTraining();throw error;}
  trainingBusy=false;await tickTraining();recordDiagnostic('training-load',{durationMs:Math.round(performance.now()-trainingLoadStarted),reused:reuseArena});
+}
+// the solo combat's set-up (the Discord button): the kind of opponent, who you play among the characters your game roles
+// unlock (all of them, with or without attacks), then the stage; the opponent itself stays drawn as before (solo-encounters.mjs)
+const soloMenu=createSoloMenu({assets:ASSETS});let soloChoice=null,soloBusy=false;
+const SOLO_VENUES=[['arena','combat/venues/arena.jpg'],['axis','combat/venues/axis.jpg'],['gehenna','combat/venues/gehenna.jpg']];
+function trainingConfig(){return fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});}
+async function soloSetup(){
+ if(soloBusy||trainingBusy)return;soloBusy=true;
+ try{
+  const config=apercuLocal?null:await trainingConfig();
+  const allowed=config?new Set(config.allowedCharacters??[]):null,catalogue=scene?.catalogue??{};
+  if(allowed&&!allowed.size)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer le combat solo.');
+  const kind=await soloMenu.opponent();if(!kind)return;
+  // against a player: the challenge goes out, then the choices come with the updates (soloSelection)
+  if(kind.kind==='player'){if(apercuLocal)throw Error('Le défi entre joueurs demande Discord.');await fetchJson(apiUrl('solo/challenge'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({name:kind.name})});return;}
+  const playable=Object.keys(spoilerAccess.characters).filter(name=>catalogue[name]&&(!allowed||allowed.has(name))).sort((a,b)=>a.localeCompare(b,'fr'));
+  const character=await soloMenu.character({characters:playable.map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note:'Les personnages débloqués par vos rôles de jeux terminés.'});if(!character)return;
+  const venues=SOLO_VENUES.filter(([id])=>!config||(config.allowedVenues??[]).includes(id)).map(([id,image])=>({id,title:mapTitle(id),image}));
+  const venue=await soloMenu.venue({venues});if(!venue)return;
+  soloChoice={character,venue};
+ }finally{soloBusy=false;}
+ await startTraining(null,soloChoice.venue,soloChoice.character);
+}
+// a solo combat against a player: each one picks a character among those both players' roles unlock, then the first
+// to pick a stage sets it; then both wait until the fight starts (the server moves them to the stage)
+let soloSelectionOpen=null;
+const soloPick=(duel,choice)=>fetchJson(apiUrl('solo/pick'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({duel,...choice})}).then(r=>r.selection);
+async function soloSelection(selection){
+ if(soloBusy||soloSelectionOpen)return;soloSelectionOpen=selection.id;
+ try{
+  let current=selection;const catalogue=scene?.catalogue??{};
+  if(!current.character){
+   const names=[...current.allowed].sort((a,b)=>a.localeCompare(b,'fr'));
+   const character=await soloMenu.character({characters:names.map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note:`Contre ${current.opponent} : les personnages débloqués par vos rôles à tous les deux.`});
+   if(character===undefined)return;if(character===null){await soloPick(current.id,{cancel:true});return;}
+   current=await soloPick(current.id,{character});if(!current)return;
+  }
+  if(!current.venue){
+   const venues=SOLO_VENUES.map(([id,image])=>({id,title:mapTitle(id),image}));
+   const venue=await soloMenu.venue({venues,note:'Le premier des deux à choisir impose le stage.'});
+   if(venue===undefined)return;if(venue===null){await soloPick(current.id,{cancel:true});return;}
+   current=await soloPick(current.id,{venue});if(!current)return;
+  }
+  // closed when the fight starts; « Annuler » declines the duel
+  if(await soloMenu.waiting(`Stage : ${mapTitle(current.venue)} · en attente de ${current.opponent}…`)===null)await soloPick(current.id,{cancel:true});
+ }finally{soloSelectionOpen=null;}
 }
 function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
 async function runTrainingTick(){
@@ -330,7 +378,11 @@ async function publier() {
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
-  if(requestedTraining&&!['arena','axis','gehenna','thors'].includes(result.map))await startTraining();
+  // the menus wait for the player: the updates go on meanwhile; a duel against a player still being chosen opens its
+  // menus, which close once it starts
+  if(result.selection&&!training)soloSelection(result.selection).catch(error=>scene?.captureNotice?.(error.message));
+  else if(!result.selection&&soloSelectionOpen)soloMenu.close();
+  if(requestedTraining&&!['arena','axis','gehenna','thors'].includes(result.map))soloSetup().catch(error=>scene?.captureNotice?.(error.message));
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
     bandeau.textContent = "Votre personnage du jour : " + result.character;
@@ -380,7 +432,7 @@ async function start() {
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
     if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
-    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester entraînement IA';trainingTest.onclick=()=>void startTraining();dialogueTest.append(trainingTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
+    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester le combat solo';trainingTest.onclick=()=>void soloSetup().catch(error=>scene?.captureNotice?.(error.message));dialogueTest.append(trainingTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );

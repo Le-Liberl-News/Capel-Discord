@@ -3281,7 +3281,8 @@
     "bodyPixelHeight": 80,
     "bodyRadiusPixels": 11.2,
     "pixelScale": 0.02,
-    "bodyHeight": 1.6
+    "bodyHeight": 1.6,
+    "portrait": "portraits/anton.png"
   },
   "Concours Schera": {
     "texture": "drinking-ch00023.png",
@@ -3396,7 +3397,8 @@
     "centerY": 0.85,
     "bodyPixelHeight": 81,
     "bodyRadiusPixels": 18,
-    "bodyHeight": 1.62
+    "bodyHeight": 1.62,
+    "portrait": "portraits/erika-russell.png"
   },
   "Dorothy": {
     "texture": "ch02070.png",
@@ -3426,7 +3428,8 @@
     "centerY": 0.8,
     "bodyPixelHeight": 81,
     "bodyRadiusPixels": 18,
-    "bodyHeight": 1.62
+    "bodyHeight": 1.62,
+    "portrait": "portraits/dorothy.png"
   },
   "Aina": {
     "texture": "roster-ch02560.png",
@@ -3458,7 +3461,8 @@
       "game": "Third",
       "chip": "ch02560",
       "scene": "t0700"
-    }
+    },
+    "portrait": "portraits/aina.png"
   },
   "Jean": {
     "texture": "roster-ch02400.png",
@@ -3490,7 +3494,8 @@
       "game": "Third",
       "chip": "ch02400",
       "scene": "SC"
-    }
+    },
+    "portrait": "portraits/jean.png"
   },
   "Chancelier Osborne": {
     "texture": "roster-ch03950.png",
@@ -3522,7 +3527,8 @@
       "game": "Third",
       "chip": "ch03950",
       "scene": "t4105"
-    }
+    },
+    "portrait": "portraits/chancelier-osborne.png"
   },
   "Theresa": {
     "texture": "roster-ch02570.png",
@@ -3554,7 +3560,8 @@
       "game": "Third",
       "chip": "ch02570",
       "scene": "t2410"
-    }
+    },
+    "portrait": "portraits/theresa.png"
   },
   "Mme Mao": {
     "texture": "roster-ch02430.png",
@@ -3586,7 +3593,8 @@
       "game": "Third",
       "chip": "ch02430",
       "scene": "t3221"
-    }
+    },
+    "portrait": "portraits/mme-mao.png"
   },
   "Dalmore": {
     "texture": "roster-ch02410.png",
@@ -3618,7 +3626,8 @@
       "game": "Third",
       "chip": "ch02410",
       "scene": "SC"
-    }
+    },
+    "portrait": "portraits/dalmore.png"
   },
   "Ambassadrice Elsa": {
     "texture": "roster-ch03720.png",
@@ -3650,7 +3659,8 @@
       "game": "Third",
       "chip": "ch03720",
       "scene": "t3221"
-    }
+    },
+    "portrait": "portraits/ambassadrice-elsa.png"
   },
   "Ambassadeur Davil": {
     "texture": "roster-ch03710.png",
@@ -3682,7 +3692,8 @@
       "game": "Third",
       "chip": "ch03710",
       "scene": "t4138"
-    }
+    },
+    "portrait": "portraits/ambassadeur-davil.png"
   },
   "Lucy": {
     "texture": "roster-ch02690.png",
@@ -3714,7 +3725,8 @@
       "game": "Third",
       "chip": "ch02690",
       "scene": "t2510"
-    }
+    },
+    "portrait": "portraits/lucy.png"
   },
   "Leo": {
     "texture": "roster-ch02680.png",
@@ -3746,7 +3758,8 @@
       "game": "Third",
       "chip": "ch02680",
       "scene": "t2510"
-    }
+    },
+    "portrait": "portraits/leo.png"
   },
   "Ein Selnate": {
     "texture": "ein-run-85ef716616.png",
@@ -3780,7 +3793,8 @@
       "tool": "atelier-sprites",
       "generatedWithAI": false
     },
-    "bodyPixelHeight": 83
+    "bodyPixelHeight": 83,
+    "portrait": "portraits/ein-selnate.png"
   },
   "Rufina Argent": {
     "texture": "roster-ch03940.png",
@@ -3812,7 +3826,8 @@
       "game": "Third",
       "chip": "ch03940",
       "scene": "m5415"
-    }
+    },
+    "portrait": "portraits/rufina-argent.png"
   },
   "Celeste von Auslese": {
     "texture": "roster-ch02890.png",
@@ -3844,7 +3859,8 @@
       "game": "Third",
       "chip": "ch02890",
       "scene": "u4205"
-    }
+    },
+    "portrait": "portraits/celeste-von-auslese.png"
   },
   "Directeur Murdock": {
     "texture": "roster-ch02620.png",
@@ -3876,7 +3892,8 @@
       "game": "Third",
       "chip": "ch02620",
       "scene": "t3130"
-    }
+    },
+    "portrait": "portraits/directeur-murdock.png"
   },
   "Chef-mécanicien Gustav": {
     "texture": "roster-ch02440.png",
@@ -3908,7 +3925,8 @@
       "game": "Third",
       "chip": "ch02440",
       "scene": "t3102"
-    }
+    },
+    "portrait": "portraits/chef-mecanicien-gustav.png"
   },
   "Dan Russell": {
     "texture": "roster-ch03980.png",
@@ -3940,7 +3958,8 @@
       "game": "Third",
       "chip": "ch03980",
       "scene": "t3121"
-    }
+    },
+    "portrait": "portraits/dan-russell.png"
   },
   "Halle": {
     "texture": "halle-satin-00be8f2852.png",
@@ -3985,7 +4004,8 @@
       74,
       118
     ],
-    "bodyPixelHeight": 86
+    "bodyPixelHeight": 86,
+    "portrait": "portraits/halle.png"
   },
   "Jack": {
     "texture": "jack-satin-7747a7ee5e.png",
@@ -4030,7 +4050,8 @@
       74,
       120
     ],
-    "bodyPixelHeight": 86
+    "bodyPixelHeight": 86,
+    "portrait": "portraits/jack.png"
   },
   "Rean": {
     "texture": "rean-cs2-run-96bd957ed2.png",
@@ -4069,7 +4090,8 @@
       "generatedWithAI": false
     },
     "bodyPixelHeight": 97,
-    "groundProjection": true
+    "groundProjection": true,
+    "portrait": "portraits/rean.png"
   },
   "Altina": {
     "texture": "altina-cs2-run-e0829b9176.png",
@@ -4108,7 +4130,8 @@
       "generatedWithAI": false
     },
     "bodyPixelHeight": 87,
-    "groundProjection": true
+    "groundProjection": true,
+    "portrait": "portraits/altina.png"
   },
   "Claiomh Solais": {
     "texture": "combat/cs2/guardian-hd-field-f5292886eb.png",
@@ -4150,7 +4173,8 @@
     "bodyPixelHeight": 101,
     "bodyRadiusPixels": 22,
     "groundProjection": true,
-    "sceneScale": 2
+    "sceneScale": 2,
+    "portrait": "portraits/claiomh-solais.png"
   },
   "Van": {
     "texture": "van-daybreak1-run.png",
@@ -4295,7 +4319,8 @@
       0.1981
     ],
     "bodyPixelHeight": 92,
-    "name": "Van"
+    "name": "Van",
+    "portrait": "portraits/van.png"
   },
   "Elaine": {
     "texture": "elaine-daybreak1-run.png",
@@ -4440,7 +4465,8 @@
       0.1581
     ],
     "bodyPixelHeight": 85,
-    "name": "Elaine"
+    "name": "Elaine",
+    "portrait": "portraits/elaine.png"
   },
   "Shizuna": {
     "texture": "shizuna-daybreak1-run.png",
@@ -4585,6 +4611,7 @@
       0.1581
     ],
     "bodyPixelHeight": 86,
-    "name": "Shizuna"
+    "name": "Shizuna",
+    "portrait": "portraits/shizuna.png"
   }
 }
