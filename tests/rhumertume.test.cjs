@@ -192,3 +192,13 @@ test("a wizard pom's bite is a spell: the victim fades away and falls ill a few 
   if(!ill)assert.ok(said.slice(intro+2).some(s=>/Kloe semble développer/.test(s.text)));
  }
 });
+test("a planned evolution turns the stage-1 pom sick the longest into a Pom-d'aspi at its time",async()=>{
+ let now=at('2026-10-20T17:00:00Z');
+ const {r,said}=setup({now:()=>now,random:()=>.9,cases:[]});
+ await r.infect('Tita');now=at('2026-10-20T17:10:00Z');await r.infect('Kloe');
+ now=at('2026-10-20T17:40:00Z');await r.tick();assert.equal(r.level('Tita'),1);
+ now=at('2026-10-20T17:41:00Z');await r.tick();
+ assert.equal(r.level('Tita'),2);assert.equal(r.nameOf('Tita'),"Pom-d’aspitita");assert.equal(r.level('Kloe'),1);
+ assert.ok(said.some(s=>s.text==='Quoi ? Pomtita évolue ?!'&&s.files[0]==='evolution Tita 1->aspi'));
+ now=at('2026-10-20T18:41:00Z');await r.tick();assert.equal(r.level('Kloe'),1);
+});
