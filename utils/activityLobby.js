@@ -6,7 +6,6 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
   const active = new Map(), lastSeen = new Map(),completedCaptures=new Map();
   const trainingRequests=new Map();let trainingSequence=0;
   // the arena board's queue (user -> time joined), shown to the queued player inside the activity
-  let arenaQueue=null;
   const presenceGrace = 2 * 60 * 1000;
   // A started duel is called off when one fighter stays away: 1 min once they have reached the arena, 3 min to get
   // there at first (opening the activity from a DM, loading the venue); a finished one once someone has left for 30 s.
@@ -22,7 +21,6 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
   const venueOf=duel=>duel?.venue==='gehenna'&&gehenna?'gehenna':duel?.venue==='axis'&&axis?'axis':'arena';
   const isArena=map=>map==='arena'||map==='axis'||map==='gehenna';
   const makeStadium=(venue,config)=>config&&createActivityService({ ...options, ...config, jumpEnabled:true, now, persistent: true, store: worldStores[venue],
-    resolveCharacter: async user => duels.get(assignments.get(user))?.picks?.[user] ?? options.resolveCharacter(user),
     spawnFor: user => spectators.has(user) ? (config.spectatorGrid?.spawn ?? config.grid.spawn) : config.spawns?.[duels.get(assignments.get(user))?.players.indexOf(user) ?? 0] ?? config.grid.spawn,
     onDefeat: finishDuel,
     onSay:event=>options.onSay?.({...event,map:"arena"}),
@@ -34,10 +32,10 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
     onSay:event=>options.onSay?.({...event,map:"rolent"}),
     playerPolicy:user=>huntGame?.policy(user)??{} });
   const towerArrivals=new Map(),towerTeam=new Map();
-  const towers=tower.map((floor,i)=>createActivityService({...options,...floor,dungeon:floor.layout,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:(_actor,target)=>target.enemy===true,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
-  // a duel of free choice (the solo combat between players) waits for both characters and the stage
-  const chosen=duel=>!duel.free||(duel.players.every(p=>duel.picks?.[p])&&!!duel.venue);
-  const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))&&chosen(data)){data.readyAt=now();data.startsAt=now()-(venueConfig(data)?.introDuration??0);}return data;};
+  // the tower is climbed with the character chosen in the menu (playTowerAs), on every floor
+  const towerCharacters=new Map();
+  const towers=tower.map((floor,i)=>createActivityService({...options,...floor,resolveCharacter:async user=>towerCharacters.get(user)??options.resolveCharacter(user),dungeon:floor.layout,now,persistent:true,store:worldStores['tower'+(i+1)],combatEnabled:true,canDamage:(_actor,target)=>target.enemy===true,onDrink:null,onCraft:()=>{},residents:{npcs:[],disablePoms:true},spawnFor:user=>towerArrivals.get(user)??floor.grid.spawn,onSay:event=>options.onSay?.({...event,map:'tower'+(i+1)})}));
+  const makeDuel = data => {if(data.startsAt===undefined&&data.players.every(p=>data.accepted?.includes(p))){data.readyAt=now();data.startsAt=now()-(venueConfig(data)?.introDuration??0);}return data;};
   const saved=store?.load();
   for(const [id,replay]of saved?.completedCaptures??[])if(now()-replay.at<600000)completedCaptures.set(id,replay);
   for (const [id,data] of saved?.duels ?? []) if (data.expires>now()) duels.set(id,makeDuel(data));
@@ -119,9 +117,9 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
       combat:result.combat && {...result.combat,attacks:result.combat.attacks.map(a=>({...a,actor:alias(a.actor),target:alias(a.target),caught:a.caught?.map(alias),hits:a.hits.map(h=>({...h,id:alias(h.id)}))}))} };
   }
   return {
-    attachQueue(queue){arenaQueue=queue;},
     requestTraining(user,mode='duel'){if(mode!=='duel')throw new ActivityError('Mode indisponible.',403);this.leaveStaleDuel(user);trainingRequests.set(user,{id:String(++trainingSequence)+':'+now(),mode,expires:now()+120000});},
     cancelTraining(user){trainingRequests.delete(user);},
+    playTowerAs(user,character){towerCharacters.set(user,character);for(const service of towers)service.refreshCharacter(user);},
     enterTower(user,floor=1,arrival=null){if(!Number.isInteger(floor)||!towers[floor-1])throw new ActivityError('Etage indisponible.',400);release(user);huntGame?.leave(user);spectators.delete(user);towers[floor-1].resetPlayer(user);towerArrivals.set(user,arrival??tower[floor-1].grid.spawn);locations.set(user,'tower'+floor);persist();},
     identity(token) {prune();const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);if(active.get(s.id)!==token)throw new ActivityError("Activit\u00e9 ouverte ailleurs.",409);return {id:s.id,channel:s.channel,map:destination(s.id).map};},
     async terminalPosition(token) {this.identity(token);const s=sessions.get(token);if(!s)throw new ActivityError("Reconnectez-vous.",401);const target=destination(s.id);if(target.key!==s.key)throw new ActivityError("D\u00e9placement en cours.",409);const state=await s.service.state(s.token);return state.joueurs.find(p=>p.id===s.id);},
@@ -157,48 +155,19 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
       if (assignments.has(opponent)) throw new ActivityError("Le personnage ciblé est déjà dans un duel actif.");
       huntGame?.leave(user); spectators.delete(user); release(user); persist();
     },
-    // free: { allowed } for a duel where each one picks a character among `allowed` and the first to pick a stage sets it
-    createDuel({ id, channel, players, names = [], free = null }) {
+    createDuel({ id, channel, players, names = [] }) {
       prune(); if (!arena) throw new ActivityError("Arène indisponible.");
       for (const user of players) if (assignments.has(user)) throw new ActivityError("Un des personnages est déjà en duel.");
-      if (free) { duels.set(id,makeDuel({channel,players,names,free:true,allowed:free.allowed,picks:{},labels:names,accepted:[],expires:now()+30*60*1000})); persist(); return; }
       duels.set(id,makeDuel({channel,players,names,venue:gehenna?['arena',...(axis?['axis']:[]),'gehenna'][Math.min(axis?2:1,Math.floor(random()*(axis?3:2)))]:axis&&random()<.5?'axis':'arena',accepted:[],expires:now()+30*60*1000})); persist();
     },
     joinDuel(id, user) {
       prune(); const duel=duels.get(id);
       if (!duel || !duel.players.includes(user)) throw new ActivityError("Invitation expirée ou inaccessible.",403);
-      // free choice: the player goes to the stage once everything is chosen (pickDuel)
-      if (!chosen(duel)) { duel.joined??=[]; if (!duel.joined.includes(user)) duel.joined.push(user); persist(); return; }
       if (assignments.get(user) !== id) { release(user); stadiumOf(duel).resetPlayer(user); }
       huntGame?.leave(user); spectators.delete(user);
       assignments.set(user,id); locations.set(user,"arena"); lastSeen.set(user,now()); persist();
     },
-    acceptDuel(id,user) { prune();const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p))&&chosen(duel);if(ready&&duel.startsAt===undefined){stadiumOf(duel).resetBalls("map:"+venueOf(duel)+":"+id);duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(venueConfig(duel).introDuration??0);}persist(); return ready; },
-    // a choice in a duel of free choice: { character } among those allowed, and/or { venue } (only the first one counts);
-    // once both characters and the stage are chosen, the players who joined go to the stage and the duel starts when
-    // both have accepted
-    pickDuel(id,user,{character,venue}={}) {
-      prune(); const duel=duels.get(id);
-      if (!duel?.free || !duel.players.includes(user) || duel.startsAt!==undefined) throw new ActivityError("Ce duel n'attend plus de choix.",403);
-      if (character!==undefined) { if (!duel.allowed.includes(character)) throw new ActivityError("Personnage indisponible pour ce duel.",403); duel.picks[user]=character; }
-      if (venue!==undefined && !duel.venue) { if (!['arena','axis','gehenna'].includes(venue)) throw new ActivityError("Stage indisponible.",403); duel.venue=venue; }
-      let ready=false;
-      if (chosen(duel)) {
-        duel.names=duel.players.map(p=>duel.picks[p]);
-        for (const p of duel.joined??[]) this.joinDuel(id,p);
-        if (duel.players.every(p=>duel.accepted?.includes(p))) ready=this.acceptDuel(id,duel.players[0]);
-      }
-      persist(); return {ready,names:duel.names,selection:this.selection(user)};
-    },
-    // what a player of a duel of free choice still has to choose, as the menus show it; null otherwise
-    selection(user) {
-      for (const [id,duel] of duels) {
-        if (!duel.free || !duel.players.includes(user) || duel.startsAt!==undefined || duel.result) continue;
-        const other=duel.players.find(p=>p!==user),label=p=>duel.labels?.[duel.players.indexOf(p)]??'?';
-        return {id,allowed:duel.allowed,character:duel.picks?.[user]??null,venue:duel.venue??null,opponent:label(other),opponentPicked:!!duel.picks?.[other],opponentAccepted:!!duel.accepted?.includes(other)};
-      }
-      return null;
-    },
+    acceptDuel(id,user) { prune();const duel=duels.get(id); if (!duel?.players.includes(user)) throw new ActivityError("Invitation inaccessible.",403); duel.accepted??=[]; if (!duel.accepted.includes(user)) duel.accepted.push(user); const ready=duel.players.every(p=>duel.accepted.includes(p));if(ready&&duel.startsAt===undefined){stadiumOf(duel).resetBalls("map:"+venueOf(duel)+":"+id);duel.startsAt=now()+500;duel.readyAt=duel.startsAt+(venueConfig(duel).introDuration??0);}persist(); return ready; },
     validateSpectate(id) { prune();const duel=duels.get(id);if(!duel||!duel.players.every(p=>duel.accepted?.includes(p)))throw new ActivityError("Ce duel n'est pas disponible.",403); },
     spectateDuel(id,user) { prune(); const duel=duels.get(id); if (!duel||!duel.players.every(p=>duel.accepted?.includes(p))) throw new ActivityError("Ce duel n'est pas disponible.",403);
       if (duel.players.includes(user)) return;
@@ -290,7 +259,7 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
       if(duel?.result)publishResult(duelId,duel);
       const introduction=isArena(target.map)&&duel&&(venueConfig(duel).introDuration||duel.result)&&duel.startsAt!==undefined?{id:duelId,venue:venueOf(duel),startsAt:duel.startsAt,readyAt:duel.readyAt,players:duel.players.map(alias),names:duel.names??[],titles:duel.players.map((user,i)=>require('./characters').characterTitle(duel.names?.[i]??result.joueurs.find(p=>p.id===user)?.character)),phrases:(duel.names??[]).map((name,i)=>require('./characters').characterEntrance(name,duel.names[1-i])),streaks:duel.players.map(getArenaStreak),result:duel.result?{winner:alias(duel.result.winner),loser:alias(duel.result.loser),winnerName:duel.result.winnerName,loserName:duel.result.loserName,at:duel.result.at,point:duel.result.point,action:duel.result.action,captureId:duel.result.captureId}:null}:null;
       if(isArena(target.map))trainingRequests.delete(session.id);
-      return {...sanitize(result),trainingRequest:trainingRequests.get(session.id)?.id,trainingMode:trainingRequests.get(session.id)?.mode,queue:arenaQueue?.has(session.id)?{since:arenaQueue.get(session.id)}:null,team,duel:introduction,selection:this.selection(session.id),map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
+      return {...sanitize(result),trainingRequest:trainingRequests.get(session.id)?.id,trainingMode:trainingRequests.get(session.id)?.mode,team,duel:introduction,map:target.map,sceneKey:target.key,relocated:changed,ownId:alias(session.id),
         actionResult:boardingError?{id:point.action.id,error:boardingError}:['flight_board','hangar_enter'].includes(point?.action?.type)?{id:point.action.id}:towerError?{id:point.action.id,error:towerError}:point?.action?.type==="tower_step"?{id:point.action.id}:changed && point?.action ? {id:point.action.id} : result.actionResult};
     },
   };

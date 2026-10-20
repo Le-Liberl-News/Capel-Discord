@@ -13,14 +13,16 @@ test('credit transaction increments only when award ledger insertion succeeds',a
  const credit=createArenaCredit({query:async()=>[],getConnection:async()=>connection});await credit('2026-10-11','private-id',8);await credit('2026-10-11','private-id',8);assert.equal(increments,1);
 });
 const {createArenaBoard}=require('../utils/activityArenaBoard');
-test('board is anonymous, paginated, persistent and queue matches only connected players',async()=>{
- let saved,payload,sends=0;const connected=new Set(),pairs=[],permissions=[];
+test('board is anonymous, paginated and persistent, with Menu and Défi RP but no queue',async()=>{
+ let saved,payload,sends=0;const permissions=[];
  const message={id:'board',edit:async p=>payload=p};const channel={guild:{roles:{everyone:{id:'everyone'}}},permissionOverwrites:{edit:async(...a)=>permissions.push(a)},messages:{fetch:async()=>message},send:async p=>{payload=p;sends++;return message;}};
- const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},lobby:{isConnected:id=>connected.has(id),matchFor:()=>null},duels:{match:async p=>pairs.push(p)},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>Array.from({length:30},(_,i)=>({user:'secret-'+i,name:'Character '+i})),store:{load:()=>saved,save:s=>saved=s},render:async()=>Buffer.from("image")});
- await board.refresh();await board.refresh();assert.equal(sends,1);assert.equal(payload.components.length,3);assert.equal(payload.components[0].components[0].label,'⚔ Combat solo');assert.equal(payload.components[0].components[0].style,3);assert.ok(!payload.components.flatMap(r=>r.components).some(b=>b.custom_id==='arena:ctf'));assert.equal(JSON.stringify(payload).includes('secret-'),false);assert.equal(permissions[1][1].SendMessages,false);
- const interaction=id=>({isButton:()=>true,customId:'arena:queue',user:{id},launchActivity:async()=>{},reply:async()=>{}});
- await board.handle(interaction('one'));await board.handle(interaction('two'));await board.tick();assert.equal(pairs.length,0);connected.add('one');connected.add('two');await Promise.all([board.tick(),board.tick()]);assert.deepEqual(pairs,[['one','two']]);
+ const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},lobby:{isConnected:()=>false,matchFor:()=>null},duels:{},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>Array.from({length:30},(_,i)=>({user:'secret-'+i,name:'Character '+i})),store:{load:()=>saved,save:s=>saved=s},render:async()=>Buffer.from("image")});
+ await board.refresh();await board.refresh();assert.equal(sends,1);assert.equal(payload.components.length,3);
+ assert.deepEqual(payload.components.slice(0,2).map(r=>r.components.map(b=>[b.custom_id,b.label])),[[['arena:open','▶ Menu principal']],[['arena:choose','Défi RP']]]);assert.equal(payload.components[0].components[0].style,3);
+ assert.ok(!payload.components.flatMap(r=>r.components).some(b=>['arena:queue','arena:leave','arena:training','arena:ctf'].includes(b.custom_id)));
+ assert.equal(JSON.stringify(payload).includes('secret-'),false);assert.equal(permissions[1][1].SendMessages,false);
 });
+
 const {createActivityDuels}=require('../utils/activityDuels');
 test('dashboard challenge sends only opponent an anonymous DM; blocked DMs cancel invitation',async()=>{
  const sent=[],cancelled=[];let fail=false,joined=0,launched=0;
@@ -42,29 +44,20 @@ test('challenge modal lists all opponents without account IDs and sends chosen c
  challenged=null;await board.handle({...submit,deferred:true,fields:{getStringSelectValues:id=>id==='opponent:0'?['Unknown']:[]}});assert.equal(challenged,null);assert.match(replies.at(-1).content,/indisponible/);
 });
 test('console screen renders portraits and scoreboard to an animated GIF',async()=>{
- const buffer=await require('../utils/activityArenaBoardImage').renderArenaBoard({rows:[{name:'Estelle',wins:4,streak:2,lastWin:false,pb:8,delta:-6}],page:0,pages:1,queueSize:0});
+ const buffer=await require('../utils/activityArenaBoardImage').renderArenaBoard({rows:[{name:'Estelle',wins:4,streak:2,lastWin:false,pb:8,delta:-6}],page:0,pages:1});
  assert.equal(buffer.subarray(0,6).toString(),'GIF89a');assert.equal(buffer.readUInt16LE(6),900);assert.ok(buffer.includes(Buffer.from('NETSCAPE2.0')));assert.ok(buffer.length>10000&&buffer.length<2e6);
 });
 
-test('queue notifications show only the character, deduplicate clicks and disappear on leaving or matching',async()=>{
- const {createArenaBoard}=require('../utils/activityArenaBoard');let saved={},sent=[],removed=[],n=0;const msg={id:'board',edit:async()=>{}};
- const channel={guild:{roles:{everyone:{}}},permissionOverwrites:{edit:async()=>{}},messages:{fetch:async()=>msg,delete:async id=>removed.push(id)},send:async body=>{if(body.content){sent.push(body);return{id:'notice-'+(++n)};}return msg;}};
- const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},lobby:{matchFor:()=>null,isConnected:()=>true},duels:{match:async()=>{}},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>[],resolveCharacter:async id=>id==='private-a'?'Julia':'Estelle',store:{load:()=>saved,save:s=>saved=s},render:async()=>Buffer.from('image')});
- const i=(id,action)=>({isButton:()=>true,customId:'arena:'+action,user:{id},reply:async()=>{}});
- await board.handle(i('private-a','queue'));await board.handle(i('private-a','queue'));assert.equal(sent.length,1);assert.match(sent[0].content,/Julia/);assert.equal(JSON.stringify(sent).includes('private-'),false);assert.deepEqual(sent[0].allowedMentions.parse,[]);
- await board.handle(i('private-a','leave'));assert.deepEqual(removed,['notice-1']);await board.handle(i('private-a','queue'));await board.handle(i('private-b','queue'));await board.tick();assert.equal(removed.length,3);
+test('the notices the former queue left in the channel are removed once',async()=>{
+ let saved={queueNotices:[['private-a','notice-1'],['private-b','notice-2']]};const removed=[],msg={id:'board',edit:async()=>{}};
+ const channel={guild:{roles:{everyone:{}}},permissionOverwrites:{edit:async()=>{}},messages:{fetch:async()=>msg,delete:async id=>removed.push(id)},send:async()=>msg};
+ const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},lobby:{matchFor:()=>null,isConnected:()=>true},duels:{},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>[],store:{load:()=>saved,save:x=>saved=x},render:async()=>Buffer.from('image')});
+ await board.tick();await board.tick();assert.deepEqual(removed,['notice-1','notice-2']);assert.equal(saved.queueNotices,undefined);
 });
 
-test('Training board button launches privately without queueing or creating a duel',async()=>{let requested,launched=0,replied=0,cancelled=false;const lobby={matchFor:()=>null,isConnected:()=>false,requestTraining:user=>requested=user,cancelTraining:()=>cancelled=true};const board=createArenaBoard({client:{},lobby,duels:{},ranking:{},assigned:async()=>[],store:{load:()=>null},render:async()=>Buffer.from('image')});const i={isButton:()=>true,customId:'arena:training',user:{id:'private'},launchActivity:async()=>launched++,reply:async p=>{assert.equal(p.flags,64);replied++;}};await board.handle(i);assert.equal(requested,'private');assert.equal(launched,1);assert.equal(replied,0);assert.equal(cancelled,false);lobby.isConnected=()=>true;await board.handle(i);assert.equal(launched,1);assert.equal(replied,1);});
-
-test('a player waiting in the activity is matched with a recently queued player whose activity is closed, who gets the way back in DM',async()=>{
- let clock=0,payload;const connected=new Set(['here']),pairs=[],dms=[];
- const message={id:'board',edit:async p=>payload=p};const channel={guild:{roles:{everyone:{id:'everyone'}}},permissionOverwrites:{edit:async()=>{}},messages:{fetch:async()=>message},send:async p=>{payload=p;return message;}};
- const board=createArenaBoard({client:{user:{id:'bot'},channels:{fetch:async()=>channel},users:{fetch:async id=>({send:async m=>dms.push([id,m])})}},lobby:{isConnected:id=>connected.has(id),matchFor:()=>null},duels:{match:async p=>{pairs.push(p);return 'duel:x';}},ranking:{settle:async()=>{},rows:()=>[]},assigned:async()=>[],store:{load:()=>null,save:()=>{}},render:async()=>Buffer.from('image'),now:()=>clock});
- const interaction=id=>({isButton:()=>true,customId:'arena:queue',user:{id},launchActivity:async()=>{},reply:async()=>{}});
- await board.handle(interaction('stale'));clock=4*60*1000;await board.handle(interaction('here'));await board.tick();
- assert.equal(pairs.length,0,'an absent player queued 4 minutes ago is not matched');
- assert.match(payload.components.flatMap(r=>r.components).find(b=>b.custom_id==='arena:queue').label,/2 · 1 prêt\)/);
- await board.handle(interaction('away'));await board.tick();
- assert.deepEqual(pairs,[['here','away']]);assert.equal(dms[0][0],'away');assert.equal(dms[0][1].components[0].components[0].custom_id,'activity:duel:x');
+test('Menu opens the activity, which is told to use its menu when already open; the former Combat solo does the same',async()=>{
+ let launched=0,replies=[],connected=false;const board=createArenaBoard({client:{},lobby:{isConnected:()=>connected},duels:{},ranking:{},assigned:async()=>[],store:{load:()=>null},render:async()=>Buffer.from('image')});
+ const i=id=>({isButton:()=>true,customId:'arena:'+id,user:{id:'private'},launchActivity:async()=>launched++,reply:async p=>replies.push(p)});
+ await board.handle(i('open'));await board.handle(i('training'));assert.equal(launched,2);
+ connected=true;await board.handle(i('open'));assert.equal(launched,2);assert.match(replies[0].content,/menu/);
 });

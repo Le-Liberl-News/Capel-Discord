@@ -1,23 +1,29 @@
-const {terminalNearby}=require("../activity/terminal-world.cjs");
 const {ActivityError}=require("./activityService");
-function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,trainingVenues=async()=>[],now=Date.now}) {
+// The activity's menu, at home (the Antérose is no longer shown): the solo games (the tower with a character the
+// player's game roles unlock) and the duels (with the character of the day, against a character played today or a
+// Discord member).
+function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,trainingVenues=async()=>[],allowedCharacters=async()=>null,now=Date.now}) {
  const pending=new Map(),completed=new Map();
  async function nearby(token) {
-  const identity=lobby.identity(token),p=await lobby.terminalPosition(token);
-  if(identity.map!=="anterose"||!p||p.hp===0||!terminalNearby(p,terminal))
-   throw new ActivityError("Approchez-vous du Capel.",403);
+  const identity=lobby.identity(token);
+  if(identity.map!=="anterose")throw new ActivityError("Revenez au menu pour cela.",403);
   return identity;
  }
  async function menu(token) {
   const {id}=await nearby(token),own=await resolveCharacter(id),characters=await assignedCharacters();
-  return {trainingVenues:await trainingVenues(id),testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
+  return {own,trainingVenues:await trainingVenues(id),testCharacters:testCharacters?.menu(id)??null,characters:characters.filter(name=>name!==own),hunt:lobby.huntSummary(),requests:duels.pending(id)};
  }
  async function perform(token,body) {
   const {id}=lobby.identity(token);
   if(body.action.startsWith("hunt_")||body.action==="ctf")throw new ActivityError("Mode indisponible.",403);
   switch(body.action) {
    case "rematch": {const opponent=lobby.rematchOpponent(body.invitation,id);return duels.challenge({id},opponent,client,true);}
-   case "tower": {await nearby(token);lobby.enterTower(id,1);return {message:"Tour rejointe."};}
+   case "tower": {
+    await nearby(token);
+    if(body.character!==undefined){const allowed=await allowedCharacters(id);if(typeof body.character!=="string"||(allowed&&!allowed.includes(body.character)))throw new ActivityError("Personnage indisponible.",400);lobby.playTowerAs(id,body.character);}
+    lobby.enterTower(id,1);return {message:"Tour rejointe."};
+   }
+   case "duel_player": {await nearby(token);if(typeof body.target!=="string"||!body.target)throw new ActivityError("Choisissez un joueur.",400);return duels.discordChallenge(id,body.target,client);}
    case "test_character": {
     await nearby(token);
     if(!testCharacters)throw new ActivityError("Test indisponible.",403);

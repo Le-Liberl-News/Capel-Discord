@@ -14,7 +14,7 @@ async function portrait(name){
 const WIDTH=1200,SCALE=.75,FRAMES=16,DELAY=90,GLOW='#5dffa6';
 const FONT=size=>`${size}px ArenaTerminal`;
 // The screen of Capel's orbal calculator: the board laid out as before, in a terminal font where every text glows.
-function drawBoard(c,{rows,page,pages,queueSize},images,height){
+function drawBoard(c,{rows,page,pages},images,height){
  const width=WIDTH,box=(x,y,w,h,r,fill)=>{c.fillStyle=fill;c.beginPath();c.roundRect(x,y,w,h,r);c.fill();};
  const text=(value,x,y,font,color,glow=8)=>{c.font=font;c.fillStyle=color;c.shadowColor=GLOW;c.shadowBlur=glow;c.fillText(value,x,y);c.shadowBlur=0;};
   // the whole picture is the screen, no bezel around it
@@ -35,7 +35,7 @@ function drawBoard(c,{rows,page,pages,queueSize},images,height){
   c.textAlign='right';text(String(row.pb??0),1012,y+36,FONT(46),'#ffe7a4',9);c.textAlign='left';text(`(${(row.delta??0)>=0?'+':''}${row.delta??0})`,1020,y+38,FONT(28),(row.delta??0)<0?'#ff9b93':'#8acda2',5);
  });
  if(!rows.length)text('AUCUN COMBATTANT ATTRIBUÉ.',100,294,FONT(40),'#accab6');
- text('PB VERSÉS À MINUIT · PARIS',90,height-115,FONT(26),'#9db8a6',4);c.textAlign='right';text(`${queueSize} EN ATTENTE   /   PAGE ${page+1} SUR ${pages}`,width-90,height-115,FONT(26),'#9db8a6',4);c.textAlign='left';
+ text('PB VERSÉS À MINUIT · PARIS',90,height-115,FONT(26),'#9db8a6',4);c.textAlign='right';text(`PAGE ${page+1} SUR ${pages}`,width-90,height-115,FONT(26),'#9db8a6',4);c.textAlign='left';
  // static CRT texture: scanlines over the screen and a darker rim
  c.fillStyle='rgba(0,0,0,.22)';for(let y=2;y<height;y+=4)c.fillRect(0,y,width,2);
  const vignette=c.createRadialGradient(width/2,height/2,height*.25,width/2,height/2,width*.62);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,0,0,.42)');c.fillStyle=vignette;c.fillRect(0,0,width,height);

@@ -266,12 +266,11 @@ test("Capel challenges notify connected opponents in game and disclose only char
  await assert.rejects(()=>duels.accept(invited.id,"outsider",client));await duels.accept(invited.id,"real-bob",client);await duels.accept(invited.id,"real-bob",client);assert.equal(announcements,1);assert.deepEqual(duels.pending("real-bob"),[]);assert.equal((await lobby.state(a.activity_token)).map,"arena");assert.equal((await lobby.state(b.activity_token)).map,"arena");
 });
 
-test("Capel enforces proximity, active sessions and idempotent launches",async()=>{
+test("the menu needs an active session and launches once per request",async()=>{
  const {createActivityTerminal}=require('../utils/activityTerminal');let point={x:1,y:0,z:1,hp:100},entered=0;
  const lobby={identity:token=>{if(token!=='session')throw Error('Unauthorized');return{id:'private-user',map:'anterose'};},terminalPosition:async()=>point,enterTower:()=>entered++,huntSummary:()=>null};
  const terminal=createActivityTerminal({lobby,duels:{pending:()=>[]},resolveCharacter:async()=> 'Estelle',assignedCharacters:async()=>['Estelle','Joshua'],terminal:{position:{x:1,y:0,z:1}}});
  assert.deepEqual((await terminal.menu('session')).characters,['Joshua']);await assert.rejects(()=>terminal.menu('invalid'));
- point.x=100;await assert.rejects(()=>terminal.action('session',{request:'far-away-111',action:'tower'}));point.x=1;
  const body={request:'enter-tower-111',action:'tower'};await terminal.action('session',body);await terminal.action('session',body);assert.equal(entered,1);
  await assert.rejects(()=>terminal.action('session',{...body,character:'Joshua'}),e=>e.status===409);
 });

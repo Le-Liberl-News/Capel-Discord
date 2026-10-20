@@ -6,6 +6,7 @@ const TRAINING_VENUES={arena:{},thors:thorsLayout,gehenna:{spawns:[{x:0,y:0,z:-1
 import {createTraining} from './training.mjs';
 import {pickSoloEncounter} from './solo-encounters.mjs';
 import {createSoloMenu} from './solo-menu.mjs';
+import {createHomeMenu} from './home-menu.mjs';
 import spoilerAccess from './assets/sky/combat/spoiler-access.json';
 import trainingCombat from './native-combat.cjs';
 import {createCapturePublisher} from "./capture-publisher.mjs";
@@ -39,9 +40,7 @@ const etat = {
 let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
- // the plain « Combat solo » opens the same menus as the Discord button, once the terminal has closed; test entries
- // that force an encounter or a venue still start at once
- action:body=>body.action==='training'&&!body.encounter&&!body.venue?(setTimeout(()=>void soloSetup().catch(soloFailed)),Promise.resolve()):body.action==='training'?startTraining(body.encounter??null,body.venue??null):apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
+ action:body=>body.action==='training'?startTraining(body.encounter??null,body.venue??null):apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
  changed:()=>wakePoll()
 });
 function bindScene(){scene.onAction(()=>{if(training){if(['leave_map','leave_duel'].includes(scene.action()?.type))void stopTraining();return;}if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onRematch(async id=>{try{const result=await fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify({action:"rematch",invitation:id,request:crypto.randomUUID()})});scene?.captureNotice(result.message);wakePoll();}catch(error){scene?.captureNotice(error.message);throw error;}});scene.onCraftCapture(event=>void publishCraftCapture(event));}
@@ -57,7 +56,8 @@ const perfHud=document.createElement('div');perfHud.id='sky-perf';perfHud.hidden
 let perfTick=0;setInterval(()=>{const stats=scene?.performanceStats?.();if(!stats)return;const ping=training?null:pingMedian();perfHud.textContent=stats.fps+' fps · '+stats.cpuMs+' ms/image'+(ping==null?'':' · ping '+ping+' ms')+(stats.softwareGpu?' · GPU logiciel':'');if(++perfTick%5===0)recordDiagnostic('perf',{map:etat.map,...stats,ping,hidden:document.hidden});},1000);
 const trainingResult=document.createElement('div');trainingResult.hidden=true;trainingResult.style.cssText='position:fixed;top:35%;left:50%;transform:translateX(-50%);z-index:35;background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;padding:20px;text-align:center;font:22px AveriaSky,sans-serif';
 const trainingWinner=document.createElement('p'),trainingAgain=document.createElement('button'),trainingExit=document.createElement('button');trainingAgain.textContent='Rejouer';trainingExit.textContent='Retour';for(const b of [trainingAgain,trainingExit])b.style.cssText='font:inherit;padding:8px;margin:5px;background:#ead29c;color:#241b15;border:1px solid #b49760;border-radius:4px';trainingResult.append(trainingWinner,trainingAgain,trainingExit);document.body.append(trainingResult);
-trainingAgain.onclick=()=>void startTraining(null,soloChoice?.venue??null,soloChoice?.character??null);trainingExit.onclick=()=>void stopTraining();
+// « Rejouer »: the same character, a new random arena and new random teams
+trainingAgain.onclick=()=>void startTraining(null,randomVenue(),soloChoice?.character??null);trainingExit.onclick=()=>void stopTraining();
 // Capture the flag: same local loop as the training (ctf.mjs), three a side, flag in the middle.
 const CTF_VENUES={arena:{red:{x:-1,z:3.25},blue:{x:-1,z:-16.25},centre:{x:-1,z:-6.5}},axis:{red:{x:0,z:-9.5},blue:{x:0,z:9.5},centre:{x:0,z:0}}};
 let trainingMode='duel';
@@ -85,7 +85,7 @@ async function startCaptureTheFlag(){
  trainingBusy=false;await tickTraining();
 }
 async function startTraining(forcedEncounter=null,forcedVenue=null,chosenCharacter=null){
- if(trainingBusy)return;trainingMode='duel';const trainingLoadStarted=performance.now();trainingBusy=true;clearTimeout(trainingTimer);trainingResult.hidden=true;
+ if(trainingBusy)return;trainingMode='duel';const trainingLoadStarted=performance.now();trainingBusy=true;home.show(false);clearTimeout(trainingTimer);trainingResult.hidden=true;
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
  let titles={},entrances={},allowedCharacters=null;try{if(!apercuLocal){const config=await trainingConfig();titles=config.titles;entrances=config.entrances;allowedCharacters=config.allowedCharacters;if(forcedVenue&&!(config.allowedVenues??[]).includes(forcedVenue))throw Error('Cette arène nécessite le rôle du jeu correspondant.');if(!Array.isArray(allowedCharacters)||!allowedCharacters.length)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer les adversaires du combat solo.');}}catch(error){trainingBusy=false;throw error;}
@@ -94,54 +94,37 @@ async function startTraining(forcedEncounter=null,forcedVenue=null,chosenCharact
  catch(error){trainingBusy=false;await stopTraining();throw error;}
  trainingBusy=false;await tickTraining();recordDiagnostic('training-load',{durationMs:Math.round(performance.now()-trainingLoadStarted),reused:reuseArena});
 }
-// the solo combat's set-up (the Discord button): the kind of opponent, who you play among the characters your game roles
-// unlock (all of them, with or without attacks), then the stage; the opponent itself stays drawn as before (solo-encounters.mjs)
-const soloMenu=createSoloMenu({assets:ASSETS});let soloChoice=null,soloBusy=false;
-const SOLO_VENUES=[['arena','combat/venues/arena.jpg'],['axis','combat/venues/axis.jpg'],['gehenna','combat/venues/gehenna.jpg']];
+// the home menu (home-menu.mjs), in place of the Antérose: solo games with a character the player's game roles unlock,
+// duels with the character of the day
+const soloMenu=createSoloMenu({assets:ASSETS});let soloChoice=null;
+const SOLO_VENUES=['arena','axis','gehenna'];let soloVenues=SOLO_VENUES;
+const randomVenue=()=>soloVenues[Math.floor(Math.random()*soloVenues.length)];
 function trainingConfig(){return fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});}
-async function soloSetup(){
- if(soloBusy||trainingBusy)return;soloBusy=true;
- try{
-  const config=apercuLocal?null:await trainingConfig();
-  const allowed=config?new Set(config.allowedCharacters??[]):null,catalogue=scene?.catalogue??{};
-  if(allowed&&!allowed.size)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer le combat solo.');
-  const kind=await soloMenu.opponent({search:q=>apercuLocal?Promise.resolve([{id:'apercu-1',name:'Joueur de test'},{id:'apercu-2',name:'Autre joueur'}].filter(p=>p.name.toLowerCase().includes(q.toLowerCase()))):fetchJson(apiUrl('solo/players'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({q})}).then(r=>r.players)});if(!kind)return;
-  // against a player: the challenge goes out, then the choices come with the updates (soloSelection)
-  if(kind.kind==='player'){if(apercuLocal)throw Error('Le défi entre joueurs demande Discord.');await fetchJson(apiUrl('solo/challenge'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({id:kind.id})});return;}
-  const playable=Object.keys(spoilerAccess.characters).filter(name=>catalogue[name]&&(!allowed||allowed.has(name))).sort((a,b)=>a.localeCompare(b,'fr'));
-  const character=await soloMenu.character({characters:playable.map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note:'Les personnages débloqués par vos rôles de jeux terminés.'});if(!character)return;
-  const venues=SOLO_VENUES.filter(([id])=>!config||(config.allowedVenues??[]).includes(id)).map(([id,image])=>({id,title:mapTitle(id),image}));
-  const venue=await soloMenu.venue({venues});if(!venue)return;
-  soloChoice={character,venue};
- }finally{soloBusy=false;}
- await startTraining(null,soloChoice.venue,soloChoice.character);
+const posted=body=>({method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify(body)});
+const terminalAction=body=>fetchJson(apiUrl('terminal'),posted({...body,request:crypto.randomUUID()}));
+// a choice that cannot go on says why, in a window of its own
+function soloFailed(error){recordDiagnostic('solo-error',{message:error?.message},true);void soloMenu.notice(error?.message||'Indisponible pour le moment.');}
+// the characters the player's game roles unlock (all of them, with or without attacks), and the arenas they open
+async function playable(){
+ if(apercuLocal)return {names:Object.keys(spoilerAccess.characters),venues:SOLO_VENUES};
+ const config=await trainingConfig(),allowed=new Set(config.allowedCharacters??[]);
+ if(!allowed.size)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer les personnages.');
+ return {names:Object.keys(spoilerAccess.characters).filter(name=>allowed.has(name)),venues:SOLO_VENUES.filter(v=>(config.allowedVenues??[]).includes(v))};
 }
-// a solo combat against a player: each one picks a character among those both players' roles unlock, then the first
-// to pick a stage sets it; then both wait until the fight starts (the server moves them to the stage)
-let soloSelectionOpen=null;
-// a solo combat that cannot open or go on says why, in a window of its own
-function soloFailed(error){recordDiagnostic('solo-error',{message:error?.message},true);void soloMenu.notice(error?.message||'Le combat solo est indisponible pour le moment.');}
-const soloPick=(duel,choice)=>fetchJson(apiUrl('solo/pick'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({duel,...choice})}).then(r=>r.selection);
-async function soloSelection(selection){
- if(soloBusy||soloSelectionOpen)return;soloSelectionOpen=selection.id;
- try{
-  let current=selection;const catalogue=scene?.catalogue??{};
-  if(!current.character){
-   const names=[...current.allowed].sort((a,b)=>a.localeCompare(b,'fr'));
-   const character=await soloMenu.character({characters:names.map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note:`Contre ${current.opponent} : les personnages débloqués par vos rôles à tous les deux.`});
-   if(character===undefined)return;if(character===null){await soloPick(current.id,{cancel:true});return;}
-   current=await soloPick(current.id,{character});if(!current)return;
-  }
-  if(!current.venue){
-   const venues=SOLO_VENUES.map(([id,image])=>({id,title:mapTitle(id),image}));
-   const venue=await soloMenu.venue({venues,note:'Le premier des deux à choisir impose le stage.'});
-   if(venue===undefined)return;if(venue===null){await soloPick(current.id,{cancel:true});return;}
-   current=await soloPick(current.id,{venue});if(!current)return;
-  }
-  // closed when the fight starts; « Annuler » declines the duel
-  if(await soloMenu.waiting(`Stage : ${mapTitle(current.venue)} · en attente de ${current.opponent}…`)===null)await soloPick(current.id,{cancel:true});
- }finally{soloSelectionOpen=null;}
+function pickCharacter(names,note){
+ const catalogue=scene?.catalogue??{};
+ return soloMenu.character({characters:names.filter(name=>catalogue[name]).sort((a,b)=>a.localeCompare(b,'fr')).map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note});
 }
+const unlocked='Les personnages débloqués par vos rôles de jeux terminés.';
+const home=createHomeMenu({
+ ownCharacter:()=>etat.character,
+ async randomFight(){try{const {names,venues}=await playable();soloVenues=venues.length?venues:SOLO_VENUES;const character=await pickCharacter(names,unlocked);if(!character)return;soloChoice={character};await startTraining(null,randomVenue(),character);}catch(error){soloFailed(error);}},
+ async tower(){try{if(apercuLocal)throw Error('La tour demande Discord.');const {names}=await playable();const character=await pickCharacter(names,unlocked);if(!character)return;await terminalAction({action:'tower',character});wakePoll();}catch(error){soloFailed(error);}},
+ async rivalRP(){try{if(apercuLocal)throw Error('Les duels demandent Discord.');const menu=await fetchJson(apiUrl('terminal'),{headers:{Authorization:'Bearer '+etat.token}});if(!menu.characters.length)throw Error("Personne d'autre n'a encore joué aujourd'hui.");const character=await pickCharacter(menu.characters,`Vous jouerez ${menu.own}. Les personnages joués aujourd'hui :`);if(!character)return;await terminalAction({action:'duel',character});wakePoll();}catch(error){soloFailed(error);}},
+ async discordPlayer(){try{if(apercuLocal)throw Error('Les duels demandent Discord.');const member=await soloMenu.player({search:q=>fetchJson(apiUrl('solo/players'),posted({q})).then(r=>r.players)});if(!member)return;await terminalAction({action:'duel_player',target:member.id});wakePoll();}catch(error){soloFailed(error);}}
+});
+// home: no fight, no tower, no duel
+const updateHome=()=>home.show((etat.map??'anterose')==='anterose'&&!training&&!trainingBusy);
 function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
 async function runTrainingTick(){
  const active=training,current=scene;if(!active||trainingBusy)return;
@@ -153,7 +136,7 @@ async function runTrainingTick(){
 }
 async function stopTraining(map){
  if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);training=null;trainingResult.hidden=true;if(trainingStep)await trainingStep;
- const saved=trainingReturn;trainingReturn=null;scene?.dispose();scene=await createSkyScene(toile,map??saved?.map??'anterose');if(map)etat.map=map;bindScene();await scene.me({...saved?.player,character:etat.character});scene.setConnected(true);leave.hidden=(map??saved?.map??'anterose')==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map??saved?.map??'anterose');music.setTrack(musicUrl(map??saved?.map??'anterose'));trainingBusy=false;wakePoll();
+ const saved=trainingReturn;trainingReturn=null;scene?.dispose();scene=await createSkyScene(toile,map??saved?.map??'anterose');if(map)etat.map=map;bindScene();await scene.me({...saved?.player,character:etat.character});scene.setConnected(true);leave.hidden=(map??saved?.map??'anterose')==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map??saved?.map??'anterose');music.setTrack(musicUrl(map??saved?.map??'anterose'));trainingBusy=false;updateHome();wakePoll();
 }
 
 async function previewTravel(map){if(!__ACTIVITY_PREVIEW__)return;const previous=scene;scene=null;previous.dispose();etat.map=map;scene=await createSkyScene(toile,map);bindScene();await scene.me({...etat.moi,...scene.spawn,character:etat.character});scene.setConnected(true);leave.hidden=map==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map);if(window.__activityPreview)window.__activityPreview=scene;music?.setTrack(musicUrl(map));}
@@ -194,7 +177,7 @@ function drawHunt() {
  huntText.textContent = g.phase==="waiting" ? "Prop Hunt \u00b7 "+g.players+" joueurs" : g.phase==="finished" ? (g.winner==="hunter" ? "Le chasseur a gagné !" : g.winner==="cancelled" ? "Partie annulée." : "Les joueurs cachés ont gagné !") : g.phase==="preparation" ? "Préparation : "+seconds+" s\n"+(g.role==="hunter"?"Tu es le chasseur. Patiente !":"Trouve une cachette !") : timer+" · "+g.remaining+" joueurs cachés\n"+(g.role==="hunter"?"Chasseur":g.role==="found"?"Trouvé ! Tu es spectateur.":g.role==="spectator"?"Spectateur":"Reste discret !");
 }
 setInterval(drawHunt,250);
-const leave = document.createElement("button"); leave.id="sky-leave"; leave.textContent = "Retour à l’Antérose"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
+const leave = document.createElement("button"); leave.id="sky-leave"; leave.textContent = "Retour au menu"; leave.hidden = true; leave.style.cssText = "position:fixed;right:16px;top:16px;z-index:23;padding:8px 12px;color:#ffe7b0;background:#211c2a;border:1px solid #b49760;border-radius:4px;cursor:pointer"; leave.addEventListener("click",()=>scene?.leaveDuel()); document.body.append(leave);
 const chat = document.createElement("form");
 chat.id = "sky-chat";
 chat.hidden = true;
@@ -349,7 +332,7 @@ async function publier() {
   if(!training)notePing(performance.now()-requestStarted);
   const result = response;
   if(trainingBusy)return;
-  const requestedTraining=result.trainingRequest&&result.trainingRequest!==lastTrainingRequest;if(result.trainingRequest)lastTrainingRequest=result.trainingRequest;
+  if(result.trainingRequest)lastTrainingRequest=result.trainingRequest;
   if(training){terminal.setRequests(result.requests);if(!['arena','axis','gehenna','thors'].includes(result.map))return;await stopTraining(result.map);}
   terminal.setRequests(result.requests);
   const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
@@ -382,11 +365,8 @@ async function publier() {
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
-  // the menus wait for the player: the updates go on meanwhile; a duel against a player still being chosen opens its
-  // menus, which close once it starts
-  if(result.selection&&!training)soloSelection(result.selection).catch(soloFailed);
-  else if(!result.selection&&soloSelectionOpen)soloMenu.close();
-  if(requestedTraining&&!['arena','axis','gehenna','thors'].includes(result.map))soloSetup().catch(soloFailed);
+  // the home menu shows whenever the player is back home
+  updateHome();
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
     bandeau.textContent = "Votre personnage du jour : " + result.character;
@@ -397,7 +377,7 @@ async function start() {
     bandeau.textContent = "Ouvrez cette activité depuis Discord.";
     return;
   }
-  etape("Chargement du restaurant Antérose…");
+  etape("Chargement…");
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
@@ -408,7 +388,7 @@ async function start() {
   await scene.me({ ...etat.moi, character: etat.character });
   if((etat.map??'anterose')==='anterose'){const warm=()=>void prepareTrainingArena().catch(error=>recordDiagnostic('arena-preload-error',{message:error.message}));if(window.requestIdleCallback)window.requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,500);}
   if(apercuLocal)scene.setConnected(true);
-  chat.hidden = false;document.body.dataset.skyReady="true";
+  chat.hidden = false;document.body.dataset.skyReady="true";updateHome();
   if (
     __ACTIVITY_PREVIEW__ &&
     apercuLocal &&
@@ -436,7 +416,7 @@ async function start() {
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
     if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
-    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester le combat solo';trainingTest.onclick=()=>void soloSetup().catch(soloFailed);dialogueTest.append(trainingTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
+    if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );
