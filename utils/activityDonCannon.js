@@ -3,9 +3,9 @@ const {immobilized,applyStatus}=require('../activity/combat-status.cjs');
 const {rayBody}=require('../activity/fps-combat.cjs');
 function startDon(player,command,spec,time,{validateRay}){
  const origin={x:player.x,y:player.y??0,z:player.z};let ray=null;
- if(command.kind==='basic'){ray=validateRay(player,command.ray);if(!ray)return {error:'Visée invalide.'};}
- const h=ray?.direction??{x:player.heading?.dx??0,z:player.heading?.dz??1},n=Math.hypot(h.x,h.z)||1;
- return {id:command.id,actor:player.id,character:'Don',kind:command.kind,special:'donCannon',technique:spec.name,origin,aim:{x:origin.x+h.x/n*2.1,y:origin.y,z:origin.z+h.z/n*2.1},ray,started:time,impactAt:time+(command.kind==='craft'?spec.impactAt:spec.windup+cannon.MAX_FLIGHT),endsAt:time+(command.kind==='craft'?spec.duration+1300:spec.windup+cannon.MAX_FLIGHT+1300),hits:[],resolved:false,nextHit:0};
+ if(command.kind==='basic'||command.ray){ray=validateRay(player,command.ray);if(!ray)return {error:'Visée invalide.'};}
+ const h=ray?.direction??{x:player.heading?.dx??0,z:player.heading?.dz??1};
+ return {id:command.id,actor:player.id,character:'Don',kind:command.kind,special:'donCannon',technique:spec.name,origin,aim:cannon.craftPoint(origin,h),ray,started:time,impactAt:time+(command.kind==='craft'?spec.impactAt:spec.windup+cannon.MAX_FLIGHT),endsAt:time+(command.kind==='craft'?spec.duration+1300:spec.windup+cannon.MAX_FLIGHT+1300),hits:[],resolved:false,nextHit:0};
 }
 function tickDon(a,s,actor,room,time,{geometry,floor,canDamage,hurt,project}){
  const age=time-a.started;if(a.resolved){if(a.kind==='craft'&&age>=s.duration)a.dashFinished=true;return;}

@@ -1,4 +1,5 @@
-import {createDonCraftCamera} from './don-craft-camera.mjs';
+import {createFootContactView} from './foot-contact-view.mjs';
+import {createDonCraftCamera,donCraftYaw} from './don-craft-camera.mjs';
 import {createStunView} from './stun-view.mjs';
 import altinaSword from './altina-scraft.cjs';
 import {createArenaAtmosphere} from './arena-atmosphere.mjs';
@@ -218,6 +219,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   gradient.addColorStop(0,"rgba(0,0,0,.85)");gradient.addColorStop(.5,"rgba(0,0,0,.5)");gradient.addColorStop(1,"rgba(0,0,0,0)");
   shadowContext.fillStyle=gradient;shadowContext.fillRect(0,0,64,64);
   const shadowTexture=new THREE.CanvasTexture(shadowCanvas);
+  const footContactView=createFootContactView(THREE,scene,shadowTexture,collision);
   function attachShadow(avatar,id) {
     if (id.startsWith("world:pom"))return avatar;
     dayNight.apply(avatar.mesh);
@@ -368,14 +370,14 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if((spec.groundTarget||spec.targetRequired)&&!confirmed&&!(spec.chargeStun&&pickCombatTarget(event,spec))){craftTarget=kind;combatControls.targeting(kind);marker.visible=true;return true;}
     if(spec.targetRequired){target=lockedTarget??pickCombatTarget(event,spec);if(!target)return false;}
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
-    let ray=null;if(spec.fps){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
+    let ray=null;if(spec.fps||spec.special==='donCannon'&&kind==='craft'){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
     const photoHeading=me.heading??{dx:0,dz:-1};
     const aim=lineAhead?lineAhead:spec.kaleido?combatMoves.forwardAim(me.position,me.heading,1.3):spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:kind==='basic'?combatMoves.forwardAim(me.position,me.heading,spec.range):target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:spec.special==='flameSlash'?craftGroundAim(event,spec):aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);
     const stage=spec.special==='trinity'?(continuing?juliaCombo.stage+1:1):1;
     const launchHeading=spec.special==='altinaSword'?altinaSword.cameraSurfDirection(yaw):spec.kaleido?{x:me.heading.dx,z:me.heading.dz}:null;const action=queueAction("attack",undefined,aim,undefined,{kind,target,ray,...(launchHeading?{direction:launchHeading}:{})});if(!action)return false;
     const tempo=kind==='basic'?combatMoves.comboFactor(combatMoves.comboOf({combo:localCombo},Date.now()+jumpClockOffset)):1;
-    const predicted=renneCombat.predict(action.id,ray?.origin??me.position,aim,kind,localId,me.character,ray,stage,tempo);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
+    const predicted=renneCombat.predict(action.id,spec.special==='donCannon'&&kind==='craft'?me.position:ray?.origin??me.position,aim,kind,localId,me.character,ray,stage,tempo);if(!predicted){actionQueue.splice(actionQueue.indexOf(action),1);return false;}
     if(launchHeading&&spec.special==='altinaSword')Object.assign(predicted,{surfHeading:launchHeading,launchHeading});
     if(spec.dash||spec.leap){localJump=null;jumpPending=false;}
     if(spec.lockMovement){path=[];keys.clear();movementTrace=[];}
@@ -978,6 +980,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(hit){const length=Math.hypot(desired.x-target.x,desired.y-target.y,desired.z-target.z),fraction=Math.max(.01,(hit.distance-.12)/length);camera.position.set(target.x+(desired.x-target.x)*fraction,target.y+(desired.y-target.y)*fraction,target.z+(desired.z-target.z)*fraction);}
     }
     camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
+    yaw=donCraftYaw(isFPS&&!introPlaying?renneCombat?.current(localId):null,time,yaw,me?.position);
     pitch=donCraftCamera(isFPS&&!introPlaying?renneCombat?.current(localId):null,time,pitch,me?.position);
     if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';altinaPrompt.disabled=altinaCameraBlend<1;}else altinaCameraBlend=0;
@@ -1154,6 +1157,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     siegDiveView.draw(avatars,Date.now()+jumpClockOffset);
     renneCombat?.update(localId,craftCapture,camera,avatars);
     stunView?.update(avatars,Date.now()+jumpClockOffset);
+    footContactView.update(avatars,camera);
     damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
     if(guardHeld){guardDirection=combatMoves.cameraFacing(yaw);if(!connected||!movementAllowed||me?.dead||health.hp<=0||health.spectator)guardInput('end');else if(performance.now()>=guardRefreshAt&&queueAction('parry',undefined,undefined,undefined,{phase:'keep',direction:{x:guardDirection.dx,z:guardDirection.dz}}))guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;}
     if(ctfView)guarded('ctf',()=>ctfView.update(avatars,camera,performance.now()));
@@ -1514,6 +1518,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       for (const texture of maps) texture.dispose(); for (const material of materials) material.dispose();
       for (const pending of propModels.values()) pending.then(value => value.scene.traverse(object => { object.geometry?.dispose(); for(const material of [].concat(object.material??[])){ material.map?.dispose(); material.dispose(); } }));
       mapShadows?.light.shadow.dispose();
+      footContactView.dispose();
       shadowTexture.dispose();
       mapBloom.dispose();renderer.dispose();
     },

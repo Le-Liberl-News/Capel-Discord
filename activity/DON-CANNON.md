@@ -13,3 +13,5 @@ Le craft reste entièrement en première personne : la caméra suit la hauteur r
 Effets : SC/sc000_10._ef au départ, SC/msc0640._ef à l’impact du boulet et SC/sc006_17._ef pour le marteau. Sons : ed6se487 (SC), ed6se585 (FC), ed6se602 (FC). Les personnages étourdis affichent SC/paralyze._ef comme Olivier dans l’Antérose.
 
 Extraction : tools/export-don.py et tools/export-sounds.py. Vérification : tests/activity-don.test.cjs et contrôle du FPS, du saut et du marteau dans la scène réelle.
+
+Le craft transmet désormais la direction FPS validée au serveur au déclenchement, au lieu d’utiliser uniquement la direction mémorisée du personnage. La prédiction partage le même calcul de point à 2,1 m devant lui. Pendant la retombée, le pivot horizontal comme vertical s’aligne vers ce point réel. Le canon du HUD est agrandi de 60 % uniquement pendant le craft.

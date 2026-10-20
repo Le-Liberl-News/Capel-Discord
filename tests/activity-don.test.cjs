@@ -46,3 +46,17 @@ test('Don stays in FPS, tilts toward the ground during descent and keeps that pi
  assert.equal(update(null,2300,landed,{x:0,y:0,z:0}),landed);
  assert.equal(cannon.pose(event,1100).bank,2);assert.equal(cannon.pose(event,1400).pose,5);
 });
+
+test('cannon craft follows the current camera ray even when the replicated heading is stale',async()=>{
+ const f=fixture();f.actor.heading={dx:0,dz:1};f.send('craft',{origin:{x:0,y:1.45,z:0},direction:{x:1,y:0,z:0}});assert.ok(f.event().aim.x>2);assert.ok(Math.abs(f.event().aim.z)<1e-9);
+ const {donCraftYaw,donCraftGunPose}=await import('../activity/don-craft-camera.mjs');const a={id:'yaw',character:'Don',kind:'craft',localStart:0,aim:{x:2.1,y:0,z:0}};
+ assert.ok(Math.abs(donCraftYaw(a,1250,0,{x:0,y:0,z:0})+Math.PI/2)<1e-9);assert.equal(donCraftGunPose(600).scale,1.6);assert.equal(donCraftGunPose(null).scale,1);
+});
+test('rear-foot contacts are projected to the ground along the camera ray',async()=>{
+ const {projectFootContact}=await import('../activity/foot-contact-view.mjs'),camera={x:0,y:4,z:-6},foot={x:.2,y:.25,z:0},p=projectFootContact(camera,foot,0);assert.ok(p.z>foot.z);assert.ok(Math.abs(p.x/(p.z+6)-foot.x/6)<1e-9);assert.equal(p.y,.018);assert.equal(projectFootContact(camera,{x:0,y:5,z:0},0),null);
+});
+
+test('Van standing and coin craft banks carry both foot contacts in every direction',()=>{
+ const banks=require('../activity/assets/sky/combat/catalogue.json').Van.banks;
+ for(const b of [0,5,6,7,8,9]){const info=banks[b];assert.equal(info.footContacts.length,info.frames);for(const feet of info.footContacts){assert.equal(feet.length,2);for(const [x,y]of feet){assert.ok(Number.isFinite(x)&&Number.isFinite(y));assert.ok(x>=0&&x<=info.frameWidth&&y>=0&&y<=info.frameHeight);}}}
+});
