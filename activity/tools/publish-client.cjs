@@ -28,7 +28,8 @@ const fs = require("node:fs/promises"),
       if (e.isDirectory()) await hash(file);
       else {
         if (
-          [".php", ".html", ".css", ".js", ".json", ".gltf", ".txt"].includes(path.extname(file))
+          // text files are hashed with LF endings, as git stores them (the website checks these hashes on its checkout)
+          [".php", ".html", ".css", ".js", ".json", ".gltf", ".txt", ".md", ".svg", ".xml", ".csv", ".yml", ".yaml"].includes(path.extname(file))
         )
           await fs.writeFile(
             file,
