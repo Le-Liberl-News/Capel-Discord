@@ -98,7 +98,7 @@ async function startTraining(forcedEncounter=null,forcedVenue=null,chosenCharact
 // the home menu (home-menu.mjs), in place of the Antérose: solo games with a character the player's game roles unlock,
 // duels with the character of the day
 const soloMenu=createSoloMenu({assets:ASSETS}),loading=createLoadingScreen({assets:ASSETS});let soloChoice=null;
-const SOLO_VENUES=['arena','axis','gehenna'];let soloVenues=SOLO_VENUES;
+const SOLO_VENUES=['arena','axis','gehenna'],DUEL_MAPS=['arena','axis','gehenna','thors'];let soloVenues=SOLO_VENUES;
 const randomVenue=()=>soloVenues[Math.floor(Math.random()*soloVenues.length)];
 function trainingConfig(){return fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});}
 const posted=body=>({method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify(body)});
@@ -371,7 +371,7 @@ async function publier() {
     scene = await createSkyScene(toile, etat.map);
     bindScene();
     await scene.me(ownPlayer);
-    }finally{loading.hide();}
+    }finally{if(!DUEL_MAPS.includes(etat.map))loading.hide();}
     music.setTrack(musicUrl(etat.map));
     etat.messageCursor = result.messageCursor;
   } else if (result.relocated) {
@@ -398,6 +398,8 @@ async function publier() {
   // a duel against a Discord member still being chosen opens its menus, which close once it starts
   if(result.selection&&!training)soloSelection(result.selection).catch(soloFailed);
   else if(!result.selection&&soloSelectionOpen)soloMenu.close();
+  // on a duel's stage before the duel starts, the loading screen stays: « En attente de l'adversaire », with a way out
+  if(!training&&DUEL_MAPS.includes(result.map)){if(result.duel)loading.hide();else loading.wait(result.map,mapTitle(result.map),'En attente de l’adversaire…',()=>scene?.leaveDuel());}
   // the home menu shows whenever the player is back home
   updateHome();
   if (result.character && result.character !== etat.character) {
@@ -415,6 +417,7 @@ async function start() {
   etape("Chargement…");
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
+  if ((etat.map ?? "anterose") !== "anterose") { home.show(false); loading.show(etat.map, mapTitle(etat.map)); }
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
   bindScene();
   music = createMapMusic(musicUrl(etat.map),settings);
@@ -424,6 +427,8 @@ async function start() {
   if((etat.map??'anterose')==='anterose'){const warm=()=>void prepareTrainingArena().catch(error=>recordDiagnostic('arena-preload-error',{message:error.message}));if(window.requestIdleCallback)window.requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,500);}
   if(apercuLocal)scene.setConnected(true);
   chat.hidden = false;document.body.dataset.skyReady="true";updateHome();startedUp();
+  // a duel stage waits for the first update to know whether the duel has started; other places are ready
+  if (!DUEL_MAPS.includes(etat.map)) loading.hide();
   if (
     __ACTIVITY_PREVIEW__ &&
     apercuLocal &&

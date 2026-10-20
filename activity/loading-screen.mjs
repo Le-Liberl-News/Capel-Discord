@@ -13,9 +13,12 @@ export function createLoadingScreen({assets}){
  const track=document.createElement('div');track.style.cssText='position:relative;width:min(84vw,640px);height:12px;border-radius:6px;background:#2a2019;border:1px solid #6d5a3f;overflow:hidden';
  const bar=document.createElement('div');bar.style.cssText='height:100%;width:0;background:linear-gradient(90deg,#b49760,#ffd27a);transition:width .25s ease-out';
  const label=document.createElement('p');label.style.cssText='position:relative;margin:0;font:13px system-ui;color:#c9b48a';
- track.append(bar);root.append(blur,card,title,track,label);document.body.append(root);
- let shown=false,best=0,done=0,total=0,creep=null;
- const draw=()=>{bar.style.width=Math.round(best*100)+'%';label.textContent=total?`Chargement… ${done} / ${total}`:'Chargement…';};
+ // while waiting for the other player: a way out
+ const quit=document.createElement('button');quit.type='button';quit.textContent='Quitter';quit.style.cssText='position:relative;display:none;font:15px Cinzel,Georgia,serif;padding:8px 20px;border-radius:5px;border:1px solid #b49760;background:#3a2c22;color:#ffe7b0;cursor:pointer';
+ let onQuit=null;quit.onclick=()=>onQuit?.();
+ track.append(bar);root.append(blur,card,title,track,label,quit);document.body.append(root);
+ let shown=false,waiting=false,best=0,done=0,total=0,creep=null;
+ const draw=()=>{bar.style.width=Math.round(best*100)+'%';if(!waiting)label.textContent=total?`Chargement… ${done} / ${total}`:'Chargement…';};
  // the share never goes back, even when new files are discovered on the way
  const progress=(loaded,count)=>{if(!shown)return;done=loaded;total=count;best=Math.max(best,Math.min(.97,count?loaded/count:0));draw();};
  const manager=THREE.DefaultLoadingManager,previous=manager.onProgress;
@@ -25,12 +28,18 @@ export function createLoadingScreen({assets}){
   show(map,name){
    const picture=PICTURES[map],url=picture?'url('+JSON.stringify(new URL(picture,assets).href)+')':'none';
    blur.style.backgroundImage=url;card.style.backgroundImage=url;card.style.display=picture?'':'none';title.textContent=name??'';
-   shown=true;best=.03;done=total=0;draw();root.style.display='flex';
+   shown=true;waiting=false;quit.style.display='none';best=.03;done=total=0;draw();root.style.display='flex';
    // between the files it can count (data, set-up) the bar still creeps on, slower and slower, up to 60 %
    clearInterval(creep);creep=setInterval(()=>{if(best<.6){best+=(.6-best)*.04;draw();}},200);
   },
   // the bar fills, then the screen goes
-  hide(){if(!shown)return;shown=false;clearInterval(creep);best=1;draw();setTimeout(()=>{if(!shown)root.style.display='none';},300);},
-  get visible(){return shown;}
+  // the stage is loaded but the other player is not there yet: the screen stays, full bar, with the text and « Quitter »
+  wait(map,name,text,leave){
+   if(!shown)this.show(map,name);
+   clearInterval(creep);waiting=true;best=1;draw();label.textContent=text;onQuit=leave;quit.style.display=leave?'':'none';
+  },
+  hide(){if(!shown)return;shown=false;waiting=false;quit.style.display='none';clearInterval(creep);best=1;draw();setTimeout(()=>{if(!shown)root.style.display='none';},300);},
+  get visible(){return shown;},
+  get waiting(){return shown&&waiting;}
  };
 }
