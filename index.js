@@ -222,7 +222,6 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
 // Activité Discord : carte isométrique (voir le dossier `activity/`).
 // L'app Capel porte à la fois le bot et l'activité : mêmes identifiants OAuth.
 // ---------------------------------------------------------------------------
-const ACTIVITE_DOSSIER = path.join(__dirname, 'activity');
 const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '';
 const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
 const { createActivityLobby } = require('./utils/activityLobby.js');
@@ -408,22 +407,8 @@ app.post('/api/craft-capture',async(req,res)=>{
   try{const {id}=activiteService.identity(activiteBearer(req));const replay=activiteService.duelCaptureFor(id,req.body?.id);if(replay)activityRoleplay.finish(replay);res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}
   catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Publication roleplay temporairement indisponible.'});}
 });
-app.use('/assets/sky', express.static(path.join(ACTIVITE_DOSSIER, 'assets', 'sky')));
-
-function envoyerClientActivite(nomFichier, res) {
-    fs.readFile(path.join(ACTIVITE_DOSSIER, nomFichier), (erreur, donnees) => {
-        if (erreur) return res.status(404).send('introuvable');
-        const estJs = nomFichier.endsWith('.js');
-        res.set('Cache-Control', 'no-store');
-        res.type(estJs ? 'application/javascript' : 'text/html');
-        res.send(estJs
-            ? donnees.toString('utf8').replaceAll('__CLIENT_ID__', ACTIVITE_ID)
-            : donnees);
-    });
-}
-
-app.get('/', (req, res) => envoyerClientActivite('index.html', res));
-app.get('/bundle.js', (req, res) => envoyerClientActivite('bundle.js', res));
+// The activity's client (page, bundle, assets) is published on the website (activity/tools/publish-client.cjs);
+// Discord loads it from there, and the website's api.php relays the /api routes here.
 
 // Only messages whose author already has an avatar in this activity room are relayed.
 client.on('messageCreate', message => {

@@ -4,7 +4,7 @@ const test = require("node:test"),
   path = require("node:path");
 const root = path.join(__dirname, "..");
 test("published activity pages contain no avatar picker or dialogue test form", () => {
-  for (const file of ["activity/index.html", "activity/deploy/index.php"]) {
+  for (const file of ["activity/deploy/index.php"]) {
     const page = fs.readFileSync(path.join(root, file), "utf8");
     assert.doesNotMatch(
       page,
