@@ -117,6 +117,8 @@ async function soloSetup(){
 // a solo combat against a player: each one picks a character among those both players' roles unlock, then the first
 // to pick a stage sets it; then both wait until the fight starts (the server moves them to the stage)
 let soloSelectionOpen=null;
+// a solo combat that cannot open or go on says why, in a window of its own
+function soloFailed(error){recordDiagnostic('solo-error',{message:error?.message},true);void soloMenu.notice(error?.message||'Le combat solo est indisponible pour le moment.');}
 const soloPick=(duel,choice)=>fetchJson(apiUrl('solo/pick'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({duel,...choice})}).then(r=>r.selection);
 async function soloSelection(selection){
  if(soloBusy||soloSelectionOpen)return;soloSelectionOpen=selection.id;
@@ -380,9 +382,9 @@ async function publier() {
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
   // the menus wait for the player: the updates go on meanwhile; a duel against a player still being chosen opens its
   // menus, which close once it starts
-  if(result.selection&&!training)soloSelection(result.selection).catch(error=>scene?.captureNotice?.(error.message));
+  if(result.selection&&!training)soloSelection(result.selection).catch(soloFailed);
   else if(!result.selection&&soloSelectionOpen)soloMenu.close();
-  if(requestedTraining&&!['arena','axis','gehenna','thors'].includes(result.map))soloSetup().catch(error=>scene?.captureNotice?.(error.message));
+  if(requestedTraining&&!['arena','axis','gehenna','thors'].includes(result.map))soloSetup().catch(soloFailed);
   if (result.character && result.character !== etat.character) {
     etat.character = result.character;
     bandeau.textContent = "Votre personnage du jour : " + result.character;
@@ -432,7 +434,7 @@ async function start() {
     twoDialogues.addEventListener("click", () => void scene.demoConversation());
     dialogueTest.append(twoDialogues);
     if(etat.map==='anterose'){const demo=document.createElement('button');demo.type='button';demo.textContent='Voir la table du concours';demo.onclick=()=>void scene.demoDrinkingTable();dialogueTest.append(demo);}
-    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester le combat solo';trainingTest.onclick=()=>void soloSetup().catch(error=>scene?.captureNotice?.(error.message));dialogueTest.append(trainingTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
+    const trainingTest=document.createElement('button');trainingTest.type='button';trainingTest.textContent='Tester le combat solo';trainingTest.onclick=()=>void soloSetup().catch(soloFailed);dialogueTest.append(trainingTest);if(etat.map==='arena'||etat.map==='axis'){const photo=document.createElement('button');photo.type='button';photo.textContent='Tester le flash photo';photo.onclick=()=>void scene.demoPhoto();dialogueTest.append(photo);const loewe=document.createElement('button');loewe.type='button';loewe.textContent='Tester Loewe';loewe.onclick=()=>void scene.demoLoewe();dialogueTest.append(loewe);const dimension=document.createElement('button');dimension.type='button';dimension.textContent='Tester Another Dimension';dimension.onclick=()=>void scene.demoDimension();dialogueTest.append(dimension);const emptyDimension=document.createElement('button');emptyDimension.type='button';emptyDimension.textContent='Tester la zone vide';emptyDimension.onclick=()=>void scene.demoDimension(true);dialogueTest.append(emptyDimension);const demo=document.createElement('button');demo.type='button';demo.textContent='Tester l’introduction';demo.onclick=()=>void scene.demoIntro();dialogueTest.append(demo);}
     picker.addEventListener("change", () =>
       scene.me({ ...etat.moi, ...scene.position(), character: picker.value }),
     );

@@ -6,7 +6,7 @@ const BUTTON='font:16px Cinzel,Georgia,serif;padding:9px 18px;margin:6px;border-
 const QUIET='display:block;margin:12px auto 0;font:14px Cinzel,Georgia,serif;background:none;border:none;color:#c9b48a;cursor:pointer;text-decoration:underline';
 export function createSoloMenu({assets}){
  let current=null;
- function screen(title,note,build){
+ function screen(title,note,build,cancelLabel='Annuler'){
   close();
   return new Promise(resolve=>{
    const box=document.createElement('div');box.style.cssText='position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:#000a';
@@ -15,7 +15,7 @@ export function createSoloMenu({assets}){
    if(note){const p=document.createElement('p');p.textContent=note;p.style.cssText='margin:0 0 14px;font:14px system-ui;color:#d9c49a';panel.append(p);}
    const done=value=>{if(current!==box)return;current=null;box.remove();resolve(value);};
    build(panel,done);
-   const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Annuler';cancel.style.cssText=QUIET;cancel.onclick=()=>done(null);panel.append(cancel);
+   const cancel=document.createElement('button');cancel.type='button';cancel.textContent=cancelLabel;cancel.style.cssText=QUIET;cancel.onclick=()=>done(null);panel.append(cancel);
    box.append(panel);document.body.append(box);current=box;box._settle=resolve;
   });
  }
@@ -62,6 +62,8 @@ export function createSoloMenu({assets}){
    }
    panel.append(row);
   });},
+  // why the solo combat cannot go on
+  notice(text){return screen('Combat solo',text,()=>{},'Fermer');},
   // a message while waiting (the other player), with a way out
   waiting(text){return screen(text,null,(panel)=>{const p=document.createElement('p');p.textContent='…';p.style.margin='4px 0';panel.append(p);});}
  };
