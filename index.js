@@ -384,7 +384,17 @@ app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store')
 app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
 // the solo combat against a player: found by their Discord name; both pick among the characters that both players' game
 // roles unlock, then the first to pick sets the stage
-async function findGuildMember(name){
+// the server's members for the picker: their names on the server, fetched once every ten minutes
+let soloMembers=null;
+async function guildMembers(){
+ if(soloMembers&&Date.now()-soloMembers.at<600000)return soloMembers.list;
+ const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),members=await guild.members.fetch();
+ const list=[...members.values()].filter(m=>!m.user.bot).map(m=>({id:m.id,name:m.displayName,avatar:m.displayAvatarURL({size:64,extension:'png'})})).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+ soloMembers={at:Date.now(),list};return list;
+}
+const folded=text=>String(text??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
+async function findGuildMember(name,id){
+ if(id){const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID);return guild.members.fetch(String(id)).catch(()=>{throw Object.assign(Error('Joueur introuvable sur le serveur.'),{status:404});});}
  const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),wanted=String(name??'').trim().replace(/^@/,'').toLocaleLowerCase('fr');
  if(!wanted)throw Object.assign(Error('Indiquez le pseudo Discord du joueur.'),{status:400});
  const found=[...(await guild.members.search({query:wanted,limit:25})).values()].filter(m=>[m.user.username,m.user.globalName,m.nickname,m.displayName].some(n=>n&&n.toLocaleLowerCase('fr')===wanted));
@@ -393,12 +403,16 @@ async function findGuildMember(name){
  return found[0];
 }
 app.post('/api/solo/challenge',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
- const target=await findGuildMember(req.body?.name),guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),me=await guild.members.fetch(id);
+ const target=await findGuildMember(req.body?.name,req.body?.id),guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),me=await guild.members.fetch(id);
  const [mine,theirs]=await Promise.all([activitySpoilerAccess.characters(id),activitySpoilerAccess.characters(target.id)]);
  const allowed=mine.filter(name=>theirs.includes(name)&&name in require('./activity/assets/sky/characters.json'));
  const duel=await activiteDuels.soloChallenge(id,target.id,{allowed,labels:[me.displayName,target.displayName]},client);
  res.json({id:duel,opponent:target.displayName});}
  catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:'Défi impossible pour le moment.'});}});
+// the picker: members whose name on the server contains the search (accents and case aside), the player excluded
+app.post('/api/solo/players',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req)),wanted=folded(req.body?.q).trim();
+ res.json({players:(await guildMembers()).filter(m=>m.id!==id&&(!wanted||folded(m.name).includes(wanted))).slice(0,60)});}
+ catch(error){res.status(error.status||400).json({erreur:error.status?error.message:'Liste des joueurs indisponible pour le moment.'});}});
 app.post('/api/solo/pick',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
  const {duel,character,venue,cancel}=req.body??{};if(cancel){activiteDuels.decline(String(duel),id);return res.json({selection:null});}
  res.json({selection:await activiteDuels.pick(String(duel),id,{character:character??undefined,venue:venue??undefined},client)});}

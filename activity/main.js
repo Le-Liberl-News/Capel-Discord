@@ -39,7 +39,9 @@ const etat = {
 let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
- action:body=>body.action==='training'?startTraining(body.encounter??null,body.venue??null):apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
+ // the plain « Combat solo » opens the same menus as the Discord button, once the terminal has closed; test entries
+ // that force an encounter or a venue still start at once
+ action:body=>body.action==='training'&&!body.encounter&&!body.venue?(setTimeout(()=>void soloSetup().catch(soloFailed)),Promise.resolve()):body.action==='training'?startTraining(body.encounter??null,body.venue??null):apercuLocal?Promise.resolve({message:"Aper\u00e7u."}):fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify(body)}),
  changed:()=>wakePoll()
 });
 function bindScene(){scene.onAction(()=>{if(training){if(['leave_map','leave_duel'].includes(scene.action()?.type))void stopTraining();return;}if(apercuLocal&&scene.action()?.type==='hangar_enter')void previewTravel('hangar');else if(apercuLocal&&scene.action()?.type==='flight_board')void previewTravel('liberl');else if(apercuLocal&&['leave_map','leave_duel'].includes(scene.action()?.type))void previewTravel('anterose');else wakePoll();});scene.onTerminal(()=>void terminal.open());scene.onRematch(async id=>{try{const result=await fetchJson(apiUrl("terminal"),{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+etat.token},body:JSON.stringify({action:"rematch",invitation:id,request:crypto.randomUUID()})});scene?.captureNotice(result.message);wakePoll();}catch(error){scene?.captureNotice(error.message);throw error;}});scene.onCraftCapture(event=>void publishCraftCapture(event));}
@@ -103,9 +105,9 @@ async function soloSetup(){
   const config=apercuLocal?null:await trainingConfig();
   const allowed=config?new Set(config.allowedCharacters??[]):null,catalogue=scene?.catalogue??{};
   if(allowed&&!allowed.size)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer le combat solo.');
-  const kind=await soloMenu.opponent();if(!kind)return;
+  const kind=await soloMenu.opponent({search:q=>apercuLocal?Promise.resolve([{id:'apercu-1',name:'Joueur de test'},{id:'apercu-2',name:'Autre joueur'}].filter(p=>p.name.toLowerCase().includes(q.toLowerCase()))):fetchJson(apiUrl('solo/players'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({q})}).then(r=>r.players)});if(!kind)return;
   // against a player: the challenge goes out, then the choices come with the updates (soloSelection)
-  if(kind.kind==='player'){if(apercuLocal)throw Error('Le défi entre joueurs demande Discord.');await fetchJson(apiUrl('solo/challenge'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({name:kind.name})});return;}
+  if(kind.kind==='player'){if(apercuLocal)throw Error('Le défi entre joueurs demande Discord.');await fetchJson(apiUrl('solo/challenge'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+etat.token},body:JSON.stringify({id:kind.id})});return;}
   const playable=Object.keys(spoilerAccess.characters).filter(name=>catalogue[name]&&(!allowed||allowed.has(name))).sort((a,b)=>a.localeCompare(b,'fr'));
   const character=await soloMenu.character({characters:playable.map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note:'Les personnages débloqués par vos rôles de jeux terminés.'});if(!character)return;
   const venues=SOLO_VENUES.filter(([id])=>!config||(config.allowedVenues??[]).includes(id)).map(([id,image])=>({id,title:mapTitle(id),image}));

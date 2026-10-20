@@ -23,14 +23,31 @@ export function createSoloMenu({assets}){
  function close(){if(current){const box=current;current=null;box.remove();box._settle(undefined);}}
  return {
   close,
-  // { kind:'ai' } or { kind:'player', name }
-  opponent(){return screen('Combat solo','Contre qui voulez-vous vous battre ?',(panel,done)=>{
+  // { kind:'ai' } or { kind:'player', id, name }; search(text) gives the server's members matching it: [{ id, name, avatar }]
+  opponent({search}){return screen('Combat solo','Contre qui voulez-vous vous battre ?',(panel,done)=>{
    const ai=document.createElement('button');ai.type='button';ai.textContent='Adversaire IA';ai.style.cssText=BUTTON;ai.onclick=()=>done({kind:'ai'});
-   const form=document.createElement('form');form.style.cssText='margin-top:10px;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap';
-   const input=document.createElement('input');input.placeholder='Pseudo Discord du joueur';input.maxLength=40;input.style.cssText='font:15px system-ui;padding:8px 10px;border-radius:5px;border:1px solid #b49760;background:#2a2019;color:#ffe7b0;min-width:220px';
-   const go=document.createElement('button');go.type='submit';go.textContent='Défier ce joueur';go.style.cssText=BUTTON;
-   form.onsubmit=e=>{e.preventDefault();const name=input.value.trim();if(name)done({kind:'player',name});};
-   form.append(input,go);panel.append(ai,form);
+   const label=document.createElement('p');label.textContent='Ou défier un joueur du serveur :';label.style.cssText='margin:14px 0 6px;font:14px system-ui;color:#d9c49a';
+   const input=document.createElement('input');input.type='search';input.placeholder='Rechercher un joueur…';input.maxLength=40;input.style.cssText='box-sizing:border-box;width:100%;font:15px system-ui;padding:8px 10px;border-radius:5px;border:1px solid #b49760;background:#2a2019;color:#ffe7b0';
+   const list=document.createElement('div');list.style.cssText='margin-top:8px;max-height:min(44vh,340px);overflow:auto;display:flex;flex-direction:column;gap:4px;min-width:min(80vw,380px);text-align:left';
+   let asked=0,timer=null;
+   const show=(text)=>{const p=document.createElement('p');p.textContent=text;p.style.cssText='margin:8px;font:14px system-ui;color:#c9b48a;text-align:center';list.replaceChildren(p);};
+   async function refresh(){
+    const ticket=++asked;show('Recherche…');
+    try{
+     const players=await search(input.value.trim());if(ticket!==asked)return;
+     if(!players.length){show('Aucun joueur ne correspond.');return;}
+     list.replaceChildren(...players.map(p=>{
+      const b=document.createElement('button');b.type='button';b.dataset.player=p.id;
+      b.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:5px;border:1px solid #6d5a3f;background:#2a2019;color:#ffe7b0;cursor:pointer;font:15px system-ui;text-align:left';
+      const face=document.createElement('div');face.style.cssText='width:32px;height:32px;flex:none;border-radius:50%;background:#1a1411 center/cover no-repeat';if(p.avatar)face.style.backgroundImage='url('+JSON.stringify(p.avatar)+')';
+      const name=document.createElement('span');name.textContent=p.name;name.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      b.onmouseenter=()=>{b.style.borderColor='#ffd27a';b.style.background='#3a2c22';};b.onmouseleave=()=>{b.style.borderColor='#6d5a3f';b.style.background='#2a2019';};
+      b.onclick=()=>done({kind:'player',id:p.id,name:p.name});b.append(face,name);return b;
+     }));
+    }catch(error){if(ticket===asked)show(error.message||'Liste des joueurs indisponible.');}
+   }
+   input.oninput=()=>{clearTimeout(timer);timer=setTimeout(refresh,250);};
+   panel.append(ai,label,input,list);void refresh();setTimeout(()=>input.focus(),0);
   });},
   // characters: [{ name, portrait, sheet }] (portrait: a path of the assets; else the sheet's front frame: { texture, columns, rows })
   character({characters,note}){return screen('Qui incarnez-vous ?',note,(panel,done)=>{

@@ -9,6 +9,7 @@ $routes = [
     'craft-capture' => '/api/craft-capture',
     // the solo combat against a player: the challenge, then each choice of character or stage
     'solo/challenge' => '/api/solo/challenge',
+    'solo/players' => '/api/solo/players',
     'solo/pick' => '/api/solo/pick',
 ];
 
