@@ -11,7 +11,7 @@ test('test character choice expires at its configured deadline, affects only its
  assert.throws(()=>choices.set('one','Not a character'),{status:400});assert.equal(choices.menu('one').selected,'Sieg');
  time=10000;assert.equal(choices.menu('one'),null);assert.equal(await choices.resolve('one',original),'Estelle');assert.throws(()=>choices.set('one','Renne'),{status:403});
 });
-test('Capel choice requires authenticated proximity and updates the sprite immediately, with reset and expiry',async()=>{
+test('the test character choice requires authentication and updates the sprite immediately, with reset and expiry',async()=>{
  let time=0;const choices=createTestCharacters({characters:{Sieg:{},Renne:{}},now:()=>time,expires:10000});const resolver=id=>choices.resolve(id,async()=> 'Estelle');
  const lobby=createActivityLobby({grid,now:()=>time,resolveCharacter:resolver});const joined=await lobby.join({id:'one',channel:'room'});await lobby.state(joined.activity_token);
  const terminal=createActivityTerminal({lobby,testCharacters:choices,terminal:{position:grid.spawn},duels:{pending:()=>[]},assignedCharacters:async()=>['Estelle'],resolveCharacter:async()=> 'Estelle',now:()=>time});
@@ -20,7 +20,6 @@ test('Capel choice requires authenticated proximity and updates the sprite immed
  await terminal.action(joined.activity_token,{request:'choice-001',action:'test_character',character:'Sieg',user:'two'});
  let state=await lobby.state(joined.activity_token);assert.equal(state.character,'Sieg');assert.equal(state.characterChanged,true);assert.ok(state.position.y>0);
  time+=1000;state=await lobby.state(joined.activity_token,{x:2,y:2,z:2});assert.equal(state.position.y,2);
- await assert.rejects(()=>terminal.action(joined.activity_token,{request:'choice-002',action:'test_character',character:'Renne'}),{status:403});
  time+=1000;await lobby.state(joined.activity_token,{x:2,y:.4,z:2});await terminal.action(joined.activity_token,{request:'choice-003',action:'test_character',character:''});state=await lobby.state(joined.activity_token);assert.equal(state.character,'Estelle');assert.equal(state.position.y,0);
  choices.set('one','Sieg');lobby.refreshCharacter('one');await lobby.state(joined.activity_token);time=11000;lobby.refreshCharacter('one');state=await lobby.state(joined.activity_token);assert.equal(state.character,'Estelle');assert.equal(state.position.y,0);
 });

@@ -220,7 +220,10 @@ function createActivityLobby({ arena, axis=null, gehenna=null, random=Math.rando
       if (!message.direct && !sources.get(message.author)?.has(message.channel) && duelChannel !== message.channel && duels.get(this.matchFor(message.author))?.thread !== message.channel) return false;
       return target.service.captureMessage({ ...message, channel: target.channel });
     },
-    async join({id,channel}) {
+    // fresh: the activity is being opened (not a reconnection): it starts on the menu, home, unless a duel waits for
+    // the player (the tower and the other places are left)
+    async join({id,channel,fresh=false}) {
+      if (fresh && !assignments.has(id) && !spectators.has(id) && (locations.get(id)??'anterose')!=='anterose') { locations.set(id,'anterose'); persist(); }
       if (assignments.has(id)) lastSeen.set(id,now());
       const old=sessions.get(active.get(id)); if (old) old.service.leave(old.token,true);
       const target=destination(id), result=await target.service.join({id,channel:target.channel});

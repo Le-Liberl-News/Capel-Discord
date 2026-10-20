@@ -49,3 +49,10 @@ test("a duel of free choice waits for both characters and the first stage chosen
  assert.deepEqual(other.joueurs.map(p=>p.character).sort(),["Estelle","Kloe"]);
  assert.throws(()=>lobby.pickDuel("free","bob",{character:"Kloe"}),/n'attend plus/);
 });
+test("opening the activity starts on the menu, even after leaving it in the tower; a reconnection keeps the tower",async()=>{
+ const simple={origin:{x:0,z:0},step:1,width:5,height:5,cells:Array(25).fill(0),spawn:{x:1,y:0,z:1}};
+ const lobby=createActivityLobby({grid:simple,tower:[{grid:simple,layout:{start:simple.spawn,exit:{x:2,y:0,z:2}}}],now:()=>1000,resolveCharacter:async()=>"Joshua"});
+ lobby.enterTower("alice");
+ assert.equal((await lobby.join({id:"alice",channel:"dm"})).map,"tower1");               // a reconnection
+ assert.equal((await lobby.join({id:"alice",channel:"dm",fresh:true})).map,"anterose");   // the activity opened again
+});

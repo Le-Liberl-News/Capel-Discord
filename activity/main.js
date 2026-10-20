@@ -318,7 +318,8 @@ async function entrer() {
       "Content-Type": "application/json",
       Authorization: "Bearer " + jeton,
     },
-    body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId }),
+    // fresh: the activity is being opened (not a reconnection), so it starts on the menu
+    body: JSON.stringify({ channel: etat.salon, guild: sdk.guildId, fresh: true }),
   }), { onRetry: (_, attempt, total) => etape(`Connexion au duel : nouvelle tentative ${attempt}/${total}...`) });
   const profile = profileResponse;
   etat.map = profile.map ?? "anterose";

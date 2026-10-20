@@ -363,7 +363,7 @@ app.post('/api/profile', async (req, res) => {
           return res.status(403).json({erreur:'Conversation privée invalide.'});
         }
         res.set('Cache-Control', 'no-store');
-        res.json(await activiteService.join({id: user.id, channel: channel.id}));
+        res.json(await activiteService.join({id: user.id, channel: channel.id, fresh: req.body?.fresh === true}));
     } catch (error) {
         if(error.status)return res.status(error.status).json({erreur:error.message});
         const denied = [10003,10007,50001,50013].includes(error.code);
