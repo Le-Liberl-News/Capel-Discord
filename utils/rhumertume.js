@@ -17,6 +17,9 @@ const CASES_PER_DAY=2;
 const STAGE_TIMES=[3.5*HOUR,7*HOUR],STAGE_SPREAD=2*HOUR;
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
 const PREFIX=['','Pom','Pompom','Pomdeter'];
+// the second stage has another form, the wizard pom « Pom-d'aspi » (drawn once for each patient, at that stage), whose
+// third stage is the « Pom funèbre »
+const ASPI="Pom-d’aspi",FUNEBRE='Pom-funèbre',ASPI_CHANCE=1/2;
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
 // the bite: a chance on each message of a pom, until that pom has bitten twice that day (Paris)
 const BITE_CHANCE=.25,BITES_PER_POM=2;
@@ -51,7 +54,7 @@ function moods(text){
  return [rage-calm,madness-calm];
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
-function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,renderSiege,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
+function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
  const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},pending:{},...(store.load()??{})};
  state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
  const save=()=>store.save(state);
@@ -71,8 +74,12 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since,state.patients[character]?.times);}
  const level=character=>{const s=stage(character);return s==null?0:levelOf(s);};
  // Pomestelle, Pompomestelle, Pomdeterestelle: the character's name runs on, without its capital
-const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(0).toLocaleLowerCase('fr')+character.slice(1):character;
- const avatarOf=(character,lvl=level(character))=>characterNames.includes(character)?pictures().avatarURL(character,lvl):AVATAR_URL;
+const aspi=character=>state.patients[character]?.variant==='aspi';
+ // the stage's picture: 1, 2 or 3, or for the wizard forms 'aspi' (second stage) and 'funebre' (third)
+ const spriteOf=(character,lvl=level(character))=>aspi(character)&&lvl>=2?(lvl===2?'aspi':'funebre'):lvl;
+ const prefixOf=(character,lvl)=>aspi(character)&&lvl>=2?(lvl===2?ASPI:FUNEBRE):PREFIX[lvl];
+ const nameOf=(character,lvl=level(character))=>lvl?prefixOf(character,lvl)+character.charAt(0).toLocaleLowerCase('fr')+character.slice(1):character;
+ const avatarOf=(character,lvl=level(character))=>characterNames.includes(character)?pictures().avatarURL(character,spriteOf(character,lvl)):AVATAR_URL;
  // a patient's book-keeping (gauges, last stage announced); one infected before this version starts where it is
  function patient(character){
   return state.patients[character]??={announced:level(character),rage:0,madness:0,updated:now(),lastMadness:0};
@@ -103,7 +110,8 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   for(const character of Object.keys(state.infected)){
    const p=patient(character),lvl=level(character);
    if(lvl<=p.announced)continue;
-   await announceWith(`Quoi ? ${nameOf(character,lvl-1)} évolue ?!`,()=>pictures().renderEvolution(character,lvl-1,lvl));
+   if(lvl>=2&&!p.variant){p.variant=random()<ASPI_CHANCE?'aspi':'pompom';save();}
+   await announceWith(`Quoi ? ${nameOf(character,lvl-1)} évolue ?!`,()=>pictures().renderEvolution(character,spriteOf(character,lvl-1),spriteOf(character,lvl)));
    p.announced=lvl;save();
   }
  }
@@ -146,7 +154,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   if(healthy.length<3)return;
   const attackers=shuffled(poms).slice(0,3),defenders=shuffled(healthy).slice(0,3);
   let outcome=['repel','rescue','flee','devour'][Math.floor(random()*4)],result=null;
-  try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:level(character)})),outcome,Math.floor(random()*2**31));}
+  try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:spriteOf(character)})),outcome,Math.floor(random()*2**31));}
   catch(error){log('rhumertume: siege: '+error.message);}
   // without the picture, the draw alone decides who falls
   outcome=result?.outcome??outcome;
@@ -187,6 +195,18 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
  const pick=list=>list[Math.floor(random()*list.length)];
  // after the pom's message: now and then a bite (twice a day at most for each pom; the victim may catch it), a self-inflicted mishap
  // when madness is high
+ // a wizard pom's bite is a spell (utils/pomWizard.js): it flies over its victim on its vacuum and casts; the victim
+ // turns white and shrinks, or fades away and, a few seconds later, falls ill (the same chance as a bite's contagion)
+ async function spell(character,victim){
+  const victimName=stage(victim)==null?victim:nameOf(victim),outcome=stage(victim)==null&&random()<CONTAGION?'vanish':'shrink';
+  let gif=null;
+  try{gif=await (renderWizard??require('./pomWizard').renderWizardBite)(character,spriteOf(character),victim,stage(victim)==null?0:spriteOf(victim),outcome,Math.floor(random()*2**31));}
+  catch(error){log('rhumertume: spell: '+error.message);}
+  await announce(`${nameOf(character)} enfourche son aspirateur et fond sur ${victimName} !`,gif?[{attachment:gif.attachment,name:gif.name}]:[]);
+  await wait(gif?.duration??0);
+  await announce(outcome==='vanish'?`${victimName} disparaît dans une pluie d’étincelles…`:`${victimName} se retrouve tout·e petit·e !`,[]);
+  if(outcome==='vanish'){await wait(3000);await catches(victim,'sort de '+character);}
+ }
  async function after(character){
   if(stage(character)==null)return;
   const p=patient(character),t=now();
@@ -196,10 +216,13 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
    const victims=[...recent].filter(([name,at])=>name!==character&&name!=='Pom'&&t-at<=RECENT).map(([name])=>name);
    if(victims.length){
     const victim=pick(victims);state.bites[today]=[...bitten,{pom:character,victim}];save();
+    if(aspi(character)&&level(character)>=2)await spell(character,victim);
+    else{
     // the rage, the bite, then the GIF of the pom jumping on its victim
     await announceWith(`${nameOf(character)} rentre dans une rage incontrôlable.\n${fill(pick(RAGE),{perso:nameOf(character),victime:stage(victim)==null?victim:nameOf(victim)})}`,
-     ()=>pictures().renderBite(character,level(character),victim,level(victim)));
+     ()=>pictures().renderBite(character,spriteOf(character),victim,spriteOf(victim)));
     if(stage(victim)==null&&random()<CONTAGION)await catches(victim,'morsure de '+character);
+    }
    }
   }
   if(p.madness>=ACTION_AT&&t-p.lastMadness>=HOUR){

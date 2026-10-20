@@ -10,6 +10,9 @@ const path=require('node:path'),fs=require('node:fs');
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
 const {parts}=require('./pomRendering');
 const {SKY,BLOOD,SPLASH,DROPS,BURST,seeded,bounds,encode,pomSprite,sheetOf,runSheetOf,sheetFrame}=parts;
+const {drawVacuum,vacuum}=require('./pomWizard');
+// the wizard poms (Pom-d'aspi, Pom funèbre) come flying on their orbal vacuum and jump off it to bite
+const RIDERS=['aspi','funebre'],FLIGHT=70;
 const W=560,H=360,S=1.4,BODY=82*S,POM=Math.round(BODY*.63),CX=280;
 const WEST=0,EAST=4,SOUTH=6;
 // the three places: x, y of the feet, direction faced, where its pom starts
@@ -61,7 +64,8 @@ async function renderSiege(defenders,attackers,outcome,seed=Date.now()){
   return {...a,slot:slotNames[i],x,y,home:[x,y],homeDir:dir,dir,start,mode:'guard',t:0,k:0,angle:0,shake:0,gone:false};});
  const poms=await Promise.all(attackers.map(async(a,i)=>{
   const img=await pomSprite(a.character,a.stage),[x0,y0,x1,y1]=bounds(img),target=people[i];
-  return {img,box:[x0,y0,x1,y1],w:Math.round(POM*(x1-x0)/(y1-y0)),x:target.start[0],y:target.start[1],angle:0,squash:1,scale:1,gone:false,on:null,target};
+  const rider=RIDERS.includes(a.stage);
+  return {img,box:[x0,y0,x1,y1],w:Math.round(POM*(x1-x0)/(y1-y0)),x:target.start[0],y:target.start[1],angle:0,squash:1,scale:1,gone:false,on:null,target,rider,mounted:rider,lift:rider?FLIGHT:0};
  }));
  const fighters=people.filter(h=>h.fighter);
  // nobody can fight: nothing else can happen
@@ -84,17 +88,22 @@ async function renderSiege(defenders,attackers,outcome,seed=Date.now()){
   x.save();x.translate(Math.round(h.x+(h.shake?(rng()*2-1)*h.shake:0)),Math.round(h.y));x.rotate(h.angle);
   x.drawImage(sheetFrame(sheet,dir,frame),-fx0*S,-fy0*S,fw*S,fh*S);x.restore();
  }
+ // the way a pom faces (its vacuum's nose): towards its target
+ const facing=p=>p.target.slot==='right'?-1:1;
  function drawPom(x,p){
   if(p.gone)return;
   const [x0,y0,x1,y1]=p.box,w=p.w*(2-p.squash)*p.scale,h=POM*p.squash*p.scale;
-  x.save();x.translate(Math.round(p.x),Math.round(p.y));x.rotate(p.angle);x.imageSmoothingEnabled=true;
+  if(p.mounted)drawVacuum(x,seat,Math.round(p.x),Math.round(p.y-p.lift)+4,p.w*(seat?2.1:1.5),facing(p));
+  x.save();x.translate(Math.round(p.x),Math.round(p.y-p.lift));x.rotate(p.angle);x.imageSmoothingEnabled=true;
   x.drawImage(p.img,x0,y0,x1-x0,y1-y0,-w/2,-h,w,h);x.restore();
  }
- const frames=[],delays=[];
+ const frames=[],delays=[],vacuums=[],seat=await vacuum();
  function snap(ms=60){
+  for(const v of vacuums){v.x+=v.vx;v.lift+=6;if(v.lift>H+80||v.x<-120||v.x>W+120)v.gone=true;}
   const c=createCanvas(W,H),x=c.getContext('2d');x.imageSmoothingEnabled=false;
   // farther first; a pom on someone just after them
-  const items=[...people.map(h=>({y:h.y,draw:()=>drawPerson(x,h)})),...poms.map(p=>({y:p.on?p.on.y+.5:p.y,draw:()=>drawPom(x,p)}))].sort((a,b)=>a.y-b.y);
+  const items=[...people.map(h=>({y:h.y,draw:()=>drawPerson(x,h)})),...poms.map(p=>({y:p.on?p.on.y+.5:p.y,draw:()=>drawPom(x,p)})),
+   ...vacuums.filter(v=>!v.gone).map(v=>({y:v.y,draw:()=>drawVacuum(x,seat,Math.round(v.x),Math.round(v.y-v.lift),v.w,v.dir)}))].sort((a,b)=>a.y-b.y);
   for(const it of items){it.draw();x.imageSmoothingEnabled=false;}
   fx.draw(x);frames.push(c);delays.push(ms);fx.step();for(const h of people)h.t++;
  }
@@ -111,14 +120,17 @@ async function renderSiege(defenders,attackers,outcome,seed=Date.now()){
  const stop=p=>{const h=p.target;return h.slot==='front'?[h.x,h.y+72]:[h.x+(h.slot==='left'?-105:105),h.y];};
  for(const p of poms){
   const from=[p.x,p.y];
-  at(0,10,t=>{p.squash=t%4<2?.92:1.06;});
-  at(10,14,(t,n)=>{const k=(t+1)/n,[sx,sy]=stop(p);p.x=lerp(from[0],sx,k);p.y=lerp(from[1],sy,k)-Math.abs(Math.sin(k*Math.PI*3))*12;p.squash=t%2?.94:1.04;});
+  at(0,10,t=>{if(p.rider)p.lift=FLIGHT+Math.sin(t*.8)*4;else p.squash=t%4<2?.92:1.06;});
+  at(10,14,(t,n)=>{const k=(t+1)/n,[sx,sy]=stop(p);p.x=lerp(from[0],sx,k);
+   if(p.rider){p.y=lerp(from[1],sy,k);p.lift=FLIGHT+Math.sin(t*.8)*4;}else{p.y=lerp(from[1],sy,k)-Math.abs(Math.sin(k*Math.PI*3))*12;p.squash=t%2?.94:1.04;}});
  }
  // 2. the leap, a little out of step
  const LEAP=24,LEAP_LEN=8,landing=new Map();
  for(const p of poms){
   const d=Math.floor(rng()*3);landing.set(p,LEAP+d+LEAP_LEN);
   at(LEAP+d,LEAP_LEN,(t,n)=>{if(p.repelled)return;const h=p.target,k=(t+1)/n,[sx,sy]=stop(p),[cx,cy]=chest(h);
+   // a rider jumps off its vacuum, which flies on and away
+   if(p.rider){if(p.mounted){p.mounted=false;vacuums.push({x:p.x,y:p.y,lift:p.lift,w:p.w*(seat?2.1:1.5),dir:facing(p),vx:facing(p)*9});}p.lift=FLIGHT*(1-k);}
    p.x=lerp(sx,cx+(h.slot==='left'?-10:h.slot==='right'?10:0),k);p.y=lerp(sy,cy+POM*.5+(h.slot==='front'?14:0),k)-Math.sin(k*Math.PI)*60;p.squash=1.1;});
  }
  const contact=p=>landing.get(p);
