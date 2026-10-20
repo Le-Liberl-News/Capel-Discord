@@ -7,8 +7,10 @@ $routes = [
     'profile' => '/api/profile',
     'terminal' => '/api/terminal',
     'craft-capture' => '/api/craft-capture',
-    // the duel against a Discord member: the server's members for the menu's picker
+    // the duel against a Discord member: the menu's picker, the challenge, each choice of character or stage
     'solo/players' => '/api/solo/players',
+    'solo/challenge' => '/api/solo/challenge',
+    'solo/pick' => '/api/solo/pick',
 ];
 
 $route = $_GET['r'] ?? '';

@@ -1,7 +1,8 @@
 // The activity's home, in place of the Antérose: a full-screen menu with the solo games (a random fight,
-// the tower of Esmelas) or the duels (with the character of the day, against a character played today or a Discord
-// member). It shows whenever the player is home (no fight, no tower); the choices themselves are made by the
-// callbacks (character and player pickers, see solo-menu.mjs).
+// the tower of Esmelas) or the duels (against a character played today, with the character of the day; or against a
+// Discord member, each one picking a character and the first one the stage).
+// It shows whenever the player is home (no fight, no tower); the choices themselves are made by the callbacks
+// (character and player pickers, see solo-menu.mjs).
 const BUTTON='display:block;width:min(78vw,340px);margin:10px auto;font:20px Cinzel,Georgia,serif;padding:14px 18px;border-radius:7px;border:1px solid #b49760;background:#3a2c22;color:#ffe7b0;cursor:pointer;box-shadow:0 3px 14px #0007';
 const QUIET='display:block;margin:18px auto 0;font:15px Cinzel,Georgia,serif;background:none;border:none;color:#c9b48a;cursor:pointer;text-decoration:underline';
 export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownCharacter=()=>null}){
@@ -20,7 +21,7 @@ export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownChara
   const own=ownCharacter();
   if(page==='main')panel.replaceChildren(title('Le Liberl News',40),note('Combats, tour d’Esmelas et duels'),button('Jeu solo',go('solo')),button('Duels',go('duels')));
   else if(page==='solo')panel.replaceChildren(title('Jeu solo'),note('Choisissez votre personnage puis c’est parti.'),button('Combat aléatoire',randomFight),button('Tour d’Esmelas',tower),button('Retour',go('main'),QUIET));
-  else panel.replaceChildren(title('Duels'),note(own?`Vous jouerez ${own}, votre personnage du jour.`:'Vous jouerez votre personnage du jour.'),button('Adversaire RP',rivalRP),button('Joueur Discord',discordPlayer),button('Retour',go('main'),QUIET));
+  else panel.replaceChildren(title('Duels'),note((own?`Adversaire RP : vous jouez ${own}, votre personnage du jour.`:'Adversaire RP : vous jouez votre personnage du jour.')+' Joueur Discord : vous choisissez chacun votre personnage, puis le stage.'),button('Adversaire RP',rivalRP),button('Joueur Discord',discordPlayer),button('Retour',go('main'),QUIET));
  }
  draw();document.body.append(root);
  return {

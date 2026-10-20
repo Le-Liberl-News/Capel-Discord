@@ -124,8 +124,30 @@ const home=createHomeMenu({
  async randomFight(){try{await startup;const {names,venues}=await playable();soloVenues=venues.length?venues:SOLO_VENUES;const character=await pickCharacter(names,unlocked);if(!character)return;soloChoice={character};await startTraining(null,randomVenue(),character);}catch(error){soloFailed(error);}},
  async tower(){try{await startup;if(apercuLocal)throw Error('La tour demande Discord.');const {names}=await playable();const character=await pickCharacter(names,unlocked);if(!character)return;loading.show('tower1',mapTitle('tower1'));await terminalAction({action:'tower',character});wakePoll();setTimeout(()=>{if((etat.map??'anterose')==='anterose')loading.hide();},15000);}catch(error){loading.hide();soloFailed(error);}},
  async rivalRP(){try{await startup;if(apercuLocal)throw Error('Les duels demandent Discord.');const menu=await fetchJson(apiUrl('terminal'),{headers:{Authorization:'Bearer '+etat.token}});if(!menu.characters.length)throw Error("Personne d'autre n'a encore joué aujourd'hui.");const character=await pickCharacter(menu.characters,`Vous jouerez ${menu.own}. Les personnages joués aujourd'hui :`);if(!character)return;if(!await soloMenu.confirm(`Êtes-vous sûr de vouloir défier ${character} ?`,'Défier'))return;await terminalAction({action:'duel',character});wakePoll();}catch(error){soloFailed(error);}},
- async discordPlayer(){try{await startup;if(apercuLocal)throw Error('Les duels demandent Discord.');const member=await soloMenu.player({search:q=>fetchJson(apiUrl('solo/players'),posted({q})).then(r=>r.players)});if(!member)return;if(!await soloMenu.confirm(`Êtes-vous sûr de vouloir défier ${member.name} ?`,'Défier'))return;await terminalAction({action:'duel_player',target:member.id});wakePoll();}catch(error){soloFailed(error);}}
+ async discordPlayer(){try{await startup;if(apercuLocal)throw Error('Les duels demandent Discord.');const member=await soloMenu.player({search:q=>fetchJson(apiUrl('solo/players'),posted({q})).then(r=>r.players)});if(!member)return;if(!await soloMenu.confirm(`Êtes-vous sûr de vouloir défier ${member.name} ?`,'Défier'))return;await fetchJson(apiUrl('solo/challenge'),posted({id:member.id}));wakePoll();}catch(error){soloFailed(error);}}
 });
+// a duel against a Discord member: each one picks a character among those both players' roles unlock, then the first
+// to pick a stage sets it; then both wait until the fight starts (the server moves them to the stage). « Annuler »
+// declines the duel; the menus close by themselves once it starts.
+let soloSelectionOpen=null;
+const soloPick=(duel,choice)=>fetchJson(apiUrl('solo/pick'),posted({duel,...choice})).then(r=>r.selection);
+async function soloSelection(selection){
+ if(soloSelectionOpen)return;soloSelectionOpen=selection.id;
+ try{
+  let current=selection;
+  if(!current.character){
+   const character=await pickCharacter(current.allowed,`Contre ${current.opponent} : les personnages débloqués par vos rôles à tous les deux.`);
+   if(character===undefined)return;if(character===null){await soloPick(current.id,{cancel:true});return;}
+   current=await soloPick(current.id,{character});if(!current)return;
+  }
+  if(!current.venue){
+   const venue=await soloMenu.venue({venues:SOLO_VENUES.map(id=>({id,title:mapTitle(id),image:'loading/'+id+'.jpg'})),note:'Le premier des deux à choisir impose le stage.'});
+   if(venue===undefined)return;if(venue===null){await soloPick(current.id,{cancel:true});return;}
+   current=await soloPick(current.id,{venue});if(!current)return;
+  }
+  if(await soloMenu.waiting(`Stage : ${mapTitle(current.venue)} · en attente de ${current.opponent}…`)===null)await soloPick(current.id,{cancel:true});
+ }finally{soloSelectionOpen=null;}
+}
 // home: no fight, no tower, no duel
 const updateHome=()=>home.show((etat.map??'anterose')==='anterose'&&!training&&!trainingBusy);
 function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
@@ -372,6 +394,9 @@ async function publier() {
   ]);
   scene.messages(result.messages ?? []);
   etat.messageCursor = result.messageCursor ?? etat.messageCursor;
+  // a duel against a Discord member still being chosen opens its menus, which close once it starts
+  if(result.selection&&!training)soloSelection(result.selection).catch(soloFailed);
+  else if(!result.selection&&soloSelectionOpen)soloMenu.close();
   // the home menu shows whenever the player is back home
   updateHome();
   if (result.character && result.character !== etat.character) {

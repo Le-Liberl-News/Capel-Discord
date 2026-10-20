@@ -1,7 +1,7 @@
 const {ActivityError}=require("./activityService");
 // The activity's menu, at home (the Antérose is no longer shown): the solo games (the tower with a character the
-// player's game roles unlock) and the duels (with the character of the day, against a character played today or a
-// Discord member).
+// player's game roles unlock) and the RP duels (with the character of the day, against a character played today);
+// the duels against a Discord member go through /api/solo/challenge.
 function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCharacters,terminal,announceHunt=async()=>{},huntStarted=async()=>{},testCharacters=null,trainingVenues=async()=>[],allowedCharacters=async()=>null,now=Date.now}) {
  const pending=new Map(),completed=new Map();
  async function nearby(token) {
@@ -23,7 +23,6 @@ function createActivityTerminal({lobby,duels,client,resolveCharacter,assignedCha
     if(body.character!==undefined){const allowed=await allowedCharacters(id);if(typeof body.character!=="string"||(allowed&&!allowed.includes(body.character)))throw new ActivityError("Personnage indisponible.",400);lobby.playTowerAs(id,body.character);}
     lobby.enterTower(id,1);return {message:"Tour rejointe."};
    }
-   case "duel_player": {await nearby(token);if(typeof body.target!=="string"||!body.target)throw new ActivityError("Choisissez un joueur.",400);return duels.discordChallenge(id,body.target,client);}
    case "test_character": {
     await nearby(token);
     if(!testCharacters)throw new ActivityError("Test indisponible.",403);

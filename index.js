@@ -392,6 +392,19 @@ async function guildMembers(){
  soloMembers={at:Date.now(),list};return list;
 }
 const folded=text=>String(text??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
+// the duel against a Discord member: both pick among the characters that both players' game roles unlock, then the
+// first to pick sets the stage
+app.post('/api/solo/challenge',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
+ const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),target=await guild.members.fetch(String(req.body?.id??'')).catch(()=>{throw Object.assign(Error('Joueur introuvable sur le serveur.'),{status:404});}),me=await guild.members.fetch(id);
+ const [mine,theirs]=await Promise.all([activitySpoilerAccess.characters(id),activitySpoilerAccess.characters(target.id)]);
+ const allowed=mine.filter(name=>theirs.includes(name)&&name in require('./activity/assets/sky/characters.json'));
+ const duel=await activiteDuels.soloChallenge(id,target.id,{allowed,labels:[me.displayName,target.displayName]},client);
+ res.json({id:duel,opponent:target.displayName});}
+ catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:'Défi impossible pour le moment.'});}});
+app.post('/api/solo/pick',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
+ const {duel,character,venue,cancel}=req.body??{};if(cancel){activiteDuels.decline(String(duel),id);return res.json({selection:null});}
+ res.json({selection:await activiteDuels.pick(String(duel),id,{character:character??undefined,venue:venue??undefined},client)});}
+ catch(error){res.status(error.status||400).json({erreur:error.status?error.message:'Choix impossible pour le moment.'});}});
 // the picker: members whose name on the server contains the search (accents and case aside), the player excluded
 app.post('/api/solo/players',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req)),wanted=folded(req.body?.q).trim();
  res.json({players:(await guildMembers()).filter(m=>m.id!==id&&(!wanted||folded(m.name).includes(wanted))).slice(0,60)});}

@@ -16,13 +16,36 @@ test("the menu works from home only, without walking up to the Capel",async()=>{
  const terminal=createActivityTerminal({lobby:fakeLobby("arena"),duels:{pending:()=>[]},resolveCharacter:async()=>"Estelle",assignedCharacters:async()=>[]});
  await assert.rejects(terminal.menu("token"),/menu/);
 });
-test("a duel against a Discord member: both play their character of the day, the challenger waits on the stage",async()=>{
+test("a duel against a Discord member is one of free choice: the challenger waits, the other gets a DM",async()=>{
  const sent=[],joined=[],accepted=[],created=[];
  const lobby={matchFor:()=>null,prepareDuel(){},createDuel:d=>created.push(d),cancelDuel(){},joinDuel:(id,user)=>joined.push(user),acceptDuel:(id,user)=>accepted.push(user)};
- const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==="alice"?"Estelle":"Joshua",resolveOpponent:async()=>null,characterNames:[]});
+ const duels=createActivityDuels({lobby,resolveCharacter:async()=>"Joshua",resolveOpponent:async()=>null,characterNames:[]});
  const client={users:{fetch:async id=>({send:async m=>sent.push([id,m])})}};
- const result=await duels.discordChallenge("alice","bob",client);
- assert.deepEqual(created[0].names,["Estelle","Joshua"]);assert.deepEqual(joined,["alice"]);assert.deepEqual(accepted,["alice"]);
- assert.equal(sent[0][0],"bob");assert.match(sent[0][1].content,/Estelle/);assert.equal(sent[0][1].components[0].components[0].custom_id,"activity:"+result.id);
- await assert.rejects(duels.discordChallenge("alice","alice",client),/autre joueur/);
+ const id=await duels.soloChallenge("alice","bob",{allowed:["Estelle","Kloe"],labels:["Alice","Bob"]},client);
+ assert.deepEqual(created[0].free,{allowed:["Estelle","Kloe"]});assert.deepEqual(created[0].players,["alice","bob"]);
+ assert.deepEqual(joined,["alice"]);assert.deepEqual(accepted,["alice"]);
+ assert.equal(sent[0][0],"bob");assert.match(sent[0][1].content,/Alice/);assert.equal(sent[0][1].components[0].components[0].custom_id,"activity:"+id);
+ await assert.rejects(duels.soloChallenge("alice","alice",{allowed:["Estelle"],labels:["Alice","Alice"]},client),/autre joueur/);
+ await assert.rejects(duels.soloChallenge("alice","carol",{allowed:[],labels:["Alice","Carol"]},client),/Aucun personnage/);
+});
+const {createActivityLobby}=require("../utils/activityLobby");
+const grid={origin:{x:0,z:0},step:1,width:10,height:10,cells:Array(100).fill(0),spawn:{x:1,y:0,z:1}};
+function fixture(){let now=0;const lobby=createActivityLobby({grid,now:()=>now,resolveCharacter:async()=>"Joshua",arena:{grid,spawns:[{x:1,y:0,z:1},{x:8,y:0,z:1}],residents:{npcs:[],ballSpawns:[{x:1,y:.375,z:2},{x:8,y:.375,z:2}]}}});return{lobby,tick:ms=>now+=ms};}
+test("a duel of free choice waits for both characters and the first stage chosen, then each plays its pick",async()=>{
+ const {lobby}=fixture();
+ const a=await lobby.join({id:"alice",channel:"dm-a"}),b=await lobby.join({id:"bob",channel:"dm-b"});
+ lobby.createDuel({id:"free",channel:"guild",players:["alice","bob"],names:["Alice","Bob"],free:{allowed:["Estelle","Kloe"]}});
+ lobby.joinDuel("free","alice");lobby.acceptDuel("free","alice");lobby.joinDuel("free","bob");assert.equal(lobby.acceptDuel("free","bob"),false);
+ // nothing chosen yet: both stay where they are, and see what is left to choose
+ const waiting=await lobby.state(a.activity_token);assert.equal(waiting.map,"anterose");
+ assert.deepEqual(waiting.selection,{id:"free",allowed:["Estelle","Kloe"],character:null,venue:null,opponent:"Bob",opponentPicked:false,opponentAccepted:true});
+ assert.throws(()=>lobby.pickDuel("free","alice",{character:"Rean"}),/indisponible/);
+ assert.equal(lobby.pickDuel("free","alice",{character:"Kloe",venue:"arena"}).ready,false);
+ // the second one's stage does not count, the first one set it
+ const done=lobby.pickDuel("free","bob",{character:"Estelle",venue:"gehenna"});
+ assert.equal(done.ready,true);assert.deepEqual(done.names,["Kloe","Estelle"]);assert.equal(lobby.selection("bob"),null);
+ const inArena=await lobby.state(a.activity_token),other=await lobby.state(b.activity_token);
+ assert.equal(inArena.map,"arena");assert.equal(inArena.selection,null);
+ assert.deepEqual(other.joueurs.map(p=>p.character).sort(),["Estelle","Kloe"]);
+ assert.throws(()=>lobby.pickDuel("free","bob",{character:"Kloe"}),/n'attend plus/);
 });

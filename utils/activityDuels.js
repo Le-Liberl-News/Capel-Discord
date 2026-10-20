@@ -98,17 +98,29 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
     async cleanupAnnouncements(client){for(const [id,i] of invitations)if(i.watchMessage&&(i.finished||i.expires<now()||!lobby.duelStatus(id,i.players[0]))){await removeWatch(i,client);if(i.expires<now())invitations.delete(id);}persist();},
     ownsThread(id){return [...invitations.values()].some(i=>i.thread===id);},
     match(players,client){return boardInvite(players,client,true);},
-    // a duel against a Discord member chosen in the activity's menu: both play their character of the day, the
-    // challenger waits on the stage, the other one gets a DM to accept
-    async discordChallenge(user,target,client){
-      if(user===target)throw new DuelError("Choisissez un autre joueur.");
-      const id=await boardInvite([user,target],client),invitation=invitations.get(id);
+    // a duel against a Discord member chosen in the activity's menu: `target` is a Discord user; both pick their
+    // character among `allowed` (what both their game roles unlock) and the first to pick sets the stage; labels: their
+    // names on the server. The challenger is the first player; the other one gets a DM to accept.
+    async soloChallenge(user,target,{allowed,labels},client){
+      prune();if(user===target)throw new DuelError("Choisissez un autre joueur.");
+      if([user,target].some(u=>lobby.busyInDuel?lobby.busyInDuel(u):lobby.matchFor(u)))throw new DuelError("Un des joueurs est déjà en duel.");
+      if(!allowed.length)throw new DuelError("Aucun personnage n'est débloqué à la fois par vos rôles et par ceux de ce joueur.");
+      lobby.prepareDuel(user,target);const id="duel:"+randomBytes(16).toString("hex");
+      lobby.createDuel({id,channel:spectatorChannel,players:[user,target],names:labels,free:{allowed}});
+      const invitation={players:[user,target],names:labels,free:true,expires:now()+30*60*1000};invitations.set(id,invitation);persist();
       try {
         const opponent=await client.users.fetch(target);
-        await opponent.send({content:invitation.names[0]+" te défie en duel ("+invitation.names[1]+" contre "+invitation.names[0]+").",components:[{type:1,components:[{type:2,custom_id:"activity:"+id,label:"Accepter et rejoindre",style:1}]}],allowedMentions:{parse:[]}});
+        await opponent.send({content:labels[0]+" te défie en duel. Vous choisirez chacun votre personnage, puis le stage.",components:[{type:1,components:[{type:2,custom_id:"activity:"+id,label:"Accepter et rejoindre",style:1}]}],allowedMentions:{parse:[]}});
       }catch(error){invitations.delete(id);lobby.cancelDuel(id);persist();throw new DuelError(error.code===50007?"Impossible d'envoyer le MP : ce joueur doit autoriser les messages privés du bot.":"Impossible d'envoyer l'invitation privée. Réessayez dans un instant.");}
       lobby.joinDuel(id,user);lobby.acceptDuel(id,user);
-      return {message:"Défi envoyé.",id};
+      return id;
+    },
+    // a choice in a duel of free choice; the match thread opens once it starts, under the characters picked
+    async pick(id,user,choice,client){
+      const invitation=invitations.get(id);if(!invitation?.players.includes(user))throw new ActivityError("Invitation expirée.",403);
+      const result=lobby.pickDuel(id,user,choice);
+      if(result.ready){invitation.names=result.names;persist();await announce(id,invitation,client).catch(error=>console.error('Activity match thread failed:',error.code??'unavailable'));}
+      return result.selection;
     },
     async boardChallenge(user,name,client){
       const target=await resolveOpponent(name);if(!target)throw new DuelError("Personnage indisponible.");
@@ -124,7 +136,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
     // the challenges a player has received (never one they sent: the challenger is always the first player)
     pending(user) { prune();return [...invitations].filter(([id,i])=>i.players.includes(user)&&i.players[0]!==user&&lobby.duelStatus(id,user)?.accepted===false).map(([id,i])=>({id,opponent:i.names[i.players[0]===user?1:0]})); },
     async challenge(user,requested,client,rematch=false) {const result=await invite({user,client,requested,channelId:spectatorChannel,inGame:true,rematch});if(!result.id)throw new DuelError(result.content);lobby.joinDuel(result.id,user.id);lobby.acceptDuel(result.id,user.id);return {message:"D\u00e9fi envoy\u00e9.",id:result.id};},
-    async accept(id,user,client) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation expir\u00e9e.",403);if(await resolveCharacter(user)!==i.names[i.players.indexOf(user)])throw new ActivityError("Votre personnage a chang\u00e9.",403);lobby.joinDuel(id,user);if(lobby.acceptDuel(id,user))await announce(id,i,client).catch(error=>console.error('Activity match thread failed:',error.code??'unavailable'));return {message:"Duel rejoint."};},
+    async accept(id,user,client) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation expir\u00e9e.",403);if(!i.free&&await resolveCharacter(user)!==i.names[i.players.indexOf(user)])throw new ActivityError("Votre personnage a chang\u00e9.",403);lobby.joinDuel(id,user);if(lobby.acceptDuel(id,user))await announce(id,i,client).catch(error=>console.error('Activity match thread failed:',error.code??'unavailable'));return {message:"Duel rejoint."};},
     decline(id,user) {prune();const i=invitations.get(id);if(!i?.players.includes(user))throw new ActivityError("Invitation inaccessible.",403);lobby.cancelDuel(id);if(i.watchMessage)i.finished=true;else invitations.delete(id);persist();return {message:"D\u00e9fi refus\u00e9."};},
     async handle(interaction) {
       if (interaction.isAutocomplete?.() && interaction.commandName === "duel") {
@@ -142,7 +154,7 @@ function createActivityDuels({ lobby, resolveCharacter, resolveOpponent, charact
         if (!invitation?.players.includes(interaction.user.id)) { await interaction.reply({content:"Invitation expirée ou inaccessible.",flags:64}); return true; }
         let joined=false;
         try {
-          if (await resolveCharacter(interaction.user.id) !== invitation.names[invitation.players.indexOf(interaction.user.id)]) throw new DuelError("Votre personnage du jour a changé.");
+          if (!invitation.free && await resolveCharacter(interaction.user.id) !== invitation.names[invitation.players.indexOf(interaction.user.id)]) throw new DuelError("Votre personnage du jour a changé.");
           // Launch only inside the participant's private conversation with the bot.
           if (!interaction.channel?.isDMBased?.()) throw new DuelError("Ouvrez votre invitation privée.");
           lobby.joinDuel(id,interaction.user.id);joined=true;

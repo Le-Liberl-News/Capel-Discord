@@ -1,5 +1,6 @@
-// The menus' pickers, over the home menu (home-menu.mjs): who you play (portraits of the characters given) and the
-// Discord member to challenge (the server's members, searched by their names on the server).
+// The menus' pickers, over the home menu (home-menu.mjs): who you play (portraits of the characters given), the
+// Discord member to challenge (the server's members, searched by their names on the server), the stage of a duel
+// against them (pictures) and the wait for them.
 // Each screen resolves with the choice, null when the player cancels it, undefined when it is closed (close()).
 const PANEL='background:#211c2af2;color:#ffe7b0;border:2px solid #b49760;border-radius:8px;padding:18px 22px;text-align:center;font:18px Cinzel,Georgia,serif;box-shadow:0 8px 32px #000a;max-width:min(92vw,980px);max-height:88vh;overflow:auto';
 const QUIET='display:block;margin:12px auto 0;font:14px Cinzel,Georgia,serif;background:none;border:none;color:#c9b48a;cursor:pointer;text-decoration:underline';
@@ -68,6 +69,22 @@ export function createSoloMenu({assets}){
    b.style.cssText='font:18px Cinzel,Georgia,serif;padding:10px 26px;margin:10px 6px 0;border-radius:6px;border:1px solid #b49760;background:#3a2c22;color:#ffe7b0;cursor:pointer';
    b.onclick=()=>done(true);panel.append(b);
   });},
+  // venues: [{ id, title, image }] (image: a path of the assets)
+  venue({venues,note}){return screen('Choisissez le stage',note,(panel,done)=>{
+   const row=document.createElement('div');row.style.cssText='display:flex;gap:14px;justify-content:center;flex-wrap:wrap';
+   for(const v of venues){
+    const b=document.createElement('button');b.type='button';b.dataset.venue=v.id;
+    b.style.cssText='display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:8px;border:2px solid #6d5a3f;background:#2a2019;color:#ffe7b0;cursor:pointer;font:16px Cinzel,Georgia,serif;width:250px';
+    const img=document.createElement('div');img.style.cssText='width:100%;aspect-ratio:16/9;border-radius:5px;background:#1a1411 center/cover no-repeat';
+    if(v.image)img.style.backgroundImage='url('+JSON.stringify(new URL(v.image,assets).href)+')';
+    const label=document.createElement('span');label.textContent=v.title;
+    b.onmouseenter=()=>{b.style.borderColor='#ffd27a';};b.onmouseleave=()=>{b.style.borderColor='#6d5a3f';};
+    b.onclick=()=>done(v.id);b.append(img,label);row.append(b);
+   }
+   panel.append(row);
+  });},
+  // a message while waiting (the other player), with a way out
+  waiting(text){return screen(text,null,(panel)=>{const p=document.createElement('p');p.textContent='…';p.style.margin='4px 0';panel.append(p);});},
   // why a choice of the menu cannot go on
   notice(text){return screen('Menu',text,()=>{},'Fermer');}
  };
