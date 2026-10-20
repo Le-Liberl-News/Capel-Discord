@@ -3,7 +3,7 @@ const {createActivityCombat}=require('../utils/activityCombat'),{combatSpec}=req
 const grid={origin:{x:-20,z:-20},step:1,width:41,height:41,cells:Array(1681).fill(0)};
 function fixture(geometry){let time=1000;const actor={id:'a',character:'Anelace',x:0,y:0,z:0,hp:100,team:'blue'},enemy={id:'enemy',character:'Estelle',x:6,y:0,z:.9,hp:100,team:'red'},ally={...enemy,id:'ally',x:3,team:'blue'},room=new Map([[actor.id,actor],[enemy.id,enemy],[ally.id,ally]]),combat=createActivityCombat({grid,geometry,now:()=>time,canDamage:(a,b)=>a.team!==b.team});return {actor,enemy,room,combat,cast(){return combat.action(actor,{id:'wave',kind:'craft',aim:{x:12,y:0,z:0}},room)},tick(age){time=1000+age;combat.tick(room)},event(){return combat.snapshot().attacks[0]}};}
 test('Piercing Wave doubles its speed, narrows its marker and sweeps the whole enemy body between ticks',()=>{
- const s=combatSpec('Anelace','craft');assert.equal(s.projectileSpeed,18);assert.equal(s.lineRadius,.7);
+ const s=combatSpec('Anelace','craft');assert.equal(s.projectileSpeed,36);assert.equal(s.lineRadius,.7);assert.equal(s.windup,500);assert.equal(s.duration,1000);
  const f=fixture();assert.ok(f.cast().combatId);f.tick(499);assert.equal(f.enemy.hp,100);f.tick(1000);assert.equal(f.enemy.hp,70);assert.equal(f.room.get('ally').hp,100);assert.ok(f.event().explodedAt);assert.equal(f.event().hits.filter(h=>h.id==='enemy').length,1);f.tick(1500);assert.equal(f.enemy.hp,70);
 });
 test('the wave hits the nearest hostile, respects walls and does not hit another floor',()=>{
@@ -23,7 +23,7 @@ test('the visible crescent stays anchored to its collider and its fire trail is 
   global.fetch=async()=>({ok:true,json:async()=>require('../activity/assets/sky/combat/campanella-spire/model.json')});
   const {createSpecialCraftView}=await import('../activity/special-crafts-view.mjs'),map=new THREE.Texture(),bank={map,frames:90,columns:8,rows:12},scene=new THREE.Scene(),view=await createSpecialCraftView({...THREE,TextureLoader:class{async loadAsync(){return new THREE.Texture();}}},scene,new URL('http://localhost/'),new Map([['third/ms04671l._ef',bank],['sc/mg041_3._ef',bank]]),map,new Map([['third/sc009_05._ef',player]])),spec=combatSpec('Anelace','craft');
   const a={id:'wave',actor:'a',started:1000,impactAt:1500,flightEndsAt:2200,origin:{x:0,y:0,z:0},aim:{x:12,y:0,z:0}};view.draw(a,spec,700,new Map());
-  const group=scene.children[0],projectile=group.children[0],model=projectile.children[0].children.find(x=>x.isGroup);assert.ok(model);assert.ok(model.position.length()<1e-6);assert.ok(Math.abs(projectile.position.x-3.6)<1e-6);assert.ok(group.children.slice(2).some(t=>t.visible&&t.position.x<projectile.position.x));
+  const group=scene.children[0],projectile=group.children[0],model=projectile.children[0].children.find(x=>x.isGroup);assert.ok(model);assert.ok(model.position.length()<1e-6);assert.ok(Math.abs(projectile.position.x-7.2)<1e-6);assert.ok(group.children.slice(2).some(t=>t.visible&&t.position.x<projectile.position.x));
   a.explodedAt=1800;a.explosionPoint={x:4,y:0,z:0};view.draw(a,spec,900,new Map());assert.equal(projectile.visible,false);assert.ok(group.children[1].visible);assert.ok(group.children.slice(2).every(t=>!t.visible));view.remove(a.id);assert.equal(scene.children.length,0);view.dispose();map.dispose();
  }finally{global.fetch=savedFetch;global.document=savedDocument;}
 });
