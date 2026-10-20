@@ -7,6 +7,7 @@ import {createTraining} from './training.mjs';
 import {pickSoloEncounter} from './solo-encounters.mjs';
 import {createSoloMenu} from './solo-menu.mjs';
 import {createHomeMenu} from './home-menu.mjs';
+import {createLoadingScreen} from './loading-screen.mjs';
 import spoilerAccess from './assets/sky/combat/spoiler-access.json';
 import trainingCombat from './native-combat.cjs';
 import {createCapturePublisher} from "./capture-publisher.mjs";
@@ -89,14 +90,14 @@ async function startTraining(forcedEncounter=null,forcedVenue=null,chosenCharact
  if(trainingStep)await trainingStep;
  if(!training)trainingReturn={map:etat.map??'anterose',player:{...etat.moi,...scene.position(),character:scene.playerCharacter?.()??etat.character}};
  let titles={},entrances={},allowedCharacters=null;try{if(!apercuLocal){const config=await trainingConfig();titles=config.titles;entrances=config.entrances;allowedCharacters=config.allowedCharacters;if(forcedVenue&&!(config.allowedVenues??[]).includes(forcedVenue))throw Error('Cette arène nécessite le rôle du jeu correspondant.');if(!Array.isArray(allowedCharacters)||!allowedCharacters.length)throw Error('Ajoutez vos rôles de jeux terminés sur Discord pour débloquer les adversaires du combat solo.');}}catch(error){trainingBusy=false;throw error;}
- const reuseArena=!!training&&(!forcedVenue||forcedVenue===trainingVenue);training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=forcedVenue||(__ACTIVITY_PREVIEW__&&new URLSearchParams(location.search).get('venue'))||['arena','axis','gehenna'][Math.floor(Math.random()*3)];}
- try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}const forced=forcedEncounter??(__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('opponent'):null),selection=pickSoloEncounter(scene.catalogue,{forced,allowedCharacters});training=createTraining({...scene.trainingGeometry(),...TRAINING_VENUES[trainingVenue],character:chosenCharacter??trainingReturn.player.character,...selection,titles,entrances,introDuration:introDurationFor(trainingVenue)});scene.retainCombatCharacters(training.characters);bindScene();await Promise.all([scene.me(training.player),...training.characters.map(name=>scene.prepareCombat(name))]);training.beginIntro();scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Combat solo · '+selection.label;music.setTrack(musicUrl(trainingVenue));}
- catch(error){trainingBusy=false;await stopTraining();throw error;}
+ const reuseArena=!!training&&(!forcedVenue||forcedVenue===trainingVenue);training=null;if(reuseArena)scene.resetTraining();else{scene.dispose();scene=null;trainingVenue=forcedVenue||(__ACTIVITY_PREVIEW__&&new URLSearchParams(location.search).get('venue'))||['arena','axis','gehenna'][Math.floor(Math.random()*3)];}loading.show(trainingVenue,mapTitle(trainingVenue));
+ try{if(!reuseArena){scene=await createSkyScene(toile,trainingVenue,{localTraining:true});if(__ACTIVITY_PREVIEW__&&window.__activityPreview)window.__activityPreview=scene;}const forced=forcedEncounter??(__ACTIVITY_PREVIEW__?new URLSearchParams(location.search).get('opponent'):null),selection=pickSoloEncounter(scene.catalogue,{forced,allowedCharacters});training=createTraining({...scene.trainingGeometry(),...TRAINING_VENUES[trainingVenue],character:chosenCharacter??trainingReturn.player.character,...selection,titles,entrances,introDuration:introDurationFor(trainingVenue)});scene.retainCombatCharacters(training.characters);bindScene();await Promise.all([scene.me(training.player),...training.characters.map(name=>scene.prepareCombat(name))]);training.beginIntro();loading.hide();scene.setConnected(true);leave.hidden=false;connectionNotice.hidden=true;document.querySelector('#hud h1').textContent='Combat solo · '+selection.label;music.setTrack(musicUrl(trainingVenue));}
+ catch(error){trainingBusy=false;loading.hide();await stopTraining();throw error;}
  trainingBusy=false;await tickTraining();recordDiagnostic('training-load',{durationMs:Math.round(performance.now()-trainingLoadStarted),reused:reuseArena});
 }
 // the home menu (home-menu.mjs), in place of the Antérose: solo games with a character the player's game roles unlock,
 // duels with the character of the day
-const soloMenu=createSoloMenu({assets:ASSETS});let soloChoice=null;
+const soloMenu=createSoloMenu({assets:ASSETS}),loading=createLoadingScreen({assets:ASSETS});let soloChoice=null;
 const SOLO_VENUES=['arena','axis','gehenna'];let soloVenues=SOLO_VENUES;
 const randomVenue=()=>soloVenues[Math.floor(Math.random()*soloVenues.length)];
 function trainingConfig(){return fetchJson(apiUrl('terminal')+(apiUrl('terminal').includes('?')?'&':'?')+'training=1',{headers:{Authorization:'Bearer '+etat.token}});}
@@ -119,7 +120,7 @@ const unlocked='Les personnages débloqués par vos rôles de jeux terminés.';
 const home=createHomeMenu({
  ownCharacter:()=>etat.character,
  async randomFight(){try{const {names,venues}=await playable();soloVenues=venues.length?venues:SOLO_VENUES;const character=await pickCharacter(names,unlocked);if(!character)return;soloChoice={character};await startTraining(null,randomVenue(),character);}catch(error){soloFailed(error);}},
- async tower(){try{if(apercuLocal)throw Error('La tour demande Discord.');const {names}=await playable();const character=await pickCharacter(names,unlocked);if(!character)return;await terminalAction({action:'tower',character});wakePoll();}catch(error){soloFailed(error);}},
+ async tower(){try{if(apercuLocal)throw Error('La tour demande Discord.');const {names}=await playable();const character=await pickCharacter(names,unlocked);if(!character)return;loading.show('tower1',mapTitle('tower1'));await terminalAction({action:'tower',character});wakePoll();setTimeout(()=>{if((etat.map??'anterose')==='anterose')loading.hide();},15000);}catch(error){loading.hide();soloFailed(error);}},
  async rivalRP(){try{if(apercuLocal)throw Error('Les duels demandent Discord.');const menu=await fetchJson(apiUrl('terminal'),{headers:{Authorization:'Bearer '+etat.token}});if(!menu.characters.length)throw Error("Personne d'autre n'a encore joué aujourd'hui.");const character=await pickCharacter(menu.characters,`Vous jouerez ${menu.own}. Les personnages joués aujourd'hui :`);if(!character)return;await terminalAction({action:'duel',character});wakePoll();}catch(error){soloFailed(error);}},
  async discordPlayer(){try{if(apercuLocal)throw Error('Les duels demandent Discord.');const member=await soloMenu.player({search:q=>fetchJson(apiUrl('solo/players'),posted({q})).then(r=>r.players)});if(!member)return;await terminalAction({action:'duel_player',target:member.id});wakePoll();}catch(error){soloFailed(error);}}
 });
@@ -135,8 +136,8 @@ async function runTrainingTick(){
  if(training===active&&scene===current)trainingTimer=setTimeout(tickTraining,33);
 }
 async function stopTraining(map){
- if(trainingBusy)return;trainingBusy=true;clearTimeout(trainingTimer);training=null;trainingResult.hidden=true;if(trainingStep)await trainingStep;
- const saved=trainingReturn;trainingReturn=null;scene?.dispose();scene=await createSkyScene(toile,map??saved?.map??'anterose');if(map)etat.map=map;bindScene();await scene.me({...saved?.player,character:etat.character});scene.setConnected(true);leave.hidden=(map??saved?.map??'anterose')==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map??saved?.map??'anterose');music.setTrack(musicUrl(map??saved?.map??'anterose'));trainingBusy=false;updateHome();wakePoll();
+ if(trainingBusy)return;trainingBusy=true;loading.show(map,map?mapTitle(map):'Retour au menu');clearTimeout(trainingTimer);training=null;trainingResult.hidden=true;if(trainingStep)await trainingStep;
+ const saved=trainingReturn;trainingReturn=null;scene?.dispose();scene=await createSkyScene(toile,map??saved?.map??'anterose');if(map)etat.map=map;bindScene();await scene.me({...saved?.player,character:etat.character});scene.setConnected(true);leave.hidden=(map??saved?.map??'anterose')==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map??saved?.map??'anterose');music.setTrack(musicUrl(map??saved?.map??'anterose'));trainingBusy=false;loading.hide();updateHome();wakePoll();
 }
 
 async function previewTravel(map){if(!__ACTIVITY_PREVIEW__)return;const previous=scene;scene=null;previous.dispose();etat.map=map;scene=await createSkyScene(toile,map);bindScene();await scene.me({...etat.moi,...scene.spawn,character:etat.character});scene.setConnected(true);leave.hidden=map==='anterose';document.querySelector('#hud h1').textContent=mapTitle(map);if(window.__activityPreview)window.__activityPreview=scene;music?.setTrack(musicUrl(map));}
@@ -333,15 +334,19 @@ async function publier() {
   const result = response;
   if(trainingBusy)return;
   if(result.trainingRequest)lastTrainingRequest=result.trainingRequest;
-  if(training){terminal.setRequests(result.requests);if(!['arena','axis','gehenna','thors'].includes(result.map))return;await stopTraining(result.map);}
+  // a solo fight stops only for a duel that has really started (not one still waiting for the other player)
+  if(training){terminal.setRequests(result.requests);if(!['arena','axis','gehenna','thors'].includes(result.map)||!result.duel)return;await stopTraining(result.map);}
   terminal.setRequests(result.requests);
   const ownPlayer=result.joueurs.find(p=>p.id===result.ownId)??{id:result.ownId,character:result.character,...result.position,...result.health,prop:result.game?.prop??null};
   etat.moi=ownPlayer;
   if (result.map !== (etat.map ?? "anterose") || (etat.sceneKey && result.sceneKey !== etat.sceneKey)) {
+    loading.show(result.map,result.map==='anterose'?'Retour au menu':mapTitle(result.map));
+    try{
     scene.dispose(); etat.map = result.map;
     scene = await createSkyScene(toile, etat.map);
     bindScene();
     await scene.me(ownPlayer);
+    }finally{loading.hide();}
     music.setTrack(musicUrl(etat.map));
     etat.messageCursor = result.messageCursor;
   } else if (result.relocated) {

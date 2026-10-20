@@ -1,4 +1,4 @@
-// The activity's home, in place of the Antérose: a full-screen menu. « Lancer », then the solo games (a random fight,
+// The activity's home, in place of the Antérose: a full-screen menu with the solo games (a random fight,
 // the tower of Esmelas) or the duels (with the character of the day, against a character played today or a Discord
 // member). It shows whenever the player is home (no fight, no tower); the choices themselves are made by the
 // callbacks (character and player pickers, see solo-menu.mjs).
@@ -8,7 +8,7 @@ export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownChara
  const root=document.createElement('div');root.id='sky-home';root.hidden=true;
  root.style.cssText='position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 35%,#3a2c22 0%,#201b18 60%,#120e0c 100%);color:#ffe7b0;text-align:center;font:16px system-ui;overflow:auto';
  const panel=document.createElement('div');panel.style.cssText='padding:24px 16px;max-width:92vw';root.append(panel);
- let page='launch',busy=false;
+ let page='main',busy=false;
  const title=(text,size=34)=>{const h=document.createElement('h1');h.textContent=text;h.style.cssText=`margin:0 0 6px;font:${size}px Cinzel,Georgia,serif;letter-spacing:.04em;text-shadow:0 2px 12px #000`;return h;};
  const note=text=>{const p=document.createElement('p');p.textContent=text;p.style.cssText='margin:4px 0 18px;color:#d9c49a';return p;};
  const button=(text,run,style=BUTTON)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.style.cssText=style;
@@ -17,8 +17,7 @@ export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownChara
  const go=next=>()=>{page=next;draw();};
  function draw(){
   const own=ownCharacter();
-  if(page==='launch')panel.replaceChildren(title('Le Liberl News',40),note('Combats, tour d’Esmelas et duels'),button('Lancer',go('main')));
-  else if(page==='main')panel.replaceChildren(title('Menu'),note(' '),button('Jeu solo',go('solo')),button('Duels',go('duels')));
+  if(page==='main')panel.replaceChildren(title('Le Liberl News',40),note('Combats, tour d’Esmelas et duels'),button('Jeu solo',go('solo')),button('Duels',go('duels')));
   else if(page==='solo')panel.replaceChildren(title('Jeu solo'),note('Choisissez votre personnage puis c’est parti.'),button('Combat aléatoire',randomFight),button('Tour d’Esmelas',tower),button('Retour',go('main'),QUIET));
   else panel.replaceChildren(title('Duels'),note(own?`Vous jouerez ${own}, votre personnage du jour.`:'Vous jouerez votre personnage du jour.'),button('Adversaire RP',rivalRP),button('Joueur Discord',discordPlayer),button('Retour',go('main'),QUIET));
  }
