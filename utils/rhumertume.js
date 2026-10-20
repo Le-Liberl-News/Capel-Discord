@@ -20,8 +20,8 @@ const PREFIX=['','Pom','Pompom','Pomdeter'];
 // the second stage has another form, the wizard pom « Pom-d'aspi » (drawn once for each patient, at that stage), whose
 // third stage is the « Pom funèbre »
 const ASPI="Pom-d’aspi",FUNEBRE='Pom-funèbre',ASPI_CHANCE=1/2;
-// evolutions into a Pom-d'aspi planned by hand: Paris date and time (minutes)
-const PLANNED_ASPI=[{date:'2026-10-20',minutes:19*60+41}];
+// cases planned by hand, sure to become Pom-d'aspi: Paris date and time (minutes), minutes until the second stage
+const PLANNED_ASPI=[{date:'2026-10-20',minutes:19*60+41,after:75}];
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
 // the bite: a chance on each message of a pom, until that pom has bitten twice that day (Paris)
 const BITE_CHANCE=.25,BITES_PER_POM=2;
@@ -117,28 +117,28 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    p.announced=lvl;save();
   }
  }
- // a wizard evolution planned by hand (Paris): the stage-1 pom sick the longest reaches the second stage as a Pom-d'aspi;
- // without one it waits until the end of that day
- function plannedWizards(){
+ // a case planned by hand (Paris): at its time a healthy character of the day falls ill, and reaches the second stage
+ // as a Pom-d'aspi `after` minutes later; without anyone to draw it waits until the end of that day
+ async function plannedWizards(){
   const {date,minutes}=parisParts(now());
   state.planned??={};
   for(const plan of PLANNED_ASPI){
    const key=`${plan.date} ${plan.minutes}`;
    if(state.planned[key]||plan.date!==date||minutes<plan.minutes)continue;
-   const character=Object.keys(state.infected).filter(c=>level(c)===1).sort((a,b)=>state.infected[a]-state.infected[b])[0];
-   if(!character)continue;
-   const p=patient(character);
-   if(now()-state.infected[character]<HOUR)state.infected[character]=now()-HOUR;
-   const elapsed=now()-state.infected[character],third=(p.times??STAGE_TIMES)[1];
-   p.times=[elapsed,Math.max(third,elapsed+HOUR)];p.variant='aspi';state.planned[key]=character;save();
-   log(`rhumertume: ${character} devient un Pom-d'aspi (prévu)`);
+   const candidates=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]&&!state.pending[name]);
+   if(!candidates.length)continue;
+   const character=candidates[Math.floor(random()*candidates.length)];
+   state.planned[key]=character;save();
+   try{await catches(character,"tirage programmé (Pom-d'aspi)");}catch(error){delete state.planned[key];save();throw error;}
+   const p=state.patients[character],second=plan.after*60000;
+   p.times=[second,Math.max(p.times[1],second+HOUR)];p.variant='aspi';save();
   }
  }
  let busy=false,waiting=null;
  async function tick(){
   if(busy)return;busy=true;
   try{
-   plannedWizards();
+   await plannedWizards().catch(error=>log('rhumertume: cas programmé: '+error.message));
    // an evolution that cannot be announced must not hold the day's cases back
    await evolutions().catch(error=>log('rhumertume: evolution: '+error.message));
    await pendingCases().catch(error=>log('rhumertume: annonce reprise: '+error.message));
