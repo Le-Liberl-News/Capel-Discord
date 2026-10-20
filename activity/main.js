@@ -117,12 +117,14 @@ function pickCharacter(names,note){
  return soloMenu.character({characters:names.filter(name=>catalogue[name]).sort((a,b)=>a.localeCompare(b,'fr')).map(name=>({name,portrait:catalogue[name]?.portrait,sheet:catalogue[name]})),note});
 }
 const unlocked='Les personnages débloqués par vos rôles de jeux terminés.';
+// the home's choices need the connection: a click made while the activity is still starting waits for it
+let startedUp;const startup=new Promise(resolve=>startedUp=resolve);
 const home=createHomeMenu({
  ownCharacter:()=>etat.character,
- async randomFight(){try{const {names,venues}=await playable();soloVenues=venues.length?venues:SOLO_VENUES;const character=await pickCharacter(names,unlocked);if(!character)return;soloChoice={character};await startTraining(null,randomVenue(),character);}catch(error){soloFailed(error);}},
- async tower(){try{if(apercuLocal)throw Error('La tour demande Discord.');const {names}=await playable();const character=await pickCharacter(names,unlocked);if(!character)return;loading.show('tower1',mapTitle('tower1'));await terminalAction({action:'tower',character});wakePoll();setTimeout(()=>{if((etat.map??'anterose')==='anterose')loading.hide();},15000);}catch(error){loading.hide();soloFailed(error);}},
- async rivalRP(){try{if(apercuLocal)throw Error('Les duels demandent Discord.');const menu=await fetchJson(apiUrl('terminal'),{headers:{Authorization:'Bearer '+etat.token}});if(!menu.characters.length)throw Error("Personne d'autre n'a encore joué aujourd'hui.");const character=await pickCharacter(menu.characters,`Vous jouerez ${menu.own}. Les personnages joués aujourd'hui :`);if(!character)return;await terminalAction({action:'duel',character});wakePoll();}catch(error){soloFailed(error);}},
- async discordPlayer(){try{if(apercuLocal)throw Error('Les duels demandent Discord.');const member=await soloMenu.player({search:q=>fetchJson(apiUrl('solo/players'),posted({q})).then(r=>r.players)});if(!member)return;await terminalAction({action:'duel_player',target:member.id});wakePoll();}catch(error){soloFailed(error);}}
+ async randomFight(){try{await startup;const {names,venues}=await playable();soloVenues=venues.length?venues:SOLO_VENUES;const character=await pickCharacter(names,unlocked);if(!character)return;soloChoice={character};await startTraining(null,randomVenue(),character);}catch(error){soloFailed(error);}},
+ async tower(){try{await startup;if(apercuLocal)throw Error('La tour demande Discord.');const {names}=await playable();const character=await pickCharacter(names,unlocked);if(!character)return;loading.show('tower1',mapTitle('tower1'));await terminalAction({action:'tower',character});wakePoll();setTimeout(()=>{if((etat.map??'anterose')==='anterose')loading.hide();},15000);}catch(error){loading.hide();soloFailed(error);}},
+ async rivalRP(){try{await startup;if(apercuLocal)throw Error('Les duels demandent Discord.');const menu=await fetchJson(apiUrl('terminal'),{headers:{Authorization:'Bearer '+etat.token}});if(!menu.characters.length)throw Error("Personne d'autre n'a encore joué aujourd'hui.");const character=await pickCharacter(menu.characters,`Vous jouerez ${menu.own}. Les personnages joués aujourd'hui :`);if(!character)return;if(!await soloMenu.confirm(`Êtes-vous sûr de vouloir défier ${character} ?`,'Défier'))return;await terminalAction({action:'duel',character});wakePoll();}catch(error){soloFailed(error);}},
+ async discordPlayer(){try{await startup;if(apercuLocal)throw Error('Les duels demandent Discord.');const member=await soloMenu.player({search:q=>fetchJson(apiUrl('solo/players'),posted({q})).then(r=>r.players)});if(!member)return;if(!await soloMenu.confirm(`Êtes-vous sûr de vouloir défier ${member.name} ?`,'Défier'))return;await terminalAction({action:'duel_player',target:member.id});wakePoll();}catch(error){soloFailed(error);}}
 });
 // home: no fight, no tower, no duel
 const updateHome=()=>home.show((etat.map??'anterose')==='anterose'&&!training&&!trainingBusy);
@@ -382,6 +384,8 @@ async function start() {
     bandeau.textContent = "Ouvrez cette activité depuis Discord.";
     return;
   }
+  // the menu is the first thing seen: it shows before anything loads (its choices wait for the connection)
+  home.show(true);
   etape("Chargement…");
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
@@ -393,7 +397,7 @@ async function start() {
   await scene.me({ ...etat.moi, character: etat.character });
   if((etat.map??'anterose')==='anterose'){const warm=()=>void prepareTrainingArena().catch(error=>recordDiagnostic('arena-preload-error',{message:error.message}));if(window.requestIdleCallback)window.requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,500);}
   if(apercuLocal)scene.setConnected(true);
-  chat.hidden = false;document.body.dataset.skyReady="true";updateHome();
+  chat.hidden = false;document.body.dataset.skyReady="true";updateHome();startedUp();
   if (
     __ACTIVITY_PREVIEW__ &&
     apercuLocal &&

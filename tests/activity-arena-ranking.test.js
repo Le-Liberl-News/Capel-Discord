@@ -31,7 +31,7 @@ test('dashboard challenge sends only opponent an anonymous DM; blocked DMs cance
  const duels=createActivityDuels({lobby,resolveCharacter:async id=>id==='private-a'?'Estelle':'Joshua',resolveOpponent:async()=> 'private-b',characterNames:['Estelle','Joshua']});
  const id=await duels.boardChallenge('private-a','Joshua',client);assert.equal(sent.length,1);assert.equal(sent[0].id,'private-b');assert.equal(sent[0].payload.content,"Estelle te d\u00e9fie dans l'ar\u00e8ne de Grancel.");assert.equal(JSON.stringify(sent[0].payload).includes('private-'),false);
  await duels.handle({isButton:()=>true,customId:'activity:'+id,user:{id:'private-b'},channel:{isDMBased:()=>true},client,reply:async()=>{},launchActivity:async()=>launched++});assert.equal(joined,1);assert.equal(launched,0);
- fail=true;await assert.rejects(duels.boardChallenge('private-a','Joshua',client),/MP/);assert.equal(cancelled.length,1);assert.equal(duels.pending('private-a').length,1);
+ fail=true;await assert.rejects(duels.boardChallenge('private-a','Joshua',client),/MP/);assert.equal(cancelled.length,1);assert.equal(duels.pending('private-b').length,1);assert.equal(duels.pending('private-a').length,0);
 });
 test('challenge modal lists all opponents without account IDs and sends chosen challenge',async()=>{
  let modal,challenged,replies=[];const characters=Array.from({length:60},(_,n)=>({user:'secret-'+n,name:'Hero '+n}));

@@ -62,6 +62,12 @@ export function createSoloMenu({assets}){
    }
    panel.append(grid);
   });},
+  // a last check before something that cannot be taken back (a challenge sent): true, or null when cancelled
+  confirm(question,yes){return screen(question,null,(panel,done)=>{
+   const b=document.createElement('button');b.type='button';b.textContent=yes;
+   b.style.cssText='font:18px Cinzel,Georgia,serif;padding:10px 26px;margin:10px 6px 0;border-radius:6px;border:1px solid #b49760;background:#3a2c22;color:#ffe7b0;cursor:pointer';
+   b.onclick=()=>done(true);panel.append(b);
+  });},
   // why a choice of the menu cannot go on
   notice(text){return screen('Menu',text,()=>{},'Fermer');}
  };
