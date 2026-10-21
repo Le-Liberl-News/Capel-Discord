@@ -7,7 +7,7 @@ const {createCatalogue}=require('./catalogue.cjs');
 const {cohortFromRhumertume}=require('./integration.cjs');
 function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolveCharacter,channelId,ownerId,onSay=()=>{},runtime=path.resolve(__dirname,'../../.runtime/sanktheim-live'),now=Date.now}){
  const store=name=>createActivityStateStore(path.join(runtime,name+'.json'));
- const cohort=cohortFromRhumertume(rhumertume,{daspiCharacters:new Set(['Renne','Tita'])});
+ const cohort=cohortFromRhumertume(rhumertume);
  const balanceStore=store('balance');let balance=balanceStore.load();
  if(!balance){balance=require('./balance.cjs').calibrate(cohort());if(balance)balanceStore.save(balance);}
  const siege=createSiege({store:store('state'),cohort,balance,now,enableLadders:true,seed:'sanktheim-live-2026'});

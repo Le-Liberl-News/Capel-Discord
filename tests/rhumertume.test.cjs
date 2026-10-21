@@ -166,4 +166,37 @@ test('a case cut short before its announcement is announced on the next tick, ne
  assert.equal(store.load().pending.Anelace,undefined);assert.match(store.load().patients.Anelace.cause,/tirage du jour/);
 });
 
-test('garou evolution is picked once at stage three, persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.ok(calls.includes('garou'));assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,1);});
+test('garou evolution is picked once at stage three, persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');const initial=store.load();initial.patients.Tita.variant='pompom';store.save(initial);r=make();now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.ok(calls.includes('garou'));assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,1);});
+test("the second stage's other form: Pom-d'aspi, with its own picture and evolution, then the Pom funèbre",async()=>{
+ let now=at('2026-10-26T09:00:00Z');const start=now;
+ const {r,said}=setup({now:()=>now,random:()=>0});   // random 0: the wizard form, at the shortest times
+ await r.infect('Tita');said.length=0;
+ now=start+2*3600000;await r.tick();
+ assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.deepEqual(said.at(-1).files,['evolution Tita 1->aspi']);
+ assert.equal((await r.message('Tita','Bonjour.')).avatarURL,'pom/Tita-aspi.png');
+ now=start+5.5*3600000;await r.tick();
+ assert.match(said.at(-1).text,/Quoi \? Pom-d’aspitita évolue/);assert.deepEqual(said.at(-1).files,['evolution Tita aspi->funebre']);assert.equal(r.nameOf('Tita'),'Pom-funèbretita');
+});
+test("a wizard pom's bite is a spell: the victim fades away and falls ill a few seconds later, or shrinks",async()=>{
+ // healthy Kloe fades away (random 0: the wizard form, the bite, the contagion); an ill Kloe can only shrink
+ for(const [ill,outcome,victimSprite] of [[false,'vanish',0],[true,'shrink',1]]){
+  let now=at('2026-10-26T09:00:00Z');const start=now,said=[],spells=[];
+  const r=createRhumertume({store:memory(),now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render,wait:async()=>{},
+   renderWizard:async(c,sprite,v,vs,o)=>{spells.push([c,sprite,v,vs,o]);return {attachment:Buffer.from('gif'),name:'sort.gif',duration:7000};},
+   announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
+  await r.infect('Tita');now=start+2*3600000;await r.tick();   // stage 2, the wizard form
+  if(ill)await r.infect('Kloe');
+  assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');
+  await r.message('Kloe','Salut.');await r.message('Tita','Pom.');await r.after('Tita');
+  assert.deepEqual(spells.at(-1),['Tita','aspi','Kloe',victimSprite,outcome]);
+  const intro=said.findIndex(s=>/enfourche son aspirateur et fond sur/.test(s.text));assert.ok(intro>=0);assert.deepEqual(said[intro].files,['sort.gif']);
+  assert.match(said[intro+1].text,outcome==='vanish'?/Kloe disparaît/:/se retrouve tout·e petit·e/);
+  if(!ill)assert.ok(said.slice(intro+2).some(s=>/Kloe semble développer/.test(s.text)));
+ }
+});
+test('a pom already shown at the usual second stage keeps the usual form at the third',async()=>{
+ const start=at('2026-10-26T09:00:00Z');let now=start+6*3600000;
+ const {r,said}=setup({now:()=>now,random:()=>0,cases:[],data:{infected:{Tita:start},patients:{Tita:{announced:2,rage:0,madness:0,updated:start,lastMadness:0,times:[2*3600000,5*3600000]}}}});
+ await r.tick();
+ assert.equal(r.nameOf('Tita'),'Pomdetertita');assert.ok(said.some(s=>s.text==='Quoi ? Pompomtita évolue ?!'&&s.files[0]==='evolution Tita 2->3'));
+});

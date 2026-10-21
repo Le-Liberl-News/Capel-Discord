@@ -173,12 +173,24 @@ function evolutionFrame(sprite,{glow=0,flash=0,sparkles=null}={}){
  if(flash){x.fillStyle=`rgba(255,255,255,${flash})`;x.fillRect(0,0,EVOLUTION,EVOLUTION);}
  return c;
 }
-// from: 0 = the character itself, 1 or 2 = the pom's stage; to: the next stage
+// the wizard forms (Pom-d'aspi, Pom funèbre) are shown on their orbal vacuum (chat/vacuum.png, lying like a broom,
+// handle forward), so that the name makes sense
+const VACUUM=path.join(SKY,'chat/vacuum.png');
+async function onVacuum(pom){
+ if(!fs.existsSync(VACUUM))return pom;
+ const vacuum=await loadImage(fs.readFileSync(VACUUM)),[x0,y0,x1,y1]=bounds(pom),w=x1-x0,h=y1-y0;
+ const vw=w*1.6,vh=vw*vacuum.height/vacuum.width,c=createCanvas(Math.ceil(vw),Math.ceil(h+vh*.75)),x=c.getContext('2d');
+ const seat=vw*.32;   // the body, under the pom, a quarter of the vacuum from its back
+ x.drawImage(vacuum,0,h-vh*.25,vw,vh);x.drawImage(pom,x0,y0,w,h,seat-w/2,0,w,h);
+ return c;
+}
+const stageSprite=async(character,stage)=>{const pom=await pomSprite(character,stage);return stage==='aspi'||stage==='funebre'?onVacuum(pom):pom;};
+// from: 0 = the character itself, 1, 2, 'aspi' = the pom's stage; to: the next stage (2, 3, 'aspi' or 'funebre')
 async function renderEvolution(character,from,to,seed=Date.now()){
- const before=from===0?await characterSprite(character):await pomSprite(character,from);
+ const before=from===0?await characterSprite(character):await stageSprite(character,from);
  const old=before?fitted(before,from===0?190:220,from===0):evolutionFrame(null);
  // from the character: the pom comes out smaller than the human (about two thirds of its height)
- const young=fitted(await pomSprite(character,to),from===0?Math.round((bounds(old)[3]-bounds(old)[1])*.68):220,false);
+ const young=fitted(await stageSprite(character,to),from===0?Math.round((bounds(old)[3]-bounds(old)[1])*.68):220,false);
  const rng=seeded(seed),frames=[],delays=[],add=(c,ms)=>{frames.push(c);delays.push(ms);};
  add(evolutionFrame(old),900);
  for(let i=1;i<=6;i++)add(evolutionFrame(tinted(old,i/6),{glow:6+i}),70);                       // whitening
