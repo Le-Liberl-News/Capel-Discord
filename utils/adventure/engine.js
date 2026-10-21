@@ -41,7 +41,6 @@ function createAdventure(data){
   for(const o of a.use||[]){const i=state.inventory.indexOf(String(o));if(i>=0)state.inventory.splice(i,1);}
   for(const t of a.effect||[])if(!state.triggers.includes(String(t)))state.triggers.push(String(t));
   for(const o of a.give||[])if(!state.inventory.includes(String(o)))state.inventory.push(String(o));
-  if (a.to) {go(state,a.to)};
  }
  // moving: through one of the room's exits, if its conditions hold; returns the new room's description
  function go(state,direction){
