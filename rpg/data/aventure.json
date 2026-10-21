@@ -13,8 +13,8 @@
   "final": {
     "room": 18,
     "players": 3,
-    "victory": "",
-    "closing": ""
+    "victory": "Trois poms courageux ont affronté leurs peurs et prouvé leur valeur en mettant la main sur la source du maléfice et l'ont brisé ! Le manoir s'est estompé et la forteresse Leiston est revenue à sa place. Félicitations à nos trois héros !",
+    "closing": "Merci de vous être prêtés à ce petit jeu d'Halloween ! C'est terminé pour de bon, promis. On espère que ça vous a plu :)"
   },
 
 
@@ -37,7 +37,7 @@
       "name": "Hall d'entrée",
       "exits": {
         "sud": 1,
-        "ouest": 6,
+        "ouest": 3,
         "est": {
           "to": 7,
           "must": ["bibliotheque_ouverte"],
