@@ -545,6 +545,12 @@
     "sol": [
       "rebord",
       "effondrement"
+    ],
+    "rayon": [
+      "rayons"
+    ],
+    "arts": [
+      "loisirs"
     ]
   },
 
@@ -1019,7 +1025,7 @@
       "noun": ["livre"],
       "mustnot": ["livre_pris"],
       "effect": ["livre_pris"],
-      "give": "livre",
+      "give": ["livre"],
       "text": "Vous prenez le livre de recettes avec vous."
     },
     {
