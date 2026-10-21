@@ -13,8 +13,8 @@
   "final": {
     "room": 18,
     "players": 3,
-    "victory": "Trois poms courageux ont affronté leurs peurs et prouvé leur valeur en mettant la main sur la source du maléfice et l'ont brisé ! Le manoir s'est estompé et la forteresse Leiston est revenue à sa place. Félicitations à nos trois héros !",
-    "closing": "Merci de vous être prêtés à ce petit jeu d'Halloween ! C'est terminé pour de bon, promis. On espère que ça vous a plu :)"
+    "victory": "",
+    "closing": ""
   },
 
 
@@ -724,14 +724,14 @@
       "place": [4],
       "verb": "regarder",
       "noun": [],
-      "mustnot": "escalier_decouvert",
+      "mustnot": ["escalier_decouvert"],
       "text": "Une chaise au dossier rouge se trouve derrière le bureau. Par la fenêtre, vous pouvez voir un arbuste aux feuilles séchées, devant lequel se trouve une petite croix en pierre.\nLe bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Sur ce tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21 et une carte sur laquelle est imprimée un joueur de banjo et une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
     },
     {
       "place": [4],
       "verb": "regarder",
       "noun": [],
-      "must": "escalier_decouvert",
+      "must": ["escalier_decouvert"],
       "text": "Une partie du mur ouest s'est écroulée, révélant un passage menant à un escalier."
     },
     {
@@ -1003,22 +1003,22 @@
       "place": [11],
       "verb": "regarder",
       "noun": ["rayon"],
-      "mustnot": "livre_pris",
+      "mustnot": ["livre_pris"],
       "text": "En observant plus attentivement, vous trouvez un livre de recettes dans les rayons les plus bas : « La cuisine de demain »."
     },
     {
       "place": [11],
       "verb": "regarder",
       "noun": ["rayon"],
-      "mustnot": "livre_pris",
+      "must": ["livre_pris"],
       "text": "Il n'y a absolument plus rien dans les rayons."
     },
     {
       "place": [11],
       "verb": "prendre",
       "noun": ["livre"],
-      "mustnot": "livre_pris",
-      "effect": "livre_pris",
+      "mustnot": ["livre_pris"],
+      "effect": ["livre_pris"],
       "give": "livre",
       "text": "Vous prenez le livre de recettes avec vous."
     },
