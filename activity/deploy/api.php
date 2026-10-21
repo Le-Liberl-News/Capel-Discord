@@ -3,6 +3,7 @@
 // sous le dossier du mapping, donc /api/... passe par ici (?r=token|state).
 $routes = [
     'token' => '/api/token',
+    'siege/status' => '/api/siege/status',
     'siege/session' => '/api/siege/session',
     'siege/catalogue' => '/api/siege/catalogue',
     'siege/navigation' => '/api/siege/navigation',

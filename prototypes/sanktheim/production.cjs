@@ -18,6 +18,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const pending=new Set();let ready=false;
  const isOwner=id=>String(id)===String(ownerId);
  const identity=req=>{const {id}=lobby.identity(bearer(req));return {id:'player-'+id,userId:id};};
+ app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');res.json({ready,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-1'});});
  app.use('/api/siege',async(req,res)=>{
   try{
    const user=identity(req);await access.assertMember(user.userId);
