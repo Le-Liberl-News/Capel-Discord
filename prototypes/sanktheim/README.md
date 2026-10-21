@@ -1,3 +1,9 @@
+## Mise à jour de présentation et de synchronisation
+
+Entrée MP directe conservée jusqu’à confirmation du chargement ; initialisation du mode unique. Déplacements avec temps réel par requête, crédit conservé et séquences anti-relecture, à la manière du jeu normal. Interface repliée par défaut, saisie RP compacte, options dans l’engrenage, saut tactile uniquement. Défenses à 2 500 000 PV ; migration proportionnelle de la sauvegarde.
+
+Les préavis portent le bouton de participation. Bilans sans liste des indemnes, portrait du MVP et séries personnelles tous les cinq poms sans mourir. GIFs de destruction pré-calculés depuis le modèle natif ; GIFs d’alerte sous 10 % et de décès avec sprites et PV réels, encodés dans un worker pour laisser tourner la simulation. Nouvelle alerte critique après récupération à 15 %.
+
 # Défense de Sanktheim — intégration publiée
 
 `production.cjs` branche le mode sur les sessions authentifiées du Capel et le personnage du jour, avec lecture seule de la contamination réelle. Les annonces RP sont envoyées par `discord.cjs`, conservées et dédupliquées après redémarrage. Le siège progresse sans onglet connecté. Les PV des soldats sont divisés par deux et les sauvegardes existantes migrent une seule fois. État de production séparé : `.runtime/sanktheim-live/`. Aucun bouton ni API de test en production ; arrêt réservé au propriétaire de l’événement.

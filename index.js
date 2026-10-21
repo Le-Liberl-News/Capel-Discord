@@ -237,9 +237,10 @@ client.on('messageCreate',message=>{adventure.message(message);});
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
+const sanktheimRoleplaySender=require('./utils/activityRoleplayDiscord').createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ROLEPLAY_ID,webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL,avatarFor:character=>{if(!process.env.BASE_URL)return undefined;const stats=require('./rpg/data/persos.json')[character]??require('./rpg/data/persos.json').default;const ko=state.players[character]&&state.players[character].hpActuel<=stats.hpMax/5?'_ko':'';return process.env.BASE_URL?.replace(/\/$/,'')+'/pp/'+encodeURIComponent(character+ko)+'.webp';}});
 const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
 const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
-  send:async payload=>payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{}),threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
+  send:async payload=>payload.map==="sanktheim"?sanktheimRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{})}):payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{}),threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
   onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
 });
 const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
@@ -346,7 +347,7 @@ app.post('/api/token', async (req, res) => {
 
 const activityAccess=require('./utils/activityAccess').createActivityAccess({client});
 const activitySpoilerAccess=require('./utils/activitySpoilerAccess').createActivitySpoilerAccess({client});
-const sanktheim=require('./prototypes/sanktheim/production.cjs').createProductionSiege({app,client,lobby:activiteService,access:activityAccess,bearer:activiteBearer,rhumertume,resolveCharacter:require('./commands/anonyme').getPseudoAnonyme,channelId:process.env.ROLEPLAY_ID,onSay:event=>activityRoleplay.speech(event),ownerId:process.env.SANKTHEIM_OWNER_ID||'744964573249011712'});
+const sanktheim=require('./prototypes/sanktheim/production.cjs').createProductionSiege({app,client,lobby:activiteService,access:activityAccess,bearer:activiteBearer,rhumertume,resolveCharacter:require('./commands/anonyme').getPseudoAnonyme,channelId:process.env.ROLEPLAY_ID,onSay:event=>activityRoleplay.speech(event),baseUrl:process.env.BASE_URL,ownerId:process.env.SANKTHEIM_OWNER_ID||'744964573249011712'});
 client.once('clientReady',()=>{void sanktheim.start().catch(e=>console.error('Activation Sanktheim:',e.message));});
 
 client.on('guildMemberRemove',member=>{if(member.guild.id===require('./utils/activityAccess').ACTIVITY_GUILD_ID)activityAccess.invalidate(member.id);});
@@ -367,7 +368,7 @@ app.post('/api/profile', async (req, res) => {
           return res.status(403).json({erreur:'Conversation privée invalide.'});
         }
         res.set('Cache-Control', 'no-store');
-        res.json({...await activiteService.join({id: user.id, channel: channel.id, fresh: req.body?.fresh === true}),siegeEntry:sanktheim.consumeEntry(user.id)});
+        res.json({...await activiteService.join({id: user.id, channel: channel.id, fresh: req.body?.fresh === true}),siegeEntry:sanktheim.wantsEntry(user.id)});
     } catch (error) {
         if(error.status)return res.status(error.status).json({erreur:error.message});
         const denied = [10003,10007,50001,50013].includes(error.code);
@@ -377,11 +378,11 @@ app.post('/api/profile', async (req, res) => {
 app.use(['/api/state','/api/terminal','/api/craft-capture'],async(req,res,next)=>{try{const {id}=activiteService.identity(activiteBearer(req));await activityAccess.assertMember(id);next();}catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Vérification du serveur temporairement indisponible.'});}});
 
 app.get('/api/state', async (req, res) => {
-    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, undefined, Number(req.query.after));res.json({...state,requests:activiteDuels.pending(activiteService.identity(token).id)}); }
+    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, undefined, Number(req.query.after));res.json({...state,siegeEntry:sanktheim.wantsEntry(activiteService.identity(token).id),requests:activiteDuels.pending(activiteService.identity(token).id)}); }
     catch(error){res.status(error.status || 500).json({erreur:error.message});}
 });
 app.post('/api/state', async (req, res) => {
-    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, req.body, req.body?.after);res.json({...state,requests:activiteDuels.pending(activiteService.identity(token).id)}); }
+    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, req.body, req.body?.after);res.json({...state,siegeEntry:sanktheim.wantsEntry(activiteService.identity(token).id),requests:activiteDuels.pending(activiteService.identity(token).id)}); }
     catch(error){res.status(error.status || 500).json({erreur:error.message});}
 });
 app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');if(req.query.training==='1'){const {id}=activiteService.identity(activiteBearer(req)),allowedCharacters=await activitySpoilerAccess.characters(id);const registry=require('./utils/characters');res.json({allowedCharacters,allowedVenues:['arena','axis','gehenna',...(allowedCharacters.includes('Rean')?['thors']:[])],entrances:Object.fromEntries(registry.characterNames.map(name=>[name,require("./rpg/data/persos.json")[name].entree])),titles:Object.fromEntries(registry.characterNames.map(name=>[name,registry.characterTitle(name)]))});}else res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});

@@ -40,8 +40,9 @@ const etat = {
   character: "Estelle",
   messageCursor: 0,
 };
-let siegeMode=false;
-async function enterSiege(){if(siegeMode)return;const result=await fetchJson(apiUrl("siege/session"),{headers:{Authorization:"Bearer "+etat.token}});if(!result.player)throw Error("Siège indisponible.");siegeMode=true;scene?.dispose();music?.dispose();home.show(false);await openSiege({token:etat.token,apiUrl});}
+let siegeMode=false,siegeOpening=null;
+function enterSiege(){if(siegeOpening)return siegeOpening;siegeOpening=(async()=>{const result=await fetchJson(apiUrl("siege/session"),{headers:{Authorization:"Bearer "+etat.token}});if(!result.player)throw Error("Siège indisponible.");siegeMode=true;clearTimeout(trainingTimer);training=null;trainingBusy=false;scene?.dispose();music?.dispose();home.show(false);await openSiege({token:etat.token,apiUrl});})();siegeOpening.catch(()=>{if(!siegeMode)siegeOpening=null;});return siegeOpening;}
+
 let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
  menu:()=>apercuLocal?Promise.resolve({characters:["Joshua","Lechter"],hunt:null,requests:[]}):fetchJson(apiUrl("terminal"),{headers:{Authorization:"Bearer "+etat.token}}),
@@ -154,7 +155,7 @@ async function soloSelection(selection){
  }finally{soloSelectionOpen=null;}
 }
 // home: no fight, no tower, no duel
-const updateHome=()=>home.show((etat.map??'anterose')==='anterose'&&!training&&!trainingBusy);
+const updateHome=()=>home.show(!siegeMode&&(etat.map??'anterose')==='anterose'&&!training&&!trainingBusy);
 function tickTraining(){trainingStep=runTrainingTick();return trainingStep;}
 async function runTrainingTick(){
  const active=training,current=scene;if(!active||trainingBusy)return;
@@ -340,6 +341,7 @@ async function publier() {
   });
   if(!training)notePing(performance.now()-requestStarted);
   const result = response;
+  if(result.siegeEntry){await enterSiege();return;}
   if(trainingBusy)return;
   if(result.trainingRequest)lastTrainingRequest=result.trainingRequest;
   // a solo fight stops only for a duel that has really started (not one still waiting for the other player)
@@ -396,11 +398,11 @@ async function start() {
     return;
   }
   // the menu is the first thing seen: it shows before anything loads (its choices wait for the connection)
-  home.show(true);
-  etape("Chargement…");
+  home.show(false);
+  etape("Connexion…");
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
-  if(etat.siegeEntry){startedUp();await enterSiege();return;}
+  if(etat.siegeEntry){etape("Entrée à Sanktheim…");startedUp();await enterSiege();return;}
   if ((etat.map ?? "anterose") !== "anterose") { home.show(false); loading.show(etat.map, mapTitle(etat.map)); }
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
   bindScene();
@@ -410,7 +412,7 @@ async function start() {
   await scene.me({ ...etat.moi, character: etat.character });
   if((etat.map??'anterose')==='anterose'){const warm=()=>void prepareTrainingArena().catch(error=>recordDiagnostic('arena-preload-error',{message:error.message}));if(window.requestIdleCallback)window.requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,500);}
   if(apercuLocal)scene.setConnected(true);
-  chat.hidden = false;document.body.dataset.skyReady="true";updateHome();startedUp();
+  chat.hidden = false;document.body.dataset.skyReady="true";if(apercuLocal)updateHome();startedUp();
   // a duel stage waits for the first update to know whether the duel has started; other places are ready
   if (!DUEL_MAPS.includes(etat.map)) loading.hide();
   if (

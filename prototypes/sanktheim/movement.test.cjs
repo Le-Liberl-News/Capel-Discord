@@ -1,0 +1,6 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{acceptMovement}=require('./movement.cjs');
+const nav={origin:{x:-30,z:-30},step:1,width:100,height:100,cells:Array(10000).fill(0)};
+function fixture(){const p={x:0,y:0,z:0};const context={geometry:{floor:()=>0,sweep:()=>null},navigation:()=>nav,scale:2/3,now:1000};return {p,context,move(packet,ms=100){context.now+=ms;acceptMovement(p,packet,context);}};}
+test('movement carries unused time credit across rapid polls and accepts a lagged batch',()=>{const {p,move}=fixture();for(let i=1;i<=20;i++)move({x:i*.6,z:0,sequence:i,trace:[{x:i*.6,z:0,sequence:i}]});assert.ok(Math.abs(p.x-12)<1e-8);move({x:17.4,z:0,sequence:21},900);assert.ok(Math.abs(p.x-17.4)<1e-8);});
+test('an acknowledged trace prefix or an older retry never moves the character backwards',()=>{const {p,move}=fixture();move({x:.6,z:0,sequence:1,trace:[{x:.6,z:0,sequence:1}]});move({x:1.2,z:0,sequence:2,trace:[{x:.6,z:0,sequence:1},{x:1.2,z:0,sequence:2}]});assert.equal(p.x,1.2);move({x:.6,z:0,sequence:1,trace:[{x:.6,z:0,sequence:1}]});assert.equal(p.x,1.2);assert.equal(p.movementSequence,2);});
+test('time credit does not permit forged long teleports',()=>{const {p,move}=fixture();move({x:60,z:0,sequence:1},1000);assert.equal(p.x,0);});

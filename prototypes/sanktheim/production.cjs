@@ -5,7 +5,7 @@ const {createSiege}=require('./core.cjs');
 const {createArenaBridge}=require('./arena-bridge.cjs');
 const {createCatalogue}=require('./catalogue.cjs');
 const {cohortFromRhumertume}=require('./integration.cjs');
-function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolveCharacter,channelId,ownerId,onSay=()=>{},runtime=path.resolve(__dirname,'../../.runtime/sanktheim-live'),now=Date.now}){
+function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolveCharacter,channelId,ownerId,baseUrl,onSay=()=>{},runtime=path.resolve(__dirname,'../../.runtime/sanktheim-live'),now=Date.now}){
  const store=name=>createActivityStateStore(path.join(runtime,name+'.json'));
  const cohort=cohortFromRhumertume(rhumertume);
  const balanceStore=store('balance');let balance=balanceStore.load();
@@ -14,11 +14,12 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const nativeGeometry=require('../../utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../activity/assets/sky/sanktheim/map/model.gltf'),'utf8')));
  const {geometry}=require('./geometry.cjs').createGeometry(siege,nativeGeometry);
  const arena=createArenaBridge({siege,geometry,worldScale:world.SCALE,surfaceJumps:true,onSay,resolveCharacter,isInfected:c=>rhumertume.isInfected(c),now:()=>siege._state.at});
- const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries')});
- const pending=new Set();let ready=false;
+ const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,renderHighlight:require('./highlights.cjs').renderHighlight});
+ const entries=store('entries');const pending=new Map(entries.load()??[]);const saveEntries=()=>entries.save([...pending]);let ready=false;
+ const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
  const isOwner=id=>String(id)===String(ownerId);
  const identity=req=>{const {id}=lobby.identity(bearer(req));return {id:'player-'+id,userId:id};};
- app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');res.json({ready,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-1',pendingAnnouncements:siege.outbox().length});});
+ app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');res.json({ready,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length});});
  app.use('/api/siege',async(req,res)=>{
   try{
    const user=identity(req);await access.assertMember(user.userId);
@@ -32,7 +33,8 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
    if(route==='/navigation')return res.json(arena.navigation(req.query.layer==='roof'));
    if(route==='/state')return res.json(world.snapshot(siege.snapshot()));
    if(route==='/music')return res.json(require('./music.json'));
-   if(route==='/arena')return res.json({...await arena.update(user,req.body??{}),siege:world.snapshot(siege.snapshot())});
+   if(route==='/entered'){pending.delete(user.userId);saveEntries();return res.json({ok:true});}
+   if(route==='/arena'){siege.advance(now());return res.json({...await arena.update(user,req.body??{}),siege:world.snapshot(siege.snapshot())});}
    if(route==='/admin-stop'){
     if(!isOwner(user.userId))return res.status(403).json({error:'Seul le propriétaire peut arrêter le siège.'});
     siege.stop();await announce.flush();return res.json({ok:true});
@@ -57,11 +59,11 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
      await interaction.deferReply({flags:64});
      const message=await interaction.user.send({content:'Rejoindre la défense de Sanktheim avec votre personnage du jour.',components:[{type:1,components:[{type:2,custom_id:'sanktheim:enter',label:'Entrer à Sanktheim',style:1}]}],allowedMentions:{parse:[]}});
      await interaction.editReply({content:'Votre bouton de lancement est dans vos messages privés avec Capel.',components:[{type:1,components:[{type:2,style:5,label:'Ouvrir Capel',url:'https://discord.com/channels/@me/'+message.channelId}]}]});
-    }else{pending.add(interaction.user.id);await interaction.launchActivity();}
+    }else{pending.set(interaction.user.id,now()+10*60000);saveEntries();if(lobby.isConnected?.(interaction.user.id))await interaction.reply({content:'Vous rejoignez directement Sanktheim dans votre activité ouverte.',flags:64});else await interaction.launchActivity();}
    }
-  }catch(e){pending.delete(interaction.user.id);if(interaction.deferred)await interaction.editReply({content:e.message,components:[]});else if(!interaction.replied)await interaction.reply({content:e.message,flags:64});}
+  }catch(e){pending.delete(interaction.user.id);saveEntries();if(interaction.deferred)await interaction.editReply({content:e.message,components:[]});else if(!interaction.replied)await interaction.reply({content:e.message,flags:64});}
   return true;
  }
- return {start,handle,siege,arena,captureMessage(message){const p=siege._state.players['player-'+message.author.id];if(!p?.online||message.author.bot||message.webhookId||p.discordChannel!==message.channelId)return;arena.chat.push({id:message.id,author:p.id,character:p.name,text:String(message.cleanContent??message.content).slice(0,4000),created:now()});if(arena.chat.length>100)arena.chat.shift();},consumeEntry(id){const value=pending.has(id);pending.delete(id);return value;},close(){clearInterval(timer);clearInterval(announcements);siege.save();}};
+ return {start,handle,siege,arena,captureMessage(message){const p=siege._state.players['player-'+message.author.id];if(!p?.online||message.author.bot||message.webhookId||p.discordChannel!==message.channelId)return;arena.chat.push({id:message.id,author:p.id,character:p.name,text:String(message.cleanContent??message.content).slice(0,4000),created:now()});if(arena.chat.length>100)arena.chat.shift();},wantsEntry,consumeEntry:wantsEntry,close(){clearInterval(timer);clearInterval(announcements);siege.save();}};
 }
 module.exports={createProductionSiege};

@@ -1,0 +1,15 @@
+// Offline authoring only. Requires Playwright/Chrome and the usual canvas package.
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const repo=path.resolve(__dirname,'../../..'),out=path.join(repo,'prototypes/sanktheim/assets/highlights');fs.mkdirSync(out,{recursive:true});
+const {chromium}=require(process.env.SIEGE_PLAYWRIGHT||'playwright');const {createCanvas,loadImage}=require('@napi-rs/canvas');const {GIFEncoder,quantize,applyPalette}=require('gifenc');
+const script=require('esbuild').buildSync({entryPoints:[path.join(__dirname,'highlight-scene.mjs')],bundle:true,format:'esm',write:false}).outputFiles[0].contents;
+const server=http.createServer((req,res)=>{if(req.url==='/'){res.setHeader('Content-Type','text/html');return res.end('<meta charset="utf-8"><script type="module" src="/scene.js"></script>');}if(req.url==='/scene.js'){res.setHeader('Content-Type','text/javascript');return res.end(script);}const file=path.resolve(repo,'activity',req.url.replace(/^\//,''));if(!file.startsWith(path.join(repo,'activity/assets')+path.sep)){res.statusCode=404;return res.end();}fs.readFile(file,(e,data)=>{res.statusCode=e?404:200;res.end(data);});});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({headless:true,...(process.env.SIEGE_CHROME?{executablePath:process.env.SIEGE_CHROME}:{})});try{const page=await browser.newPage();page.on('pageerror',e=>console.error(e.message));await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.captureReady,null,{timeout:120000});fs.writeFileSync(path.join(out,'garrison.png'),Buffer.from((await page.evaluate(()=>window.garrison)).split(',')[1],'base64'));
+ for(const wall of ['west-wall','west-tower','gate','east-tower','east-wall'])for(const [i,percent]of [95,85,75,65,55,45,35,25,15,5,0].entries()){
+  const file=path.join(out,wall+'-'+percent+'.gif');if(fs.existsSync(file))continue;
+  const frames=await page.evaluate(([wall,step])=>window.capture(wall,step),[wall,i+1]);const canvas=createCanvas(448,280),c=canvas.getContext('2d'),pixels=[];
+  for(const data of frames){c.drawImage(await loadImage(data),0,0);pixels.push(c.getImageData(0,0,448,280).data);}
+  const sample=[];for(const rgba of pixels)for(let p=0;p<rgba.length;p+=64)sample.push(rgba[p],rgba[p+1],rgba[p+2],rgba[p+3]);const palette=quantize(new Uint8Array(sample),128),gif=GIFEncoder();
+  for(const [f,data]of pixels.entries())gif.writeFrame(applyPalette(data,palette),448,280,{palette:f===0?palette:undefined,delay:f===pixels.length-1?650:90,repeat:-1});gif.finish();fs.writeFileSync(file,gif.bytes());console.log(wall,percent);
+ }
+ }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);server.close();process.exitCode=1;});

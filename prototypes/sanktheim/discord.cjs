@@ -1,7 +1,7 @@
 const crypto=require('node:crypto');
 // Acknowledgements are persisted after each part. Discord's nonce and the recent
 // message marker close the send/ack crash window without reposting an event.
-function createAnnouncements({client,channelId,siege,store}){
+function createAnnouncements({client,channelId,siege,store,baseUrl,renderHighlight=async()=>null}){
  const ledger=store.load()??{};let busy=false;
  async function flush(){
   if(busy||!client.isReady())return;busy=true;
@@ -12,12 +12,21 @@ function createAnnouncements({client,channelId,siege,store}){
    const recent=await channel.messages.fetch({limit:100});
    const markers=new Set([...recent.values()].filter(m=>m.author?.id===client.user.id).flatMap(m=>(m.embeds??[]).map(e=>e.footer?.text)));
    for(const event of siege.outbox()){
-    const parts=event.text.match(/[\s\S]{1,1800}/g)??[''];
+    const parts=event.text.match(/[\s\S]{1,1800}/g)??[''];let highlight;
     for(let i=0;i<parts.length;i++){
      const marker='Sanktheim · '+event.id+' · '+i;
      if(!ledger[marker]&&!markers.has(marker)){
       const nonce=BigInt('0x'+crypto.createHash('sha256').update(marker).digest('hex').slice(0,15)).toString();
-      const message=await channel.send({embeds:[{description:parts[i],color:0xb39153,footer:{text:marker}}],allowedMentions:{parse:[]},nonce,enforceNonce:true,...(event.type==='intro'&&i===0?{components:[{type:1,components:[{type:2,custom_id:'sanktheim:join',label:'Prendre part à la défense de Sanktheim',style:1},{type:2,custom_id:'sanktheim:stop',label:'Arrêter le siège',style:2}]}]}:{})});
+      const embed={description:parts[i],color:0xb39153,footer:{text:marker}};
+      if(i===0){
+       if(['threshold','soldier-death','soldier-critical'].includes(event.type))try{highlight=await renderHighlight(event);}catch(error){console.error('GIF Sanktheim:',error.message);}
+       if(highlight)embed.image={url:'attachment://'+highlight.name};
+       const mvp=event.summary?.mvp;
+       if(mvp){embed.title='🏆 '+mvp.character+' · MVP de la vague';embed.color=0xf0be54;if(baseUrl)embed.thumbnail={url:baseUrl.replace(/\/$/,'')+'/pp/'+encodeURIComponent(mvp.character)+'.webp'};}
+      }
+      const join=['intro','warning'].includes(event.type)&&i===0;
+      const components=join?[{type:1,components:[{type:2,custom_id:'sanktheim:join',label:'Prendre part à la défense de Sanktheim',style:1},...(event.type==='intro'?[{type:2,custom_id:'sanktheim:stop',label:'Arrêter le siège',style:2}]:[])]}]:undefined;
+      const message=await channel.send({embeds:[embed],allowedMentions:{parse:[]},nonce,enforceNonce:true,...(i===0&&highlight?{files:[highlight]}:{}),...(components?{components}:{})});
       ledger[marker]=message.id;
      }else ledger[marker]??=true;
      store.save(ledger);

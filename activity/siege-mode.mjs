@@ -1,6 +1,8 @@
 import screen from '../prototypes/sanktheim/screen.html';
 import {startSiege} from '../prototypes/sanktheim/arena-front.mjs';
-export async function openSiege(options){
+let opening;
+export function openSiege(options){return opening??=mountSiege(options);}
+async function mountSiege(options){
  // Keep the SDK/session in this document; no tokens in URLs or browser storage.
  document.body.replaceChildren();
  const template=document.createElement('template');template.innerHTML=screen;

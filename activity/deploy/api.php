@@ -4,6 +4,7 @@
 $routes = [
     'token' => '/api/token',
     'siege/status' => '/api/siege/status',
+    'siege/entered' => '/api/siege/entered',
     'siege/session' => '/api/siege/session',
     'siege/catalogue' => '/api/siege/catalogue',
     'siege/navigation' => '/api/siege/navigation',
