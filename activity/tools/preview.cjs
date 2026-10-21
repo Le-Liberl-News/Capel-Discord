@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 require("esbuild").buildSync({
   entryPoints: [path.join(root, "main.js")],
   bundle: true,
+  loader:{".html":"text"},
   format: "esm",
   minify: true,
   legalComments: "eof",

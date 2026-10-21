@@ -5,7 +5,7 @@
 // (character and player pickers, see solo-menu.mjs).
 const BUTTON='display:block;width:min(78vw,340px);margin:10px auto;font:20px Cinzel,Georgia,serif;padding:14px 18px;border-radius:7px;border:1px solid #b49760;background:#3a2c22;color:#ffe7b0;cursor:pointer;box-shadow:0 3px 14px #0007';
 const QUIET='display:block;margin:18px auto 0;font:15px Cinzel,Georgia,serif;background:none;border:none;color:#c9b48a;cursor:pointer;text-decoration:underline';
-export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownCharacter=()=>null}){
+export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,siege,ownCharacter=()=>null}){
  // shown and hidden through `display` (an inline display beats the hidden attribute)
  const root=document.createElement('div');root.id='sky-home';
  root.style.cssText='position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 35%,#3a2c22 0%,#201b18 60%,#120e0c 100%);color:#ffe7b0;text-align:center;font:16px system-ui;overflow:auto';
@@ -19,7 +19,7 @@ export function createHomeMenu({randomFight,tower,rivalRP,discordPlayer,ownChara
  const go=next=>()=>{page=next;draw();};
  function draw(){
   const own=ownCharacter();
-  if(page==='main')panel.replaceChildren(title('Le Liberl News',40),note('Combats, tour d’Esmelas et duels'),button('Jeu solo',go('solo')),button('Duels',go('duels')));
+  if(page==='main')panel.replaceChildren(title('Le Liberl News',40),note('Combats, tour d’Esmelas et duels'),button('Jeu solo',go('solo')),...(siege?[button('Défense de Sanktheim',siege)]:[]),button('Duels',go('duels')));
   else if(page==='solo')panel.replaceChildren(title('Jeu solo'),note('Choisissez votre personnage puis c’est parti.'),button('Combat aléatoire',randomFight),button('Tour d’Esmelas',tower),button('Retour',go('main'),QUIET));
   else panel.replaceChildren(title('Duels'),note((own?`Adversaire RP : vous jouez ${own}, votre personnage du jour.`:'Adversaire RP : vous jouez votre personnage du jour.')+' Joueur Discord : vous choisissez chacun votre personnage, puis le stage.'),button('Adversaire RP',rivalRP),button('Joueur Discord',discordPlayer),button('Retour',go('main'),QUIET));
  }

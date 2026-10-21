@@ -130,6 +130,7 @@ client.once('clientReady', async () => {
 
 client.on('interactionCreate', async interaction => {
     if (await require('./utils/activityEntry').handleActivityEntry(interaction)) return;
+    if (await sanktheim.handle(interaction)) return;
     if (await arenaBoard.handle(interaction)) return;
     if (await activiteDuels.handle(interaction)) return;
     if (await activitePropHunt.handle(interaction)) return;
@@ -345,6 +346,9 @@ app.post('/api/token', async (req, res) => {
 
 const activityAccess=require('./utils/activityAccess').createActivityAccess({client});
 const activitySpoilerAccess=require('./utils/activitySpoilerAccess').createActivitySpoilerAccess({client});
+const sanktheim=require('./prototypes/sanktheim/production.cjs').createProductionSiege({app,client,lobby:activiteService,access:activityAccess,bearer:activiteBearer,rhumertume,resolveCharacter:require('./commands/anonyme').getPseudoAnonyme,channelId:process.env.ROLEPLAY_ID,onSay:event=>activityRoleplay.speech(event),ownerId:process.env.SANKTHEIM_OWNER_ID||'744964573249011712'});
+client.once('clientReady',()=>{void sanktheim.start().catch(e=>console.error('Activation Sanktheim:',e.message));});
+
 client.on('guildMemberRemove',member=>{if(member.guild.id===require('./utils/activityAccess').ACTIVITY_GUILD_ID)activityAccess.invalidate(member.id);});
 
 app.post('/api/profile', async (req, res) => {
@@ -363,7 +367,7 @@ app.post('/api/profile', async (req, res) => {
           return res.status(403).json({erreur:'Conversation privée invalide.'});
         }
         res.set('Cache-Control', 'no-store');
-        res.json(await activiteService.join({id: user.id, channel: channel.id, fresh: req.body?.fresh === true}));
+        res.json({...await activiteService.join({id: user.id, channel: channel.id, fresh: req.body?.fresh === true}),siegeEntry:sanktheim.consumeEntry(user.id)});
     } catch (error) {
         if(error.status)return res.status(error.status).json({erreur:error.message});
         const denied = [10003,10007,50001,50013].includes(error.code);
@@ -418,6 +422,7 @@ app.post('/api/craft-capture',async(req,res)=>{
 
 // Only messages whose author already has an avatar in this activity room are relayed.
 client.on('messageCreate', message => {
+    sanktheim.captureMessage(message);
     activiteService.captureMessage({id: message.id, channel: message.channelId, author: message.author.id, text: message.cleanContent ?? message.content, direct: Boolean(message.channel.isDMBased?.()), bot: message.author.bot, webhook: Boolean(message.webhookId)});
 });
 

@@ -3,6 +3,14 @@
 // sous le dossier du mapping, donc /api/... passe par ici (?r=token|state).
 $routes = [
     'token' => '/api/token',
+    'siege/session' => '/api/siege/session',
+    'siege/catalogue' => '/api/siege/catalogue',
+    'siege/navigation' => '/api/siege/navigation',
+    'siege/state' => '/api/siege/state',
+    'siege/music' => '/api/siege/music',
+    'siege/arena' => '/api/siege/arena',
+    'siege/admin-stop' => '/api/siege/admin-stop',
+
     'state' => '/api/state',
     'profile' => '/api/profile',
     'terminal' => '/api/terminal',
@@ -31,6 +39,7 @@ if ($authorization === '' && function_exists('getallheaders')) {
 $corps = file_get_contents('php://input');
 // Training configuration is a distinct authenticated GET on the terminal route.
 $query = ($route === 'terminal' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && ($_GET['training'] ?? '') === '1') ? '?training=1' : '';
+if ($route === 'siege/navigation') $query = '?layer=' . (($_GET['layer'] ?? '') === 'roof' ? 'roof' : 'ground');
 $requete = curl_init('http://127.0.0.1:3000' . $routes[$route] . $query);
 curl_setopt_array($requete, [
     CURLOPT_RETURNTRANSFER => true,

@@ -23,6 +23,7 @@ jobs:
     - name: Test activity movement and sessions
       run: |
         npm run activity:test
+        node --test prototypes/sanktheim/*.test.cjs prototypes/sanktheim/*.test.mjs
         node --test tests/activity-service.test.js tests/activity-world.test.js tests/activity-duel.test.js tests/activity-access.test.js
 
     - name: Test native texture transparency

@@ -1,0 +1,3 @@
+function path(origin,aim,geometry){const points=[{...origin,t:0}],duration=1900;let previous=origin;for(let i=1;i<=48;i++){const k=i/48,p={x:origin.x+(aim.x-origin.x)*k,y:origin.y+(aim.y-origin.y)*k+Math.sin(k*Math.PI)*8,z:origin.z+(aim.z-origin.z)*k,t:k*duration},hit=geometry?.sweep(previous,p,.35);if(hit){points.push({...hit.point,t:p.t});return points;}points.push(p);previous=p;}return points;}
+function at(shell,time){const age=time-shell.at,points=shell.points;let i=0;while(i<points.length-2&&points[i+1].t<age)i++;const a=points[i],b=points[i+1],k=Math.max(0,Math.min(1,(age-a.t)/(b.t-a.t||1)));return {x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k,z:a.z+(b.z-a.z)*k};}
+module.exports={path,at};

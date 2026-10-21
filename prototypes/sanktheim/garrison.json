@@ -1,0 +1,98 @@
+[
+  {
+    "id": "soldier-1",
+    "name": "Soldat Jules",
+    "chip": "ch01640._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 1,
+    "position": [
+      -6,
+      0,
+      3
+    ]
+  },
+  {
+    "id": "soldier-2",
+    "name": "Soldat Hector",
+    "chip": "ch01640._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 2,
+    "position": [
+      -6,
+      0,
+      -3
+    ]
+  },
+  {
+    "id": "soldier-3",
+    "name": "Soldat Chesley",
+    "chip": "ch01300._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 3,
+    "position": [
+      -17,
+      11.75,
+      11
+    ]
+  },
+  {
+    "id": "soldier-6",
+    "name": "Soldat Wayne",
+    "chip": "ch01300._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 6,
+    "position": [
+      -17,
+      11.75,
+      -11
+    ]
+  },
+  {
+    "id": "soldier-7",
+    "name": "Adjudant Talbot",
+    "chip": "ch01300._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 7,
+    "position": [
+      -18,
+      11.75,
+      0
+    ]
+  },
+  {
+    "id": "soldier-13",
+    "name": "Adjudant-chef Dale",
+    "chip": "ch01310._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 13,
+    "position": [
+      -5,
+      0,
+      0
+    ]
+  },
+  {
+    "id": "soldier-14",
+    "name": "Soldat Wolpe",
+    "chip": "ch01640._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 14,
+    "position": [
+      -24,
+      7.25,
+      21
+    ]
+  },
+  {
+    "id": "soldier-15",
+    "name": "Soldat Olnis",
+    "chip": "ch01640._ch",
+    "source": "FC/t3400._sn",
+    "npcIndex": 15,
+    "position": [
+      -24,
+      7.25,
+      -21
+    ]
+  }
+]

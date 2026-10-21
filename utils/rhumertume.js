@@ -71,8 +71,9 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since,state.patients[character]?.times);}
  const level=character=>{const s=stage(character);return s==null?0:levelOf(s);};
  // Pomestelle, Pompomestelle, Pomdeterestelle: the character's name runs on, without its capital
-const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(0).toLocaleLowerCase('fr')+character.slice(1):character;
- const avatarOf=(character,lvl=level(character))=>characterNames.includes(character)?pictures().avatarURL(character,lvl):AVATAR_URL;
+const nameOf=(character,lvl=level(character))=>lvl?(lvl===3&&variant(character)==='garou'?'Pomgarou':PREFIX[lvl])+character.charAt(0).toLocaleLowerCase('fr')+character.slice(1):character;
+ const variant=character=>level(character)===3?(state.patients[character]?.kind??'pom'):'pom';
+ const avatarOf=(character,lvl=level(character))=>characterNames.includes(character)?pictures().avatarURL(character,lvl===3&&variant(character)==='garou'?'garou':lvl):AVATAR_URL;
  // a patient's book-keeping (gauges, last stage announced); one infected before this version starts where it is
  function patient(character){
   return state.patients[character]??={announced:level(character),rage:0,madness:0,updated:now(),lastMadness:0};
@@ -103,7 +104,8 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   for(const character of Object.keys(state.infected)){
    const p=patient(character),lvl=level(character);
    if(lvl<=p.announced)continue;
-   await announceWith(`Quoi ? ${nameOf(character,lvl-1)} évolue ?!`,()=>pictures().renderEvolution(character,lvl-1,lvl));
+   if(lvl===3&&!p.kind){p.kind=random()<.25?'garou':'pom';save();}
+   await announceWith(`Quoi ? ${nameOf(character,lvl-1)} évolue ?!`,()=>pictures().renderEvolution(character,lvl-1,lvl===3&&p.kind==='garou'?'garou':lvl));
    p.announced=lvl;save();
   }
  }
@@ -146,7 +148,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   if(healthy.length<3)return;
   const attackers=shuffled(poms).slice(0,3),defenders=shuffled(healthy).slice(0,3);
   let outcome=['repel','rescue','flee','devour'][Math.floor(random()*4)],result=null;
-  try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:level(character)})),outcome,Math.floor(random()*2**31));}
+  try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:variant(character)==='garou'?'garou':level(character)})),outcome,Math.floor(random()*2**31));}
   catch(error){log('rhumertume: siege: '+error.message);}
   // without the picture, the draw alone decides who falls
   outcome=result?.outcome??outcome;
@@ -198,7 +200,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
     const victim=pick(victims);state.bites[today]=[...bitten,{pom:character,victim}];save();
     // the rage, the bite, then the GIF of the pom jumping on its victim
     await announceWith(`${nameOf(character)} rentre dans une rage incontrôlable.\n${fill(pick(RAGE),{perso:nameOf(character),victime:stage(victim)==null?victim:nameOf(victim)})}`,
-     ()=>pictures().renderBite(character,level(character),victim,level(victim)));
+     ()=>pictures().renderBite(character,variant(character)==='garou'?'garou':level(character),victim,variant(victim)==='garou'?'garou':level(victim)));
     if(stage(victim)==null&&random()<CONTAGION)await catches(victim,'morsure de '+character);
    }
   }
@@ -223,7 +225,7 @@ const nameOf=(character,lvl=level(character))=>lvl?PREFIX[lvl]+character.charAt(
   catch(error){await interaction.editReply({content:error.message});}
   return true;
  }
- return {tick,infect,stage,level,nameOf,roleplay,message,after,handle,gauges:c=>state.patients[c]&&{rage:state.patients[c].rage,madness:state.patients[c].madness},
+ return {tick,infect,stage,level,variant,nameOf,roleplay,message,after,handle,gauges:c=>state.patients[c]&&{rage:state.patients[c].rage,madness:state.patients[c].madness},
   isInfected:character=>stage(character)!=null,infected:()=>Object.keys(state.infected)};
 }
 module.exports={createRhumertume,pomify,pomifyFinal,progress,moods,parisParts,AVATAR_URL,LAST_DAY};

@@ -13,8 +13,8 @@ export function createXRayPass(THREE){
     }
     for(const child of object.children)collect(child);
   }
-  return {render(renderer,scene,camera){
-    for(const child of scene.children)collect(child);
+  return {render(renderer,scene,camera,{only=null}={}){
+    if(only)collect(only);else for(const child of scene.children)collect(child);
     if(!touched.length)return;
     // only the materials above are touched; the rest of the scene is hidden for this pass
     const hidden=[];scene.traverse(object=>{if((object.isMesh||object.isSprite||object.isPoints||object.isLine)&&object.visible&&![].concat(object.material??[]).some(m=>seen.has(m))){object.visible=false;hidden.push(object);}});

@@ -165,3 +165,5 @@ test('a case cut short before its announcement is announced on the next tick, ne
  assert.ok(said.some(t=>/Anelace semble développer/.test(t)));assert.equal(r.isInfected('Anelace'),true);
  assert.equal(store.load().pending.Anelace,undefined);assert.match(store.load().patients.Anelace.cause,/tirage du jour/);
 });
+
+test('garou evolution is picked once at stage three, persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.ok(calls.includes('garou'));assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,1);});

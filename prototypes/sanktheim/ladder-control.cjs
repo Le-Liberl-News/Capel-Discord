@@ -1,0 +1,5 @@
+const motion=require('./ladder-motion.cjs');
+const length=c=>(c.points??[c.from,c.to]).slice(1).reduce((n,p,i)=>{const a=(c.points??[c.from,c.to])[i];return n+Math.hypot(p.x-a.x,p.y-a.y,p.z-a.z);},0);
+function drive(climb,input){const dx=climb.to.x-climb.from.x,dz=climb.to.z-climb.from.z,n=Math.hypot(dx,dz)||1,l=Math.max(1,Math.hypot(input?.x??0,input?.z??0));return Math.max(-1,Math.min(1,((input?.x??0)*dx+(input?.z??0)*dz)/(n*l)));}
+function update(p,dt,at,blocked=false){const c=p.climb;if(!c?.controlled)return false;const fresh=at-(p.ladderInputAt??0)<400,input=fresh&&!blocked?p.ladderInput:{x:0,z:0},force=drive(c,input),old=c.progress??0;c.rate=Math.abs(force)>.2?force*6/Math.max(1,length(c)):0;c.progress=Math.max(0,Math.min(1,old+c.rate*dt));c.updatedAt=at;Object.assign(p,motion.point(c,at));p.moving=Math.abs(c.progress-old)>.00001;p.heading={dx:(c.to.x-c.from.x)*(c.rate<0?-1:1),dz:(c.to.z-c.from.z)*(c.rate<0?-1:1)};if(c.progress>=1||c.progress<=0&&c.rate<0){const end=c.progress>=1?c.to:c.from;Object.assign(p,end);p.onWall=end.y>6;p.climb=null;p.ladderNeedsExit=true;p.ladderCooldown=at+500;p.moving=false;}return true;}
+module.exports={drive,update,length};

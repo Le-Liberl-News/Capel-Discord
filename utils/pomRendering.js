@@ -144,6 +144,8 @@ async function characterSprite(character){
  c.getContext('2d').drawImage(tex,6*sheet.frameWidth,0,sheet.frameWidth,sheet.frameHeight,0,0,sheet.frameWidth,sheet.frameHeight);return c;
 }
 async function pomSprite(character,stage){
+ const local=path.join(SKY,'chat/pom',slug(character)+'-'+stage+'.png');
+ if(fs.existsSync(local))return loadImage(fs.readFileSync(local));
  const response=await fetch(avatarURL(character,stage));
  if(!response.ok)throw Error(`sprite ${character} ${stage} : HTTP ${response.status}`);
  return loadImage(Buffer.from(await response.arrayBuffer()));
