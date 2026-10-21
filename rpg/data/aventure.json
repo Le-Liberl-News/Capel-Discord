@@ -458,6 +458,12 @@
     ],
     "allumer": [
       "activer"
+    ],
+    "eteindre": [
+      "eteinds"
+    ],
+    "consulter": [
+      "consulte"
     ]
   },
 
@@ -801,7 +807,7 @@
       "place": [6],
       "verb": "regarder",
       "noun": ["statue"],
-      "text": "La statue représente un homme aux bras croisés et au regard perdu dans le vague. Une plaque descriptive se trouve devant le socle. Il y est écrit :\nFyodor Leiston, né le 24 juin 1303\n« En ce monde, toute chose et tout être sont amenés à rejoindre une place, une destination. C'est ce qu'on appelle aussi la destinée. En effet, la bible septienne nous apprend que nous n'avançons pas dans la vie au hasard : notre chemin est tracé par ceux qui nous ont précédés, et Aidios, Déesse des cieux, nous a tous précédés. Je suis par conséquent convaincu que, de par ses divins desseins, la bonté et la douceur sont destinés à trouver leur place en toute chose et en tout être. »"
+      "text": "La statue représente un homme aux bras croisés et au regard perdu dans le vague. Une plaque descriptive se trouve devant le socle. Il y est écrit :\nFyodor Leiston, né le 24 juin 1303\n« En ce monde, toute chose et tout être sont amenés à rejoindre une place, une destination. C'est ce qu'on appelle aussi la destinée. En effet, la bible septienne nous apprend que nous n'avançons pas dans la vie au hasard : notre chemin est tracé par ceux qui nous ont précédés, et Aidios, Déesse des cieux, nous a tous précédés. Je suis par conséquent convaincu que, de par ses divins desseins, la bonté et la douceur sont destinées à trouver leur place en toute chose et en tout être. »"
     },
     {
       "place": [6],
@@ -837,37 +843,37 @@
       "place": [7,71,72,73,74,75,76],
       "verb": "consulter",
       "noun": ["musique"],
-      "to": 71
+      "move": 71
     },
     {
       "place": [7,71,72,73,74,75,76],
       "verb": "consulter",
-      "noun": ["litterature"],
-      "to": 72
+      "noun": ["littérature"],
+      "move": 72
     },
     {
       "place": [7,71,72,73,74,75,76],
       "verb": "consulter",
       "noun": ["arts"],
-      "to": 73
+      "move": 73
     },
     {
       "place": [7,71,72,73,74,75,76],
       "verb": "consulter",
       "noun": ["sciences"],
-      "to": 74
+      "move": 74
     },
     {
       "place": [7,71,72,73,74,75,76],
       "verb": "consulter",
       "noun": ["mythologie"],
-      "to": 75
+      "move": 75
     },
     {
       "place": [7,71,72,73,74,75,76],
       "verb": "consulter",
       "noun": ["enfant"],
-      "to": 76
+      "move": 76
     },
     {
       "place": [73],
