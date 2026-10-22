@@ -1,8 +1,10 @@
+import {loadNativeProp} from './native-prop.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import forestry from './forestry.cjs';
 const {TREES,growth,REACH}=forestry;
 export function createForestView({T,model,asset,getState,getOwn,send,sounds,scale=2/3}){
  const root=new T.Group();root.name='sanktheim-forest';root.userData.noXRay=true;model.add(root);
+ let axeTemplate=null;const axes=new Map();loadNativeProp(T,asset,'t03ono00',1.35).then(g=>axeTemplate=g).catch(console.error);
  const views=new Map(),seen=new Set();let disposed=false,near=null,lastSound=0,lastRevision=-1,lastError=null,errorUntil=0;
  const button=document.createElement('button');button.id='siege-chop';button.hidden=true;button.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:35;padding:8px 12px;border:1px solid #b59b67;border-radius:5px;background:#182a2fee;color:#ffe7b0;font:13px system-ui';document.body.append(button);
  const request=()=>{const own=getOwn();if(own?.chopping)send({type:'forest',kind:'cancel'});else if(near)send({type:'forest',kind:'chop',tree:near.id});button.blur();};button.onclick=request;
@@ -22,7 +24,10 @@ export function createForestView({T,model,asset,getState,getOwn,send,sounds,scal
   }}
   const current=states.get(own?.chopping),chopping=current?.worker===own?.id;
   button.hidden=!chopping&&!near&&time>=errorUntil;button.textContent=time<errorUntil?lastError:chopping?`Coupe · ${Math.min(100,Math.floor(current.work/f.cutTime*100))} % · Annuler [X]`:near?`Couper cet arbre · 1 min · +${near.wood} bois [X]`:'';
-  for(const p of state.players)if(p.chopping){const v=avatars.get(p.id),d=TREES.find(d=>d.id===p.chopping);if(v&&d){const beat=(time%900)/900,lean=Math.sin(beat*Math.PI*2)*.08;v.mesh.rotation.z+=lean;v.mesh.position.y+=Math.abs(Math.sin(beat*Math.PI*2))*.035;}}
+  const active=new Set();for(const p of state.players)if(p.chopping){const v=avatars.get(p.id),d=TREES.find(d=>d.id===p.chopping);if(v&&d){const beat=(time%900)/900,lean=Math.sin(beat*Math.PI*2)*.08;v.mesh.rotation.z+=lean;v.mesh.position.y+=Math.abs(Math.sin(beat*Math.PI*2))*.035;
+    if(axeTemplate){active.add(p.id);let axe=axes.get(p.id);if(!axe){axe=new T.Group();const prop=axeTemplate.clone(true);prop.position.y=-1.05;axe.add(prop);root.add(axe);axes.set(p.id,axe);}const dx=d.x-p.x/scale,dz=d.z-p.z/scale,angle=Math.atan2(dx,dz);axe.position.set(p.x/scale+Math.cos(angle)*.45,p.y/scale+1.2,p.z/scale-Math.sin(angle)*.45);axe.rotation.set(0,angle,0);axe.rotateX(-.8+Math.sin(beat*Math.PI*2)*1.05);}
+  }}for(const [id,axe]of axes)if(!active.has(id)){axe.removeFromParent();axes.delete(id);}
+
   if(chopping&&time-lastSound>900){lastSound=time;sounds.play('siege-wall-hit',{gain:.13});}
   for(const e of state.events)if(e.type==='tree-felled'&&!seen.has(e.id)){seen.add(e.id);if(state.at-e.at<1200&&own){const gain=Math.max(0,1-Math.hypot(own.x-e.position.x,own.z-e.position.z)/25);if(gain)sounds.play('siege-wall-break',{gain:gain*.35});}}
  }

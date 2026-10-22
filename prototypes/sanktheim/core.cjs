@@ -26,7 +26,7 @@ function createSiege({store,now=Date.now,cohort=()=>[],seed='sanktheim-2026',bal
  for(const p of Object.values(state.players)){p.online=false;p.input={x:0,z:0};}
  state.turrets??=[];state.barricades??=[];let movementGeometry=null;let dirty=false;const actors=()=>[...state.soldiers,...Object.values(state.players),...state.turrets.filter(t=>t.hp>0),...state.barricades.filter(b=>b.hp>0)];const breached=z=>state.walls.some(w=>w.hp===0&&Math.abs(z-w.z)<(w.id.includes('wall')?3.5:2.5));
  const save=()=>{store?.save(state);dirty=false;};
- function emit(type,text,extra={}){const e={id:'sanktheim-'+(++state.seq),at:state.at,type,text,...extra};state.events.push(e);if(state.events.length>500)state.events.shift();if(['intro','threshold','soldier-death','soldier-critical','rest','wave-start','wave-end','warning','breach','stopped'].includes(type))state.outbox.push(e);dirty=true;return e;}
+ function emit(type,text,extra={}){const e={id:'sanktheim-'+(++state.seq),at:state.at,type,text,...extra};state.events.push(e);if(state.events.length>500)state.events.shift();if(['turret-installed','intro','threshold','soldier-death','soldier-critical','rest','wave-start','wave-end','warning','breach','stopped'].includes(type))state.outbox.push(e);dirty=true;return e;}
  function schedule(date){return [10,13,16,19,22].map((hour,i)=>{const jitter=hour===10?hash(state.seed+date+i)%16:hash(state.seed+date+i)%31-15;return {id:date+'-'+i,start:civil(date,hour)+jitter*MINUTE};});}
  function active(t){const h=local(t).hour;return h>=10&&h<23;}
  function start(){if(!state.started){state.started=true;emit('intro',INTRO,{button:{label:'Prendre part à la défense de Sanktheim',route:'sanktheim'}});save();}}
