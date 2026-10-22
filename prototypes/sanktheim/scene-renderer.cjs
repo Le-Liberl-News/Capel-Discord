@@ -2,10 +2,16 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const root=path.resolve(__dirname,'../..');let browser,server,idle,serial=Promise.resolve();
 async function launch(){
  const {chromium:playwright}=require(process.env.SANKTHEIM_PLAYWRIGHT||'playwright-core');
- let executablePath=process.env.SANKTHEIM_CAPTURE_CHROME,args=[];
+ let executablePath=process.env.SANKTHEIM_CAPTURE_CHROME,args=[],env=process.env;
  if(!executablePath&&process.platform==='win32')executablePath='C:/Program Files/Google/Chrome/Application/chrome.exe';
- if(!executablePath){const {default:chromium}=await import('@sparticuz/chromium');executablePath=await chromium.executablePath();args=chromium.args;}
- return playwright.launch({headless:true,executablePath,args,timeout:45000});
+ if(!executablePath){const {default:chromium}=await import('@sparticuz/chromium');executablePath=await chromium.executablePath();args=chromium.args;
+  // Shared hosting may omit NSS/NSPR. Use the libraries shipped with this exact
+  // Chromium build, in our private cache; no system package installation needed.
+  const cache=path.join(require('node:os').tmpdir(),'capel-chromium-153'),lib=path.join(cache,'lib');
+  if(!fs.existsSync(path.join(lib,'libnspr4.so'))){fs.mkdirSync(cache,{recursive:true});const archive=path.join(cache,'libraries.tar');fs.writeFileSync(archive,require('node:zlib').brotliDecompressSync(fs.readFileSync(path.join(path.dirname(require.resolve('@sparticuz/chromium')),'../bin/al2023.tar.br'))));require('node:child_process').execFileSync('tar',['-xf',archive,'-C',cache]);fs.unlinkSync(archive);}
+  env={...process.env,LD_LIBRARY_PATH:[lib,process.env.LD_LIBRARY_PATH].filter(Boolean).join(':')};
+ }
+ return playwright.launch({headless:true,executablePath,args,env,timeout:45000});
 }
 function host(){return new Promise(resolve=>{
  const mime={'.js':'text/javascript','.json':'application/json','.gltf':'model/gltf+json','.png':'image/png','.webp':'image/webp','.woff':'font/woff','.woff2':'font/woff2'};
