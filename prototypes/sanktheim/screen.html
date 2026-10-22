@@ -10,7 +10,7 @@ summary{cursor:pointer;padding:8px 11px;user-select:none}summary::marker{color:#
 #wave-banner{position:fixed;top:23%;left:0;width:100%;text-align:center;pointer-events:none;z-index:20;font:900 clamp(26px,5vw,60px) system-ui;color:#fff0be;text-shadow:0 4px 6px #000,0 0 24px #b64416;opacity:0;transform:translateY(-15px);transition:opacity .3s,transform .3s}#wave-banner.visible{opacity:1;transform:translateY(0)}
 </style>
 <div id="wave-banner" role="status" aria-live="assertive"></div>
-<details id="hud"><summary>Remparts <span id="siege-phase"></span></summary><section id="siege-panel-body"><p id="clock"></p><div id="walls"></div></section></details>
+<details id="hud"><summary>Remparts <span id="siege-phase"></span></summary><section id="siege-panel-body"><p id="clock"></p><div id="walls"></div><p id="siege-wood" style="font-size:12px;margin:8px 0 0;color:#d6bb80">Bois commun · 0</p></section></details>
 <details id="siege-journal"><summary>Journal</summary><div id="log" role="log" aria-label="Journal du siège"></div></details>
 <details id="siege-settings"><summary aria-label="Réglages" title="Réglages">⚙</summary></details><p id="message" role="status"></p>
 <div hidden id="siege-internal"><span id="counter"></span><span id="health"></span><span id="mode"></span><button hidden id="reset"></button><button hidden id="test-side"></button><button hidden id="wave"></button><button hidden id="damage"></button><button hidden id="stop"></button></div>

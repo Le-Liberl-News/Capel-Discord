@@ -166,7 +166,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
    const door=new THREE.Mesh(new THREE.BoxGeometry(2.8,3,.5),new THREE.MeshBasicMaterial({color:0x564333,transparent:true,opacity:0,depthWrite:false}));door.position.y=1.15;hangarDoor.add(door);model.add(hangarDoor);
   }
   model.updateMatrixWorld(true);
-  const collision = collisionModule.createSurfaceCollision(THREE, model);
+  const nativeCollision = collisionModule.createSurfaceCollision(THREE, model);
+  const collision = venue?.collision?.(nativeCollision)??nativeCollision;
   model.traverse((object) => {
     if (object.isMesh) {
       const materials = Array.isArray(object.material)
