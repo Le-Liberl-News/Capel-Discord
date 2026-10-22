@@ -9,7 +9,7 @@ const DEFAULT_DIRECTIONS={nord:['n','nord'],sud:['s','sud'],est:['e','est'],oues
 const DEFAULT_COMMANDS={inventaire:['inventaire','inv','i'],regarder:['regarder','regarde','r','observer'],aide:['aide','help','?'],aller:['aller','va','vais','marcher','avancer','entrer','entre','go']};
 // "Ouvre-la porte, avec l'énorme clé !" -> ['ouvre','porte','enorme','cle'] (no accents, no articles)
 function words(text){
- return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[^a-z0-9?\s-]/g,' ').replace(/-/g,' ')
+ return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[^a-z0-9?\s-]/g,' ')
   .split(/\s+/).filter(w=>w&&!STOPWORDS.has(w));
 }
 const norm=w=>words(w).join(' ');
