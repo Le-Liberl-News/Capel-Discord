@@ -250,6 +250,7 @@
   "third/sc014_00._ef": {
     "name": "third-sc014_00",
     "frames": 90,
+    "lastVisibleFrame": 89,
     "duration": 5000,
     "size": 4
   },
@@ -523,6 +524,27 @@
     "name": "sc-sc000_10",
     "frames": 90,
     "lastVisibleFrame": 17,
+    "duration": 1000,
+    "size": 4
+  },
+  "third/msc0370._ef": {
+    "name": "third-msc0370",
+    "frames": 90,
+    "lastVisibleFrame": 89,
+    "duration": 1400,
+    "size": 4
+  },
+  "third/sc013_00._ef": {
+    "name": "third-sc013_00",
+    "frames": 90,
+    "lastVisibleFrame": 77,
+    "duration": 1000,
+    "size": 4
+  },
+  "third/msc0320._ef": {
+    "name": "third-msc0320",
+    "frames": 90,
+    "lastVisibleFrame": 29,
     "duration": 1000,
     "size": 4
   }

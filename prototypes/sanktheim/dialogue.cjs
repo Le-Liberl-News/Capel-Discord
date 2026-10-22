@@ -1,4 +1,4 @@
-const ATTACK=['Défendez la muraille ouest !','Ils sont trop nombreux !','Couvrez les échelles !','Les volants ! Il nous faut des tourelles !','Pour la reine Alicia !!','Ne les laissez pas entrer dans Zeiss !',"Mais d'où sortent toutes ces saloperies ?!",'On est submergés !'];
+const ATTACK=['Défendez la muraille ouest !','Ils sont trop nombreux !','Couvrez les cordes !','Les volants ! Il nous faut des tourelles !','Pour la reine Alicia !!','Ne les laissez pas entrer dans Zeiss !',"Mais d'où sortent toutes ces saloperies ?!",'On est submergés !'];
 const REST=['Je sais pas combien de temps on va pouvoir tenir...','On a vraiment besoin de renforts.',"Y a déjà plus grand chose à manger. Va falloir songer à cuisiner un de ces poms si ça continue.","Vivement que ça soit à moi de faire la sieste, j'en peux plus.",'Aidios, je vous en prie... Si je revois une seule de ces boules de poil...','Je veux rentrer à la maison...','Mais que fait le général Morgan ?!'];
 const PREPARE=['Vous avez entendu ça ?',"C'est ces satanés pom-garous...",'Branle-bas de combat !'];
 const NIGHTMARE="Non... Non....m'approche pas, maudite bête !!! Ah, ouf... juste un cauchemar...";

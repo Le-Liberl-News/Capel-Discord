@@ -19,7 +19,7 @@ function createAnnouncements({client,channelId,siege,store,baseUrl,renderHighlig
       const nonce=BigInt('0x'+crypto.createHash('sha256').update(marker).digest('hex').slice(0,15)).toString();
       const embed={description:parts[i],color:0xb39153,footer:{text:marker}};
       if(i===0){
-       if(['threshold','soldier-death','soldier-critical'].includes(event.type))try{highlight=await renderHighlight(event);}catch(error){console.error('GIF Sanktheim:',error.message);}
+       if(['threshold','soldier-death','soldier-critical','tank-arrival'].includes(event.type))try{highlight=await renderHighlight(event);}catch(error){console.error('GIF Sanktheim:',error.message);}
        if(highlight)embed.image={url:'attachment://'+highlight.name};
        const mvp=event.summary?.mvp;
        if(mvp){embed.title='🏆 '+mvp.character+' · MVP de la vague';embed.color=0xf0be54;if(baseUrl)embed.thumbnail={url:baseUrl.replace(/\/$/,'')+'/pp/'+encodeURIComponent(mvp.character)+'.webp'};}

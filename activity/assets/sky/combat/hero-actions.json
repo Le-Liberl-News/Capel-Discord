@@ -208,7 +208,7 @@
     "slot": 17,
     "craft": {
       "name": "True Distend",
-      "nativeEffect": "Third/cr221_00._ef",
+      "nativeEffect": "Third/msc0370._ef",
       "effectDuration": 1400,
       "windup": 2800,
       "duration": 2800,
@@ -597,7 +597,7 @@
       "hitEffect": "Third/sc014_00._ef",
       "explosionEffect": "Third/sc005_16._ef",
       "effectDuration": 5000,
-      "edgeEffect": "Third/sc014_02._ef"
+      "edgeEffect": "Third/sc014_00._ef"
     }
   },
   "Cassius": {

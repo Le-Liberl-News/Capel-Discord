@@ -3,6 +3,7 @@ const root=path.resolve(__dirname,'assets/highlights');
 const wallIds=new Set(['west-wall','west-tower','gate','east-tower','east-wall']);
 const thresholds=[95,85,75,65,55,45,35,25,15,5,0];
 async function renderHighlightDirect(event){
+ if(event.type==='tank-arrival')return {attachment:fs.readFileSync(path.join(root,'tank-advance.gif')),name:'char-des-poms.gif'};
  if(event.type==='threshold'){
   if(!wallIds.has(event.wall)||!thresholds.includes(event.healthPercent))return null;
   const file=path.join(root,event.wall+'-'+event.healthPercent+'.gif');

@@ -4,10 +4,10 @@ import {bakedEffectSprite} from './baked-effects.mjs';
 import {shareTexture} from './shared-texture.mjs';
 export function createTrinityView(THREE,scene,banks){
  const views=new Map(),matrix=new THREE.Matrix4(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3(),point=new THREE.Vector3();
- const blue=material=>{material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace(/#include <map_(?:particle_)?fragment>/,'$&\n diffuseColor.rgb = vec3(max(max(diffuseColor.r,diffuseColor.g),diffuseColor.b)) * vec3(0.2,0.55,1.0);');};material.customProgramCacheKey=()=>"trinity-blue";};
+
  function plane(bank,instances){
   const map=shareTexture(bank.map);map.repeat.set(1/bank.columns,1/bank.rows);
-  const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});blue(material);
+  const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
   const geometry=new THREE.PlaneGeometry(1,1),mesh=instances?new THREE.InstancedMesh(geometry,material,instances):new THREE.Mesh(geometry,material);
   mesh.frustumCulled=false;mesh.renderOrder=4;
   return {mesh,bank,map,draw(ms,loop=false){let frame=Math.floor(Math.max(0,ms)*bank.frames/(bank.duration??3000));frame=loop?frame%bank.frames:Math.min(bank.frames-1,frame);map.offset.set(frame%bank.columns/bank.columns,1-(Math.floor(frame/bank.columns)+1)/bank.rows);},dispose(){geometry.dispose();material.dispose();map.dispose();}};
@@ -16,7 +16,7 @@ export function createTrinityView(THREE,scene,banks){
   const group=new THREE.Group();scene.add(group);
   const length=Math.hypot(event.aim.x-event.origin.x,event.aim.z-event.origin.z),count=Math.max(1,Math.ceil(length/.8));
   const trail=plane(banks.get(spec.nativeEffect.toLowerCase()),count);group.add(trail.mesh);
-  const aura=bakedEffectSprite(THREE,banks.get(spec.hitEffect.toLowerCase()),2);blue(aura.sprite.material);group.add(aura.sprite);
+  const aura=bakedEffectSprite(THREE,banks.get(spec.hitEffect.toLowerCase()),2);group.add(aura.sprite);
   const v={group,trail,count,aura,walls:[],nova:null};views.set(event.id,v);return v;
  }
  function draw(event,spec,time,avatars,camera){
@@ -35,7 +35,7 @@ export function createTrinityView(THREE,scene,banks){
    }
    const elapsed=time-(event.explodedAt-event.started);
    for(const wall of v.walls){wall.mesh.visible=elapsed>=0&&elapsed<3000;wall.draw(elapsed);}
-   if(!v.nova){v.nova=bakedEffectSprite(THREE,banks.get(spec.explosionEffect.toLowerCase()),7);blue(v.nova.sprite.material);v.group.add(v.nova.sprite);}
+   if(!v.nova){v.nova=bakedEffectSprite(THREE,banks.get(spec.explosionEffect.toLowerCase()),7);v.group.add(v.nova.sprite);}
    const center=event.explosionPoint??{x:event.triangle.reduce((n,p)=>n+p.x,0)/3,y:event.triangle.reduce((n,p)=>n+p.y,0)/3,z:event.triangle.reduce((n,p)=>n+p.z,0)/3};
    v.nova.sprite.position.set(center.x,center.y+1.5,center.z);v.nova.sprite.visible=elapsed>=0&&elapsed<3000;if(v.nova.sprite.visible)v.nova.draw(elapsed);
   }
