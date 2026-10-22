@@ -7,6 +7,6 @@ function capture(state,hit){
   .map(a=>({id:a.id,character:a.pomCharacter??a.character??a.name,name:a.name,...point(a),
    pom:!!(a.pomControlled||a.id.startsWith('pom-')),soldier:a.id.startsWith('soldier-'),
    stage:a.stage,kind:a.kind,flying:a.flying,moving:a.moving,heading:a.heading&&{...a.heading}}));
- return {at:state.at,actors,hit:{from:hit.from,kind:hit.kind,position:{...hit.position},points:hit.points?.map(p=>({...p}))}};
+ return {at:state.at,actors,scene:require('./scene-history.cjs').sceneSnapshot(state,scale),hit:{from:hit.from,kind:hit.kind,position:{...hit.position},points:hit.points?.map(p=>({...p})),projectile:hit.projectile&&JSON.parse(JSON.stringify(hit.projectile))}};
 }
 module.exports={capture};

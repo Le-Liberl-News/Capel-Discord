@@ -105,6 +105,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false,
+    preserveDrawingBuffer:!!venue?.recording,
     alpha: false,
   });
   const mapBloom=createMapBloom(renderer);
@@ -945,17 +946,17 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       reportFrameError('frame',error);
       // still show the world as it is, so the game never looks frozen
       try{mapBloom.render(scene,camera);}catch{}
-      if(!disposed)requestAnimationFrame(render);
+      if(!disposed&&!venue?.recording)requestAnimationFrame(render);
     }
   }
   function renderFrame(time) {
     if (disposed) return;
-    if (time - lastTime < 33) {
-      requestAnimationFrame(render);
+    if (!venue?.recording && time - lastTime < 33) {
+      if(!venue?.recording)requestAnimationFrame(render);
       return;
     }
     if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
-    const seconds = Math.min((time - lastTime) / 1000, 0.1);
+    const seconds = Math.max(0,Math.min((time - lastTime) / 1000, 0.1));
     lastTime = time;
     if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Carna","Don","Sieg"].includes(avatars.get(localId)?.character))yaw=faceOpponent()??Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;const push={origin:{x:target.point.x,y:target.point.y-.8,z:target.point.z},end:{x:target.point.x+(target.point.x>=-1?1.5:-1.5),y:target.point.y-.8,z:target.point.z},started:previewCollapse.started+585,duration:250};if(age>=585){Object.assign(a.position,projectionMechanics.projectionPosition(push,Date.now()));a.knockback=age<835?push:null;}a.downUntil=age>=835&&age<3335?previewCollapse.started+3335:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3400)previewCollapse=null;}
@@ -995,6 +996,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     if(isFPS&&!introPlaying&&josetteBlend<.01){const shake=donShotShake(localAttack,time);camera.translateX(shake.x);camera.translateY(shake.y);camera.rotateZ(shake.roll);}
+    if(venue?.recording?.camera){const pose=venue.recording.camera;camera=flightCamera;camera.position.set(pose.position.x,pose.position.y,pose.position.z);camera.lookAt(pose.target.x,pose.target.y,pose.target.z);camera.fov=pose.fov??45;camera.updateProjectionMatrix();}
     camera.updateMatrixWorld();
     if(altinaAiming){const valid=!!altinaLanding();crosshair.style.color=valid?'#fff':'#ff6666';altinaPrompt.disabled=altinaCameraBlend<1||!valid;altinaPrompt.title=valid?'Plonger ici':'Viser un sol libre, sans obstacle';}else crosshair.style.color='#fff';
     arenaAudience?.update(time,camera);
@@ -1272,10 +1274,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(xray&&!venueView?.renderCamera)guarded('xray',()=>{if(fighterHidden())xray.render(renderer, scene, camera,venue?.ownXRay?{only:avatars.get(localId)?.mesh}:undefined);});
     craftCapture?.update(time);
     duelFinish?.update(time,avatars,camera);
-    requestAnimationFrame(render);
+    if(!venue?.recording)requestAnimationFrame(render);
   }
-  requestAnimationFrame(render);
+  if(!venue?.recording)requestAnimationFrame(render);
   return {
+    ...(venue?.recording?{drawRecording(pose){venue.recording.camera=pose;renderFrame(performance.now());}}:{}),
     spawn,
     setNavigation(next){grid=next;walkingGrid=next;surfaceNavKey='';},
     setVenueWeather(next){if(venue)venue.weather=next;},
