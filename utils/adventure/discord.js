@@ -2,7 +2,7 @@
 // game in the player's DMs, and every DM of a player is a command. For now only administrators and the users of
 // `allowed` may play (the button checks it; a DM is only read from someone who started through the button).
 // When `final.players` players stand in the final room, each of them gets the victory text and the roleplay
-// channel the closing one. Players' states survive restarts (store).
+// channel the closing one. Players' states survive restarts (store). « /reset » in the DMs starts a player over.
 // Everything is text; a room may have a picture (its "image", a file of rpg/data/aventure/), sent on entering it
 // and with « regarder ».
 const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('discord.js');
@@ -78,6 +78,13 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
   if(msg.author.bot||msg.guild||!state.players[msg.author.id]||!msg.content.trim())return false;
   const id=msg.author.id;
   const next=(queues.get(id)||Promise.resolve()).then(async()=>{
+   // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
+   if(msg.content.trim().toLowerCase()==='/reset'){
+    const player=game.fresh(),start=game.start(player);
+    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);save();
+    await send(msg.channel,{...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]},player);
+    return;
+   }
    const player=state.players[id];
    if(state.done&&state.reached.includes(id)){await msg.channel.send({content:data.messages?.over||'Votre aventure est terminée.'});return;}
    const result=game.handle(player,msg.content);save();

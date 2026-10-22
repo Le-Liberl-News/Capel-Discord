@@ -77,3 +77,18 @@ test('a room with a picture sends it on entering and with « regarder », the ot
  adv.message(dm(user('a'),'inventaire'));await tick();await tick();assert.equal(sent.dm.at(-1)[1].files,undefined);
  adv.message(dm(user('a'),'regarder'));await tick();await tick();assert.equal(sent.dm.at(-1)[1].files[0].name,'hall.png');
 });
+test('« /reset » in the DMs starts a player over, even after the end; strangers are not heard',async()=>{
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,intro:'Début.',rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Sortie.',exits:{sud:1}}],final:{room:2,players:1,victory:'Gagné !',closing:'Fin.'}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c',closingChannelId:'rp'});
+ assert.equal(adv.message(dm(user('x'),'/reset')),false);
+ await adv.handle(button(user('a'),true).i);
+ adv.message(dm(user('a'),'nord'));for(let i=0;i<6;i++)await tick();
+ assert.equal(adv.state.done,true);assert.deepEqual(adv.state.reached,['a']);
+ adv.message(dm(user('a'),'  /RESET '));for(let i=0;i<4;i++)await tick();
+ assert.equal(adv.state.players.a.room,'1');assert.deepEqual(adv.state.reached,[]);
+ assert.ok(sent.dm.some(([,m])=>/recommence depuis le début/.test(m.content)&&/Début\./.test(m.content)));
+ adv.message(dm(user('a'),'nord'));for(let i=0;i<6;i++)await tick();
+ assert.equal(adv.state.players.a.room,'2');assert.equal(sent.channels.rp.length,1);
+ assert.equal(sent.dm.filter(([,m])=>m.content==='Gagné !').length,1);
+});
