@@ -269,7 +269,11 @@
       "id": 16,
       "name": "Laboratoire",
       "exits": {
-        "est": 18
+        "est": {
+          "to": 18,
+          "must": ["trone_ouvert"],
+          "fail": "La porte est fermée à clé."
+        }
       },
       "description": "La porte s'est refermée derrière vous. Une maigre lumière s'infiltre au travers des rideaux, mais elle ne vous permet de distinguer que quelques reflets vitreux à différents endroits de la salle."
     },
@@ -1564,7 +1568,23 @@
       "verb": "regarder",
       "noun": [],
       "must": ["rideaux_ouverts"],
+      "mustnot": ["cage_ouverte"],
       "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près d'une porte fermée à l'est de la salle."
+    },
+    {
+      "place": [16],
+      "verb": "regarder",
+      "noun": [],
+      "must": ["cage_ouverte"],
+      "mustnot": ["trone_ouvert"],
+      "text": "Le petit humain s'est enfui. Il ne reste plus que vous, la clé que vous venez de ramasser entre vos mains. Elle ouvre probablement la porte fermée à l'est."
+    },
+    {
+      "place": [16],
+      "verb": "regarder",
+      "noun": [],
+      "must": ["trone_ouvert"],
+      "text": "La porte est désormais ouverte vers l'est, mais la peur vous paralyse. Votre instinct vous dit que c'est peut-être la dernière porte que vous aurez jamais à franchir."
     },
     {
       "place": [16],
@@ -1577,17 +1597,27 @@
       "place": [16],
       "verb": "regarder",
       "noun": ["cage"],
-      "mustnot": ["rideaux_ouverts"],
+      "must": ["rideaux_ouverts"],
       "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
     },
     {
       "place": [16],
       "verb": "ouvrir",
       "noun": ["cage"],
-      "mustnot": ["rideaux_ouverts", "cage_ouverte"],
+      "must": ["rideaux_ouverts"],
+      "mustnot": ["cage_ouverte"],
       "effect":["cage_ouverte"],
       "give": ["cle"],
-      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous, puis s'arrête quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon."
+      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous, puis s'arrête quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé."
+    },
+    {
+      "place": [16],
+      "verb": "ouvrir",
+      "noun": ["porte"],
+      "must": ["rideaux_ouverts", "cage_ouverte"],
+      "effect":["trone_ouvert"],
+      "use": ["cle"],
+      "text": "Vous déverrouillez la porte, qui s'entrebaille alors. Une sensation étrange vous fait bourdonner les oreilles une fraction de seconde avant de disparaître."
     },
     {
       "place": [17],
