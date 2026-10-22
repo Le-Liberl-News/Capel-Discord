@@ -84,8 +84,13 @@ jobs:
           npm install --omit=dev --no-audit --no-fund
           node tools/prune-retired-files.cjs
           node tools/sync-application-commands.cjs
-          chmod +x maj.sh
-          ./maj.sh
+          if pm2 describe LN-Bot >/dev/null 2>&1; then
+            pm2 reload LN-Bot --update-env
+          else
+            pm2 start index.js --name LN-Bot --cwd "$PWD"
+          fi
+          pm2 save
+          node -e 'const {execFileSync}=require("node:child_process");const apps=JSON.parse(execFileSync("pm2",["jlist"],{encoding:"utf8"}));if(!apps.some(p=>p.name==="LN-Bot"&&p.pm2_env.status==="online"))process.exit(1);'
         EOF
         
         echo "✅ Déploiement terminé avec succès !"
