@@ -17,6 +17,6 @@ window.captureTank=lane=>{const frames=[],depths=[],poses=[];for(let i=0;i<FRAME
  const floor=new T.Raycaster(new T.Vector3(position.x,8,position.z),new T.Vector3(0,-1,0),0,15).intersectObject(terrain,true)[0];position.y=floor?.point.y??0;
  tank.root.position.copy(position);tank.animate(time,true);const follow=shared.tracking(position);camera.position.copy(follow.position);camera.lookAt(follow.target.x,follow.target.y,follow.target.z);camera.updateMatrixWorld(true);scene.updateMatrixWorld(true);
  renderer.render(scene,camera);frames.push(renderer.domElement.toDataURL('image/png'));const projection=new T.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
- poses.push({position,matrix:projection.elements,view:camera.matrixWorldInverse.elements});depths.push(depth());
+ poses.push({position,matrix:projection.elements.slice(),view:camera.matrixWorldInverse.elements.slice()});depths.push(depth());
  }return {frames,depths,poses,width:W,height:H,delay:DELAY};};
 window.captureReady=true;

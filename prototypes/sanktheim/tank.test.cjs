@@ -20,6 +20,7 @@ test('the tracked shot advances at gameplay speed while keeping the tank centred
    assert.ok(pose.matrix.every(Number.isFinite));assert.ok(Math.abs(pose.position.x-shared.advanceX(-63,f*meta.delay/1000)*shared.SCALE)<1e-9);
    const {target}=shared.tracking(pose.position),p=project(target,pose.matrix,pose.view,meta.width,meta.height);
    assert.ok(Math.abs(p.x-meta.width/2)<.001);assert.ok(Math.abs(p.y-meta.height/2)<.001);
+   const firstTarget=shared.tracking(first.position).target,firstDepth=project(firstTarget,first.matrix,first.view,meta.width,meta.height).z;assert.ok(Math.abs(p.z-firstDepth)<.001,'following must preserve depth and crew scale across frames');
   }
   assert.ok(meta.poses.at(-1).position.x>first.position.x);
  }
