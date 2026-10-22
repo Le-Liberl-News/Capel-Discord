@@ -301,7 +301,7 @@
         "nord": 15,
         "sud": 21,
         "ouest": 20,
-        "est": 20
+        "est": 22
       },
       "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
     },
@@ -793,7 +793,7 @@
       "verb": "regarder",
       "noun": [],
       "must": ["cle_tombee"],
-      "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloches sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau entourent cette machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
+      "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloches sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau sont maintenant éparpillés autour de la machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
     },
     {
       "place": [3],
@@ -1292,6 +1292,12 @@
     {
       "place": [10],
       "verb": "regarder",
+      "noun": ["lit"],
+      "text": "Même le lit est couvert par plusieurs arbrisseaux."
+    },
+    {
+      "place": [10],
+      "verb": "regarder",
       "noun": ["arbrisseaux"],
       "must" : ["cle_tombee"],
       "text": "Les arbrisseaux possèdent tous des feuillages d'apparence duveteuse. Par ailleurs, vous remarquez qu'ils émettent une odeur particulière, comme celle des agrumes."
@@ -1385,7 +1391,7 @@
       "verb": "fermer",
       "noun": ["yeux"],
       "must": ["vinyle_pose"],
-      "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour où nous n'étions pas encore perdus... »"
+      "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour béni où, joie, nous n'étions pas encore perdus... »"
     },
     {
       "place": [12],
@@ -1425,12 +1431,24 @@
     {
       "place": [13],
       "verb": "regarder",
+      "noun": ["lit"],
+      "text": "Le lit est d'assez petite taille. Il devait être prévu pour un enfant."
+    },
+    {
+      "place": [13],
+      "verb": "regarder",
       "noun": ["corde"],
       "text": "Aucun extrêmité de corde n'est visible. Elles sont majoritairement plongées dans la masse des peluches."
     },
     {
       "place": [13],
       "verb": "prendre",
+      "noun": ["corde"],
+      "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
+    },
+    {
+      "place": [13],
+      "verb": "tirer",
       "noun": ["corde"],
       "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
     },
@@ -1475,7 +1493,14 @@
       "mustnot": ["vinyle_pose"],
       "use": ["vinyle_2"],
       "effect": ["vinyle_pose"],
-      "text": "Vous posez le disque sur le grammophone. Il se met à tourner mais n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
+      "text": "Vous posez le disque sur le grammophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
+    },
+    {
+      "place": [14],
+      "verb": "ecouter",
+      "noun": [],
+      "must": ["vinyle_pose"],
+      "text": "Vous avez beau tendre l'oreille, vous n'entendez rien, d'ici."
     },
     {
       "place": [14],
@@ -1628,11 +1653,18 @@
     },
     {
       "place": [16],
+      "verb": "ouvrir",
+      "noun": ["rideaux"],
+      "mustnot": ["rideaux_ouverts"],
+      "text": "Vous ouvrez les rideaux voyez que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous sont couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
+    },
+    {
+      "place": [16],
       "verb": "regarder",
       "noun": [],
       "must": ["rideaux_ouverts"],
       "mustnot": ["cage_ouverte"],
-      "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près d'une porte fermée à l'est de la salle."
+      "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
     },
     {
       "place": [16],
