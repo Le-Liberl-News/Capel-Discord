@@ -269,7 +269,11 @@
       "id": 16,
       "name": "Laboratoire",
       "exits": {
-        "est": 18
+        "est": {
+          "to": 18,
+          "must": ["trone_ouvert"],
+          "fail": "La porte est fermée à clé."
+        }
       },
       "description": "La porte s'est refermée derrière vous. Une maigre lumière s'infiltre au travers des rideaux, mais elle ne vous permet de distinguer que quelques reflets vitreux à différents endroits de la salle."
     },
@@ -551,6 +555,27 @@
     ],
     "arts": [
       "loisirs"
+    ],
+    "couvert": [
+      "couverts"
+    ],
+    "plat": [
+      "plats"
+    ],
+    "cloche": [
+      "cloches"
+    ],
+    "table": [
+      "tables"
+    ],
+    "verre": [
+      "verres"
+    ],
+    "assiette": [
+      "assiettes"
+    ],
+    "chaise": [
+      "chaises"
     ]
   },
 
@@ -647,7 +672,13 @@
       "place": [2],
       "verb": "regarder",
       "noun": ["porte-manteau"],
-      "text": "Des vêtements de couleurs différentes sont sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
+      "text": "Des manteaux de couleurs différentes sont sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["manteau"],
+      "text": "Quel manteau souhaitez-vous regarder ?"
     },
     {
       "place": [2],
@@ -658,8 +689,50 @@
     {
       "place": [2],
       "verb": "regarder",
+      "noun": ["porte-manteau", "rouge"],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["porte-manteau", "violet"],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["porte-manteau", "gris"],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["manteau", "blanc"],
+      "text": "Vous remarquez un papier dans la poche du manteau. Un nombre y est écrit : 13."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["manteau", "rouge"],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["manteau", "violet"],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
+      "noun": ["manteau", "gris"],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [2],
+      "verb": "regarder",
       "noun": ["tapis"],
-      "text": "Le tapis est couvert de poussière."
+      "text": "Ce tapis vert est couvert de poussière."
     },
     {
       "place": [2],
@@ -675,6 +748,18 @@
       "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)"
     },
     {
+      "place": [2],
+      "verb": "prendre",
+      "noun": ["porte-manteau"],
+      "text": "Vous avez de drôles d'idées."
+    },
+    {
+      "place": [2],
+      "verb": "prendre",
+      "noun": ["manteau"],
+      "text": "Quelque chose vous dit qu'il vaudrait mieux les laisser à leur place..."
+    },
+    {
       "place": [3],
       "verb": "regarder",
       "noun": [],
@@ -686,7 +771,7 @@
       "verb": "regarder",
       "noun": [],
       "must": ["cle_tombee"],
-      "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloche sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau entourent cette machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
+      "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloches sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau entourent cette machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
     },
     {
       "place": [3],
@@ -711,6 +796,114 @@
       "text": "La machine est couverte de terre et de morceaux de poterie"
     },
     {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["table"],
+      "text": "Les tables traversent toute la longueur de la salle. Des couverts ainsi que deux grands plats sous cloches y sont posés pour une soixantaine d'invités."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["assiette"],
+      "text": "Les assiettes sont de très bonne facture, mais elles sont couvertes de poussière."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["plat"],
+      "text": "Ce sont de grand plats luxueux en argent."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["cloche"],
+      "text": "Les cloches sont en argent, tout comme les plats sur lesquels elles sont posées."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["couvert"],
+      "text": "Des fourchettes, des couteaux et des cuillères sont posés autour de chaque assiette."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["verre"],
+      "text": "Étonnamment, aucun verre n'est posé sur les tables."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["chaise"],
+      "text": "Les chaises semblent confortables, mais il n'y a rien à dire de plus sur elles."
+    },
+    {
+      "place": [3],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez que le plafond s'est partiellement effondré juste au-dessus de l'endroit où se trouve la machine métallique."
+    },
+    {
+      "place": [2,4,5,7,10,11,12,13,14,15],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Le plafond est couvert de lattes, soutenu par des poutres à intervalle régulier."
+    },
+    {
+      "place": [8,9],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Le plafond est vouté, mais c'est tout ce que vous arrivez à discerner."
+    },
+    {
+      "place": [20],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez un ovale discret tracé sur le plafond."
+    },
+    {
+      "place": [21],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez un trait discret tracé sur le plafond."
+    },
+    {
+      "place": [22],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez une sorte de Z discret tracé sur le plafond."
+    },
+    {
+      "place": [24],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez une sorte de 4 discret tracé sur le plafond."
+    },
+    {
+      "place": [25],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez une sorte de S discret tracé sur le plafond."
+    },
+    {
+      "place": [26],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez une sorte de b discret tracé sur le plafond."
+    },
+    {
+      "place": [27],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez une sorte de L discret tracé sur le plafond."
+    },
+    {
+      "place": [28],
+      "verb": "regarder",
+      "noun": ["plafond"],
+      "text": "Vous remarquez une sorte de 8 couché, discrètement tracé sur le plafond."
+    },
+    {
       "place": [2,3,10],
       "verb": "regarder",
       "noun": ["papier-peint"],
@@ -725,6 +918,90 @@
       "effect": ["cle_prise"],
       "give": ["cle"],
       "text": "Vous récupérez la clé."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["couvert"],
+      "text": "Il y a des fourchettes, des couteaux et des cuillères. Quel couvert souhaitez-vous prendre ?"
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["couteau"],
+      "mustnot": ["couteau_pris"],
+      "effect": ["couteau_pris"],
+      "give": ["couteau"],
+      "text": "Vous récupérez un couteau."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["fourchette"],
+      "mustnot": ["fourchette_prise"],
+      "effect": ["fourchette_prise"],
+      "give": ["fourchette"],
+      "text": "Vous récupérez une fourchette."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["cuillere"],
+      "mustnot": ["cuillere_prise"],
+      "effect": ["cuillere_prise"],
+      "give": ["cuillere"],
+      "text": "Vous récupérez une cuillère."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["couteau"],
+      "must": ["couteau_pris"],
+      "text": "Vous avez déjà un couteau."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["fourchette"],
+      "must": ["fourchette_prise"],
+      "text": "Vous avez déjà une fourchette."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["cuillere"],
+      "must": ["cuillere_prise"],
+      "text": "Vous avez déjà une cuillère."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["plat"],
+      "text": "Vous n'avez aucun intérêt à prendre un de ces plats avec vous."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["table"],
+      "text": "Vous vous prenez pour Hercules ?"
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["cloche"],
+      "text": "Vous soulevez la cloche d'un plat par curiosité. Rien. Même constat pour le plat sur l'autre table."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["machine"],
+      "text": "Vous vous prenez pour Hercules ? C'est bien trop lourd pour que vous la preniez."
+    },
+    {
+      "place": [3],
+      "verb": "prendre",
+      "noun": ["chaise"],
+      "text": "Théoriquement, vous pourriez en déplacer une dans une autre salle, mais ça n'aurait aucun intérêt."
     },
     {
       "place": [4],
@@ -1222,7 +1499,25 @@
       "tool": ["couteau"],
       "mustnot": ["chambre_ouverte"],
       "effect": ["chambre_ouverte"],
-      "text": "Vous parvenez à ouvrir la porte à l'aide du couteau que vous avez récupéré dans le salon."
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte à l'aide de la pointe du couteau que vous avez récupéré dans le salon."
+    },
+    {
+      "place": [15],
+      "verb": "ouvrir",
+      "noun": ["porte", "est", "cuillere"],
+      "tool": ["cuillere"],
+      "mustnot": ["chambre_ouverte"],
+      "effect": ["chambre_ouverte"],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la cuillère que vous avez récupérée dans le salon."
+    },
+    {
+      "place": [15],
+      "verb": "ouvrir",
+      "noun": ["porte", "est", "fourchette"],
+      "tool": ["fourchette"],
+      "mustnot": ["chambre_ouverte"],
+      "effect": ["chambre_ouverte"],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon."
     },
     {
       "place": [15],
@@ -1273,7 +1568,23 @@
       "verb": "regarder",
       "noun": [],
       "must": ["rideaux_ouverts"],
+      "mustnot": ["cage_ouverte"],
       "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près d'une porte fermée à l'est de la salle."
+    },
+    {
+      "place": [16],
+      "verb": "regarder",
+      "noun": [],
+      "must": ["cage_ouverte"],
+      "mustnot": ["trone_ouvert"],
+      "text": "Le petit humain s'est enfui. Il ne reste plus que vous, la clé que vous venez de ramasser entre vos mains. Elle ouvre probablement la porte fermée à l'est."
+    },
+    {
+      "place": [16],
+      "verb": "regarder",
+      "noun": [],
+      "must": ["trone_ouvert"],
+      "text": "La porte est désormais ouverte vers l'est, mais la peur vous paralyse. Votre instinct vous dit que c'est peut-être la dernière porte que vous aurez jamais à franchir."
     },
     {
       "place": [16],
@@ -1286,17 +1597,27 @@
       "place": [16],
       "verb": "regarder",
       "noun": ["cage"],
-      "mustnot": ["rideaux_ouverts"],
+      "must": ["rideaux_ouverts"],
       "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
     },
     {
       "place": [16],
       "verb": "ouvrir",
       "noun": ["cage"],
-      "mustnot": ["rideaux_ouverts", "cage_ouverte"],
+      "must": ["rideaux_ouverts"],
+      "mustnot": ["cage_ouverte"],
       "effect":["cage_ouverte"],
       "give": ["cle"],
-      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous, puis s'arrête quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon."
+      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous, puis s'arrête quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé."
+    },
+    {
+      "place": [16],
+      "verb": "ouvrir",
+      "noun": ["porte"],
+      "must": ["rideaux_ouverts", "cage_ouverte"],
+      "effect":["trone_ouvert"],
+      "use": ["cle"],
+      "text": "Vous déverrouillez la porte, qui s'entrebaille alors. Une sensation étrange vous fait bourdonner les oreilles une fraction de seconde avant de disparaître."
     },
     {
       "place": [17],
