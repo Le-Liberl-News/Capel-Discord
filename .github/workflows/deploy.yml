@@ -27,6 +27,9 @@ jobs:
         node --test prototypes/sanktheim/*.test.cjs prototypes/sanktheim/*.test.mjs
         node --test tests/activity-service.test.js tests/activity-world.test.js tests/activity-duel.test.js tests/activity-access.test.js
 
+    - name: Prepare private scene browser libraries
+      run: python3 tools/prepare-sanktheim-browser-libs.py
+
     - name: Test full Sanktheim scene recording
       run: node tools/check-sanktheim-scene.cjs
 

@@ -5,10 +5,10 @@ async function launch(){
  let executablePath=process.env.SANKTHEIM_CAPTURE_CHROME,args=[],env=process.env;
  if(!executablePath&&process.platform==='win32')executablePath='C:/Program Files/Google/Chrome/Application/chrome.exe';
  if(!executablePath){const {default:chromium}=await import('@sparticuz/chromium');executablePath=await chromium.executablePath();args=chromium.args;
-  // Shared hosting may omit NSS/NSPR. Use the libraries shipped with this exact
-  // Chromium build, in our private cache; no system package installation needed.
-  const cache=path.join(require('node:os').tmpdir(),'capel-chromium-153'),lib=path.join(cache,'lib');
-  if(!fs.existsSync(path.join(lib,'libnspr4.so'))){fs.mkdirSync(cache,{recursive:true});const archive=path.join(cache,'libraries.tar');fs.writeFileSync(archive,require('node:zlib').brotliDecompressSync(fs.readFileSync(path.join(path.dirname(require.resolve('@sparticuz/chromium')),'../bin/al2023.tar.br'))));require('node:child_process').execFileSync('tar',['-xf',archive,'-C',cache]);fs.unlinkSync(archive);}
+  // Use our verified Debian-compatible NSS/NSPR bundle, not the AL2023
+  // libraries (which require a newer glibc than the shared host provides).
+  const lib=path.join(__dirname,'assets/browser-libs/usr/lib/x86_64-linux-gnu');
+  if(!fs.existsSync(path.join(lib,'libnspr4.so')))throw Error('Run tools/prepare-sanktheim-browser-libs.py before Linux scene capture.');
   env={...process.env,LD_LIBRARY_PATH:[lib,process.env.LD_LIBRARY_PATH].filter(Boolean).join(':')};
  }
  return playwright.launch({headless:true,executablePath,args,env,timeout:45000});
