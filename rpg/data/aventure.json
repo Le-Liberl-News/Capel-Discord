@@ -460,7 +460,8 @@
     "regarder": [
       "voir",
       "observer",
-      "décrire"
+      "décrire",
+      "regarde"
     ],
     "allumer": [
       "activer"
@@ -578,6 +579,13 @@
     ],
     "chaise": [
       "chaises"
+    ],
+    "etiquette": [
+      "etiquettes"
+    ],
+    "carte": [
+      "cartes",
+      "tarot"
     ]
   },
 
@@ -686,7 +694,7 @@
       "place": [2],
       "verb": "regarder",
       "noun": ["porte-manteau"],
-      "text": "Des manteaux de couleurs différentes sont sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
+      "text": "Des manteaux de couleurs différentes sont posés sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
     },
     {
       "place": [2],
@@ -1021,8 +1029,35 @@
       "place": [4],
       "verb": "regarder",
       "noun": [],
+      "text": "Une chaise au dossier rouge se trouve derrière le bureau. Ce bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Des cartes de tarot sont posées dessus.\nPar la fenêtre, vous pouvez voir un arbuste aux feuilles séchées, devant lequel se trouve une petite croix en pierre."
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["tapis"],
       "mustnot": ["escalier_decouvert"],
-      "text": "Une chaise au dossier rouge se trouve derrière le bureau. Par la fenêtre, vous pouvez voir un arbuste aux feuilles séchées, devant lequel se trouve une petite croix en pierre.\nLe bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Sur ce tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21 et une carte sur laquelle est imprimée un joueur de banjo et une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["carte"],
+      "mustnot": ["escalier_decouvert"],
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["tapis"],
+      "must": ["escalier_decouvert"],
+      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["carte"],
+      "must": ["escalier_decouvert"],
+      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
     },
     {
       "place": [4],
@@ -1035,6 +1070,12 @@
       "place": [4],
       "verb": "regarder",
       "noun": ["fenetre"],
+      "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["croix"],
       "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
     },
     {
@@ -1192,7 +1233,7 @@
       "place": [8],
       "verb": "regarder",
       "noun": [],
-      "text": "Des tonneau sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor. Une odeur indescriptible arrive jusqu'à vos narines : fûmante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
+      "text": "Des tonneau sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fûmante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
     },
     {
       "place": [8],
@@ -1210,7 +1251,7 @@
       "place": [9],
       "verb": "regarder",
       "noun": [],
-      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine baignée d'une matière visqueuse."
+      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse."
     },
     {
       "place": [9],
@@ -1365,6 +1406,8 @@
       "verb": "prendre",
       "noun": ["vinyle"],
       "mustnot": ["vinyle_pris"],
+      "effect": ["vinyle_pris"],
+      "give": ["vinyle_1"],
       "text": "Vous prenez le vinyle avec vous."
     },
     {
@@ -1400,9 +1443,15 @@
     {
       "place": [14],
       "verb": "regarder",
+      "noun": ["echelle"],
+      "text": "L'échelle monte à l'étage supérieur. (*utiliser la commande \"haut\" ou \"monter\" pour l'escalader*)"
+    },
+    {
+      "place": [14],
+      "verb": "regarder",
       "noun": ["grammophone"],
       "mustnot": ["vinyle_pose"],
-      "text": "Aucun disque n'est posé dans le grammophone pour l'instant."
+      "text": "Aucun disque n'est posé sur la platine du grammophone pour l'instant."
     },
     {
       "place": [14],
