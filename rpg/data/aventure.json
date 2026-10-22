@@ -26,10 +26,12 @@
       "id": 1,
       "name": "Devant l'entrée",
       "exits": {
+        "nord": {
           "to": 2,
           "must": ["chatiere_vue"],
           "fail": "Vous n'arrivez pas à atteindre la poignée de la porte. Elle est trop haute."
-        },
+        }
+      },
       "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
     },
     {

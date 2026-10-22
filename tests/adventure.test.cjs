@@ -12,22 +12,28 @@ test('every exit leads to a room and the start and final rooms exist',()=>{
  assert.ok(ids.has(String(data.start)));assert.ok(ids.has(String(data.final.room)));
  for(const r of data.rooms)for(const e of Object.values(r.exits||{}))assert.ok(ids.has(String(e.to??e)),r.id+' → '+(e.to??e));
 });
-test('a locked door opens with the key taken in the study, and the key is used up',()=>{
+test('the front door opens once its cat flap is seen, the library once its code is given',()=>{
  const game=createAdventure(data),s=game.fresh();
- const [,locked]=play(game,s,'nord','nord');assert.match(locked.replies[0],/fermée/);assert.equal(s.room,'2');
- play(game,s,'est','nord');assert.match(game.describe(s),/clé rouillée/);
- const [take,again]=play(game,s,'prends la clef','ramasse la cle');assert.match(take.replies[0],/prenez/);assert.match(again.replies[0],/plus de clé/);
- assert.doesNotMatch(game.describe(s),/clé rouillée/);
- assert.match(game.handle(s,'inventaire').replies[0],/petite clé/);
- play(game,s,'sud','ouest');const open=game.handle(s,'ouvrir la porte avec la clé');assert.match(open.replies[0],/s'ouvre/);
- assert.deepEqual(s.inventory,[]);
- const go=game.handle(s,'aller au nord');assert.equal(s.room,'6');assert.equal(go.moved,true);assert.equal(go.first,true);
+ const [shut]=play(game,s,'nord');assert.match(shut.replies[0],/trop haute/);assert.equal(s.room,'1');
+ assert.match(game.handle(s,'regarder la porte').replies[0],/chatière/);
+ const [hall]=play(game,s,'nord');assert.equal(s.room,'2');assert.equal(hall.moved,true);assert.equal(hall.first,true);
+ const [locked]=play(game,s,'est');assert.match(locked.replies[0],/cadenas/);assert.equal(s.room,'2');
+ play(game,s,'code 1234');play(game,s,'est');assert.equal(s.room,'2');
+ play(game,s,'code 2406','est');assert.equal(s.room,'7');
+});
+test('an object is taken once, then shown in the inventory',()=>{
+ const game=createAdventure(data),s=game.fresh();
+ play(game,s,'regarder la porte','nord','ouest');assert.equal(s.room,'3');
+ const [take,again]=play(game,s,'prendre le couteau','prends le couteau');
+ assert.deepEqual(s.inventory,['couteau']);assert.notEqual(take.replies[0],again.replies[0]);
+ assert.match(game.handle(s,'inventaire').replies[0],/un couteau/);
 });
 test('unknown words and walls are answered',()=>{
  const game=createAdventure(data),s=game.fresh();
  assert.equal(game.handle(s,'danser').replies[0],"Je n'ai pas compris.");
  assert.equal(game.handle(s,'ouest').replies[0],'Vous ne pouvez pas aller par là.');
- assert.equal(game.handle(s,'regarder').look,true);
+ play(game,s,'regarder la porte','nord');
+ assert.notEqual(game.handle(s,'regarder').replies[0],"Je n'ai pas compris.");
 });
 test('long texts are cut under the Discord limit',()=>{
  const parts=chunks(('mot '.repeat(300)+'\n\n').repeat(3));assert.ok(parts.length>1);assert.ok(parts.every(p=>p.length<=1900));
@@ -52,30 +58,31 @@ test('only administrators and allowed users may enter, and the game goes on in D
  const allowed=button(user('744964573249011712'));await adv.handle(allowed.i);assert.match(allowed.r.reply.content,/message privé/);
  assert.ok(sent.dm.some(([,m])=>/gigantesque porte/.test(m.content)));
  const admin=button(user('2'),true);await adv.handle(admin.i);assert.ok(adv.state.players['2']);
+ adv.message(dm(user('2'),'regarder la porte'));await tick();await tick();
  assert.equal(adv.message(dm(user('2'),'nord')),true);await tick();await tick();
  assert.equal(adv.state.players['2'].room,'2');assert.ok(saved.length);
 });
 test('enough players in the final room win, and the roleplay channel hears the end once',async()=>{
  const {sent,client,user}=fakeDiscord();
- const small={...data,final:{...data.final,players:2}};
+ const small={...data,final:{...data.final,players:2,victory:'Victoire !',closing:'Le fort est tombé.'}};
  const adv=createAdventureDiscord({client,data:small,store:{load:()=>null,save:()=>{}},channelId:'c',closingChannelId:'rp'});
- for(const id of ['a','b']){await adv.handle(button(user(id),true).i);adv.state.players[id].room='32';}
+ for(const id of ['a','b']){await adv.handle(button(user(id),true).i);Object.assign(adv.state.players[id],{room:'16',triggers:['trone_ouvert']});}
  adv.message(dm(user('a'),'est'));await tick();await tick();await tick();
  assert.deepEqual(adv.state.reached,['a']);assert.equal(adv.state.done,false);assert.equal(sent.channels.rp,undefined);
  adv.message(dm(user('b'),'est'));for(let i=0;i<6;i++)await tick();
  assert.equal(adv.state.done,true);assert.equal(sent.channels.rp.length,1);
  assert.equal(sent.dm.filter(([,m])=>m.content===small.final.victory).length,2);
 });
-test('a room with a picture sends it on entering and with « regarder », the others only text',async()=>{
+test('a room with a picture sends it on entering, other replies are only text',async()=>{
  const {sent,client,user}=fakeDiscord(),dir=require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(),'aventure-'));
  require('node:fs').writeFileSync(require('node:path').join(dir,'hall.png'),'png');
  const pictured={...data,rooms:data.rooms.map(r=>String(r.id)==='2'?{...r,image:'hall.png'}:r)};
  const adv=createAdventureDiscord({client,data:pictured,store:{load:()=>null,save:()=>{}},channelId:'c',files:dir});
  await adv.handle(button(user('a'),true).i);assert.ok(sent.dm.every(([,m])=>!m.files));
+ adv.message(dm(user('a'),'regarder la porte'));await tick();await tick();
  adv.message(dm(user('a'),'nord'));await tick();await tick();
  const last=sent.dm.at(-1)[1];assert.match(last.content,/hall d'entrée/);assert.equal(last.files[0].name,'hall.png');
  adv.message(dm(user('a'),'inventaire'));await tick();await tick();assert.equal(sent.dm.at(-1)[1].files,undefined);
- adv.message(dm(user('a'),'regarder'));await tick();await tick();assert.equal(sent.dm.at(-1)[1].files[0].name,'hall.png');
 });
 test('« /reset » in the DMs starts a player over, even after the end; strangers are not heard',async()=>{
  const {sent,client,user}=fakeDiscord();
