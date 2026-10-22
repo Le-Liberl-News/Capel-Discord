@@ -13,8 +13,8 @@
   "final": {
     "room": 18,
     "players": 3,
-    "victory": "",
-    "closing": ""
+    "victory": "Trois poms courageux ont affronté leurs peurs et prouvé leur valeur en mettant la main sur la source du maléfice et l'ont brisé ! Le manoir s'est estompé et la forteresse Leiston est revenue à sa place. Félicitations à nos trois héros !",
+    "closing": "Merci de vous être prêtés à ce petit jeu d'Halloween ! C'est terminé pour de bon, promis. On espère que ça vous a plu :)"
   },
 
 
@@ -30,7 +30,7 @@
           "to": 2,
           "must": ["chatiere_vue"],
           "fail": "Vous n'arrivez pas à atteindre la poignée de la porte. Elle est trop haute."
-        }
+        },
       },
       "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
     },
@@ -633,9 +633,21 @@
     {
       "place": [1],
       "verb": "regarder",
+      "noun": [],
+      "text": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit.",
+    },
+    {
+      "place": [1],
+      "verb": "regarder",
       "noun": ["porte"],
-      "text": "La porte est trop grande pour que vous atteigniez sa poignée. Cependant, vous apercevez qu'elle est équipée d'une chatière.",
+      "text": "La porte est trop grande pour que vous atteigniez sa poignée. Cependant, vous apercevez qu'elle est équipée d'une chatière. Vous pourriez passer par là.",
       "effect": ["chatiere_vue"]
+    },
+    {
+      "place": [1],
+      "verb": "passer",
+      "noun": ["chatiere"],
+      "move": 2
     },
     {
       "place": [2],
