@@ -7,12 +7,12 @@ function disembark(p,c,at,geometry){const from={...c.from},dx=c.from.x-c.to.x,dz
 function update(p,dt,at,blocked=false,geometry=null){const c=p.climb;if(!c?.rope)return legacyUpdate(p,dt,at,blocked);if(!c.controlled)return false;
  if(c.disembark){c.progress=Math.min(1,(c.progress??0)+dt/.42);c.updatedAt=at;Object.assign(p,motion.point(c,at));p.moving=true;if(c.progress>=1)finish(p,c.to,at);return true;}
  const fresh=at-(p.ladderInputAt??0)<400,force=blocked?0:drive(c,fresh?p.ladderInput:null),total=Math.max(1,length(c)),old=c.progress??0;
- if(!blocked){if(force<-.2){c.descending=true;c.exiting=false;}else if(force>.2)c.descending=false;
+ if(!blocked){if(force<-.2){c.descending=true;c.exiting=false;}else if(force>.12)c.descending=false;
   const points=c.points??[c.from,c.to],first=Math.hypot(points[1].x-c.from.x,points[1].y-c.from.y,points[1].z-c.from.z);
-  if(!c.descending&&old*total>=first-1.65&&(force>.2||c.exiting))c.exiting=true;
+  if(!c.descending&&old*total>=first-2.5&&(force>.12||c.exiting))c.exiting=true;
  }
- c.rate=blocked?0:c.descending?-22/total:c.exiting?9/total:force>.2?force*6/total:0;c.progress=Math.max(0,Math.min(1,old+c.rate*dt));c.updatedAt=at;Object.assign(p,motion.point(c,at));p.moving=Math.abs(c.progress-old)>.00001;p.heading={dx:(c.to.x-c.from.x)*(c.rate<0?-1:1),dz:(c.to.z-c.from.z)*(c.rate<0?-1:1)};
- if(c.rate>0&&!c.descending){const first=c.points?.[1]??c.to;if(c.progress*total>=Math.hypot(first.x-c.from.x,first.y-c.from.y,first.z-c.from.z)-1.65)c.exiting=true;}
+ c.rate=blocked?0:c.descending?-22/total:c.exiting?18/total:force>.12?force*14/total:0;c.progress=Math.max(0,Math.min(1,old+c.rate*dt));c.updatedAt=at;Object.assign(p,motion.point(c,at));p.moving=Math.abs(c.progress-old)>.00001;p.heading={dx:(c.to.x-c.from.x)*(c.rate<0?-1:1),dz:(c.to.z-c.from.z)*(c.rate<0?-1:1)};
+ if(c.rate>0&&!c.descending){const first=c.points?.[1]??c.to;if(c.progress*total>=Math.hypot(first.x-c.from.x,first.y-c.from.y,first.z-c.from.z)-2.5)c.exiting=true;}
  if(c.progress>=1)finish(p,c.to,at);else if(c.progress<=0&&c.descending)disembark(p,c,at,geometry);return true;
 }
 module.exports={drive,update,length};

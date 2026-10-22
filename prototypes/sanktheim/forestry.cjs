@@ -1,5 +1,5 @@
 const TREES=require('./forest.json');
-const CUT_TIME=60000,REGROW_TIME=6*3600000;
+const CUT_TIME=15000,REGROW_TIME=6*3600000;
 const COSTS={auto:300,manual:300,barricade:30,mine:20};
 const REACH=2.4;
 function growth(tree,at){return tree.cutAt==null?4:Math.min(4,Math.floor(Math.max(0,at-tree.cutAt)/(REGROW_TIME/4)));}
@@ -12,7 +12,7 @@ function createForestry({state,emit,geometry=()=>null}){
  // A building, cliff or wall between the actor and the trunk must block interaction.
  const from={x:p.x,y:p.y+.8,z:p.z},to={x:d.x,y:d.y+.8,z:d.z},length=Math.hypot(to.x-from.x,to.z-from.z),hit=geometry()?.sweep(from,to,.05);
  if(hit&&hit.distance<length-Math.max(.8,d.radius+.3))return {error:'L’arbre est derrière un obstacle.'};
- cancel(raw);t.worker=id;t.lastWorkAt=state.at;t.startHP=p.hp;t.start={x:p.x,z:p.z};raw.chopping=t.id;return {ok:true};
+ cancel(raw);t.worker=id;t.lastWorkAt=state.at;t.startHP=p.hp;t.start={x:p.x,z:p.z};raw.chopping=t.id;raw.input={x:0,z:0};raw.moving=false;return {ok:true};
  }
  function update(){forest.at=state.at;for(const t of forest.trees){const stage=growth(t,state.at);if(t.stage!==stage){t.stage=stage;forest.revision++;}if(stage===4&&t.cutAt!=null){t.cutAt=null;t.work=0;forest.revision++;}if(!t.worker)continue;const p=state.players[t.worker];if(!valid(p,t)||p.hp<t.startHP||Math.hypot(p.x-t.start.x,p.z-t.start.z)>.3||state.stoppedAt){cancel(p);t.worker=null;continue;}const elapsed=Math.max(0,Math.min(1000,state.at-t.lastWorkAt));t.lastWorkAt=state.at;t.work+=elapsed;if(t.work<CUT_TIME)continue;
  const d=definitions.get(t.id),owner=p.id;t.cutAt=state.at;t.stage=0;t.fallAngle=Math.atan2(d.x-p.x,d.z-p.z);cancel(p);t.work=0;forest.wood+=d.wood;forest.revision++;emit('tree-felled','',{tree:t.id,actor:owner,wood:d.wood,position:{x:d.x,y:d.y,z:d.z}});
