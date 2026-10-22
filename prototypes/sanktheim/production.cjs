@@ -12,7 +12,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  if(!balance){balance=require('./balance.cjs').calibrate(cohort());if(balance)balanceStore.save(balance);}
  const siege=createSiege({store:store('state'),cohort,balance,now,enableLadders:true,seed:'sanktheim-live-2026'});
  const terrainGeometry=require('../../utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../activity/assets/sky/sanktheim/forest/terrain.gltf'),'utf8')));
- const nativeGeometry=require("./forest-collision.cjs").createForestCollision(terrainGeometry,()=>siege._state.forestry);
+ const nativeGeometry=require("./forest-collision.cjs").createForestCollision(terrainGeometry,()=>siege._state.forestry,1,()=>siege._state.barricades);
  const {geometry}=require('./geometry.cjs').createGeometry(siege,nativeGeometry);
  const arena=createArenaBridge({siege,geometry,worldScale:world.SCALE,surfaceJumps:true,onSay,resolveCharacter,isInfected:c=>rhumertume.isInfected(c),now:()=>siege._state.at});
  const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,renderHighlight:require('./highlights.cjs').renderHighlight});

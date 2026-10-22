@@ -21,7 +21,7 @@ export function createDefenceProps({T,scene,asset,getState,getOwn,sounds,nativeE
   }
  })).catch(console.error);
  function update({time,dayNight,avatars}){
-  const state=getState();for(const l of lamps){const night=dayNight.lamps;l.volume.visible=night>.04;l.light.intensity=85*night;}
+  const state=getState();for(const l of lamps){const night=state.night?1:0;l.volume.visible=night>.04;l.light.intensity=85*night;}
   for(const m of state.mines??[]){let v=mines.get(m.id);if(!v&&templates.has('t31orb00')){v=templates.get('t31orb00').clone(true);scene.add(v);mines.set(m.id,v);}if(v){v.position.set(m.x,m.y+.015,m.z);v.visible=!m.spent;}}
   const ids=new Set((state.mines??[]).map(m=>m.id));for(const [id,v]of mines)if(!ids.has(id)){scene.remove(v);mines.delete(id);}
   for(const a of state.soldiers){const sleeping=a.sleeping&&a.hp>0&&!a.transit&&!state.wave;let v=blankets.get(a.id);if(sleeping&&!v&&templates.has('t23bed01')){v=templates.get('t23bed01').clone(true);scene.add(v);blankets.set(a.id,v);dayNight.apply?.(v);}if(v){v.visible=!!sleeping;v.position.set(a.x,a.y+.07,a.z+.22);}}

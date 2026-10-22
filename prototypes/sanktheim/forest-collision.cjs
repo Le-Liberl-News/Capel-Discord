@@ -1,8 +1,8 @@
 const {TREES,growth}=require('./forestry.cjs');
 // Trunks and stumps are shared cylinders. Falling crowns never become invisible walls.
-function createForestCollision(base,getForest,scale=1){
+function createForestCollision(base,getForest,scale=1,getBarricades=()=>[]){
  let revision=null,cylinders=[];
- function current(){const f=getForest();const key=f?.revision??'full';if(key!==revision){revision=key;const states=new Map((f?.trees??[]).map(t=>[t.id,t]));cylinders=TREES.map(d=>{const t=states.get(d.id),stage=t?growth(t,f.at??Date.now()):4,s=stage/4;return {x:d.x*scale,y:d.y*scale,z:d.z*scale,r:Math.max(.17,d.radius*s)*scale,h:(stage?d.height*s:.32)*scale};});}return cylinders;}
+ function current(){const f=getForest();const key=f?.revision??'full';if(key!==revision){revision=key;const states=new Map((f?.trees??[]).map(t=>[t.id,t]));cylinders=TREES.map(d=>{const t=states.get(d.id),stage=t?growth(t,f.at??Date.now()):4,s=stage/4;return {x:d.x*scale,y:d.y*scale,z:d.z*scale,r:Math.max(.17,d.radius*s)*scale,h:(stage?d.height*s:.32)*scale};});}return [...cylinders,...getBarricades().filter(b=>b.hp>0).map(b=>({x:b.x*scale,y:b.y*scale,z:b.z*scale,r:1.1*scale,h:2.025*scale}))];}
  function sweep(from,to,radius=.25){let best=base.sweep(from,to,radius);const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,length=Math.hypot(dx,dy,dz);if(!length)return best;for(const c of current()){
   const r=c.r+radius,ox=from.x-c.x,oz=from.z-c.z,a=dx*dx+dz*dz,b=2*(ox*dx+oz*dz),cc=ox*ox+oz*oz-r*r,roots=[];
   if(a>1e-12){const disc=b*b-4*a*cc;if(disc>=0){const root=(-b-Math.sqrt(disc))/(2*a);if(root>=0&&root<=1)roots.push(root);}}
