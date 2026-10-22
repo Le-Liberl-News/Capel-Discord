@@ -1,4 +1,4 @@
-function immobilized(player,time){return time<Math.max(player.stunUntil??0,player.stoneUntil??0);}
+function immobilized(player,time){return time<Math.max(player.stunUntil??0,player.stoneUntil??0,player.pomBoundUntil??0);}
 function movementFactor(player,time){return player.guardHold?.until>time||player.catCling||immobilized(player,time)?0:(time<(player.slowUntil??0)?player.slowFactor??.45:1)*(player.speedBuff?.until>time?1+player.speedBuff.amount:1)*(player.cooking?.heldUntil>=time?.08:1)*(player.catCarrier?.active?.8:1);}
 function attackFactor(player,time){return player.attackBuff?.until>time?1+player.attackBuff.amount:1;}
 function defenseFactor(player,time){return player.defenseBuff?.until>time?1-Math.min(.8,player.defenseBuff.amount):1;}

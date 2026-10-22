@@ -252,7 +252,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const stunView=renneCombat?await createStunView(THREE,scene,ASSETS):null;
   const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
   const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
-  const combatControls=createCombatControls((kind,event)=>startAttack(kind,event),(phase,event)=>cookingInput(phase,event),phase=>guardInput(phase));
+  const combatControls=createCombatControls((kind,event)=>startAttack(kind,event),(phase,event)=>pomCraftInput(phase,event)||cookingInput(phase,event),phase=>guardInput(phase));
   function aimForAttack(event,groundOnly=false) {
     const me=avatars.get(localId);if(!me)return null;
     if(event){pointer.set(event.clientX/viewport.width*2-1,1-event.clientY/viewport.height*2);raycaster.setFromCamera(pointer,camera);const candidates=groundOnly?[]:[...avatars].filter(([id,a])=>id!==localId&&!a.npc&&!a.dead);const hit=raycaster.intersectObjects([model,...candidates.map(([,a])=>a.mesh)],true).find(hit=>(!groundOnly||(hit.face&&Math.abs(hit.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld)).y)>.45)||(hit.combatGround=combatGround.stepAimPoint(hit.point,walkingGrid)))&&(!cutaway||!model.getObjectById(hit.object.id)||cutaway.visible(hit.point)));if(hit){const avatar=candidates.find(([,a])=>a.mesh.id===hit.object.id)?.[1];return avatar?{...avatar.position}:{x:hit.point.x,y:hit.combatGround?.y??hit.point.y,z:hit.point.z};}if(groundOnly)return null;}
@@ -349,8 +349,18 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(!queueAction('parry'))return false;
     combatControls.started('parry',me.character);combatFeedback?.parryPressed(localId);me.parryPose={kind:'basic',character:me.character,localStart:performance.now()};return true;
   }
+  let pomCraftHeld=false,pomCraftRefresh=0;
+  function pomCraftInput(phase,event){
+    if(!venue?.pomCrafts||!health.pomControlled||health.stage!==2||health.flying||['garou','funebre','daspi'].includes(health.kind))return false;
+    if(phase==='end'||phase==='cancel'){if(pomCraftHeld){pomCraftHeld=false;const d=combatMoves.cameraFacing(yaw);queueAction('pom-craft',undefined,undefined,undefined,{phase:phase==='cancel'||!event?'cancel':'release',direction:{x:d.dx,z:d.dz}});}return true;}
+    if(pomCraftHeld)return true;
+    if(!connected||health.hp<=0||health.spectator||health.canMove===false||!combatControls.ready('craft'))return true;
+    if(queueAction('pom-craft',undefined,undefined,undefined,{phase:'begin'})){pomCraftHeld=true;pomCraftRefresh=performance.now()+400;path=[];movementTrace=[];}return true;
+  }
   function startAttack(kind,event=cursor,confirmed=false) {
     if(kind==='parry')return startParry();
+    if(kind==='craft'&&pomCraftInput('begin',event))return true;
+    if(kind==='craft'&&venue?.pomCrafts&&health.pomControlled&&health.stage===3&&!health.flying&&!['garou','funebre','daspi'].includes(health.kind)){const target=mobileTargetId??pickCombatTarget(event??cursor,{});if(!target&&!confirmed){craftTarget='craft';combatControls.targeting('craft');marker.visible=true;return true;}if(!target)return false;craftTarget=false;combatControls.targeting(null);marker.visible=false;return !!queueAction('pom-craft',undefined,undefined,undefined,{target});}
     if(guardHeld&&kind!=='basic')return false;
     if(kind==='art'&&renneMechanics.combatSpec(avatars.get(localId)?.character,'art')?.dodge)return startDodge();
     if(kind==='craft'&&avatars.get(localId)?.character==='Phyllis')return cookingInput('begin',event);
@@ -775,11 +785,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   function keyup(event) {
     if(remapKey(event).code==='KeyV')guardInput('end');
-    if(remapKey(event).code==='KeyG')cookingInput('end');
+    if(remapKey(event).code==='KeyG'){pomCraftInput('end',event);cookingInput('end');}
     keys.delete(remapKey(event).key.toLowerCase());
   }
   function blur() {
     stopCarna();
+    pomCraftInput('cancel');
     restMoveHeld=false;
     guardInput('end');
     cookingInput('end');
@@ -956,6 +967,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       return;
     }
     if(lastTime&&time-lastTime>500)recordDiagnostic('render-stall',{map,durationMs:Math.round(time-lastTime),hidden:document.hidden},!document.hidden);
+    if(pomCraftHeld&&time>=pomCraftRefresh){pomCraftRefresh=time+400;if(health.hp<=0||!connected){pomCraftInput('cancel');}else queueAction('pom-craft',undefined,undefined,undefined,{phase:'hold'});}
     const seconds = Math.max(0,Math.min((time - lastTime) / 1000, 0.1));
     lastTime = time;
     if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Carna","Don","Sieg"].includes(avatars.get(localId)?.character))yaw=faceOpponent()??Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
