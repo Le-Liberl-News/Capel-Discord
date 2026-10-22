@@ -18,7 +18,7 @@ function updateFlying(e,{state,dt,geometry,hurt,emit,damageMultiplier,damageWall
  const aim=target?{x:target.x,y:target.y+1.8,z:target.z}:{x:wallX(wall),y:2,z:wall.z},clear=!geometry?.sweep({x:e.x,y:e.y+.6,z:e.z},aim,.08),inRange=dist(e,aim)<(target?11:8);
  if(!inRange||!clear||t<e.nextAttack||!target&&wall.hp<=0)return;
  if(target){hurt(target,12*damageMultiplier);emit('attack','',{from:e.id,to:target.id,ranged:true});}
- else {const before=wall.hp;damageWall(wall,(state.balance?.wallBaseDamage??4)*damageMultiplier);emit('wall-hit','',{from:e.id,wall:wall.id,amount:before-wall.hp,position:aim});}
+ else {const before=wall.hp;damageWall(wall,(state.balance?.wallBaseDamage??4)*damageMultiplier,{from:e.id,position:aim,kind:'ranged'});emit('wall-hit','',{from:e.id,wall:wall.id,amount:before-wall.hp,position:aim});}
  if(t>=(e.nextFire??0)){const fire={id:'fire-'+e.id+'-'+t,x:aim.x,y:target?.y>7?11.75:0,z:aim.z,radius:1.65,at:t,nextDamage:t+700};if(state.fires.length<80&&!state.fires.some(f=>dist(f,fire)<1.2)){state.fires.push(fire);emit('fire-launch','',{from:e.id,origin:{x:e.x,y:e.y,z:e.z},aim:fire});}e.nextFire=t+9000;}
  e.nextAttack=t+2000;
 }

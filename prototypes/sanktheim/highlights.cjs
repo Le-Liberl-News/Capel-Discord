@@ -6,6 +6,7 @@ async function renderHighlightDirect(event){
  if(event.type==='tank-arrival')return {attachment:fs.readFileSync(path.join(root,'tank-advance.gif')),name:'char-des-poms.gif'};
  if(event.type==='threshold'){
   if(!wallIds.has(event.wall)||!thresholds.includes(event.healthPercent))return null;
+  if(event.replay?.hit&&fs.existsSync(path.join(root,event.wall+'-'+event.healthPercent+'.json')))return require('./highlight-replay.cjs').renderReplay(event);
   const file=path.join(root,event.wall+'-'+event.healthPercent+'.gif');
   return {attachment:fs.readFileSync(file),name:event.wall+'-'+event.healthPercent+'.gif'};
  }
@@ -34,7 +35,7 @@ async function renderHighlightDirect(event){
 }
 let worker=null,sequence=0;const pending=new Map();
 function renderHighlight(event){
- if(!['soldier-critical','soldier-death'].includes(event.type))return renderHighlightDirect(event);
+ if(!['soldier-critical','soldier-death'].includes(event.type)&&!(event.type==='threshold'&&event.replay))return renderHighlightDirect(event);
  if(!worker){const {Worker}=require('node:worker_threads');worker=new Worker(path.join(__dirname,'highlights-worker.cjs'));const current=worker;worker.on('message',({id,result,error})=>{const job=pending.get(id);if(!job)return;pending.delete(id);if(error)job.reject(Error(error));else job.resolve({...result,attachment:Buffer.from(result.attachment)});if(!pending.size)current.unref();});worker.on('error',error=>{for(const job of pending.values())job.reject(error);pending.clear();worker=null;});worker.on('exit',()=>{if(worker===current){for(const job of pending.values())job.reject(Error('GIF worker stopped'));pending.clear();worker=null;}});}
  worker.ref();return new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});worker.postMessage({id,event});});
 }
