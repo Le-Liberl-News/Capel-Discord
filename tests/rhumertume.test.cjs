@@ -6,7 +6,7 @@ const at=s=>Date.parse(s),HOUR=3600000;
 const render={avatarURL:(c,l)=>`pom/${c}-${l}.png`,renderEvolution:async(c,f,t)=>({name:`evolution ${c} ${f}->${t}`}),renderBubble:async(text,l)=>({name:`bulle ${l}`,text}),renderBite:async(c,l,v,vl)=>({name:`morsure ${c} ${l} ${v} ${vl}`})};
 const names=['Kloe','Tita','Nial','Joshua'];
 function setup({now,random=()=>.5,cases=['Tita'],data=null}){
- const said=[],store=memory(data);
+ const today=parisParts(now()).date;const said=[],store=memory(data??{drawn:{[today]:['fixture-1','fixture-2']}});
  const r=createRhumertume({store,now,random,charactersOfTheDay:async()=>cases,characterNames:names,render,announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
  return {r,said,store};
 }
@@ -27,18 +27,18 @@ test('30% of the words after an hour, 60% after 3h30, all of them after 7 hours'
  assert.ok(Math.abs(progress(3.5*HOUR)-.6)<1e-9);
  assert.equal(progress(7*HOUR),1);assert.equal(progress(40*HOUR),1);
 });
-test('two characters of the day fall ill between 10:00 and 13:00, each with the evolution GIF',async()=>{
+test('one played character and one unassigned character fall ill in the daily window',async()=>{
  let now=at('2026-10-20T06:00:00Z');
- const {r,said,store}=setup({now:()=>now,cases:['Nial','Pom','Tita']});
+ const {r,said,store}=setup({now:()=>now,cases:['Nial','Pom','Tita'],data:{}});
  await r.tick();assert.deepEqual(said,[]);
  const times=store.load().schedule['2026-10-20'];assert.equal(times.length,2);assert.ok(times.every(m=>m>=10*60&&m<=13*60));
  now=at('2026-10-20T11:00:00Z');await r.tick();await r.tick();
  assert.equal(said.length,2);assert.ok(said.every(s=>/symptômes préoccupants/.test(s.text)));
- assert.deepEqual(said.map(s=>s.files[0]).sort(),['evolution Nial 0->1','evolution Tita 0->1']);
+ assert.equal(said.filter(s=>/Nial semble|Tita semble/.test(s.text)).length,1);assert.equal(said.filter(s=>/Kloe semble|Joshua semble/.test(s.text)).length,1);
 });
 test('a day picked up after 13:00 gets no draw, an earlier one only times still ahead',async()=>{
  let now=at('2026-10-21T12:30:00Z');
- const {r,said,store}=setup({now:()=>now,random:()=>0,cases:['Kloe']});
+ const {r,said,store}=setup({now:()=>now,random:()=>0,cases:['Kloe'],data:{}});
  await r.tick();assert.deepEqual(said,[]);assert.deepEqual(store.load().schedule['2026-10-21'],[]);
  now=at('2026-10-22T09:30:00Z');await r.tick();
  assert.ok(store.load().schedule['2026-10-22'].every(m=>m>=11*60+30));
@@ -113,15 +113,11 @@ test('/pomifier is for administrators and announces the new case',async()=>{
  c=call(true,'Inconnu');await r.handle(c.interaction);assert.match(c.out.reply,/inconnu/);
  assert.equal(await r.handle({commandName:'duel'}),false);
 });
-test('a case due while nobody has a character yet waits for the first one played, even one lost before',async()=>{
+test('when nobody has played yet, daily cases use the healthy unassigned pool immediately',async()=>{
  const cases=[],{r,said,store}=setup({now:()=>at('2026-10-20T12:59:00+02:00'),cases,data:{schedule:{'2026-10-20':[600,640]},drawn:{'2026-10-20':[null]},infected:{},patients:{}}});
- await r.tick();await r.tick();assert.equal(said.length,0);
- cases.push('Tita');await r.tick();
- assert.equal(said.length,1);assert.match(said[0].text,/Tita semble/);
- cases.push('Kloe');await r.tick();
- assert.equal(said.length,2);assert.deepEqual(store.load().drawn['2026-10-20'],['Tita','Kloe']);
- await r.tick();assert.equal(said.length,2);
+ await r.tick();assert.equal(said.length,2);assert.equal(store.load().drawn['2026-10-20'].length,2);const infected=r.infected();cases.push('Tita','Kloe');await r.tick();assert.deepEqual(r.infected(),infected);
 });
+
 test('an evolution that cannot be announced does not hold back the cases of the day',async()=>{
  let fail=true;const said=[],logs=[];
  const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,640]},drawn:{},infected:{Kloe:at('2026-10-20T00:00:00+02:00')},patients:{Kloe:{announced:1,rage:0,madness:0,updated:0,lastRage:0,lastMadness:0}}}),
@@ -131,14 +127,14 @@ test('an evolution that cannot be announced does not hold back the cases of the 
  assert.equal(said.filter(t=>/semble/.test(t)).length,2);assert.ok(logs.some(l=>/evolution: Discord/.test(l)));
  fail=false;await r.tick();assert.ok(said.some(t=>/Pompomkloe évolue/.test(t)));
 });
-test('three poms at stage 2 or 3 besiege three healthy characters once a day; those who fall catch it',async()=>{
+test('three poms besiege unassigned healthy characters once at the saved random daily time',async()=>{
  const said=[],sieges=[],t0=at('2026-10-20T08:00:00+02:00');let now=at('2026-10-20T09:00:00+02:00');
  const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,601]},drawn:{'2026-10-20':['Nial','Tita']},infected:{Nial:t0,Tita:t0,Kloe:t0},patients:{}}),
-  now:()=>now,random:()=>.6,charactersOfTheDay:async()=>['Estelle','Joshua','Olivier','Nial'],characterNames:names,render,wait:async()=>{},
+  now:()=>now,random:()=>.6,charactersOfTheDay:async()=>['Estelle','Joshua','Olivier','Nial'],characterNames:[...names,'Soldat','Matelot','Marchand'],render,wait:async()=>{},
   renderSiege:async(defenders,attackers,outcome)=>{sieges.push({defenders,attackers,outcome});return {attachment:Buffer.from('gif'),name:'siege.gif',outcome,fallen:defenders.slice(1).map(d=>d.character),escaped:defenders[0].character,duration:6000};},
   announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
  await r.tick();assert.equal(sieges.length,0);                       // before 10:00
- now=at('2026-10-20T15:00:00+02:00');await r.tick();
+ now=at('2026-10-20T18:00:00+02:00');await r.tick();
  assert.equal(sieges.length,1);assert.equal(sieges[0].outcome,'flee');assert.ok(sieges[0].attackers.every(a=>a.stage>=2));
  const intro=said.find(s=>/encerclent/.test(s.text));assert.deepEqual(intro.files,['siege.gif']);assert.match(intro.text,/acculé·es dos à dos/);
  const [escaped,...fallen]=sieges[0].defenders.map(d=>d.character);
@@ -156,7 +152,7 @@ test('stages 2 and 3 come within two hours of 3h30 and 7 hours, drawn for each p
 });
 test('a case cut short before its announcement is announced on the next tick, never kept silent',async()=>{
  const said=[];let fail=true;
- const store=memory({schedule:{'2026-10-20':[600,640]},drawn:{'2026-10-20':['Anelace','Kloe']},infected:{Kloe:at('2026-10-20T10:40:00+02:00')},patients:{},pending:{Anelace:{cause:'tirage du jour',at:0}}});
+ const store=memory({schedule:{'2026-10-20':[600,640]},drawn:{'2026-10-20':['Anelace','Kloe']},infected:{Kloe:at('2026-10-19T10:40:00+02:00')},patients:{},pending:{Anelace:{cause:'tirage du jour',at:0}}});
  const r=createRhumertume({store,now:()=>at('2026-10-20T11:00:00+02:00'),random:()=>.5,charactersOfTheDay:async()=>['Anelace','Kloe'],characterNames:names,render,
   announce:async(text,files=[])=>{if(fail)throw Error('Discord');said.push(text);}});
  assert.equal(r.isInfected('Anelace'),false);                      // pending: not ill until announced
@@ -181,7 +177,7 @@ test("a wizard pom's bite is a spell: the victim fades away and falls ill a few 
  // healthy Kloe fades away (random 0: the wizard form, the bite, the contagion); an ill Kloe can only shrink
  for(const [ill,outcome,victimSprite] of [[false,'vanish',0],[true,'shrink',1]]){
   let now=at('2026-10-26T09:00:00Z');const start=now,said=[],spells=[];
-  const r=createRhumertume({store:memory(),now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render,wait:async()=>{},
+  const r=createRhumertume({store:memory({drawn:{'2026-10-26':['fixture-1','fixture-2']}}),now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render,wait:async()=>{},
    renderWizard:async(c,sprite,v,vs,o)=>{spells.push([c,sprite,v,vs,o]);return {attachment:Buffer.from('gif'),name:'sort.gif',duration:7000};},
    announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
   await r.infect('Tita');now=start+2*3600000;await r.tick();   // stage 2, the wizard form

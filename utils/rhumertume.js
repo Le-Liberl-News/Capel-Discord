@@ -1,5 +1,5 @@
 // Rhumertume (Halloween 2026): twice a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
-// played that day starts turning into a pom-tiron; an administrator can also infect a character with /pomifier.
+// of the healthy roster starts turning into a pom-tiron (at most one player character per Paris day); an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
 // (30% after an hour, 60% after about 3h30, every word but one in eight after about 7 hours) and are shown in a Sky bubble; its
 // avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx after 3h30, Pomdeterx after 7 hours
@@ -7,9 +7,10 @@
 // each step announced with a Pokémon-like evolution GIF. Now and then (twice a day at most for each pom) a pom flies into a rage and bites
 // whoever spoke lately, who may catch the illness. How the player writes feeds two gauges, rage (capitals, "!") and
 // madness ("?", emojis, which makes the pom hurt itself); "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
-// Once a day, when three poms are at stage 2 or 3, they corner three healthy characters (the siege, utils/pomSiege.js);
+// Once a day at a saved random time from 10:00 to 23:00, three poms corner three healthy characters (utils/pomSiege.js);
 // those who fall catch the illness.
 const {PermissionFlagsBits}=require('discord.js');
+const {weightedPick,weightedSample}=require('./pomSelection.cjs');
 const HOUR=3600000,LAST_DAY='2026-10-31';
 const WINDOW=[10*60,13*60];
 const CASES_PER_DAY=2;
@@ -54,9 +55,9 @@ function moods(text){
  return [rage-calm,madness-calm];
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
-function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
+function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],hasCraft=character=>!!require('../activity/native-combat.cjs').combatSpec(character,'craft'),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
  const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},pending:{},...(store.load()??{})};
- state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
+ state.playerCases??={};state.siegeSchedule??={};state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
  const save=()=>store.save(state);
  const pictures=()=>render??(render=require('./pomRendering'));
  const drawsOver=()=>parisParts(now()).date>LAST_DAY;
@@ -93,15 +94,34 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  }
  // a new case: noted as pending, announced, then made real; a case cut short (the bot restarting while the GIF is drawn)
  // is announced again on the next tick (pendingCases), never kept unannounced. cause: what gave it (logged and kept)
- async function catches(character,cause,retry=false){
+ // Reserve infections serially: Discord rendering, bites and the daily tick can overlap.
+ const assignedToday=async()=>new Set((await charactersOfTheDay()).filter(n=>n&&n!=='Pom'));
+ function playerCases(date,assigned,except=null){
+  const used=new Set(state.playerCases[date]??[]);
+  for(const [c,since]of Object.entries(state.infected))if(c!==except&&assigned.has(c)&&parisParts(since).date===date)used.add(c);
+  for(const [c,p]of Object.entries(state.pending))if(c!==except&&assigned.has(c)&&parisParts(p.at).date===date)used.add(c);
+  return used;
+ }
+ async function canInfect(character){const assigned=await assignedToday();return !assigned.has(character)||playerCases(parisParts(now()).date,assigned,character).size<1;}
+ const healthy=names=>[...new Set(names)].filter(n=>n&&n!=='Pom'&&state.infected[n]==null&&!state.pending[n]);
+ let infectionQueue=Promise.resolve();
+ function catches(character,cause,retry=false){const next=infectionQueue.then(()=>catchOnce(character,cause,retry));infectionQueue=next.catch(()=>{});return next;}
+ async function catchOnce(character,cause,retry=false){
+  if(state.infected[character]!=null)return true;
+  if(drawsOver())return false;
+  const date=parisParts(now()).date,assigned=await assignedToday(),controlled=assigned.has(character);
+  if(controlled&&playerCases(date,assigned,character).size>=1){
+   delete state.pending[character];state.drawn[date]=drawnOn(date).filter(c=>c!==character);save();log('rhumertume: plafond joueur atteint, '+character+' reste sain');return false;
+  }
   state.pending[character]={cause,at:now()};save();
   // a new case that cannot be announced is dropped (its draw is undone); a case being announced again stays pending
   try{await announceWith(symptoms(character),()=>pictures().renderEvolution(character,0,1));}
   catch(error){if(!retry){delete state.pending[character];save();}throw error;}
   const spread=()=>(random()*2-1)*STAGE_SPREAD,second=STAGE_TIMES[0]+spread(),third=Math.max(second+HOUR,STAGE_TIMES[1]+spread());
   delete state.pending[character];
-  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastMadness:0,times:[second,third],cause};save();
-  log(`rhumertume: ${character} tombe malade (${cause})`);
+  state.infected[character]=now();state.patients[character]={announced:1,rage:0,madness:0,updated:now(),lastMadness:0,times:[second,third],cause};
+  if(controlled)state.playerCases[date]=[...new Set([...(state.playerCases[date]??[]),character])];save();
+  log(`rhumertume: ${character} tombe malade (${cause})`);return true;
  }
  async function pendingCases(){
   for(const [character,{cause}] of Object.entries(state.pending))if(!state.infected[character])await catches(character,cause.endsWith('annonce reprise')?cause:cause+', annonce reprise',true);else{delete state.pending[character];save();}
@@ -130,20 +150,21 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    if(date>LAST_DAY)return;
    const due=scheduledMinutes(date,minutes).filter(m=>m<=minutes).length;
    while(drawnOn(date).length<due){
-    const candidates=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]&&!state.pending[name]);
-    // nobody has a character yet today (none is given before its player's first message): the case waits for one
-    if(!candidates.length){if(waiting!==date){waiting=date;log('rhumertume: no healthy character yet, the case waits');}break;}
-    const character=candidates[Math.floor(random()*candidates.length)],previous=drawnOn(date);
+    const assigned=await assignedToday(),players=playerCases(date,assigned).size<1?healthy([...assigned]):[],npcs=healthy(characterNames).filter(n=>!assigned.has(n)),candidates=players.length?players:npcs;
+    // Exhausted healthy roster: keep the case pending until an eligible character is available.
+    if(!candidates.length){if(waiting!==date){waiting=date;log('rhumertume: no eligible healthy character, the case waits');}break;}
+    const character=weightedPick(candidates,hasCraft,random),previous=drawnOn(date);
     state.drawn[date]=[...drawnOn(date),character];save();
     // if Discord is unreachable the draw is undone and retried on the next tick
-    try{await catches(character,'tirage du jour');}catch(error){state.drawn[date]=previous;save();throw error;}
+    try{if(!await catches(character,'tirage du jour')){state.drawn[date]=previous;save();}}catch(error){state.drawn[date]=previous;save();throw error;}
    }
    await siege(date,minutes);
   }finally{busy=false;}
  }
- // the siege: once a day (10:00-22:00), when three poms are at stage 2 or 3, three of them corner three healthy characters
+ // The daily ambush has its own persisted random Paris time, from 10:00 to 23:00.
+ // Three infected characters of any stage can take part; craftless unassigned victims are preferred.
  // of the day; the GIF shows how it ends (utils/pomSiege.js), then the outcome is told and those who fell catch it
- const SIEGE_HOURS=[WINDOW[0],22*60],OUTCOME_TEXT={
+ const SIEGE_HOURS=[WINDOW[0],23*60],OUTCOME_TEXT={
   repel:d=>`${list(d.defenders)} repoussent l'assaut : les poms s'envolent au loin !`,
   rescue:d=>`Un pom s'accroche, mais les autres viennent à la rescousse : ${list(d.defenders)} s'en sortent indemnes !`,
   flee:d=>`${d.escaped} parvient à s'enfuir… ${list(d.fallen)} tombent sous les morsures des poms.`,
@@ -151,12 +172,17 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  const list=names=>names.length<2?names.join(''):names.slice(0,-1).join(', ')+' et '+names.at(-1);
  const shuffled=items=>items.map(v=>[random(),v]).sort((a,b)=>a[0]-b[0]).map(([,v])=>v);
  async function siege(date,minutes){
-  if(state.sieges[date]||minutes<SIEGE_HOURS[0]||minutes>=SIEGE_HOURS[1])return;
-  const poms=Object.keys(state.infected).filter(c=>level(c)>=2);
+  if(state.sieges[date]||minutes>=SIEGE_HOURS[1])return;
+  if(state.siegeSchedule[date]==null){const from=Math.max(SIEGE_HOURS[0],minutes);state.siegeSchedule[date]=from+Math.floor(random()*(SIEGE_HOURS[1]-from));save();log(`rhumertume: embuscade du ${date} à ${Math.floor(state.siegeSchedule[date]/60)}h${String(state.siegeSchedule[date]%60).padStart(2,'0')}`);}
+  if(minutes<state.siegeSchedule[date])return;
+  const poms=Object.keys(state.infected);
   if(poms.length<3)return;
-  const healthy=[...new Set(await charactersOfTheDay())].filter(name=>name&&name!=='Pom'&&!state.infected[name]&&!state.pending[name]);
-  if(healthy.length<3)return;
-  const attackers=shuffled(poms).slice(0,3),defenders=shuffled(healthy).slice(0,3);
+  const assigned=await assignedToday(),npcs=healthy(characterNames).filter(n=>!assigned.has(n)),players=playerCases(date,assigned).size<1?healthy([...assigned]):[];
+  const defenders=weightedSample(npcs,3,hasCraft,random);
+  // At most one assigned character may appear among the healthy victims.
+  if(defenders.length<3&&players.length)defenders.push(weightedPick(players,hasCraft,random));
+  if(defenders.length<3)return;
+  const attackers=shuffled(poms).slice(0,3);
   let outcome=['repel','rescue','flee','devour'][Math.floor(random()*4)],result=null;
   try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:spriteOf(character)})),outcome,Math.floor(random()*2**31));}
   catch(error){log('rhumertume: siege: '+error.message);}
@@ -176,7 +202,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  async function infect(character){
   if(drawsOver())throw Error('La rhumertume ne fait plus de nouvelles victimes.');
   if(state.infected[character])throw Error(`${character} est déjà atteint·e.`);
-  await catches(character,'/pomifier');
+  if(!await catches(character,'/pomifier'))throw Error('Un personnage contrôlé par un joueur a déjà été pomifié aujourd’hui.');
  }
  const textOf=(character,text)=>level(character)===3?pomifyFinal(text,random):pomify(text,stage(character),random);
  // the activity's roleplay: text, avatar and name only
@@ -202,7 +228,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  // a wizard pom's bite is a spell (utils/pomWizard.js): it flies over its victim on its vacuum and casts; the victim
  // turns white and shrinks, or fades away and, a few seconds later, falls ill (the same chance as a bite's contagion)
  async function spell(character,victim){
-  const victimName=stage(victim)==null?victim:nameOf(victim),outcome=stage(victim)==null&&random()<CONTAGION?'vanish':'shrink';
+  const victimName=stage(victim)==null?victim:nameOf(victim),outcome=stage(victim)==null&&await canInfect(victim)&&random()<CONTAGION?'vanish':'shrink';
   let gif=null;
   try{gif=await (renderWizard??require('./pomWizard').renderWizardBite)(character,spriteOf(character),victim,stage(victim)==null?0:spriteOf(victim),outcome,Math.floor(random()*2**31));}
   catch(error){log('rhumertume: spell: '+error.message);}
