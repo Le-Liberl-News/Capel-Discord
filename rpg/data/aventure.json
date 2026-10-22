@@ -457,6 +457,14 @@
       "ouvrez",
       "deverrouiller"
     ],
+    "ranger": [
+      "poser",
+      "mettre",
+      "déposer",
+      "insérer",
+      "glisser",
+      "remettre"
+    ],
     "regarder": [
       "voir",
       "observer",
@@ -509,14 +517,6 @@
     "lampe": [
       "torche",
       "lampe-torche"
-    ],
-    "ranger": [
-      "poser",
-      "mettre",
-      "déposer",
-      "insérer",
-      "glisser",
-      "remettre"
     ],
     "grammophone": [
       "platine"
