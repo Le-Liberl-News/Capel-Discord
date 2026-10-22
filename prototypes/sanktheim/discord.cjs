@@ -1,7 +1,7 @@
 const crypto=require('node:crypto');
 // Acknowledgements are persisted after each part. Discord's nonce and the recent
 // message marker close the send/ack crash window without reposting an event.
-function createAnnouncements({client,channelId,siege,store,baseUrl,renderHighlight=async()=>null}){
+function createAnnouncements({client,channelId,siege,store,baseUrl,renderHighlight=async()=>null,renderOverview=summary=>require('./highlights.cjs').renderHighlight({type:'fortress-report',summary})}){
  const ledger=store.load()??{};let busy=false;
  async function flush(){
   if(busy||!client.isReady())return;busy=true;
@@ -20,6 +20,7 @@ function createAnnouncements({client,channelId,siege,store,baseUrl,renderHighlig
       const embed={description:parts[i],color:0xb39153,footer:{text:marker}};
       if(i===0){
        if(['threshold','soldier-death','soldier-critical','tank-arrival'].includes(event.type))try{highlight=await renderHighlight(event);}catch(error){console.error('GIF Sanktheim:',error.message);}
+       if(event.type==='wave-end'&&event.summary?.walls?.length)try{highlight=await renderOverview(event.summary);}catch(error){console.error('Plan Sanktheim:',error.message);}
        if(highlight)embed.image={url:'attachment://'+highlight.name};
        const mvp=event.summary?.mvp;
        if(mvp){embed.title='🏆 '+mvp.character+' · MVP de la vague';embed.color=0xf0be54;if(baseUrl)embed.thumbnail={url:baseUrl.replace(/\/$/,'')+'/pp/'+encodeURIComponent(mvp.character)+'.webp'};}

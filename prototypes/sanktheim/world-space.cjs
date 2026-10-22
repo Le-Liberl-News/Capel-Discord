@@ -1,6 +1,6 @@
 const SCALE=2/3;
 function point(p,s=SCALE){return p&&{...p,x:p.x*s,y:p.y*s,z:p.z*s};}
-function climb(c,s=SCALE){return c&&{...c,from:point(c.from,s),to:point(c.to,s),points:c.points?.map(p=>point(p,s))};}
+function climb(c,s=SCALE){return c&&{...c,arc:c.arc==null?undefined:c.arc*s,from:point(c.from,s),to:point(c.to,s),points:c.points?.map(p=>point(p,s))};}
 function actor(a,s=SCALE){return {...a,...point(a,s),climb:climb(a.climb,s),mineLaunch:a.mineLaunch&&point(a.mineLaunch,s),restPosition:point(a.restPosition,s),transit:a.transit&&{...a.transit,from:point(a.transit.from,s),to:point(a.transit.to,s),points:a.transit.points?.map(p=>point(p,s))},leap:a.leap&&{...a.leap,x:a.leap.x*s,z:a.leap.z*s}};}
 function snapshot(v,s=SCALE){return {...v,capel:point(v.capel,s),worldScale:s,walls:v.walls.map(w=>({...w,z:w.z*s,width:w.width*s})),players:v.players.map(a=>actor(a,s)),soldiers:v.soldiers.map(a=>actor(a,s)),enemies:v.enemies.map(a=>actor(a,s)),shells:v.shells?.map(a=>({...a,points:a.points.map(p=>point(p,s))})),fires:v.fires?.map(f=>({...point(f,s),radius:f.radius*s})),corpses:v.corpses?.map(a=>point(a,s)),events:v.events.map(e=>({...e,origin:point(e.origin,s),aim:point(e.aim,s),position:point(e.position,s)})),barricades:v.barricades?.map(p=>point(p,s)),mines:v.mines?.map(p=>point(p,s)),turrets:v.turrets?.map(p=>point(p,s))};}
 // Combat runs in world metres. The persistent siege AI keeps the source map's coordinates.
