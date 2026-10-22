@@ -191,7 +191,7 @@ async function renderEvolution(character,from,to,seed=Date.now()){
  const old=before?fitted(before,from===0?190:220,from===0):evolutionFrame(null);
  // from the character: the pom comes out smaller than the human (about two thirds of its height)
  const young=fitted(await stageSprite(character,to),from===0?Math.round((bounds(old)[3]-bounds(old)[1])*.68):220,false);
- const rng=seeded(seed),frames=[],delays=[],add=(c,ms)=>{frames.push(c);delays.push(ms);};
+ const rng=seeded(seed),frames=[],delays=[],add=(c,ms)=>{const small=createCanvas(Math.round(c.width/2),Math.round(c.height/2)),x=small.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(c,0,0,small.width,small.height);frames.push(small);delays.push(ms);};
  add(evolutionFrame(old),900);
  for(let i=1;i<=6;i++)add(evolutionFrame(tinted(old,i/6),{glow:6+i}),70);                       // whitening
  const whiteOld=tinted(old,1),whiteNew=tinted(young,1);

@@ -5,7 +5,7 @@ const {createSiege}=require('./core.cjs');
 const {createArenaBridge}=require('./arena-bridge.cjs');
 const {createCatalogue}=require('./catalogue.cjs');
 const {cohortFromRhumertume}=require('./integration.cjs');
-function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolveCharacter,channelId,ownerId,baseUrl,onSay=()=>{},runtime=path.resolve(__dirname,'../../.runtime/sanktheim-live'),now=Date.now}){
+function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolveCharacter,assignedCharacters=async()=>[],channelId,ownerId,baseUrl,onSay=()=>{},runtime=path.resolve(__dirname,'../../.runtime/sanktheim-live'),now=Date.now}){
  const store=name=>createActivityStateStore(path.join(runtime,name+'.json'));
  const cohort=cohortFromRhumertume(rhumertume);
  const balanceStore=store('balance');let balance=balanceStore.load();
@@ -16,7 +16,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const {geometry}=require('./geometry.cjs').createGeometry(siege,nativeGeometry);
  const arena=createArenaBridge({siege,geometry,worldScale:world.SCALE,surfaceJumps:true,onSay,resolveCharacter,isInfected:c=>rhumertume.isInfected(c),now:()=>siege._state.at});
  const history=require('./scene-history.cjs').createSceneHistory({siege,arena,now});
- const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,renderHighlight:async event=>{const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
+ const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
  const entries=store('entries');const pending=new Map(entries.load()??[]);const saveEntries=()=>entries.save([...pending]);let ready=false;
  const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
  const isOwner=id=>String(id)===String(ownerId);

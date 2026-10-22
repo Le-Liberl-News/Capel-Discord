@@ -49,10 +49,10 @@ test('PomX, PompomX from 3h30, PomdeterX from 7 hours, each step announced once 
  await r.infect('Tita');said.length=0;
  assert.equal(r.nameOf('Tita'),'Pomtita');assert.equal(r.roleplay('Tita','Salut').avatarURL,'pom/Tita-1.png');
  now+=3.5*HOUR;await r.tick();await r.tick();
- assert.deepEqual(said,[{text:'Quoi ? Pomtita évolue ?!',files:['evolution Tita 1->2']}]);
+ assert.deepEqual(said,[{text:'Pomtita se transforme en Pompomtita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:['evolution Tita 1->2']}]);
  assert.equal(r.nameOf('Tita'),'Pompomtita');
  now+=3.5*HOUR;await r.tick();
- assert.deepEqual(said[1],{text:'Quoi ? Pompomtita évolue ?!',files:['evolution Tita 2->3']});
+ assert.deepEqual(said[1],{text:'Pompomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:['evolution Tita 2->3']});
  assert.equal(r.roleplay('Tita','Salut').username,'Pomdetertita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
  await r.tick();assert.equal(said.length,2);
 });
@@ -122,10 +122,10 @@ test('an evolution that cannot be announced does not hold back the cases of the 
  let fail=true;const said=[],logs=[];
  const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,640]},drawn:{},infected:{Kloe:at('2026-10-20T00:00:00+02:00')},patients:{Kloe:{announced:1,rage:0,madness:0,updated:0,lastRage:0,lastMadness:0}}}),
   now:()=>at('2026-10-20T11:00:00+02:00'),random:()=>.5,charactersOfTheDay:async()=>['Tita','Nial'],characterNames:names,render,log:l=>logs.push(l),
-  announce:async text=>{if(fail&&/évolue/.test(text))throw Error('Discord');said.push(text);}});
+  announce:async text=>{if(fail&&/se transforme/.test(text))throw Error('Discord');said.push(text);}});
  await r.tick();
  assert.equal(said.filter(t=>/semble/.test(t)).length,2);assert.ok(logs.some(l=>/evolution: Discord/.test(l)));
- fail=false;await r.tick();assert.ok(said.some(t=>/Pompomkloe évolue/.test(t)));
+ fail=false;await r.tick();assert.ok(said.some(t=>/Pompomkloe se transforme/.test(t)));
 });
 test('three poms besiege unassigned healthy characters once at the saved random daily time',async()=>{
  const said=[],sieges=[],t0=at('2026-10-20T08:00:00+02:00');let now=at('2026-10-20T09:00:00+02:00');
@@ -171,7 +171,7 @@ test("the second stage's other form: Pom-d'aspi, with its own picture and evolut
  assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.deepEqual(said.at(-1).files,['evolution Tita 1->aspi']);
  assert.equal((await r.message('Tita','Bonjour.')).avatarURL,'pom/Tita-aspi.png');
  now=start+5.5*3600000;await r.tick();
- assert.match(said.at(-1).text,/Quoi \? Pom-d’aspitita évolue/);assert.deepEqual(said.at(-1).files,['evolution Tita aspi->funebre']);assert.equal(r.nameOf('Tita'),'Pom-funèbretita');
+ assert.match(said.at(-1).text,/Pom-d’aspitita se transforme en Pom-funèbretita/);assert.deepEqual(said.at(-1).files,['evolution Tita aspi->funebre']);assert.equal(r.nameOf('Tita'),'Pom-funèbretita');
 });
 test("a wizard pom's bite is a spell: the victim fades away and falls ill a few seconds later, or shrinks",async()=>{
  // healthy Kloe fades away (random 0: the wizard form, the bite, the contagion); an ill Kloe can only shrink
@@ -194,5 +194,5 @@ test('a pom already shown at the usual second stage keeps the usual form at the 
  const start=at('2026-10-26T09:00:00Z');let now=start+6*3600000;
  const {r,said}=setup({now:()=>now,random:()=>0,cases:[],data:{infected:{Tita:start},patients:{Tita:{announced:2,rage:0,madness:0,updated:start,lastMadness:0,times:[2*3600000,5*3600000]}}}});
  await r.tick();
- assert.equal(r.nameOf('Tita'),'Pomdetertita');assert.ok(said.some(s=>s.text==='Quoi ? Pompomtita évolue ?!'&&s.files[0]==='evolution Tita 2->3'));
+ assert.equal(r.nameOf('Tita'),'Pomdetertita');assert.ok(said.some(s=>s.text==='Pompomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)'&&s.files[0]==='evolution Tita 2->3'));
 });

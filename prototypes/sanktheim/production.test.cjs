@@ -4,7 +4,7 @@ test('published siege authenticates daily characters, denies test/admin forgery 
  let clock=Date.now();const app=express();app.use(express.json());const runtime=fs.mkdtempSync(path.join(os.tmpdir(),'sanktheim-live-test-')),messages=[];
  const client={user:{id:'bot'},isReady:()=>true,channels:{fetch:async()=>({messages:{fetch:async()=>new Map()},send:async p=>{messages.push(p);return {id:'m'+messages.length};}})}};
  const service=require('./production.cjs').createProductionSiege({app,client,runtime,now:()=>clock,lobby:{identity:t=>{if(t!=='valid')throw Object.assign(Error('Reconnectez-vous.'),{status:401});return {id:'123'};}},access:{assertMember:async()=>{}},bearer:req=>req.headers.authorization?.replace('Bearer ',''),rhumertume:{infected:()=>[],isInfected:()=>false},resolveCharacter:async()=> 'Julia',channelId:'rp',ownerId:'owner'});
- const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const url='http://127.0.0.1:'+server.address().port+'/api/siege',headers={Authorization:'Bearer valid','Content-Type':'application/json'};
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const url='http://127.0.0.1:'+server.address().port+'/api/siege',headers={Authorization:'Bearer valid','Content-Type':'application/json',Connection:'close'};
  try{
   assert.equal((await fetch(url+'/state')).status,401);
   assert.equal((await fetch(url+'/state',{headers})).status,503);

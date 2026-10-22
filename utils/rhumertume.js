@@ -126,7 +126,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  async function pendingCases(){
   for(const [character,{cause}] of Object.entries(state.pending))if(!state.infected[character])await catches(character,cause.endsWith('annonce reprise')?cause:cause+', annonce reprise',true);else{delete state.pending[character];save();}
  }
- // a stage reached since the last announcement: "Quoi ? PomX évolue ?!" and the GIF
+ // Announce each new form once, with the current infected army size.
  async function evolutions(){
   for(const character of Object.keys(state.infected)){
    const p=patient(character),lvl=level(character);
@@ -135,7 +135,8 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    const legacyGround=!p.variant&&p.announced>=2;
    if(lvl>=2&&!p.variant){p.variant=p.announced<2&&random()<ASPI_CHANCE?'aspi':'pompom';save();}
    if(lvl===3&&!p.kind){p.kind=!aspi(character)&&!legacyGround&&random()<.25?'garou':'pom';save();}
-   await announceWith(`Quoi ? ${nameOf(character,lvl-1)} évolue ?!`,()=>pictures().renderEvolution(character,spriteOf(character,lvl-1),spriteOf(character,lvl)));
+   const army=Object.keys(state.infected).length;
+   await announceWith(`${nameOf(character,lvl-1)} se transforme en ${nameOf(character,lvl)}. L’armée des pom-tirons se renforce ! (${army} lieutenant${army>1?'s':''} pom-tirons)`,()=>pictures().renderEvolution(character,spriteOf(character,lvl-1),spriteOf(character,lvl)));
    p.announced=lvl;save();
   }
  }

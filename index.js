@@ -347,7 +347,7 @@ app.post('/api/token', async (req, res) => {
 
 const activityAccess=require('./utils/activityAccess').createActivityAccess({client});
 const activitySpoilerAccess=require('./utils/activitySpoilerAccess').createActivitySpoilerAccess({client});
-const sanktheim=require('./prototypes/sanktheim/production.cjs').createProductionSiege({app,client,lobby:activiteService,access:activityAccess,bearer:activiteBearer,rhumertume,resolveCharacter:require('./commands/anonyme').getPseudoAnonyme,channelId:process.env.ROLEPLAY_ID,onSay:event=>activityRoleplay.speech(event),baseUrl:process.env.BASE_URL,ownerId:process.env.SANKTHEIM_OWNER_ID||'744964573249011712'});
+const sanktheim=require('./prototypes/sanktheim/production.cjs').createProductionSiege({app,client,lobby:activiteService,access:activityAccess,bearer:activiteBearer,rhumertume,resolveCharacter:require('./commands/anonyme').getPseudoAnonyme,assignedCharacters:require('./commands/anonyme').getAssignedCharacterNames,channelId:process.env.ROLEPLAY_ID,onSay:event=>activityRoleplay.speech(event),baseUrl:process.env.BASE_URL,ownerId:process.env.SANKTHEIM_OWNER_ID||'744964573249011712'});
 client.once('clientReady',()=>{void sanktheim.start().catch(e=>console.error('Activation Sanktheim:',e.message));});
 
 client.on('guildMemberRemove',member=>{if(member.guild.id===require('./utils/activityAccess').ACTIVITY_GUILD_ID)activityAccess.invalidate(member.id);});
