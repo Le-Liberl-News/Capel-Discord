@@ -1656,6 +1656,7 @@
       "verb": "ouvrir",
       "noun": ["rideaux"],
       "mustnot": ["rideaux_ouverts"],
+      "effect": ["rideaux_ouverts"],
       "text": "Vous ouvrez les rideaux voyez que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous sont couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
     },
     {
