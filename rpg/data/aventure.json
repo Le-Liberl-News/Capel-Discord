@@ -292,7 +292,7 @@
       "id": 18,
       "name": "Salle du trône",
       "exits": {},
-      "description": "Vous entrez dans une salle... qui n'en est plus vraiment une. Elle n'a plus de plafond, et un vent glaçant s'infiltre au milieu des brèches béantes formées dans les murs à divers endroits. Vous posez les pieds sur un tapis rouge, qui quelque pas plus loin, après avoir monté quelques marches, se coupe nettement en une forme d'arc de cercle inversé. Vous relevez les yeux pour jauger le trône monumental qui vous fait face. La créature qui y siège ne vous regarde pas. Son cou, long comme celui d'un flammand, est courbé vers les hauteurs, tout comme ses yeux écarquillés. Ses membres filiformes rappellent davantage des plantes grimpantes que quoi que ce soit d'animal.\nLa créature se balance lentement de gauche à droite. Sa peau est sombre comme la nuit, mais on ne la distingue clairement qu'autour de ses yeux, brillants comme des étoiles.\nDe droite à gauche. Tout le reste de son corps est couvert d'une épaisse toison cuivrée rougeoyante, luisant comme si elle était trempée.\nDe gauche à droite. Dans sa paume gauche, elle sert quelque chose. Et ce quelque chose... c'est ce qui vous a attiré ici, vous en êtes certain. Vous tentez de le lui arracher de toutes vos forces, mais ça ne suffit pas.\nDe haut en bas... La créature vous accorde un regard intrigué, la tête penchée sur le côté, mais se désintéresse vite.\nDe bas en haut.\nVous aurez besoin de la force conjointe de vos congénères pour arracher à cette créature l'antidote que vous êtes venu chercher. Il ne peut en être autrement."
+      "description": "Vous entrez dans une salle... qui n'en est plus vraiment une. Elle n'a plus de plafond, et un vent glaçant s'infiltre au milieu des brèches béantes formées dans les murs à divers endroits. Vous posez les pieds sur un tapis rouge qui, quelque pas plus loin, après avoir monté quelques marches, se coupe net en une forme d'arc de cercle inversé. Vous relevez les yeux pour jauger le trône monumental qui vous fait face. La créature qui y siège ne vous regarde pas. Son cou, long comme celui d'un flammand, est courbé vers les hauteurs, tout comme ses yeux écarquillés. Ses membres filiformes rappellent davantage des plantes grimpantes que quoi que ce soit d'animal.\nLa créature se balance lentement de gauche à droite. Sa peau est sombre comme la nuit, mais on ne la distingue clairement qu'autour de ses yeux, brillants comme des étoiles.\nDe droite à gauche. Tout le reste de son corps est couvert d'une épaisse toison cuivrée rougeoyante, luisant comme si elle était trempée.\nDe gauche à droite. Dans sa paume gauche, elle sert quelque chose. Et ce quelque chose... c'est ce qui vous a attiré ici, vous en êtes certain. Vous tentez de le lui arracher de toutes vos forces, mais ça ne suffit pas.\nDe haut en bas... La créature vous accorde un regard intrigué, la tête penchée sur le côté, mais se désintéresse vite.\nDe bas en haut.\nVous aurez besoin de la force conjointe de vos congénères pour arracher à cette créature l'antidote que vous êtes venu chercher. Il ne peut en être autrement.\n\nFélicitations, vous êtes arrivé à bout de cette aventure ! Comme l'indiquait cette dernière description, il est nécessaire que plusieurs joueurs arrivent au même endroit que vous pour conclure cette histoire (3 joueurs au total, précisément). N'hésitez pas à leur recommander d'essayer ce jeu, s'il vous a plu !"
     },
     {
       "id": 20,
@@ -301,7 +301,7 @@
         "nord": 15,
         "sud": 21,
         "ouest": 20,
-        "est": 20
+        "est": 22
       },
       "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
     },
@@ -457,10 +457,19 @@
       "ouvrez",
       "deverrouiller"
     ],
+    "ranger": [
+      "poser",
+      "mettre",
+      "déposer",
+      "insérer",
+      "glisser",
+      "remettre"
+    ],
     "regarder": [
       "voir",
       "observer",
-      "décrire"
+      "décrire",
+      "regarde"
     ],
     "allumer": [
       "activer"
@@ -508,14 +517,6 @@
     "lampe": [
       "torche",
       "lampe-torche"
-    ],
-    "ranger": [
-      "poser",
-      "mettre",
-      "déposer",
-      "insérer",
-      "glisser",
-      "remettre"
     ],
     "grammophone": [
       "platine"
@@ -578,6 +579,13 @@
     ],
     "chaise": [
       "chaises"
+    ],
+    "etiquette": [
+      "etiquettes"
+    ],
+    "carte": [
+      "cartes",
+      "tarot"
     ]
   },
 
@@ -686,7 +694,7 @@
       "place": [2],
       "verb": "regarder",
       "noun": ["porte-manteau"],
-      "text": "Des manteaux de couleurs différentes sont sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
+      "text": "Des manteaux de couleurs différentes sont posés sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
     },
     {
       "place": [2],
@@ -785,7 +793,7 @@
       "verb": "regarder",
       "noun": [],
       "must": ["cle_tombee"],
-      "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloches sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau entourent cette machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
+      "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloches sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau sont maintenant éparpillés autour de la machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
     },
     {
       "place": [3],
@@ -1021,8 +1029,35 @@
       "place": [4],
       "verb": "regarder",
       "noun": [],
+      "text": "Une chaise au dossier rouge se trouve derrière le bureau. Ce bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Des cartes de tarot sont posées dessus.\nPar la fenêtre, vous pouvez voir un arbuste aux feuilles séchées, devant lequel se trouve une petite croix en pierre."
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["tapis"],
       "mustnot": ["escalier_decouvert"],
-      "text": "Une chaise au dossier rouge se trouve derrière le bureau. Par la fenêtre, vous pouvez voir un arbuste aux feuilles séchées, devant lequel se trouve une petite croix en pierre.\nLe bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Sur ce tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21 et une carte sur laquelle est imprimée un joueur de banjo et une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["carte"],
+      "mustnot": ["escalier_decouvert"],
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["tapis"],
+      "must": ["escalier_decouvert"],
+      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["carte"],
+      "must": ["escalier_decouvert"],
+      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
     },
     {
       "place": [4],
@@ -1035,6 +1070,12 @@
       "place": [4],
       "verb": "regarder",
       "noun": ["fenetre"],
+      "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+    },
+    {
+      "place": [4],
+      "verb": "regarder",
+      "noun": ["croix"],
       "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
     },
     {
@@ -1192,7 +1233,7 @@
       "place": [8],
       "verb": "regarder",
       "noun": [],
-      "text": "Des tonneau sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor. Une odeur indescriptible arrive jusqu'à vos narines : fûmante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
+      "text": "Des tonneau sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fûmante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
     },
     {
       "place": [8],
@@ -1210,7 +1251,7 @@
       "place": [9],
       "verb": "regarder",
       "noun": [],
-      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine baignée d'une matière visqueuse."
+      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse."
     },
     {
       "place": [9],
@@ -1247,6 +1288,12 @@
       "verb": "regarder",
       "noun": [],
       "text": "Le sol s'est effondré sur le rebord de la pièce. Des arbrisseaux poussent dans des pots posés à même le sol ou accrochés aux murs par des cordelettes. Ils sont si nombreux qu'il est difficile d'accéder au lit, seul ameublement de cet endroit."
+    },
+    {
+      "place": [10],
+      "verb": "regarder",
+      "noun": ["lit"],
+      "text": "Même le lit est couvert par plusieurs arbrisseaux."
     },
     {
       "place": [10],
@@ -1344,7 +1391,7 @@
       "verb": "fermer",
       "noun": ["yeux"],
       "must": ["vinyle_pose"],
-      "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour où nous n'étions pas encore perdus... »"
+      "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour béni où, joie, nous n'étions pas encore perdus... »"
     },
     {
       "place": [12],
@@ -1365,6 +1412,8 @@
       "verb": "prendre",
       "noun": ["vinyle"],
       "mustnot": ["vinyle_pris"],
+      "effect": ["vinyle_pris"],
+      "give": ["vinyle_1"],
       "text": "Vous prenez le vinyle avec vous."
     },
     {
@@ -1382,12 +1431,24 @@
     {
       "place": [13],
       "verb": "regarder",
+      "noun": ["lit"],
+      "text": "Le lit est d'assez petite taille. Il devait être prévu pour un enfant."
+    },
+    {
+      "place": [13],
+      "verb": "regarder",
       "noun": ["corde"],
       "text": "Aucun extrêmité de corde n'est visible. Elles sont majoritairement plongées dans la masse des peluches."
     },
     {
       "place": [13],
       "verb": "prendre",
+      "noun": ["corde"],
+      "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
+    },
+    {
+      "place": [13],
+      "verb": "tirer",
       "noun": ["corde"],
       "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
     },
@@ -1400,9 +1461,15 @@
     {
       "place": [14],
       "verb": "regarder",
+      "noun": ["echelle"],
+      "text": "L'échelle monte à l'étage supérieur. (*utiliser la commande \"haut\" ou \"monter\" pour l'escalader*)"
+    },
+    {
+      "place": [14],
+      "verb": "regarder",
       "noun": ["grammophone"],
       "mustnot": ["vinyle_pose"],
-      "text": "Aucun disque n'est posé dans le grammophone pour l'instant."
+      "text": "Aucun disque n'est posé sur la platine du grammophone pour l'instant."
     },
     {
       "place": [14],
@@ -1426,7 +1493,14 @@
       "mustnot": ["vinyle_pose"],
       "use": ["vinyle_2"],
       "effect": ["vinyle_pose"],
-      "text": "Vous posez le disque sur le grammophone. Il se met à tourner mais n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
+      "text": "Vous posez le disque sur le grammophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
+    },
+    {
+      "place": [14],
+      "verb": "ecouter",
+      "noun": [],
+      "must": ["vinyle_pose"],
+      "text": "Vous avez beau tendre l'oreille, vous n'entendez rien, d'ici."
     },
     {
       "place": [14],
@@ -1579,11 +1653,19 @@
     },
     {
       "place": [16],
+      "verb": "ouvrir",
+      "noun": ["rideaux"],
+      "mustnot": ["rideaux_ouverts"],
+      "effect": ["rideaux_ouverts"],
+      "text": "Vous ouvrez les rideaux voyez que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous sont couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
+    },
+    {
+      "place": [16],
       "verb": "regarder",
       "noun": [],
       "must": ["rideaux_ouverts"],
       "mustnot": ["cage_ouverte"],
-      "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près d'une porte fermée à l'est de la salle."
+      "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
     },
     {
       "place": [16],
@@ -1612,7 +1694,7 @@
       "verb": "regarder",
       "noun": ["cage"],
       "must": ["rideaux_ouverts"],
-      "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
+      "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement :\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
     },
     {
       "place": [16],
@@ -1622,7 +1704,7 @@
       "mustnot": ["cage_ouverte"],
       "effect":["cage_ouverte"],
       "give": ["cle"],
-      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous, puis s'arrête quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé."
+      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous avant de s'arrêter quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé."
     },
     {
       "place": [16],
@@ -1638,6 +1720,12 @@
       "verb": "regarder",
       "noun": [],
       "text": "Vous êtes désormais dans un couloir en ligne droite, plongé dans l'obscurité. Tout ce que vous distinguez, c'est l'embrasure d'une porte à l'est, de l'autre côté du couloir."
+    },
+    {
+      "place": [18],
+      "verb": "regarder",
+      "noun": [],
+      "text": "Votre aventure est terminée. Vous n'avez plus qu'à attendre les autres joueurs."
     },
     {
       "place": [20,21,22,23,24,25,26,27,28],
