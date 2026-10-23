@@ -2,34 +2,34 @@ const crypto=require('node:crypto');
 // Acknowledgements are persisted after each part. Discord's nonce and the recent
 // message marker close the send/ack crash window without reposting an event.
 function createAnnouncements({client,channelId,siege,store,baseUrl,assignedCharacters=async()=>[],infectedCharacters=()=>[],renderHighlight=async()=>null,renderOverview=summary=>require('./highlights.cjs').renderHighlight({type:'fortress-report',summary})}){
- const ledger=store.load()??{};let busy=false;
+ const ledger=store.load()??{};ledger.mediaJobs??={};let busy=false;const rendering=new Map();
+ function scheduleMedia(channel,key,job){if(rendering.has(key))return;const task=Promise.resolve().then(async()=>{try{const image=job.event.type==='wave-end'?await renderOverview(job.event.summary):await renderHighlight(job.event);if(image){const embeds=job.embeds.map((e,i)=>i?e:{...e,image:{url:'attachment://'+image.name}});await channel.messages.edit(job.messageId,{embeds,files:[image],allowedMentions:{parse:[]}});}delete ledger.mediaJobs[key];store.save(ledger);}catch(error){console.error('Média Sanktheim:',error.message);delete ledger.mediaJobs[key];store.save(ledger);}finally{rendering.delete(key);}});rendering.set(key,task);}
+
  async function flush(){
   if(busy||!client.isReady())return;busy=true;
   try{
-   if(!siege.outbox().length)return;
+   if(!siege.outbox().length&&!Object.keys(ledger.mediaJobs).length)return;
    const channel=await client.channels.fetch(channelId);
    if(!channel?.send)throw Error('Salon RP du siège inaccessible.');
+   for(const [key,job]of Object.entries(ledger.mediaJobs))scheduleMedia(channel,key,job);
    const recent=await channel.messages.fetch({limit:100});
    const markers=new Set([...recent.values()].filter(m=>m.author?.id===client.user.id).flatMap(m=>(m.embeds??[]).map(e=>e.footer?.text)));
    for(const event of siege.outbox()){
     let appeal=null;if(event.type==='wave-end'&&Array.isArray(event.summary?.participants)&&!event.summary.participants.length){const cache='appeal:'+event.id;if(!(cache in ledger)){ledger[cache]=require('./faction-appeals.cjs').appeal(event,await assignedCharacters(),await infectedCharacters());store.save(ledger);}appeal=ledger[cache];}
-    const parts=event.text.match(/[\s\S]{1,1800}/g)??[''];let highlight;
+    const parts=event.text.match(/[\s\S]{1,1800}/g)??[''];
     for(let i=0;i<parts.length;i++){
      const marker='Sanktheim · '+event.id+' · '+i;
      if(!ledger[marker]&&!markers.has(marker)){
       const nonce=BigInt('0x'+crypto.createHash('sha256').update(marker).digest('hex').slice(0,15)).toString();
       const embed={description:parts[i],color:0xb39153,footer:{text:marker}};
       if(i===0){
-       if(['threshold','soldier-death','soldier-critical','tank-arrival'].includes(event.type))try{highlight=await renderHighlight(event);}catch(error){console.error('GIF Sanktheim:',error.message);}
-       if(event.type==='wave-end'&&event.summary?.walls?.length)try{highlight=await renderOverview(event.summary);}catch(error){console.error('Plan Sanktheim:',error.message);}
-       if(highlight)embed.image={url:'attachment://'+highlight.name};
        const mvp=event.summary?.mvp;
        if(mvp){embed.title='🏆 '+mvp.character+' · MVP de la vague';embed.color=0xf0be54;if(baseUrl)embed.thumbnail={url:baseUrl.replace(/\/$/,'')+'/pp/'+encodeURIComponent(mvp.character)+'.webp'};}
       }
       const join=['intro','warning'].includes(event.type)&&i===0;
       const components=join?[{type:1,components:[{type:2,custom_id:'sanktheim:join',label:'Prendre part à la défense de Sanktheim',style:1},...(event.type==='intro'?[{type:2,custom_id:'sanktheim:stop',label:'Arrêter le siège',style:2}]:[])]}]:undefined;
-      const message=await channel.send({embeds:[embed,...(i===0&&appeal?[appeal]:[])],allowedMentions:{parse:[]},nonce,enforceNonce:true,...(i===0&&highlight?{files:[highlight]}:{}),...(components?{components}:{})});
-      ledger[marker]=message.id;
+      const message=await channel.send({embeds:[embed,...(i===0&&appeal?[appeal]:[])],allowedMentions:{parse:[]},nonce,enforceNonce:true,...(components?{components}:{})});
+      ledger[marker]=message.id;if(i===0&&(['threshold','soldier-death','soldier-critical','tank-arrival'].includes(event.type)||event.type==='wave-end'&&event.summary?.walls?.length)){const job={event,messageId:message.id,embeds:[embed,...(appeal?[appeal]:[])]};ledger.mediaJobs[marker]=job;store.save(ledger);scheduleMedia(channel,marker,job);}
      }else ledger[marker]??=true;
      store.save(ledger);
     }
@@ -37,6 +37,6 @@ function createAnnouncements({client,channelId,siege,store,baseUrl,assignedChara
    }
   }finally{busy=false;}
  }
- return {flush};
+ return {flush,async drainMedia(){while(rendering.size)await Promise.all([...rendering.values()]);}};
 }
 module.exports={createAnnouncements};

@@ -1368,6 +1368,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       const data=await fetch(new URL("residents.json",ASSETS)).then(r=>r.json());environment.npcs=data.npcs.filter(n=>n.drinkingScene).map(n=>({...n,...n.waypoints[0],id:"npc:"+n.id,npc:true}));for(const npc of environment.npcs)await setAvatar(npc);
       await setAvatar({id:localId,character:avatars.get(localId)?.character??"Estelle",x:-7.6,y:1.5,z:-2.5});Object.assign(avatars.get(localId).position,{x:-7.6,y:1.5,z:-2.5});previewDrinkingClock=drinkingContest.createDrinkingDialogue();
     },
+    extendCatalogue(entries){Object.assign(catalogue,entries);},
     async me(player) {
       localId = player.id;
       await setAvatar({ ...spawn, ...player });

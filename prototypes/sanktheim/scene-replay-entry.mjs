@@ -16,11 +16,12 @@ const recording={camera:null,async api(route){
 }};
 let pending=0;T.DefaultLoadingManager.onStart=()=>pending++;T.DefaultLoadingManager.onLoad=()=>pending=0;
 window.loadSceneReplay=async job=>{
- clip=job;current=playback.sample(clip,clip.start);controller=await startSiege({recording});
+ clip=job;current=playback.sample(clip,clip.start);if(controller){controller.game.extendCatalogue(await recording.api('catalogue'));await controller.frame(playback.camera(clip,clip.start));return;}controller=await startSiege({recording});
  const style=document.createElement('style');style.textContent='html,body{margin:0!important;width:100%;height:100%;overflow:hidden}body.siege-mode>:not(#scene):not(#sky-labels){display:none!important}#scene,#sky-labels{display:block!important}#sky-labels .sky-nameplate{font-size:11px!important}';document.head.append(style);
  for(let i=0;i<3;i++){await controller.frame(playback.camera(clip,clip.start));await new Promise(r=>setTimeout(r,150));}
  await document.fonts.ready;
  let stable=0;while(stable<4){await new Promise(r=>setTimeout(r,100));if(pending)stable=0;else stable++;}
  window.sceneReplayReady=true;
 };
-window.drawSceneReplay=async at=>{current=playback.sample(clip,at);await controller.frame(playback.camera(clip,at));return {calls:controller.game.renderInfo?.().calls??0};};
+const readback=document.createElement('canvas');
+window.drawSceneReplay=async(at,capture=false)=>{current=playback.sample(clip,at);await controller.frame(playback.camera(clip,at));if(!capture)return {calls:controller.game.renderInfo?.().calls??0};const source=document.getElementById('scene');readback.width=source.width;readback.height=source.height;const ctx=readback.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0);const bytes=ctx.getImageData(0,0,readback.width,readback.height).data;let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));return {pixels:btoa(binary),width:readback.width,height:readback.height};};
