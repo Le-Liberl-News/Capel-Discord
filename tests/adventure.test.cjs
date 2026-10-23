@@ -4,8 +4,9 @@ const {createAdventureDiscord,chunks,BUTTON}=require('../utils/adventure/discord
 const data=require('../rpg/data/aventure.json');
 const play=(game,state,...lines)=>lines.map(l=>game.handle(state,l));
 
-test('commands are read without accents, articles or punctuation',()=>{
- assert.deepEqual(words("Ouvre-la porte, avec l'énorme Clé !"),['ouvre','porte','enorme','cle']);
+test('commands are read without accents, articles or punctuation; a hyphen stays in its word',()=>{
+ assert.deepEqual(words("Ouvre la porte, avec l'énorme Clé !"),['ouvre','porte','enorme','cle']);
+ assert.deepEqual(words('Regarde le porte-manteau'),['regarde','porte-manteau']);
 });
 test('every exit leads to a room and the start and final rooms exist',()=>{
  const ids=new Set(data.rooms.map(r=>String(r.id)));
@@ -98,4 +99,31 @@ test('« /reset » in the DMs starts a player over, even after the end; stranger
  adv.message(dm(user('a'),'nord'));for(let i=0;i<6;i++)await tick();
  assert.equal(adv.state.players.a.room,'2');assert.equal(sent.channels.rp.length,1);
  assert.equal(sent.dm.filter(([,m])=>m.content==='Gagné !').length,1);
+});
+test('each exchange is kept for the platform, and a hint written there is sent in DM',async()=>{
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,intro:'Début.',rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Sortie.',exits:{sud:1}}],final:{room:2,players:2,victory:'Gagné !'}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ const before=adv.version();
+ const press=button(user('123456'),true);press.i.user.globalName='Twn';await adv.handle(press.i);
+ adv.message(dm(user('123456'),'nord'));for(let i=0;i<4;i++)await tick();
+ assert.ok(adv.version()>before);
+ const [game]=adv.snapshot();
+ assert.equal(game.id,'123456');assert.equal(game.name,'Twn');assert.equal(game.state.room,'2');
+ assert.deepEqual(game.log.map(l=>l.kind),['reply','command','reply']);assert.equal(game.log[1].text,'nord');
+ await adv.hint('123456','Cherchez la chatière.');
+ assert.match(sent.dm.at(-1)[1].content,/Indice.*Cherchez la chatière\./);
+ assert.equal(adv.snapshot()[0].log.at(-1).kind,'hint');
+ await assert.rejects(adv.hint('999999','?'),/joueur inconnu/);
+});
+test('the sync sends the games once they changed and delivers the hints, reporting those that failed',async()=>{
+ const {startAdventureSync}=require('../utils/adventure/platformSync');
+ const calls=[];let version=1;const delivered=[];
+ const adventure={version:()=>version,snapshot:()=>[{id:'1',name:'a',state:{},log:[]}],hint:async(user,text)=>{if(user==='bad')throw Object.assign(new Error('x'),{code:50007});delivered.push(text);}};
+ const replies=[{hints:[{id:7,user:'1',text:'Indice'},{id:8,user:'bad',text:'?'}]},{hints:[]}];
+ const fetch=async(url,options)=>{calls.push(JSON.parse(options.body));return {ok:true,status:200,json:async()=>replies.shift()};};
+ const sync=startAdventureSync({adventure,token:'t',fetch,every:1e9,log:()=>{}});
+ await sync.tick();await sync.tick();sync.stop();
+ assert.equal(calls[0].players.length,1);assert.equal(calls[1].players,undefined);
+ assert.deepEqual(delivered,['Indice']);assert.deepEqual(calls[1].failed,[{id:8,error:'50007'}]);
 });

@@ -3,6 +3,8 @@
 // `allowed` may play (the button checks it; a DM is only read from someone who started through the button).
 // When `final.players` players stand in the final room, each of them gets the victory text and the roleplay
 // channel the closing one. Players' states survive restarts (store). « /reset » in the DMs starts a player over.
+// Each player's last exchanges are kept (logs) for the platform's editor, which follows the games and sends hints
+// (snapshot, hint; see platformSync.js).
 // Everything is text; a room may have a picture (its "image", a file of rpg/data/aventure/), sent on entering it
 // and with « regarder ».
 const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('discord.js');
@@ -22,7 +24,18 @@ function chunks(text){
 function createAdventureDiscord({client,data,store,channelId,closingChannelId,allowed=[],files=FILES,log=console.error}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
- const save=()=>store.save(state);
+ state.logs??={};state.names??={};
+ let version=0;   // bumped on every change, so the platform only gets the games when they moved
+ const save=()=>{version++;store.save(state);};
+ const LOG_SIZE=120;
+ // one line of a player's game: a command, the bot's reply, a hint
+ function note(id,kind,text){
+  if(!text)return;
+  const lines=state.logs[id]??=[];
+  lines.push({at:Date.now(),kind,text:String(text).slice(0,4000)});
+  if(lines.length>LOG_SIZE)lines.splice(0,lines.length-LOG_SIZE);
+ }
+ const replyText=result=>result.replies.filter(Boolean).join('\n\n');
  const queues=new Map();
  const mayPlay=interaction=>allowed.includes(interaction.user.id)||Boolean(interaction.memberPermissions?.has(PermissionFlagsBits.Administrator));
  // a reply: its texts, then the room's picture when the player enters or looks at it
@@ -61,15 +74,18 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
   await interaction.deferReply({flags:64});
   const id=interaction.user.id,known=state.players[id];
   const player=known||game.fresh();
+  state.names[id]=interaction.user.globalName||interaction.user.username||id;
   try{
    const dm=await interaction.user.createDM();
-   if(known)await send(dm,{replies:[data.messages?.resume||'Vous reprenez votre aventure.',game.describe(player)],look:true},player);
-   else await send(dm,game.start(player),player);
+   const opening=known?{replies:[data.messages?.resume||'Vous reprenez votre aventure.',game.describe(player)],look:true}:game.start(player);
+   await send(dm,opening,player);
+   note(id,'reply',replyText(opening));
   }catch(e){
    log('Aventure, MP :',e.code??e);
    await interaction.editReply({content:"Je n'arrive pas à t'écrire en message privé : autorise les MP des membres du serveur puis réessaie."});return true;
   }
-  if(!known){state.players[id]=player;save();}
+  if(!known)state.players[id]=player;
+  save();
   await interaction.editReply({content:'Je t’ai écrit en message privé.'});
   return true;
  }
@@ -77,23 +93,35 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
  function message(msg){
   if(msg.author.bot||msg.guild||!state.players[msg.author.id]||!msg.content.trim())return false;
   const id=msg.author.id;
+  state.names[id]=msg.author.globalName||msg.author.username||state.names[id]||id;
   const next=(queues.get(id)||Promise.resolve()).then(async()=>{
+   note(id,'command',msg.content.trim());
    // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
    if(msg.content.trim().toLowerCase()==='/reset'){
     const player=game.fresh(),start=game.start(player);
-    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);save();
-    await send(msg.channel,{...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]},player);
+    const restart={...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]};
+    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);note(id,'reply',replyText(restart));save();
+    await send(msg.channel,restart,player);
     return;
    }
    const player=state.players[id];
-   if(state.done&&state.reached.includes(id)){await msg.channel.send({content:data.messages?.over||'Votre aventure est terminée.'});return;}
-   const result=game.handle(player,msg.content);save();
+   if(state.done&&state.reached.includes(id)){const over=data.messages?.over||'Votre aventure est terminée.';note(id,'reply',over);save();await msg.channel.send({content:over});return;}
+   const result=game.handle(player,msg.content);note(id,'reply',replyText(result));save();
    await send(msg.channel,result,player);
    if(result.final)await reach(id);
   }).catch(e=>log('Aventure :',e));
   queues.set(id,next);
   return true;
  }
- return {handle,message,state};
+ // the games for the platform: every player's state and last exchanges
+ const snapshot=()=>Object.entries(state.players).map(([id,player])=>({id,name:state.names[id]||id,state:player,log:state.logs[id]||[]}));
+ // a hint written on the platform, sent in DM
+ async function hint(id,text){
+  if(!state.players[id])throw new Error('joueur inconnu');
+  const user=await client.users.fetch(id);
+  await user.send({content:(data.messages?.hint||'💡 **Indice** : ')+text,allowedMentions:{parse:[]}});
+  note(id,'hint',text);save();
+ }
+ return {handle,message,state,snapshot,hint,version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,BUTTON};
