@@ -1,4 +1,4 @@
-name: Read server disk usage
+name: Read server memory pressure
 on:
   push:
     branches: [codex/sanktheim-render-probe]
@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - name: Read disk space, inodes and account quota
+      - name: Read memory limits and capture process usage
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
           VPS_USER: ${{ secrets.VPS_USERNAME }}
@@ -16,14 +16,12 @@ jobs:
         run: |
           sudo apt-get install -y sshpass >/dev/null
           timeout 180 sshpass -e ssh -o ConnectTimeout=20 -o StrictHostKeyChecking=no -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
-          echo 'DISK SPACE'
-          df -h / /tmp /home/twnkek290001
-          echo 'INODES'
-          df -i / /tmp /home/twnkek290001
-          echo 'ACCOUNT QUOTA'
-          timeout 10 quota -s 2>/dev/null || true
-          echo 'BOT STORAGE'
-          timeout 25 du -h --max-depth=1 /home/twnkek290001/LN-Bot 2>/dev/null | sort -h
-          echo 'LOG AND CACHE STORAGE'
-          timeout 20 du -sh /home/twnkek290001/.pm2/logs /home/twnkek290001/.cache /tmp/chromium* 2>/dev/null || true
+          echo 'MEMORY AND LOAD'
+          free -m
+          uptime
+          ps -u "$(id -u)" -o pid,ppid,comm,rss,%cpu --sort=-rss | head -20
+          echo 'CGROUP MEMORY EVENTS'
+          for file in /sys/fs/cgroup/memory.events /sys/fs/cgroup/memory.current /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory/memory.failcnt /sys/fs/cgroup/memory/memory.limit_in_bytes; do
+            if [ -r "$file" ]; then echo "$file"; cat "$file"; fi
+          done
           REMOTE
