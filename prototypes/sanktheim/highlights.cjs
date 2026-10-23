@@ -4,7 +4,7 @@ const wallIds=new Set(['west-wall','west-tower','gate','east-tower','east-wall']
 const thresholds=[95,85,75,65,55,45,35,25,15,5,0];
 async function renderHighlightDirect(event){
  if(event.type==='fortress-report')return require('./fortress-report.cjs').renderFortressReport(event.summary);
- if(event.type==='scene-replay')return require('./scene-renderer.cjs').renderScene(event.clip);
+ if(event.type==='scene-replay')return require('./scene-renderer.cjs').renderScene(event.clip,{fps:6,width:384,height:256});
  if(event.type==='tank-arrival'&&event.crew?.length)return require('./tank-highlight.cjs').renderTankHighlight(event);
  if(event.type==='tank-arrival')return {attachment:fs.readFileSync(path.join(root,'tank-advance.gif')),name:'char-des-poms.gif'};
  if(event.type==='threshold'){
