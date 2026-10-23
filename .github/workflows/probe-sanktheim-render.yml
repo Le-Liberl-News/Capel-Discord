@@ -1,0 +1,27 @@
+name: Profile Sanktheim capture
+on:
+  push:
+    branches: [codex/sanktheim-render-probe]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Time a read-only capture of a saved event
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          VPS_USER: ${{ secrets.VPS_USERNAME }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          sudo apt-get install -y sshpass >/dev/null
+          timeout 180 sshpass -e ssh -o ConnectTimeout=20 -o StrictHostKeyChecking=no -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+          cd /home/twnkek290001/LN-Bot
+          node <<'JS'
+          const fs=require('fs'),pw=require('playwright-core'),start=Date.now(),log=(...a)=>console.log(Date.now()-start,...a);
+          const launch=pw.chromium.launch.bind(pw.chromium);pw.chromium.launch=async opts=>{log('browser launch');const b=await launch(opts);log('browser ready');const np=b.newPage.bind(b);b.newPage=async opts=>{const p=await np(opts),go=p.goto.bind(p),ev=p.evaluate.bind(p);p.on('console',m=>{if(m.type()==='error')log('browser error',m.text().slice(0,200));});p.goto=async(...a)=>{log('page goto');const r=await go(...a);log('page loaded');return r;};p.evaluate=async(fn,...args)=>{const label=String(fn).includes('loadSceneReplay')?'load scene':String(fn).includes('drawSceneReplay')?'draw frame':'evaluate';log(label,'start');const r=await ev(fn,...args);log(label,'done');return r;};return p;};return b;};
+          (async()=>{const s=JSON.parse(fs.readFileSync('.runtime/sanktheim-live/state.json','utf8')),event=s.events.findLast(e=>e.replay?.scene);if(!event)throw Error('No saved scene available');log('saved event',event.type);const history=require('./prototypes/sanktheim/scene-history.cjs').createSceneHistory({siege:{_state:s}}),clip=await history.clip(event);clip.end=clip.start+200;const renderer=require('./prototypes/sanktheim/scene-renderer.cjs');try{const result=await renderer.renderScene(clip);log('capture completed',result.attachment.length,'bytes');}finally{await renderer.close();}})().catch(e=>{console.error(e.stack);process.exitCode=1;});
+          JS
+          REMOTE
