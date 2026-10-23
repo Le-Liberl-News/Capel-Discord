@@ -1,0 +1,26 @@
+name: Recover Sanktheim host
+on:
+  push:
+    branches: [codex/sanktheim-recovery]
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Stop abandoned capture processes and restart bot
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          VPS_USER: ${{ secrets.VPS_USERNAME }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          sudo apt-get install -y sshpass >/dev/null
+          timeout 90 sshpass -e ssh -o ConnectTimeout=12 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+          pkill -u "$(id -u)" -f '[/]tmp/chromium' || true
+          cd /home/twnkek290001/LN-Bot
+          pm2 restart LN-Bot --update-env
+          sleep 8
+          curl --max-time 15 --fail -s http://127.0.0.1:3000/api/siege/status
+          REMOTE
