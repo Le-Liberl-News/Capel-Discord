@@ -15,9 +15,12 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const nativeGeometry=require("./forest-collision.cjs").createForestCollision(terrainGeometry,()=>siege._state.forestry,1,()=>siege._state.barricades,()=>siege._state.enemies.filter(e=>e.siegeTank));
  const {geometry}=require('./geometry.cjs').createGeometry(siege,nativeGeometry);
  const arena=createArenaBridge({siege,geometry,worldScale:world.SCALE,surfaceJumps:true,onSay,resolveCharacter,isInfected:c=>rhumertume.isInfected(c),now:()=>siege._state.at});
- const history=require('./scene-history.cjs').createSceneHistory({siege,arena,now});
- const warmSpectator=require('./spectator-warmup.cjs').createSpectatorWarmup({siege,render:event=>require('./highlights.cjs').renderHighlight(event),log:console.error});
- const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
+ // Scene GIFs require a resident Chromium process. Keep them opt-in on the shared host.
+ const sceneMediaEnabled=process.env.SANKTHEIM_SCENE_GIFS==='1';
+ const history=sceneMediaEnabled?require('./scene-history.cjs').createSceneHistory({siege,arena,now}):null;
+ const warmSpectator=sceneMediaEnabled?require('./spectator-warmup.cjs').createSpectatorWarmup({siege,render:event=>require('./highlights.cjs').renderHighlight(event),log:console.error}):()=>{};
+ const recordScene=()=>{if(history)warmSpectator(history.record());};
+ const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{if(!history)return null;const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
  const entries=store('entries');const pending=new Map(entries.load()??[]);const saveEntries=()=>entries.save([...pending]);let ready=false;
  const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
  const isOwner=id=>String(id)===String(ownerId);
@@ -45,8 +48,8 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
    return res.status(404).json({error:'Route de siège inconnue.'});
   }catch(e){res.status(e.status??400).json({error:e.message});}
  });
- async function start(){if(ready)return;siege.start();siege.advance(now());arena.tick();warmSpectator(history.record());siege.save();ready=true;await announce.flush();}
- const timer=setInterval(()=>{if(!ready)return;try{siege.advance(now());arena.tick();warmSpectator(history.record());}catch(e){console.error('Siège:',e.message);}},250);timer.unref();
+ async function start(){if(ready)return;siege.start();siege.advance(now());arena.tick();recordScene();siege.save();ready=true;await announce.flush();}
+ const timer=setInterval(()=>{if(!ready)return;try{siege.advance(now());arena.tick();recordScene();}catch(e){console.error('Siège:',e.message);}},250);timer.unref();
  const announcements=setInterval(()=>{if(ready)void announce.flush().catch(e=>console.error('Annonces Sanktheim:',e.message));},10000);announcements.unref();
  async function handle(interaction){
   if(!['sanktheim:join','sanktheim:enter','sanktheim:stop'].includes(interaction.customId))return false;
