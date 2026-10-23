@@ -16,6 +16,7 @@ async function renderTankHighlight(event){
  }
  function overlay(draw,z,offset){lc.clearRect(0,0,W,H);draw(lc);const src=lc.getImageData(0,0,W,H).data,pixels=c.getImageData(0,0,W,H),dst=pixels.data;for(let i=0;i<W*H;i++){const k=i*4,a=src[k+3]/255;if(!a||z>depth.readUInt16LE(offset+i*2)/256+.025)continue;for(let n=0;n<3;n++)dst[k+n]=Math.round(src[k+n]*a+dst[k+n]*(1-a));}c.putImageData(pixels,0,0);}
  for(const [f,pose]of meta.poses.entries()){
+  if(event.still&&f!==Math.min(12,meta.poses.length-1))continue;
   c.drawImage(atlas,0,f*H,W,H,0,0,W,H);const sprites=[];
   for(const [i,{member,image}]of crew.entries()){
    const local=shared.crewPose(i,f*delay),p={x:pose.position.x+local.x,y:pose.position.y+local.y,z:pose.position.z+local.z};
@@ -29,6 +30,7 @@ async function renderTankHighlight(event){
   for(const sprite of sprites.map(s=>({...s,q:project(s.p,pose.matrix,pose.view,W,H)})).sort((a,b)=>b.q.z-a.q.z)){
    const {q}=sprite;if(q.z<=.1)continue;const size=focal/q.z;overlay(ctx=>{const dest=[q.x-sprite.width*size/2,q.y-sprite.height*size/2,sprite.width*size,sprite.height*size];if(sprite.source)ctx.drawImage(sprite.image,...sprite.source,...dest);else ctx.drawImage(sprite.image,...dest);},q.z,f*W*H*2);
   }
+  if(event.still)return {attachment:canvas.toBuffer('image/png'),name:'char-des-poms.png'};
   frames.push(c.getImageData(0,0,W,H).data);
  }
  const sample=[];for(const frame of frames)for(let i=0;i<frame.length;i+=64)sample.push(...frame.subarray(i,i+4));const palette=quantize(Uint8Array.from(sample),256),gif=GIFEncoder();

@@ -4,6 +4,11 @@ const wallIds=new Set(['west-wall','west-tower','gate','east-tower','east-wall']
 const thresholds=[95,85,75,65,55,45,35,25,15,5,0];
 async function renderHighlightDirect(event){
  if(event.type==='fortress-report')return require('./fortress-report.cjs').renderFortressReport(event.summary);
+ if(event.still&&event.type==='threshold'&&wallIds.has(event.wall)&&thresholds.includes(event.healthPercent)){
+  if(event.replay?.hit&&fs.existsSync(path.join(root,event.wall+'-'+event.healthPercent+'.json')))return require('./highlight-replay.cjs').renderReplay(event);
+  const {createCanvas,loadImage}=require('@napi-rs/canvas'),atlas=await loadImage(path.join(root,event.wall+'-'+event.healthPercent+'.webp')),canvas=createCanvas(448,280);canvas.getContext('2d').drawImage(atlas,0,Math.min(8,atlas.height/280-1)*280,448,280,0,0,448,280);return {attachment:canvas.toBuffer('image/png'),name:event.wall+'-'+event.healthPercent+'.png'};
+ }
+ if(event.still&&event.type==='tank-arrival')return require('./tank-highlight.cjs').renderTankHighlight({...event,crew:event.crew??[]});
  if(event.type==='scene-replay')return require('./scene-renderer.cjs').renderScene(event.clip,{fps:6,width:384,height:256});
  if(event.type==='tank-arrival'&&event.crew?.length)return require('./tank-highlight.cjs').renderTankHighlight(event);
  if(event.type==='tank-arrival')return {attachment:fs.readFileSync(path.join(root,'tank-advance.gif')),name:'char-des-poms.gif'};
@@ -20,7 +25,7 @@ async function renderHighlightDirect(event){
  const backdrop=await loadImage(path.join(root,'garrison.png'));
  const blood=dead?await loadImage(path.resolve(__dirname,'../../activity/assets/sky/effects/native/effects/Third/mgblood.png')):null;
  const frames=[],w=448,h=280,hp=Math.max(0,Math.round(event.hp??0)),maxHP=Math.max(1,Math.round(event.maxHP??1));
- for(let f=0;f<24;f++){
+ for(let f=event.still?8:0;f<24;f++){
   const canvas=createCanvas(w,h),c=canvas.getContext('2d');c.imageSmoothingEnabled=false;c.drawImage(backdrop,0,0,w,h);c.fillStyle='#10151c88';c.fillRect(0,0,w,h);
   const pose=dead?Math.min(3,Math.floor(f/3)):Math.floor(f/4)%8,shake=!dead&&f<12?(f%2?2:-2):0;
   if(blood&&f>=4){c.globalAlpha=Math.min(1,(f-3)/6);c.drawImage(blood,0,32,32,32,172,219,104,32);c.globalAlpha=1;}
@@ -29,6 +34,7 @@ async function renderHighlightDirect(event){
   const ratio=Math.min(1,hp/maxHP);c.fillStyle='#120d10';c.fillRect(139,62,170,18);c.fillStyle='#49212a';c.fillRect(142,65,164,12);c.fillStyle=f%6<3?'#ff4054':'#c72739';c.fillRect(142,65,164*ratio,12);c.strokeStyle='#ebc1a1';c.strokeRect(139.5,62.5,169,17);
   c.font='bold 14px sans-serif';c.fillStyle='#fff';c.fillText(hp+' / '+maxHP+' PV',224,99);
   c.fillStyle='#11151de8';c.fillRect(0,245,w,35);c.fillStyle=dead?'#e4ccba':'#ffbd80';c.font='bold 17px sans-serif';c.fillText(dead?'Tombé au combat':'EN DANGER DE MORT',224,268);
+  if(event.still)return {attachment:canvas.toBuffer('image/png'),name:dead?'soldat-tombe.png':'soldat-en-danger.png'};
   frames.push(c.getImageData(0,0,w,h).data);
  }
  const sample=new Uint8Array(frames.flatMap(frame=>{const pixels=[];for(let i=0;i<frame.length;i+=32)pixels.push(...frame.subarray(i,i+4));return pixels;}));

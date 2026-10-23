@@ -22,7 +22,7 @@ async function renderReplay(event){
  function overlay(draw,z,depthOffset){lc.clearRect(0,0,W,H);draw(lc);const source=lc.getImageData(0,0,W,H).data,base=c.getImageData(0,0,W,H),dest=base.data;for(let y=36;y<244;y++)for(let x=0;x<W;x++){const i=y*W+x,k=i*4,alpha=source[k+3]/255;if(!alpha||z>depth.readUInt16LE(depthOffset+i*2)/256+.18)continue;for(let n=0;n<3;n++)dest[k+n]=Math.round(source[k+n]*alpha+dest[k+n]*(1-alpha));dest[k+3]=255;}c.putImageData(base,0,0);}
 
  const count=atlas.height/H;
- for(let f=0;f<count;f++){
+ for(let f=event.still?Math.min(8,count-1):0;f<count;f++){
   c.drawImage(atlas,0,f*H,W,H,0,0,W,H);const offset=f<3?0:W*H*2;
   for(const {a,info,sheet,screen}of [...actors].sort((a,b)=>b.screen.z-a.screen.z)){
    const direction=(info.directions??8)===1?0:((Math.round((Math.atan2(a.heading?.dx??1,a.heading?.dz??0)-Math.atan2(meta.view[0],meta.view[8]))/(Math.PI/4))+8)%8);
@@ -35,6 +35,7 @@ async function renderReplay(event){
   if(hit.kind==='shell'&&hit.points?.length&&f<4){const p=hit.points[Math.max(0,hit.points.length-4+f)],q=transform(p);overlay(ctx=>{ctx.fillStyle='#ffbe4d';ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fill();},q.z,offset);}
   // Keep the two captions readable, even for a character standing on the rampart.
   c.drawImage(atlas,0,f*H,W,36,0,0,W,36);c.drawImage(atlas,0,f*H+244,W,36,0,244,W,36);
+  if(event.still)return {attachment:canvas.toBuffer('image/png'),name:event.wall+'-'+event.healthPercent+'.png'};
   frames.push(c.getImageData(0,0,W,H).data);
  }
  const sample=[];for(const frame of frames)for(let i=0;i<frame.length;i+=64)sample.push(...frame.subarray(i,i+4));const palette=quantize(Uint8Array.from(sample),256),gif=GIFEncoder();

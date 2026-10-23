@@ -15,12 +15,12 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const nativeGeometry=require("./forest-collision.cjs").createForestCollision(terrainGeometry,()=>siege._state.forestry,1,()=>siege._state.barricades,()=>siege._state.enemies.filter(e=>e.siegeTank));
  const {geometry}=require('./geometry.cjs').createGeometry(siege,nativeGeometry);
  const arena=createArenaBridge({siege,geometry,worldScale:world.SCALE,surfaceJumps:true,onSay,resolveCharacter,isInfected:c=>rhumertume.isInfected(c),now:()=>siege._state.at});
- // Scene GIFs require a resident Chromium process. Keep them opt-in on the shared host.
- const sceneMediaEnabled=process.env.SANKTHEIM_SCENE_GIFS==='1';
+ // Production media stays on the browser-free still renderer.
+ const sceneMediaEnabled=false;
  const history=sceneMediaEnabled?require('./scene-history.cjs').createSceneHistory({siege,arena,now}):null;
  const warmSpectator=sceneMediaEnabled?require('./spectator-warmup.cjs').createSpectatorWarmup({siege,render:event=>require('./highlights.cjs').renderHighlight(event),log:console.error}):()=>{};
  const recordScene=()=>{if(history)warmSpectator(history.record());};
- const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{if(!history)return null;const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
+ const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{if(!history)return require('./highlights.cjs').renderHighlight({...event,still:true});const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
  const entries=store('entries');const pending=new Map(entries.load()??[]);const saveEntries=()=>entries.save([...pending]);let ready=false;
  const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
  const isOwner=id=>String(id)===String(ownerId);
