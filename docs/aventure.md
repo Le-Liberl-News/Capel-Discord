@@ -3,7 +3,7 @@
 Le Capel publie l'invitation avec `/aventure` (administrateurs) dans le salon 889835278494203915. Le bouton ouvre la
 partie en MP ; chaque MP du joueur est ensuite une commande. Le jeu est entièrement textuel, avec au plus une image
 par salle. Pour l'instant, seuls les administrateurs et
-744964573249011712 peuvent jouer (`allowed` dans `index.js`).
+744964573249011712 et 188414629376950273 peuvent jouer (`allowed` dans `index.js`).
 
 Tout le contenu est dans `rpg/data/aventure.json` ; le moteur (`utils/adventure/engine.js`) ne fait que l'appliquer.
 Les parties sont gardées dans `.runtime/aventure.json` : la supprimer remet tout le monde au départ.
