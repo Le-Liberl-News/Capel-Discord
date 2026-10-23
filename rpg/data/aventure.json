@@ -1549,6 +1549,17 @@
       ],
       "verb": "regarder",
       "noun": [],
+      "text": "Vous êtes pris d'un haut-le-cœur à la vue des monceaux de laines qui, vous en êtes désormais certains, sont imbibés de ce qui ressemble à une sorte de fluide corporel inconnu aux teintes rouges-orangées.",
+      "tool": [
+        "lampe_allumee"
+      ]
+    },
+    {
+      "place": [
+        5
+      ],
+      "verb": "regarder",
+      "noun": [],
       "text": "Comme il n'y a pas de fenêtre, vous ne voyez presque rien, hormis des tas de laine à l'apparence poisseuse, posés sur les tables ou traînant par terre. Une petite lumière attire votre œil vers l'est de la salle."
     },
     {
@@ -1632,22 +1643,6 @@
       "verb": "regarder",
       "noun": [],
       "text": "Des étagères recouvrent tous les murs, mis à part devant deux grandes fenêtres au nord de la pièce. Un écriteau indique la répartition des différentes sections thématiques."
-    },
-    {
-      "place": [
-        7,
-        71,
-        72,
-        73,
-        74,
-        75,
-        76
-      ],
-      "verb": "regarder",
-      "noun": [
-        "ecriteau"
-      ],
-      "text": "« La bibliothèque est divisée en 6 domaines : littérature, mythologie, sciences, musique, arts et loisirs et enfant. »\n(*pour consulter les différents domaines, utilisez une commande du type \"consulter la littérature\"*)"
     },
     {
       "place": [
@@ -1779,21 +1774,27 @@
     },
     {
       "place": [
-        8
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
       ],
       "verb": "regarder",
-      "noun": [],
-      "text": "Des tonneaus sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fumante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
+      "noun": [
+        "ecriteau"
+      ],
+      "text": "« La bibliothèque est divisée en 6 domaines : littérature, mythologie, sciences, musique, arts et loisirs et enfant. »\n(*pour consulter les différents domaines, utilisez une commande du type \"consulter la littérature\"*)"
     },
     {
       "place": [
         8
       ],
       "verb": "regarder",
-      "noun": [
-        "tonneau"
-      ],
-      "text": "Les tonneaux sont nombreux, tous identiques. Aucun ne semble avoir jamais été ouvert."
+      "noun": [],
+      "text": "Des tonneaus sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fumante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
     },
     {
       "place": [
@@ -1807,21 +1808,21 @@
     },
     {
       "place": [
-        9
+        8
       ],
       "verb": "regarder",
-      "noun": [],
-      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse."
+      "noun": [
+        "tonneau"
+      ],
+      "text": "Les tonneaux sont nombreux, tous identiques. Aucun ne semble avoir jamais été ouvert."
     },
     {
       "place": [
         9
       ],
       "verb": "regarder",
-      "noun": [
-        "femme"
-      ],
-      "text": "La femme reste dans l'immobilité la plus totale. On pourrait presque croire qu'elle ne vous a pas remarqué.\nPeut-être pourriez-vous essayer de lui parler ? (*pour parler d'un sujet avec cette femme, utilisez une commande du type \"parler de sujet\"*)"
+      "noun": [],
+      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse."
     },
     {
       "place": [
@@ -1850,6 +1851,16 @@
       "verb": "parler",
       "noun": [],
       "text": "De quoi souhaitez-vous parler à cette femme ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)"
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "regarder",
+      "noun": [
+        "femme"
+      ],
+      "text": "La femme reste dans l'immobilité la plus totale. On pourrait presque croire qu'elle ne vous a pas remarqué.\nPeut-être pourriez-vous essayer de lui parler ? (*pour parler d'un sujet avec cette femme, utilisez une commande du type \"parler de sujet\"*)"
     },
     {
       "place": [
@@ -1912,19 +1923,6 @@
       "place": [
         10
       ],
-      "verb": "regarder",
-      "noun": [
-        "sol"
-      ],
-      "mustnot": [
-        "cle_tombee"
-      ],
-      "text": "Le sol est effondré au bord de la pièce. Au bord du trou, vous voyez qu'un arbrisseau porte une clé sur une de ses branches."
-    },
-    {
-      "place": [
-        10
-      ],
       "verb": "prendre",
       "noun": [
         "cle"
@@ -1936,6 +1934,19 @@
         "cle_tombee"
       ],
       "text": "Alors que vous vous approchez de l'arbrisseau pour vous saisir de la clé, le pot chancelle et tombe pour s'écraser plus bas.\nUn fracas métallique se fait alors entendre."
+    },
+    {
+      "place": [
+        10
+      ],
+      "verb": "regarder",
+      "noun": [
+        "sol"
+      ],
+      "mustnot": [
+        "cle_tombee"
+      ],
+      "text": "Le sol est effondré au bord de la pièce. Au bord du trou, vous voyez qu'un arbrisseau porte une clé sur une de ses branches."
     },
     {
       "place": [
@@ -1975,19 +1986,6 @@
       "place": [
         11
       ],
-      "verb": "regarder",
-      "noun": [
-        "rayon"
-      ],
-      "must": [
-        "livre_pris"
-      ],
-      "text": "Il n'y a absolument plus rien dans les rayons."
-    },
-    {
-      "place": [
-        11
-      ],
       "verb": "prendre",
       "noun": [
         "livre"
@@ -2005,14 +2003,16 @@
     },
     {
       "place": [
-        12
+        11
       ],
       "verb": "regarder",
-      "mustnot": [
-        "vinyle_pris"
+      "noun": [
+        "rayon"
       ],
-      "noun": [],
-      "text": "Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans. Un disque vinyle est posé sur le rebord d'une des fenêtres."
+      "must": [
+        "livre_pris"
+      ],
+      "text": "Il n'y a absolument plus rien dans les rayons."
     },
     {
       "place": [
@@ -2053,24 +2053,22 @@
         12
       ],
       "verb": "regarder",
-      "must": [
+      "mustnot": [
         "vinyle_pris"
       ],
       "noun": [],
-      "text": "Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans."
+      "text": "Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans. Un disque vinyle est posé sur le rebord d'une des fenêtres."
     },
     {
       "place": [
         12
       ],
       "verb": "regarder",
-      "noun": [
-        "vinyle"
-      ],
-      "mustnot": [
+      "must": [
         "vinyle_pris"
       ],
-      "text": "Le vinyle est rangé dans une pochette titrée « Amour ambré », mais il est écrit « Là où se cachent les étoiles » sur le disque qui se trouve à l'intérieur."
+      "noun": [],
+      "text": "Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans."
     },
     {
       "place": [
@@ -2093,11 +2091,16 @@
     },
     {
       "place": [
-        13
+        12
       ],
       "verb": "regarder",
-      "noun": [],
-      "text": "Le lit est fait impeccablement. Le papier-peint représente la savane lointaine, dans des couleurs chaudes et réconfortantes. En dehors du lit, seul un coffre est posé au coin de la pièce."
+      "noun": [
+        "vinyle"
+      ],
+      "mustnot": [
+        "vinyle_pris"
+      ],
+      "text": "Le vinyle est rangé dans une pochette titrée « Amour ambré », mais il est écrit « Là où se cachent les étoiles » sur le disque qui se trouve à l'intérieur."
     },
     {
       "place": [
@@ -2114,10 +2117,8 @@
         13
       ],
       "verb": "regarder",
-      "noun": [
-        "lit"
-      ],
-      "text": "Le lit est d'assez petite taille. Il devait être prévu pour un enfant."
+      "noun": [],
+      "text": "Le lit est fait impeccablement. Le papier-peint représente la savane lointaine, dans des couleurs chaudes et réconfortantes. En dehors du lit, seul un coffre est posé au coin de la pièce."
     },
     {
       "place": [
@@ -2125,9 +2126,9 @@
       ],
       "verb": "regarder",
       "noun": [
-        "corde"
+        "lit"
       ],
-      "text": "Aucun extrêmité de corde n'est visible. Elles sont majoritairement plongées dans la masse des peluches."
+      "text": "Le lit est d'assez petite taille. Il devait être prévu pour un enfant."
     },
     {
       "place": [
@@ -2148,6 +2149,16 @@
         "corde"
       ],
       "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
+    },
+    {
+      "place": [
+        13
+      ],
+      "verb": "regarder",
+      "noun": [
+        "corde"
+      ],
+      "text": "Aucun extrêmité de corde n'est visible. Elles sont majoritairement plongées dans la masse des peluches."
     },
     {
       "place": [
@@ -2179,19 +2190,6 @@
         "vinyle_pose"
       ],
       "text": "Aucun disque n'est posé sur la platine du gramophone pour l'instant."
-    },
-    {
-      "place": [
-        14
-      ],
-      "verb": "regarder",
-      "noun": [
-        "gramophone"
-      ],
-      "must": [
-        "vinyle_pose"
-      ],
-      "text": "Le disque « Amour ambré » tourne sans fin sur le gramophone."
     },
     {
       "place": [
@@ -2252,6 +2250,19 @@
       "must": [
         "vinyle_pose"
       ],
+      "text": "Le disque « Amour ambré » tourne sans fin sur le gramophone."
+    },
+    {
+      "place": [
+        14
+      ],
+      "verb": "regarder",
+      "noun": [
+        "gramophone"
+      ],
+      "must": [
+        "vinyle_pose"
+      ],
       "text": "Le disque tourne inlassablement sur la platine, mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers."
     },
     {
@@ -2293,18 +2304,6 @@
         "couloir_ouvert"
       ],
       "text": "Deux portes sont entrebaillées, une à l'ouest, une à l'est.\nLa dernière porte au sud est fermée à clé."
-    },
-    {
-      "place": [
-        15
-      ],
-      "verb": "regarder",
-      "noun": [],
-      "mustnot": [
-        "couloir_ouvert",
-        "chambre_ouverte"
-      ],
-      "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
     },
     {
       "place": [
@@ -2460,6 +2459,18 @@
     },
     {
       "place": [
+        15
+      ],
+      "verb": "regarder",
+      "noun": [],
+      "mustnot": [
+        "couloir_ouvert",
+        "chambre_ouverte"
+      ],
+      "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
+    },
+    {
+      "place": [
         16
       ],
       "verb": "regarder",
@@ -2512,19 +2523,6 @@
       "place": [
         16
       ],
-      "verb": "regarder",
-      "noun": [
-        "fenêtre"
-      ],
-      "must": [
-        "rideaux_ouverts"
-      ],
-      "text": "Les rideaux sont maintenant ouverts, laissant voir une lune aux reflets dorés."
-    },
-    {
-      "place": [
-        16
-      ],
       "verb": "ouvrir",
       "noun": [
         "rideaux"
@@ -2536,6 +2534,19 @@
         "rideaux_ouverts"
       ],
       "text": "Vous ouvrez les rideaux et voyez que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous sont couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
+    },
+    {
+      "place": [
+        16
+      ],
+      "verb": "regarder",
+      "noun": [
+        "fenêtre"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
+      "text": "Les rideaux sont maintenant ouverts, laissant voir une lune aux reflets dorés."
     },
     {
       "place": [
@@ -2593,19 +2604,6 @@
       "place": [
         16
       ],
-      "verb": "regarder",
-      "noun": [
-        "cage"
-      ],
-      "must": [
-        "rideaux_ouverts"
-      ],
-      "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement :\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
-    },
-    {
-      "place": [
-        16
-      ],
       "verb": "ouvrir",
       "noun": [
         "cage"
@@ -2643,6 +2641,19 @@
         "cle"
       ],
       "text": "Vous déverrouillez la porte, qui s'entrebaille alors. Une sensation étrange vous fait bourdonner les oreilles une fraction de seconde avant de disparaître."
+    },
+    {
+      "place": [
+        16
+      ],
+      "verb": "regarder",
+      "noun": [
+        "cage"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
+      "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement :\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
     },
     {
       "place": [
@@ -2767,19 +2778,6 @@
     },
     {
       "place": [
-        0
-      ],
-      "verb": "regarder",
-      "text": "C'est une lampe-torche tout à fait ordinaire. Elle est allumée.",
-      "noun": [
-        "lampe"
-      ],
-      "tool": [
-        "lampe_allumee"
-      ]
-    },
-    {
-      "place": [
         10
       ],
       "verb": "couper",
@@ -2887,15 +2885,15 @@
     },
     {
       "place": [
-        11
+        0
       ],
       "verb": "regarder",
+      "text": "C'est une lampe-torche tout à fait ordinaire. Elle est allumée.",
       "noun": [
-        "livre"
+        "lampe"
       ],
-      "text": "Le livre est intitulé « La cuisine de demain ».",
-      "mustnot": [
-        "livre_pris"
+      "tool": [
+        "lampe_allumee"
       ]
     },
     {
@@ -2926,6 +2924,19 @@
       "text": "Ce n'est pas vraiment le bon endroit pour ranger ce livre.",
       "tool": [
         "livre"
+      ]
+    },
+    {
+      "place": [
+        11
+      ],
+      "verb": "regarder",
+      "noun": [
+        "livre"
+      ],
+      "text": "Le livre est intitulé « La cuisine de demain ».",
+      "mustnot": [
+        "livre_pris"
       ]
     }
   ]
