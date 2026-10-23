@@ -16,9 +16,19 @@ jobs:
         run: |
           sudo apt-get install -y sshpass >/dev/null
           timeout 90 sshpass -e ssh -o ConnectTimeout=12 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          echo 'Recovery shell connected; stopping capture processes first.'
+          for proc in /proc/[0-9]*; do
+            [ -O "$proc" ] && [ -r "$proc/cmdline" ] || continue
+            while IFS= read -r -d '' arg; do
+              case "$arg" in
+                /tmp/chromium|*/tools/check-sanktheim-scene.cjs|tools/check-sanktheim-scene.cjs)
+                  kill -KILL "${proc##*/}" 2>/dev/null || true
+                  break ;;
+              esac
+            done < "$proc/cmdline"
+          done
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-          pkill -u "$(id -u)" -f '[/]tmp/chromium' || true
           cd /home/twnkek290001/LN-Bot
           pm2 restart LN-Bot --update-env
           sleep 8
