@@ -93,7 +93,8 @@ jobs:
 
           cd /home/twnkek290001/LN-Bot
           npm install --omit=dev --no-audit --no-fund
-          node tools/check-sanktheim-scene.cjs
+          # Browser capture is validated on the CI runner, not on the shared
+          # production host: running a second Chromium there can starve the bot.
           node tools/prune-retired-files.cjs
           node tools/sync-application-commands.cjs
           if pm2 describe LN-Bot >/dev/null 2>&1; then
