@@ -16,11 +16,6 @@
     "victory": "Trois poms courageux ont affronté leurs peurs et prouvé leur valeur en mettant la main sur la source du maléfice et l'ont brisé ! Le manoir s'est estompé et la forteresse Leiston est revenue à sa place. Félicitations à nos trois héros !",
     "closing": "Merci de vous être prêtés à ce petit jeu d'Halloween ! C'est terminé pour de bon, promis. On espère que ça vous a plu :)"
   },
-
-
-
-
-
   "rooms": [
     {
       "id": 1,
@@ -28,7 +23,9 @@
       "exits": {
         "nord": {
           "to": 2,
-          "must": ["chatiere_vue"],
+          "must": [
+            "chatiere_vue"
+          ],
           "fail": "Vous n'arrivez pas à atteindre la poignée de la porte. Elle est trop haute."
         }
       },
@@ -42,7 +39,9 @@
         "ouest": 3,
         "est": {
           "to": 7,
-          "must": ["bibliotheque_ouverte"],
+          "must": [
+            "bibliotheque_ouverte"
+          ],
           "fail": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)"
         },
         "nord": 6
@@ -64,12 +63,16 @@
       "exits": {
         "haut": {
           "to": 14,
-          "must": ["escalier_decouvert"],
+          "must": [
+            "escalier_decouvert"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         },
         "ouest": {
           "to": 14,
-          "must": ["escalier_decouvert"],
+          "must": [
+            "escalier_decouvert"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         },
         "sud": 7
@@ -101,7 +104,9 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
@@ -114,11 +119,13 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
-      "description": "L'étagère contient de nombreux disques vinyles rangés soigneusement par ordre alphabètique. Vous n'en connaissez aucun."
+      "description": "L'étagère contient de nombreux disques vinyles, soigneusement rangés par ordre alphabétique."
     },
     {
       "id": 72,
@@ -127,7 +134,9 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
@@ -140,7 +149,9 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
@@ -153,7 +164,9 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
@@ -166,7 +179,9 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
@@ -179,7 +194,9 @@
         "ouest": 2,
         "nord": {
           "to": 4,
-          "must": ["livre_range"],
+          "must": [
+            "livre_range"
+          ],
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
@@ -192,7 +209,9 @@
         "haut": 6,
         "est": {
           "to": 9,
-          "tool": ["lampe_allumee"],
+          "tool": [
+            "lampe_allumee"
+          ],
           "fail": "Il fait trop sombre, vous ne voyez déjà plus rien. Vous rebroussez chemin."
         }
       },
@@ -256,12 +275,16 @@
         "ouest": 10,
         "est": {
           "to": 13,
-          "must": ["chambre_ouverte"],
+          "must": [
+            "chambre_ouverte"
+          ],
           "fail": "Vous n'avez pas ouvert cette porte."
         },
         "sud": {
           "to": 20,
-          "must": ["couloir_ouvert"],
+          "must": [
+            "couloir_ouvert"
+          ],
           "fail": "Vous n'avez pas ouvert cette porte."
         }
       },
@@ -273,7 +296,9 @@
       "exits": {
         "est": {
           "to": 18,
-          "must": ["trone_ouvert"],
+          "must": [
+            "trone_ouvert"
+          ],
           "fail": "La porte est fermée à clé."
         }
       },
@@ -394,11 +419,6 @@
       "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
     }
   ],
-
-
-
-
-
   "objects": [
     {
       "id": "cle",
@@ -437,11 +457,6 @@
       "name": "un disque vinyle titré « Amour ambré »"
     }
   ],
-
-
-
-
-
   "verbs": {
     "prendre": [
       "prends",
@@ -481,11 +496,6 @@
       "consulte"
     ]
   },
-
-
-
-
-
   "nouns": {
     "cle": [
       "clef"
@@ -518,9 +528,6 @@
       "torche",
       "lampe-torche"
     ],
-    "grammophone": [
-      "platine"
-    ],
     "cuve": [
       "cuves"
     ],
@@ -532,8 +539,6 @@
     "herbe": [
       "herbes",
       "végétation",
-      "buisson",
-      "buissons",
       "lierre"
     ],
     "escalier": [
@@ -586,1152 +591,2342 @@
     "carte": [
       "cartes",
       "tarot"
+    ],
+    "gramophone": [
+      "platine"
+    ],
+    "pom": [
+      "pomme",
+      "pommes"
+    ],
+    "fenetre": [
+      "fenetres"
+    ],
+    "potiron": [
+      "potirons"
     ]
   },
-
-
-
-
-
   "actions": [
     {
-      "place": [0],
+      "place": [
+        0
+      ],
       "verb": "allumer",
-      "noun": ["lampe"],
-      "use": ["lampe"],
-      "give": ["lampe_allumee"],
+      "noun": [
+        "lampe"
+      ],
+      "use": [
+        "lampe"
+      ],
+      "give": [
+        "lampe_allumee"
+      ],
       "text": "Votre lampe est désormais allumée."
     },
     {
-      "place": [0],
+      "place": [
+        0
+      ],
       "verb": "eteindre",
-      "noun": ["lampe"],
-      "use": ["lampe_allumee"],
-      "give": ["lampe"],
+      "noun": [
+        "lampe"
+      ],
+      "use": [
+        "lampe_allumee"
+      ],
+      "give": [
+        "lampe"
+      ],
       "text": "Vous éteignez la lampe."
     },
     {
-      "place": [0],
+      "place": [
+        0
+      ],
       "verb": "allumer",
-      "noun": ["lampe"],
-      "tool": ["lampe_allumee"],
+      "noun": [
+        "lampe"
+      ],
+      "tool": [
+        "lampe_allumee"
+      ],
       "text": "Votre lampe est déjà allumée."
     },
     {
-      "place": [0],
+      "place": [
+        0
+      ],
       "verb": "eteindre",
-      "noun": ["lampe"],
-      "tool": ["lampe"],
+      "noun": [
+        "lampe"
+      ],
+      "tool": [
+        "lampe"
+      ],
       "text": "Votre lampe est déjà éteinte."
     },
     {
-      "place": [0],
+      "place": [
+        0
+      ],
       "verb": "regarder",
-      "noun": ["vinyle"],
-      "tool": ["vinyle_1"],
+      "noun": [
+        "vinyle"
+      ],
+      "tool": [
+        "vinyle_1"
+      ],
       "text": "Le vinyle est rangé dans une pochette titrée « Amour ambré », mais il est écrit « Là où se cachent les étoiles » sur le disque qui se trouve à l'intérieur."
     },
     {
-      "place": [0],
+      "place": [
+        0
+      ],
       "verb": "regarder",
-      "noun": ["vinyle"],
-      "tool": ["vinyle_2"],
+      "noun": [
+        "vinyle"
+      ],
+      "tool": [
+        "vinyle_2"
+      ],
       "text": "C'est le disque « Amour ambré », rangé dans sa pochette originelle."
     },
     {
-      "place": [1],
+      "place": [
+        1
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
     },
     {
-      "place": [1],
+      "place": [
+        1
+      ],
       "verb": "regarder",
-      "noun": ["porte"],
+      "noun": [
+        "porte"
+      ],
       "text": "La porte est trop grande pour que vous atteigniez sa poignée. Cependant, vous apercevez qu'elle est équipée d'une chatière. Vous pourriez passer par là.",
-      "effect": ["chatiere_vue"]
+      "effect": [
+        "chatiere_vue"
+      ]
     },
     {
-      "place": [1],
+      "place": [
+        1
+      ],
       "verb": "passer",
-      "noun": ["chatiere"],
+      "noun": [
+        "chatiere"
+      ],
       "move": 2
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "code",
-      "noun": ["2406"],
-      "mustnot": ["bibliotheque_ouverte"],
+      "noun": [
+        "2406"
+      ],
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ],
       "text": "Le cadenas s'ouvre avec un cliquetis. L'accès à l'aile Est est désormais débloqué.",
-      "effect": ["bibliotheque_ouverte"]
+      "effect": [
+        "bibliotheque_ouverte"
+      ]
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "code",
       "noun": [],
-      "mustnot": ["bibliotheque_ouverte"],
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ],
       "text": "Le cadenas reste fermé."
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": [],
-      "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considéré comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nDeux portes sont ouvertes : une vers l'ouest et une vers le nord. La troisième porte à l'est est fermée par un cadenas."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": [],
-      "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considéré comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nTrois portes sont ouvertes : une vers l'ouest, une vers le nord et une vers l'est."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["étagère"],
+      "noun": [
+        "étagère"
+      ],
       "text": "L'étagère est couverte de trophées en tous genres et de cadres photos, eux-mêmes couverts de poussière, à l'exception d'un seul. On peut voir sur la photo qu'il contient un couple posant avec un bébé dans les bras. L'homme a les yeux perdus dans le lointain. La femme sourit timidement. Quant à l'enfant, il dort paisiblement. Sa chevelure rousse et frisée attire particulièrement l'œil."
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": ["porte-manteau"],
+      "noun": [
+        "porte-manteau"
+      ],
       "text": "Des manteaux de couleurs différentes sont posés sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": ["manteau"],
+      "noun": [
+        "porte-manteau",
+        "blanc"
+      ],
+      "text": "Vous remarquez un papier dans la poche du manteau. Un nombre y est écrit : 13."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "porte-manteau",
+        "rouge"
+      ],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "porte-manteau",
+        "violet"
+      ],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "porte-manteau",
+        "gris"
+      ],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "manteau",
+        "blanc"
+      ],
+      "text": "Vous remarquez un papier dans la poche du manteau. Un nombre y est écrit : 13."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "manteau",
+        "rouge"
+      ],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "manteau",
+        "violet"
+      ],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "manteau",
+        "gris"
+      ],
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "manteau"
+      ],
       "text": "Quel manteau souhaitez-vous regarder ?"
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": ["porte-manteau", "blanc"],
-      "text": "Vous remarquez un papier dans la poche du manteau. Un nombre y est écrit : 13."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["porte-manteau", "rouge"],
-      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["porte-manteau", "violet"],
-      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["porte-manteau", "gris"],
-      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["manteau", "blanc"],
-      "text": "Vous remarquez un papier dans la poche du manteau. Un nombre y est écrit : 13."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["manteau", "rouge"],
-      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["manteau", "violet"],
-      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["manteau", "gris"],
-      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
-    },
-    {
-      "place": [2],
-      "verb": "regarder",
-      "noun": ["tapis"],
+      "noun": [
+        "tapis"
+      ],
       "text": "Ce tapis vert est couvert de poussière."
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": ["porte"],
+      "noun": [
+        "porte"
+      ],
       "text": "Quelle porte, est ou ouest ?"
     },
     {
-      "place": [2],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": ["porte", "est"],
-      "mustnot": ["bibliotheque_ouverte"],
+      "noun": [
+        "porte",
+        "est"
+      ],
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ],
       "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)"
     },
     {
-      "place": [2],
-      "verb": "prendre",
-      "noun": ["porte-manteau"],
-      "text": "Vous avez de drôles d'idées."
-    },
-    {
-      "place": [2],
-      "verb": "prendre",
-      "noun": ["manteau"],
-      "text": "Quelque chose vous dit qu'il vaudrait mieux les laisser à leur place..."
-    },
-    {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
       "noun": [],
-      "mustnot": ["cle_tombee"],
+      "mustnot": [
+        "cle_tombee"
+      ],
       "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloche sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
     },
     {
-      "place": [3],
+      "place": [
+        2
+      ],
+      "verb": "prendre",
+      "noun": [
+        "porte-manteau"
+      ],
+      "text": "Vous avez de drôles d'idées."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "prendre",
+      "noun": [
+        "manteau"
+      ],
+      "text": "Quelque chose vous dit qu'il vaudrait mieux les laisser à leur place..."
+    },
+    {
+      "place": [
+        3
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["cle_tombee"],
+      "must": [
+        "cle_tombee"
+      ],
       "text": "Deux tables parcourent toute la longueur du salon, bordées de chaises aux dossiers de velours. Les couverts sont posés pour une soixantaine d'invités et deux grands plats sous cloches sont posés au centre de chaque table. Entre les deux tables gît à terre une machine tordue ressemblant vaguement à une fontaine métallique.\nDe la terre, des morceaux de poterie et un arbrisseau sont maintenant éparpillés autour de la machine.\nDeux portes sont ouvertes : une vers l'est, une vers le nord."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["machine"],
-      "mustnot": ["cle_tombee"],
+      "noun": [
+        "machine"
+      ],
+      "mustnot": [
+        "cle_tombee"
+      ],
       "text": "La machine, intensément tordue, ressemble vaguement à une fontaine métallique."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["machine"],
-      "must": ["cle_tombee"],
-      "mustnot": ["cle_prise"],
+      "noun": [
+        "machine"
+      ],
+      "must": [
+        "cle_tombee"
+      ],
+      "mustnot": [
+        "cle_prise"
+      ],
       "text": "La machine est couverte de terre et de morceaux de poterie. La clé s'est logée dans un de ces creux."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["machine"],
-      "must": ["cle_tombee", "cle_prise"],
+      "noun": [
+        "machine"
+      ],
+      "must": [
+        "cle_tombee",
+        "cle_prise"
+      ],
       "text": "La machine est couverte de terre et de morceaux de poterie"
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["table"],
+      "noun": [
+        "table"
+      ],
       "text": "Les tables traversent toute la longueur de la salle. Des couverts ainsi que deux grands plats sous cloches y sont posés pour une soixantaine d'invités."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["assiette"],
+      "noun": [
+        "assiette"
+      ],
       "text": "Les assiettes sont de très bonne facture, mais elles sont couvertes de poussière."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["plat"],
+      "noun": [
+        "plat"
+      ],
       "text": "Ce sont de grand plats luxueux en argent."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["cloche"],
+      "noun": [
+        "cloche"
+      ],
       "text": "Les cloches sont en argent, tout comme les plats sur lesquels elles sont posées."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["couvert"],
+      "noun": [
+        "couvert"
+      ],
       "text": "Des fourchettes, des couteaux et des cuillères sont posés autour de chaque assiette."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["verre"],
+      "noun": [
+        "verre"
+      ],
       "text": "Étonnamment, aucun verre n'est posé sur les tables."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "regarder",
-      "noun": ["chaise"],
+      "noun": [
+        "chaise"
+      ],
       "text": "Les chaises semblent confortables, mais il n'y a rien à dire de plus sur elles."
     },
     {
-      "place": [3],
+      "place": [
+        2
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [],
+      "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considérés comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nDeux portes sont ouvertes : une vers l'ouest et une vers le nord. La troisième porte à l'est est fermée par un cadenas."
+    },
+    {
+      "place": [
+        3
+      ],
+      "verb": "regarder",
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez que le plafond s'est partiellement effondré juste au-dessus de l'endroit où se trouve la machine métallique."
     },
     {
-      "place": [2,4,5,7,10,11,12,13,14,15],
+      "place": [
+        2,
+        4,
+        5,
+        7,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Le plafond est couvert de lattes, soutenu par des poutres à intervalle régulier."
     },
     {
-      "place": [8,9],
+      "place": [
+        8,
+        9
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Le plafond est vouté, mais c'est tout ce que vous arrivez à discerner."
     },
     {
-      "place": [20],
+      "place": [
+        20
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez un ovale discret tracé sur le plafond."
     },
     {
-      "place": [21],
+      "place": [
+        21
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez un trait discret tracé sur le plafond."
     },
     {
-      "place": [22],
+      "place": [
+        22
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez une sorte de Z discret tracé sur le plafond."
     },
     {
-      "place": [24],
+      "place": [
+        24
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez une sorte de 4 discret tracé sur le plafond."
     },
     {
-      "place": [25],
+      "place": [
+        25
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez une sorte de S discret tracé sur le plafond."
     },
     {
-      "place": [26],
+      "place": [
+        26
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez une sorte de b discret tracé sur le plafond."
     },
     {
-      "place": [27],
+      "place": [
+        27
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez une sorte de L discret tracé sur le plafond."
     },
     {
-      "place": [28],
+      "place": [
+        28
+      ],
       "verb": "regarder",
-      "noun": ["plafond"],
+      "noun": [
+        "plafond"
+      ],
       "text": "Vous remarquez une sorte de 8 couché, discrètement tracé sur le plafond."
     },
     {
-      "place": [2,3,10],
+      "place": [
+        2,
+        3,
+        10
+      ],
       "verb": "regarder",
-      "noun": ["papier-peint"],
+      "noun": [
+        "papier-peint"
+      ],
       "text": "Le papier-peint est couvert de motifs rouges et oranges, dans des formes assez végétales."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["cle"],
-      "must": ["cle_tombee"],
-      "mustnot": ["cle_prise"],
-      "effect": ["cle_prise"],
-      "give": ["cle"],
+      "noun": [
+        "cle"
+      ],
+      "must": [
+        "cle_tombee"
+      ],
+      "mustnot": [
+        "cle_prise"
+      ],
+      "effect": [
+        "cle_prise"
+      ],
+      "give": [
+        "cle"
+      ],
       "text": "Vous récupérez la clé."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["couvert"],
+      "noun": [
+        "couvert"
+      ],
       "text": "Il y a des fourchettes, des couteaux et des cuillères. Quel couvert souhaitez-vous prendre ?"
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["couteau"],
-      "mustnot": ["couteau_pris"],
-      "effect": ["couteau_pris"],
-      "give": ["couteau"],
+      "noun": [
+        "couteau"
+      ],
+      "mustnot": [
+        "couteau_pris"
+      ],
+      "effect": [
+        "couteau_pris"
+      ],
+      "give": [
+        "couteau"
+      ],
       "text": "Vous récupérez un couteau."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["fourchette"],
-      "mustnot": ["fourchette_prise"],
-      "effect": ["fourchette_prise"],
-      "give": ["fourchette"],
+      "noun": [
+        "fourchette"
+      ],
+      "mustnot": [
+        "fourchette_prise"
+      ],
+      "effect": [
+        "fourchette_prise"
+      ],
+      "give": [
+        "fourchette"
+      ],
       "text": "Vous récupérez une fourchette."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["cuillere"],
-      "mustnot": ["cuillere_prise"],
-      "effect": ["cuillere_prise"],
-      "give": ["cuillere"],
+      "noun": [
+        "cuillere"
+      ],
+      "mustnot": [
+        "cuillere_prise"
+      ],
+      "effect": [
+        "cuillere_prise"
+      ],
+      "give": [
+        "cuillere"
+      ],
       "text": "Vous récupérez une cuillère."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["couteau"],
-      "must": ["couteau_pris"],
+      "noun": [
+        "couteau"
+      ],
+      "must": [
+        "couteau_pris"
+      ],
       "text": "Vous avez déjà un couteau."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["fourchette"],
-      "must": ["fourchette_prise"],
+      "noun": [
+        "fourchette"
+      ],
+      "must": [
+        "fourchette_prise"
+      ],
       "text": "Vous avez déjà une fourchette."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["cuillere"],
-      "must": ["cuillere_prise"],
+      "noun": [
+        "cuillere"
+      ],
+      "must": [
+        "cuillere_prise"
+      ],
       "text": "Vous avez déjà une cuillère."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["plat"],
+      "noun": [
+        "plat"
+      ],
       "text": "Vous n'avez aucun intérêt à prendre un de ces plats avec vous."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["table"],
+      "noun": [
+        "table"
+      ],
       "text": "Vous vous prenez pour Hercules ?"
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["cloche"],
+      "noun": [
+        "cloche"
+      ],
       "text": "Vous soulevez la cloche d'un plat par curiosité. Rien. Même constat pour le plat sur l'autre table."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["machine"],
+      "noun": [
+        "machine"
+      ],
       "text": "Vous vous prenez pour Hercules ? C'est bien trop lourd pour que vous la preniez."
     },
     {
-      "place": [3],
+      "place": [
+        3
+      ],
       "verb": "prendre",
-      "noun": ["chaise"],
+      "noun": [
+        "chaise"
+      ],
       "text": "Théoriquement, vous pourriez en déplacer une dans une autre salle, mais ça n'aurait aucun intérêt."
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "regarder",
       "noun": [],
-      "text": "Une chaise au dossier rouge se trouve derrière le bureau. Ce bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Des cartes de tarot sont posées dessus.\nPar la fenêtre, vous pouvez voir un arbuste aux feuilles séchées, devant lequel se trouve une petite croix en pierre."
+      "text": "Une chaise au dossier rouge se trouve derrière le bureau. Ce bureau, dont l'unique tiroir est partiellement ouvert, est recouvert d'un tapis de cartes vert et terne. Des cartes de tarot sont posées dessus.\nPar la fenêtre, dans la cour intérieure, vous pouvez voir un arbuste aux feuilles séchées. Une petite croix en pierre se trouve devant.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
-      "place": [4],
-      "verb": "regarder",
-      "noun": ["tapis"],
-      "mustnot": ["escalier_decouvert"],
-      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
-    },
-    {
-      "place": [4],
-      "verb": "regarder",
-      "noun": ["carte"],
-      "mustnot": ["escalier_decouvert"],
-      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
-    },
-    {
-      "place": [4],
-      "verb": "regarder",
-      "noun": ["tapis"],
-      "must": ["escalier_decouvert"],
-      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
-    },
-    {
-      "place": [4],
-      "verb": "regarder",
-      "noun": ["carte"],
-      "must": ["escalier_decouvert"],
-      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
-    },
-    {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["escalier_decouvert"],
+      "must": [
+        "escalier_decouvert"
+      ],
       "text": "Une partie du mur ouest s'est écroulée, révélant un passage menant à un escalier."
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "regarder",
-      "noun": ["fenetre"],
-      "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+      "noun": [
+        "tapis"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ],
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "regarder",
-      "noun": ["croix"],
-      "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+      "noun": [
+        "carte"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ],
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "regarder",
-      "noun": ["buisson"],
-      "text": "De l'autre côté de la fenêtre, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+      "noun": [
+        "tapis"
+      ],
+      "must": [
+        "escalier_decouvert"
+      ],
+      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
+      "verb": "regarder",
+      "noun": [
+        "carte"
+      ],
+      "must": [
+        "escalier_decouvert"
+      ],
+      "text": "Les cartes sont à l'endroit où vous les avez distribuées. Plus besoin de les manipuler."
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "regarder",
+      "noun": [
+        "fenetre"
+      ],
+      "text": "De l'autre côté de la fenêtre, dans la cour intérieure, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "regarder",
+      "noun": [
+        "croix"
+      ],
+      "text": "De l'autre côté de la fenêtre, dans la cour intérieure, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "regarder",
+      "noun": [
+        "buisson"
+      ],
+      "text": "De l'autre côté de la fenêtre, dans la cour intérieure, vous apercevez au pied du buisson et de la croix en pierre un escalier caché."
+    },
+    {
+      "place": [
+        4
+      ],
       "verb": "ouvrir",
-      "noun": ["tiroir"],
-      "give": ["lampe"],
-      "mustnot": ["lampe_obtenue"],
-      "effect": ["lampe_obtenue"],
+      "noun": [
+        "tiroir"
+      ],
+      "give": [
+        "lampe"
+      ],
+      "mustnot": [
+        "lampe_obtenue"
+      ],
+      "effect": [
+        "lampe_obtenue"
+      ],
       "text": "Vous trouvez à l'intérieur du tiroir une lampe. Vous la récupérez."
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "regarder",
-      "noun": ["tiroir"],
-      "give": ["lampe"],
-      "mustnot": ["lampe_obtenue"],
-      "effect": ["lampe_obtenue"],
+      "noun": [
+        "tiroir"
+      ],
+      "give": [
+        "lampe"
+      ],
+      "mustnot": [
+        "lampe_obtenue"
+      ],
+      "effect": [
+        "lampe_obtenue"
+      ],
       "text": "Vous trouvez à l'intérieur du tiroir une lampe. Vous la récupérez."
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "distribuer",
-      "noun": ["20-13-1-100"],
-      "mustnot": ["escalier_decouvert"],
-      "effect": ["escalier_decouvert"],
+      "noun": [
+        "20-13-1-100"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ],
+      "effect": [
+        "escalier_decouvert"
+      ],
       "text": "Une partie du mur ouest commence à trembler puis s'effondre, révélant un escalier."
     },
     {
-      "place": [4],
+      "place": [
+        4
+      ],
       "verb": "distribuer",
       "noun": [],
-      "mustnot": ["escalier_decouvert"],
+      "mustnot": [
+        "escalier_decouvert"
+      ],
       "text": "Vous tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet. Il va falloir tenter une autre distribution."
     },
     {
-      "place": [5],
+      "place": [
+        5
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Comme il n'y a pas de fenêtre, vous ne voyez presque rien, hormis des tas de laine à l'apparence poisseuse, posés sur les tables ou traînant par terre. Une petite lumière attire votre œil vers l'est de la salle."
     },
     {
-      "place": [5],
+      "place": [
+        5
+      ],
       "verb": "regarder",
-      "noun": ["laine"],
+      "noun": [
+        "laine"
+      ],
       "text": "Ces tas de laine ne vous inspirent rien qui vaille. Mieux vaut ne pas vous en approcher."
     },
     {
-      "place": [5],
+      "place": [
+        5
+      ],
       "verb": "regarder",
-      "noun": ["lumière"],
+      "noun": [
+        "lumière"
+      ],
       "text": "Cette petite lumière attire votre œil vers l'est de la salle. Qu'y a-t-il donc là-bas ?"
     },
     {
-      "place": [6],
+      "place": [
+        6
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Le soleil peine a trouver sa voie entre les hauts murs du manoir. Des mauvaises herbes, quelques buissons et du lierre sont la seule trace de vie qui reste en ces lieux. Une statue imposante se dresse au milieu de la cour."
     },
     {
-      "place": [6],
+      "place": [
+        6
+      ],
       "verb": "regarder",
-      "noun": ["statue"],
+      "noun": [
+        "statue"
+      ],
       "text": "La statue représente un homme aux bras croisés et au regard perdu dans le vague. Une plaque descriptive se trouve devant le socle. Il y est écrit :\nFyodor Leiston, né le 24 juin 1303\n« En ce monde, toute chose et tout être sont amenés à rejoindre une place, une destination. C'est ce qu'on appelle aussi la destinée. En effet, la bible septienne nous apprend que nous n'avançons pas dans la vie au hasard : notre chemin est tracé par ceux qui nous ont précédés, et Aidios, Déesse des cieux, nous a tous précédés. Je suis par conséquent convaincu que, de par ses divins desseins, la bonté et la douceur sont destinées à trouver leur place en toute chose et en tout être. »"
     },
     {
-      "place": [6],
+      "place": [
+        6
+      ],
       "verb": "regarder",
-      "noun": ["herbe"],
+      "noun": [
+        "herbe"
+      ],
       "text": "La végétation a repris ses droits dans cette cour. Personne n'a dû entretenir cette cour depuis des lustres."
     },
     {
-      "place": [6],
+      "place": [
+        6
+      ],
       "verb": "regarder",
-      "noun": ["croix"],
+      "noun": [
+        "croix"
+      ],
       "text": "Une croix de pierre dépasse discrètement de derrière un buisson. À sa base se trouve un escalier s'enfonçant dans les profondeurs."
     },
     {
-      "place": [6],
+      "place": [
+        6
+      ],
       "verb": "regarder",
-      "noun": ["escalier"],
+      "noun": [
+        "escalier"
+      ],
       "text": "Un escalier s'enfonce dans les profondeurs au nord-est de la cour. Vous pouvez apercevoir une porte ouverte tout en bas des marches."
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Des étagères recouvrent tous les murs, mis à part devant deux grandes fenêtres au nord de la pièce. Un écriteau indique la répartition des différentes sections thématiques."
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "regarder",
-      "noun": ["ecriteau"],
+      "noun": [
+        "ecriteau"
+      ],
       "text": "« La bibliothèque est divisée en 6 domaines : littérature, mythologie, sciences, musique, arts et loisirs et enfant. »\n(*pour consulter les différents domaines, utilisez une commande du type \"consulter la littérature\"*)"
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "consulter",
-      "noun": ["musique"],
+      "noun": [
+        "musique"
+      ],
       "move": 71
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "consulter",
-      "noun": ["littérature"],
+      "noun": [
+        "littérature"
+      ],
       "move": 72
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "consulter",
-      "noun": ["arts"],
+      "noun": [
+        "arts"
+      ],
       "move": 73
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "consulter",
-      "noun": ["sciences"],
+      "noun": [
+        "sciences"
+      ],
       "move": 74
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "consulter",
-      "noun": ["mythologie"],
+      "noun": [
+        "mythologie"
+      ],
       "move": 75
     },
     {
-      "place": [7,71,72,73,74,75,76],
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
       "verb": "consulter",
-      "noun": ["enfant"],
+      "noun": [
+        "enfant"
+      ],
       "move": 76
     },
     {
-      "place": [73],
+      "place": [
+        73
+      ],
       "verb": "ranger",
-      "noun": ["livre"],
-      "use": ["livre"],
-      "effect": ["livre_range"],
+      "noun": [
+        "livre"
+      ],
+      "use": [
+        "livre"
+      ],
+      "effect": [
+        "livre_range"
+      ],
       "text": "Vous rangez le livre de cuisine dans l'étagère. Un grondement se fait alors entendre : un passage s'est ouvert dans le mur nord de la pièce."
     },
     {
-      "place": [71],
+      "place": [
+        71
+      ],
       "verb": "ranger",
-      "noun": ["vinyle"],
-      "use": ["vinyle_1"],
-      "give": ["vinyle_2"],
+      "noun": [
+        "vinyle"
+      ],
+      "use": [
+        "vinyle_1"
+      ],
+      "give": [
+        "vinyle_2"
+      ],
       "text": "Vous trouvez dans l'étagère la pochette du disque « Là où se cachent les étoiles », à l'intérieur de laquelle se trouve le disque « Amour ambré ». Vous échangez les deux disques pour prendre ce dernier avec vous."
     },
     {
-      "place": [8],
+      "place": [
+        8
+      ],
       "verb": "regarder",
       "noun": [],
-      "text": "Des tonneau sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fûmante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
+      "text": "Des tonneaus sont posés en range sans support contre les rebords de la pièce, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fumante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
     },
     {
-      "place": [8],
+      "place": [
+        8
+      ],
       "verb": "regarder",
-      "noun": ["tonneau"],
+      "noun": [
+        "tonneau"
+      ],
       "text": "Les tonneaux sont nombreux, tous identiques. Aucun ne semble avoir jamais été ouvert."
     },
     {
-      "place": [8],
+      "place": [
+        8
+      ],
       "verb": "ouvrir",
-      "noun": ["tonneau"],
+      "noun": [
+        "tonneau"
+      ],
       "text": "Vous n'avez pas de quoi ouvrir un tonneau. Vous ne savez honnêtement même pas à quoi cela pourrait vous avancer."
     },
     {
-      "place": [9],
+      "place": [
+        9
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse."
     },
     {
-      "place": [9],
+      "place": [
+        9
+      ],
       "verb": "regarder",
-      "noun": ["femme"],
+      "noun": [
+        "femme"
+      ],
       "text": "La femme reste dans l'immobilité la plus totale. On pourrait presque croire qu'elle ne vous a pas remarqué.\nPeut-être pourriez-vous essayer de lui parler ? (*pour parler d'un sujet avec cette femme, utilisez une commande du type \"parler de sujet\"*)"
     },
     {
-      "place": [9],
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "noun": [
+        "pom"
+      ],
+      "text": "Vous remarquez que la femme tressaillit un instant. Ses yeux s'écarquillent, sa bouche se tord... puis elle revient à sa position initiale, immobile."
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "noun": [
+        "fyodor"
+      ],
+      "text": "La femme fronce les sourcils et tourne lentement la tête vers le haut, sur sa gauche. Elle se met à se balancer lentement et ouvre la bouche :\n« Le rouge est la couleur du sang... Le violet est la couleur du vin... Le gris est une couleur de lin... Et le blanc est une couleur en devenir... Quand il enveloppe un objet, c'est comme si le blanc devenait... l'objet. »"
+    },
+    {
+      "place": [
+        9
+      ],
       "verb": "parler",
       "noun": [],
       "text": "De quoi souhaitez-vous parler à cette femme ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)"
     },
     {
-      "place": [9],
-      "verb": "parler",
-      "noun": ["femme"],
-      "text": "De quoi souhaitez-vous parler à cette femme ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)"
-    },
-    {
-      "place": [9],
-      "verb": "parler",
-      "noun": ["pom"],
-      "text": "Vous remarquez que la femme tressaillit un instant. Ses yeux s'écarquillent, sa bouche se tord... puis elle revient à sa position initiale, immobile."
-    },
-    {
-      "place": [9],
-      "verb": "parler",
-      "noun": ["fyodor"],
-      "text": "La femme fronce les sourcils et tourne lentement la tête vers le haut, sur sa gauche. Elle se met à se balancer lentement et ouvre la bouche :\n« Le rouge est la couleur du sang... Le violet est la couleur du vin... Le gris est une couleur de lin... Et le blanc est une couleur en devenir... Quand il enveloppe un objet, c'est comme si le blanc devenait... l'objet. »"
-    },
-    {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Le sol s'est effondré sur le rebord de la pièce. Des arbrisseaux poussent dans des pots posés à même le sol ou accrochés aux murs par des cordelettes. Ils sont si nombreux qu'il est difficile d'accéder au lit, seul ameublement de cet endroit."
     },
     {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "regarder",
-      "noun": ["lit"],
+      "noun": [
+        "lit"
+      ],
       "text": "Même le lit est couvert par plusieurs arbrisseaux."
     },
     {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "regarder",
-      "noun": ["arbrisseaux"],
-      "must" : ["cle_tombee"],
+      "noun": [
+        "arbrisseaux"
+      ],
+      "must": [
+        "cle_tombee"
+      ],
       "text": "Les arbrisseaux possèdent tous des feuillages d'apparence duveteuse. Par ailleurs, vous remarquez qu'ils émettent une odeur particulière, comme celle des agrumes."
     },
     {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "regarder",
-      "noun": ["sol"],
-      "must" : ["cle_tombee"],
+      "noun": [
+        "sol"
+      ],
+      "must": [
+        "cle_tombee"
+      ],
       "text": "Le sol est effondré au bord de la pièce. L'arbrisseau qui contenait une clé est tombé dans ce trou."
     },
     {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "regarder",
-      "noun": ["arbrisseaux"],
-      "mustnot" : ["cle_tombee"],
+      "noun": [
+        "arbrisseaux"
+      ],
+      "mustnot": [
+        "cle_tombee"
+      ],
       "text": "Les arbrisseaux possèdent tous des feuillages d'apparence duveteuse. Par ailleurs, vous remarquez qu'ils émettent une odeur particulière, comme celle des agrumes.\nVous remarquez aussi qu'un des arbrisseaux, posés sur le rebord du trou, contient une clé dans son feuillage."
     },
     {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "regarder",
-      "noun": ["sol"],
-      "mustnot" : ["cle_tombee"],
+      "noun": [
+        "sol"
+      ],
+      "mustnot": [
+        "cle_tombee"
+      ],
       "text": "Le sol est effondré au bord de la pièce. Au bord du trou, vous voyez qu'un arbrisseau porte une clé sur une de ses branches."
     },
     {
-      "place": [10],
+      "place": [
+        10
+      ],
       "verb": "prendre",
-      "noun": ["cle"],
-      "mustnot" : ["cle_tombee"],
-      "effect": ["cle_tombee"],
-      "text": "Alors que vous vous approchez de l'arbrisseau pour vous saisir de la clé, le pot chancelle et tombe pour s'écraser plus bas."
+      "noun": [
+        "cle"
+      ],
+      "mustnot": [
+        "cle_tombee"
+      ],
+      "effect": [
+        "cle_tombee"
+      ],
+      "text": "Alors que vous vous approchez de l'arbrisseau pour vous saisir de la clé, le pot chancelle et tombe pour s'écraser plus bas.\nUn fracas métallique se fait alors entendre."
     },
     {
-      "place": [11],
+      "place": [
+        11
+      ],
       "verb": "regarder",
       "noun": [],
-      "text": "Le mur nord, fissuré, laisse passer assez de lumière pour constater qu'il ne reste plus rien dans les rayons. Pas même une miette de nourriture. Seules restent les étiquettes de ce qui s'y trouvait stocké."
+      "text": "Le mur nord, fissuré, laisse passer assez de lumière pour constater qu'il ne reste plus rien dans les rayons. Pas même une miette de nourriture. Seules restent les étiquettes de ce qui s'y trouvait stocké, ainsi qu'un livre de recettes posé sur un rebord.",
+      "mustnot": [
+        "livre_pris"
+      ]
     },
     {
-      "place": [11],
+      "place": [
+        11
+      ],
       "verb": "regarder",
-      "noun": ["etiquette"],
+      "noun": [
+        "etiquette"
+      ],
       "text": "Les étiquettes indiquent principalement des noms de fruits et légumes : pommes, poires, oranges, mandarines, citrouilles, potirons, butternut, gingembre, etc."
     },
     {
-      "place": [11],
+      "place": [
+        11
+      ],
       "verb": "regarder",
-      "noun": ["rayon"],
-      "mustnot": ["livre_pris"],
+      "noun": [
+        "rayon"
+      ],
+      "mustnot": [
+        "livre_pris"
+      ],
       "text": "En observant plus attentivement, vous trouvez un livre de recettes dans les rayons les plus bas : « La cuisine de demain »."
     },
     {
-      "place": [11],
+      "place": [
+        11
+      ],
       "verb": "regarder",
-      "noun": ["rayon"],
-      "must": ["livre_pris"],
+      "noun": [
+        "rayon"
+      ],
+      "must": [
+        "livre_pris"
+      ],
       "text": "Il n'y a absolument plus rien dans les rayons."
     },
     {
-      "place": [11],
+      "place": [
+        11
+      ],
       "verb": "prendre",
-      "noun": ["livre"],
-      "mustnot": ["livre_pris"],
-      "effect": ["livre_pris"],
-      "give": ["livre"],
+      "noun": [
+        "livre"
+      ],
+      "mustnot": [
+        "livre_pris"
+      ],
+      "effect": [
+        "livre_pris"
+      ],
+      "give": [
+        "livre"
+      ],
       "text": "Vous prenez le livre de recettes avec vous."
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "regarder",
-      "mustnot": ["vinyle_pris"],
+      "mustnot": [
+        "vinyle_pris"
+      ],
       "noun": [],
       "text": "Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans. Un disque vinyle est posé sur le rebord d'une des fenêtres."
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "ecouter",
       "noun": [],
       "text": "Il vous semble qu'une voix lointaine répète sans fin la même phrase : « Fermez les yeux... Fermez les yeux... Fermez les yeux... Fermez les yeux... »"
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "fermer",
-      "noun": ["yeux"],
-      "mustnot": ["vinyle_pose"],
+      "noun": [
+        "yeux"
+      ],
+      "mustnot": [
+        "vinyle_pose"
+      ],
       "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Où est-ce qu'elles se cachent... Sont-elles ici ? Sont-elles là-bas ? Peut-être cherchent-elles leur place... »"
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "fermer",
-      "noun": ["yeux"],
-      "must": ["vinyle_pose"],
+      "noun": [
+        "yeux"
+      ],
+      "must": [
+        "vinyle_pose"
+      ],
       "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour béni où, joie, nous n'étions pas encore perdus... »"
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "regarder",
-      "must": ["vinyle_pris"],
+      "must": [
+        "vinyle_pris"
+      ],
       "noun": [],
       "text": "Une lumière crépusculaire inonde les lieux à travers les embrasures des fenêtres, toutes plus ou moins détruites. Vous ressentez un vrombissement lointain dans vos tympans."
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "regarder",
-      "noun": ["vinyle"],
-      "mustnot": ["vinyle_pris"],
+      "noun": [
+        "vinyle"
+      ],
+      "mustnot": [
+        "vinyle_pris"
+      ],
       "text": "Le vinyle est rangé dans une pochette titrée « Amour ambré », mais il est écrit « Là où se cachent les étoiles » sur le disque qui se trouve à l'intérieur."
     },
     {
-      "place": [12],
+      "place": [
+        12
+      ],
       "verb": "prendre",
-      "noun": ["vinyle"],
-      "mustnot": ["vinyle_pris"],
-      "effect": ["vinyle_pris"],
-      "give": ["vinyle_1"],
+      "noun": [
+        "vinyle"
+      ],
+      "mustnot": [
+        "vinyle_pris"
+      ],
+      "effect": [
+        "vinyle_pris"
+      ],
+      "give": [
+        "vinyle_1"
+      ],
       "text": "Vous prenez le vinyle avec vous."
     },
     {
-      "place": [13],
+      "place": [
+        13
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Le lit est fait impeccablement. Le papier-peint représente la savane lointaine, dans des couleurs chaudes et réconfortantes. En dehors du lit, seul un coffre est posé au coin de la pièce."
     },
     {
-      "place": [13],
+      "place": [
+        13
+      ],
       "verb": "ouvrir",
-      "noun": ["coffre"],
+      "noun": [
+        "coffre"
+      ],
       "text": "Vous trouvez dans le coffre un grand nombre de peluches : des lions, des tigres, des singes, des renards...\nÉmergeant de cette mer de peluches, vous distinguez ici et là des sortes de cordelettes effilochées."
     },
     {
-      "place": [13],
+      "place": [
+        13
+      ],
       "verb": "regarder",
-      "noun": ["lit"],
+      "noun": [
+        "lit"
+      ],
       "text": "Le lit est d'assez petite taille. Il devait être prévu pour un enfant."
     },
     {
-      "place": [13],
+      "place": [
+        13
+      ],
       "verb": "regarder",
-      "noun": ["corde"],
+      "noun": [
+        "corde"
+      ],
       "text": "Aucun extrêmité de corde n'est visible. Elles sont majoritairement plongées dans la masse des peluches."
     },
     {
-      "place": [13],
+      "place": [
+        13
+      ],
       "verb": "prendre",
-      "noun": ["corde"],
+      "noun": [
+        "corde"
+      ],
       "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
     },
     {
-      "place": [13],
+      "place": [
+        13
+      ],
       "verb": "tirer",
-      "noun": ["corde"],
+      "noun": [
+        "corde"
+      ],
       "text": "Vous n'arrivez pas à tirer les cordes hors du coffre. Elles semblent solidement accrochées à l'intérieur. Leur contact ne ressemble par ailleurs pas à celui d'une corde ordinaire..."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "regarder",
       "noun": [],
-      "text": "Une table basse se trouve à côté d'une porte ouverte vers le sud. Sur cette table est posé un grammophone. Dans un autre coin de la pièce se trouve une échelle."
+      "text": "Une table basse se trouve à côté d'une porte ouverte vers le sud. Sur cette table est posé un gramophone. Dans un autre coin de la pièce se trouve une échelle."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "regarder",
-      "noun": ["echelle"],
+      "noun": [
+        "echelle"
+      ],
       "text": "L'échelle monte à l'étage supérieur. (*utiliser la commande \"haut\" ou \"monter\" pour l'escalader*)"
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "regarder",
-      "noun": ["grammophone"],
-      "mustnot": ["vinyle_pose"],
-      "text": "Aucun disque n'est posé sur la platine du grammophone pour l'instant."
+      "noun": [
+        "gramophone"
+      ],
+      "mustnot": [
+        "vinyle_pose"
+      ],
+      "text": "Aucun disque n'est posé sur la platine du gramophone pour l'instant."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "regarder",
-      "noun": ["grammophone"],
-      "must": ["vinyle_pose"],
-      "text": "Le disque « Amour ambré » tourne sans fin sur le grammophone.»."
+      "noun": [
+        "gramophone"
+      ],
+      "must": [
+        "vinyle_pose"
+      ],
+      "text": "Le disque « Amour ambré » tourne sans fin sur le gramophone."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "ranger",
-      "noun": ["vinyle", "grammophone"],
-      "mustnot": ["vinyle_pose"],
-      "tool": ["vinyle_1"],
-      "text": "Vous posez le disque sur le grammophone. Il se met à tourner et à jouer une musique mélancolique accompagnée d'un harmonica. Arrivé à la fin du disque, il s'arrête de tourner et vous le reprenez dans votre inventaire."
+      "noun": [
+        "vinyle",
+        "gramophone"
+      ],
+      "mustnot": [
+        "vinyle_pose"
+      ],
+      "tool": [
+        "vinyle_1"
+      ],
+      "text": "Vous posez le disque sur le gramophone. Il se met à tourner et à jouer une musique mélancolique accompagnée d'un harmonica. Arrivé à la fin du disque, il s'arrête de tourner et vous le reprenez dans votre inventaire."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "ranger",
-      "noun": ["vinyle", "grammophone"],
-      "mustnot": ["vinyle_pose"],
-      "use": ["vinyle_2"],
-      "effect": ["vinyle_pose"],
-      "text": "Vous posez le disque sur le grammophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
+      "noun": [
+        "vinyle",
+        "gramophone"
+      ],
+      "mustnot": [
+        "vinyle_pose"
+      ],
+      "use": [
+        "vinyle_2"
+      ],
+      "effect": [
+        "vinyle_pose"
+      ],
+      "text": "Vous posez le disque sur le gramophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "ecouter",
       "noun": [],
-      "must": ["vinyle_pose"],
+      "must": [
+        "vinyle_pose"
+      ],
       "text": "Vous avez beau tendre l'oreille, vous n'entendez rien, d'ici."
     },
     {
-      "place": [14],
+      "place": [
+        14
+      ],
       "verb": "regarder",
-      "noun": ["grammophone"],
-      "must": ["vinyle_pose"],
+      "noun": [
+        "gramophone"
+      ],
+      "must": [
+        "vinyle_pose"
+      ],
       "text": "Le disque tourne inlassablement sur la platine, mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["couloir_ouvert", "chambre_ouverte"],
+      "must": [
+        "couloir_ouvert",
+        "chambre_ouverte"
+      ],
       "text": "Deux portes sont entrebaillées, une à l'ouest, une à l'est. Le couloir se pousuit vers le sud."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["couloir_ouvert"],
-      "mustnot": ["chambre_ouverte"],
+      "must": [
+        "couloir_ouvert"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
       "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nLe couloir se poursuit vers le sud par la porte que vous avez déverrouillée."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["chambre_ouverte"],
-      "mustnot": ["couloir_ouvert"],
+      "must": [
+        "chambre_ouverte"
+      ],
+      "mustnot": [
+        "couloir_ouvert"
+      ],
       "text": "Deux portes sont entrebaillées, une à l'ouest, une à l'est.\nLa dernière porte au sud est fermée à clé."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "regarder",
       "noun": [],
-      "mustnot": ["couloir_ouvert", "chambre_ouverte"],
+      "mustnot": [
+        "couloir_ouvert",
+        "chambre_ouverte"
+      ],
       "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "regarder",
       "noun": [],
-      "mustnot": ["couloir_ouvert", "chambre_ouverte"],
+      "mustnot": [
+        "couloir_ouvert",
+        "chambre_ouverte"
+      ],
       "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "regarder",
       "noun": [],
-      "mustnot": ["couloir_ouvert", "chambre_ouverte"],
+      "mustnot": [
+        "couloir_ouvert",
+        "chambre_ouverte"
+      ],
       "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte"],
+      "noun": [
+        "porte"
+      ],
       "text": "Laquelle souhaitez-vous ouvrir : la porte est ou la porte sud ?"
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "est"],
-      "must": ["chambre_ouverte"],
+      "noun": [
+        "est"
+      ],
+      "must": [
+        "chambre_ouverte"
+      ],
       "text": "Cette porte est déjà ouverte."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "sud"],
-      "must": ["couloir_ouvert"],
+      "noun": [
+        "sud"
+      ],
+      "must": [
+        "couloir_ouvert"
+      ],
       "text": "Cette porte est déjà ouverte."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "est"],
-      "mustnot": ["chambre_ouverte"],
+      "noun": [
+        "est"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
       "text": "Vous n'arriverez pas à l'ouvrir à la main."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "est", "couteau"],
-      "tool": ["couteau"],
-      "mustnot": ["chambre_ouverte"],
-      "effect": ["chambre_ouverte"],
+      "noun": [
+        "est",
+        "couteau"
+      ],
+      "tool": [
+        "couteau"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
       "text": "Vous parvenez tant bien que mal à ouvrir la porte à l'aide de la pointe du couteau que vous avez récupéré dans le salon."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "est", "cuillere"],
-      "tool": ["cuillere"],
-      "mustnot": ["chambre_ouverte"],
-      "effect": ["chambre_ouverte"],
+      "noun": [
+        "est",
+        "cuillere"
+      ],
+      "tool": [
+        "cuillere"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
       "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la cuillère que vous avez récupérée dans le salon."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "est", "fourchette"],
-      "tool": ["fourchette"],
-      "mustnot": ["chambre_ouverte"],
-      "effect": ["chambre_ouverte"],
+      "noun": [
+        "est",
+        "fourchette"
+      ],
+      "tool": [
+        "fourchette"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
       "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon."
     },
     {
-      "place": [15],
+      "place": [
+        15
+      ],
       "verb": "ouvrir",
-      "noun": ["porte", "sud"],
-      "mustnot": ["couloir_ouvert"],
-      "effect": ["couloir_ouvert"],
-      "use": ["cle"],
+      "noun": [
+        "sud"
+      ],
+      "mustnot": [
+        "couloir_ouvert"
+      ],
+      "effect": [
+        "couloir_ouvert"
+      ],
+      "use": [
+        "cle"
+      ],
       "text": "La clé correspond bien à cette serrure. Vous ouvrez la porte."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
       "noun": [],
-      "mustnot": ["rideaux_ouverts"],
+      "mustnot": [
+        "rideaux_ouverts"
+      ],
       "text": "Une maigre lumière s'infiltre au travers des rideaux, mais elle ne vous permet que de distinguer quelques reflets vitreux à différents endroits de la salle."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
-      "noun": ["rideaux"],
-      "mustnot": ["rideaux_ouverts"],
+      "noun": [
+        "rideaux"
+      ],
+      "mustnot": [
+        "rideaux_ouverts"
+      ],
       "text": "Les rideaux sont fermés, mais un vent léger les soulève légèrement par instant."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
-      "noun": ["rideaux"],
-      "must": ["rideaux_ouverts"],
+      "noun": [
+        "rideaux"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
       "text": "Les rideaux sont maintenant ouverts, laissant voir une lune aux reflets dorés."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
-      "noun": ["lune"],
-      "must": ["rideaux_ouverts"],
+      "noun": [
+        "lune"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
       "text": "La lune ce soir revêt des reflets dorés. Cette vision vous glace le sang."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
-      "noun": ["fenêtre"],
-      "must": ["rideaux_ouverts"],
+      "noun": [
+        "fenêtre"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
       "text": "Les rideaux sont maintenant ouverts, laissant voir une lune aux reflets dorés."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "ouvrir",
-      "noun": ["rideaux"],
-      "mustnot": ["rideaux_ouverts"],
-      "effect": ["rideaux_ouverts"],
-      "text": "Vous ouvrez les rideaux voyez que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous sont couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
+      "noun": [
+        "rideaux"
+      ],
+      "mustnot": [
+        "rideaux_ouverts"
+      ],
+      "effect": [
+        "rideaux_ouverts"
+      ],
+      "text": "Vous ouvrez les rideaux et voyez que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous sont couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["rideaux_ouverts"],
-      "mustnot": ["cage_ouverte"],
+      "must": [
+        "rideaux_ouverts"
+      ],
+      "mustnot": [
+        "cage_ouverte"
+      ],
       "text": "Maintenant que les rideaux sont ouverts, vous pouvez voir que vous êtes dans une sorte de laboratoire. Des cuves sont disposées et empilées partout dans la salle. Par-dessus certaines de ces cuves, des dizaines d'ouvrages sont empilés, mais tous couverts d'un mélange de liquide visqueux et de poils aux teintes rougeoyantes.\nUne unique cage se situe près de la porte fermée à l'est de la salle."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["cage_ouverte"],
-      "mustnot": ["trone_ouvert"],
+      "must": [
+        "cage_ouverte"
+      ],
+      "mustnot": [
+        "trone_ouvert"
+      ],
       "text": "Le petit humain s'est enfui. Il ne reste plus que vous, la clé que vous venez de ramasser entre vos mains. Elle ouvre probablement la porte fermée à l'est."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
       "noun": [],
-      "must": ["trone_ouvert"],
+      "must": [
+        "trone_ouvert"
+      ],
       "text": "La porte est désormais ouverte vers l'est, mais la peur vous paralyse. Votre instinct vous dit que c'est peut-être la dernière porte que vous aurez jamais à franchir."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
-      "noun": ["cuves"],
-      "must": ["rideaux_ouverts"],
+      "noun": [
+        "cuves"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
       "text": "Chacune des cuves porte un écriteau où sont écrites quelques notes. Certains contiennent ce qui ressemble à des fruits et légumes en état de décomposition avancée. D'autres contiennent des objets méconnaissables, aux formes généralement rondes, mais parfois surmontées de formes biscornues évoquant des serres, des ailes, des tentacules ou d'autres formes inidentifiables. Les plus gros de ces \"objets\" sont tous couverts d'une sorte de toison orangée. Certaines de ces cuves sont brisées, vidées de leur contenu."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "regarder",
-      "noun": ["cage"],
-      "must": ["rideaux_ouverts"],
+      "noun": [
+        "cage"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
       "text": "Un écriteau est accroché sur la cage. Il y est écrit maladroitement :\n« Nom du spécimen : Poshul.\nSymptômes : immunité totale à l'effet Dolce.\nCe spécimen est un danger pour notre projet. Il ne doit sous AUCUNE CONDITION quitter sa cage ! »\nDerrière les barreaux, un humain amaigri par la faim vous regarde, le regard suppliant."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "ouvrir",
-      "noun": ["cage"],
-      "must": ["rideaux_ouverts"],
-      "mustnot": ["cage_ouverte"],
-      "effect":["cage_ouverte"],
-      "give": ["cle"],
+      "noun": [
+        "cage"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
+      "mustnot": [
+        "cage_ouverte"
+      ],
+      "effect": [
+        "cage_ouverte"
+      ],
+      "give": [
+        "cle"
+      ],
       "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous avant de s'arrêter quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé."
     },
     {
-      "place": [16],
+      "place": [
+        16
+      ],
       "verb": "ouvrir",
-      "noun": ["porte"],
-      "must": ["rideaux_ouverts", "cage_ouverte"],
-      "effect":["trone_ouvert"],
-      "use": ["cle"],
+      "noun": [
+        "porte"
+      ],
+      "must": [
+        "rideaux_ouverts",
+        "cage_ouverte"
+      ],
+      "effect": [
+        "trone_ouvert"
+      ],
+      "use": [
+        "cle"
+      ],
       "text": "Vous déverrouillez la porte, qui s'entrebaille alors. Une sensation étrange vous fait bourdonner les oreilles une fraction de seconde avant de disparaître."
     },
     {
-      "place": [17],
+      "place": [
+        17
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Vous êtes désormais dans un couloir en ligne droite, plongé dans l'obscurité. Tout ce que vous distinguez, c'est l'embrasure d'une porte à l'est, de l'autre côté du couloir."
     },
     {
-      "place": [18],
+      "place": [
+        18
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Votre aventure est terminée. Vous n'avez plus qu'à attendre les autres joueurs."
     },
     {
-      "place": [20,21,22,23,24,25,26,27,28],
+      "place": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28
+      ],
       "verb": "regarder",
       "noun": [],
       "text": "Vous pouvez avancer dans toutes les directions. Rien ne les différencie."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "text": "C'est un simple couteau en argent.",
+      "noun": [
+        "couteau"
+      ],
+      "tool": [
+        "couteau"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "noun": [
+        "cuillere"
+      ],
+      "text": "C'est une simple cuillère en argent.",
+      "tool": [
+        "cuillere"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "text": "C'est une simple fourchette en argent.",
+      "noun": [
+        "fourchette"
+      ],
+      "tool": [
+        "fourchette"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "noun": [
+        "livre"
+      ],
+      "text": "C'est un livre de recettes nommé « La cuisine de demain ».",
+      "tool": [
+        "livre"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "noun": [
+        "cle"
+      ],
+      "text": "C'est une petite clé métallique.",
+      "tool": [
+        "cle"
+      ]
+    },
+    {
+      "place": [
+        11
+      ],
+      "verb": "regarder",
+      "noun": [],
+      "text": "Le mur nord, fissuré, laisse passer assez de lumière pour constater qu'il ne reste plus rien dans les rayons. Pas même une miette de nourriture. Seules restent les étiquettes de ce qui s'y trouvait stocké.",
+      "must": [
+        "livre_pris"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "text": "C'est une lampe-torche tout à fait ordinaire.",
+      "noun": [
+        "lampe"
+      ],
+      "tool": [
+        "lampe"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "regarder",
+      "text": "C'est une lampe-torche tout à fait ordinaire. Elle est allumée.",
+      "noun": [
+        "lampe"
+      ],
+      "tool": [
+        "lampe_allumee"
+      ]
+    },
+    {
+      "place": [
+        10
+      ],
+      "verb": "couper",
+      "noun": [
+        "arbrisseaux"
+      ],
+      "text": "Ces arbrisseaux ne vont ont rien fait de mal, laissez-les tranquilles.",
+      "tool": [
+        "couteau"
+      ]
+    },
+    {
+      "place": [
+        72,
+        7,
+        73,
+        71,
+        74,
+        75,
+        76
+      ],
+      "verb": "lire",
+      "noun": [
+        "carnelia"
+      ],
+      "text": "Debout devant la porte tournante, je tapai quelques petits coups sur le sol avec le talon de mes bottes. Je relevai le col de ma veste, rentrai mon menton, et admirai ma silhouette dans le miroir irrégulier. J'avais les cheveux coupés ras, une veste de cuir comme on en voit partout, et mes bottes, de cuir également, étaient en vérité spécialement renforcées par des plaques de fer, mais ce n'était pas..."
+    },
+    {
+      "place": [
+        72
+      ],
+      "verb": "lire",
+      "text": "Le bon fermier Ciprott\n　　　　　　Planta cinq cyprès dans son jardin\nLe bon fermier Ciprott\n　　　　　　Donna de l'engrais à chacun\nLe bon fermier Ciprott\n　　　　　　Cette année-là vit un parasite se répandre\nLe bon fermier Ciprott...",
+      "noun": [
+        "cypres"
+      ]
+    },
+    {
+      "place": [
+        72
+      ],
+      "verb": "lire",
+      "noun": [
+        "jack"
+      ],
+      "text": "République de Calvard.\nIl existe un quartier bâti par des immigrés venus d’orient pour leur rappeler leur terre natale.\nCe quartier, appelé localement le « quartier oriental », déborde en tout temps de vie et d’excitation.\nSur une avenue roulent de vieux bus orbaux, s’alignent des restaurants orientaux à ciel ouvert, leurs plats richement épicés, où les vendeuses, pleines d’énergie, exhortent les voyageurs.\nLa foule des visages..."
+    },
+    {
+      "place": [
+        72
+      ],
+      "verb": "prendre",
+      "noun": [],
+      "text": "Une voix étrangère résonne soudain :\n« Chaque chose... chaque être... est destinée à rejoindre sa place... il ne faut pas l'en déranger... »"
+    },
+    {
+      "place": [
+        16
+      ],
+      "verb": "liberer",
+      "noun": [
+        "poshul"
+      ],
+      "text": "Vous appuyez sur un bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous avant de s'arrêter quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé.",
+      "mustnot": [
+        "cage_ouverte"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
+      "give": [
+        "cle"
+      ],
+      "effect": [
+        "cage_ouverte"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "casser",
+      "noun": [],
+      "text": "Une voix s'infiltre dans vos pensées :\n« La douceur est destinée... à trouver sa voix en toute chose... en tout être... et vous n'êtes pas une exception. »"
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "noun": [
+        "potiron"
+      ],
+      "text": "La femme se renfrogne légèrement l'espace d'un instant."
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "noun": [
+        "laine"
+      ],
+      "text": "La femme plisse les yeux et sa respiration s'accélère légèrement. Elle se frotte alors précautionneusement un bras, puis un autre, puis le thorax... Passé cet examen, elle retourne à sa position initiale, l'air rassurée."
+    },
+    {
+      "place": [
+        11
+      ],
+      "verb": "regarder",
+      "noun": [
+        "livre"
+      ],
+      "text": "Le livre est intitulé « La cuisine de demain ».",
+      "mustnot": [
+        "livre_pris"
+      ]
+    },
+    {
+      "place": [
+        7
+      ],
+      "verb": "ranger",
+      "noun": [
+        "livre"
+      ],
+      "text": "D'accord, vous voulez ranger ce livre. C'est bien. Mais il faut d'abord choisir dans quelle partie de la bibliothèque.",
+      "tool": [
+        "livre"
+      ]
+    },
+    {
+      "place": [
+        71,
+        72,
+        74,
+        75,
+        76
+      ],
+      "verb": "ranger",
+      "noun": [
+        "livre"
+      ],
+      "text": "Ce n'est pas vraiment le bon endroit pour ranger ce livre.",
+      "tool": [
+        "livre"
+      ]
     }
   ]
 }
