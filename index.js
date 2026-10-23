@@ -234,6 +234,8 @@ const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('
 // Halloween text adventure: invitation in the adventure channel, played in DMs (admins and 744964573249011712 for now)
 const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',closingChannelId:process.env.ROLEPLAY_ID,allowed:['744964573249011712']});
 client.on('messageCreate',message=>{adventure.message(message);});
+// the games followed and the hints sent from the platform's editor
+require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
