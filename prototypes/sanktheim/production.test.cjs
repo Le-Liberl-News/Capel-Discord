@@ -21,6 +21,7 @@ test('published siege authenticates daily characters, denies test/admin forgery 
   // the joining's load times, shown on the public status
   await fetch(url+'/timings',{method:'POST',headers,body:JSON.stringify({marks:[['siege-start',120],['playable',9000]],files:3,kb:40,slowest:[{file:'map/model.gltf',start:200,end:8000,kb:30}]})});
   const status=await (await fetch(url+'/status')).json();assert.equal(status.joinTimings[0].character,'Julia');assert.deepEqual(status.joinTimings[0].marks.at(-1),['playable',9000]);
+  assert.equal(status.wave,null);assert.ok(status.nextWave>status.serverTime);   // what the deployment waits on
 
  }finally{service.close();await new Promise(r=>server.close(r));fs.rmSync(runtime,{recursive:true,force:true});}
 });

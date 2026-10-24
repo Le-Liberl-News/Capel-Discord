@@ -27,7 +27,10 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const identity=req=>{const {id}=lobby.identity(bearer(req));return {id:'player-'+id,userId:id};};
  // the last joinings' load times (arena-front.mjs reports them), to see where a slow start goes
  const joinTimings=[];
- app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');res.json({ready,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
+ app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');
+  // the wave under way and the next one: the deployment waits for a quiet moment (.github/workflows/deploy.yml)
+  const view=ready?siege.snapshot():null,wave=view?.wave?{number:view.wave.number,ends:view.wave.ends}:null;
+  res.json({ready,wave,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
  app.use('/api/siege',async(req,res)=>{
   try{
    const user=identity(req);await access.assertMember(user.userId);

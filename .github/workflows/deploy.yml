@@ -4,6 +4,11 @@ on:
     branches:
       - main
 
+# one deployment at a time: a push made while another one waits for a wave's end is deployed after it
+concurrency:
+  group: deploy-ln-bot
+  cancel-in-progress: false
+
 jobs:
   deploy-and-restart:
     name: 🚚 Sync & 🔄 Restart
@@ -42,6 +47,21 @@ jobs:
       run: |
         python -m pip install --quiet pillow
         python tests/test_activity_textures.py
+
+    # a restart during a Sanktheim wave throws its players out: wait for the wave's end, and keep clear of the next
+    # one's start (the restart takes a minute or two); after 45 minutes the deployment goes ahead anyway
+    - name: ⏳ Wait for the end of a Sanktheim wave
+      run: |
+        node -e '
+        const MARGIN=4*60000,LIMIT=Date.now()+45*60000;
+        (async()=>{for(;;){
+         let s=null;try{const r=await fetch("https://leliberlnews.fr/activite/api.php?r=siege/status",{signal:AbortSignal.timeout(10000)});s=await r.json();}catch(e){console.log("Statut du siège illisible ("+e.message+") : déploiement.");return;}
+         const soon=s.nextWave&&s.nextWave-s.serverTime<MARGIN;
+         if(!s.wave&&!soon){console.log("Pas de vague en cours : déploiement.");return;}
+         if(Date.now()>LIMIT){console.log("Toujours une vague après 45 min : déploiement quand même.");return;}
+         console.log(s.wave?"Vague "+s.wave.number+" en cours, fin à "+new Date(s.wave.ends).toISOString():"Vague imminente à "+new Date(s.nextWave).toISOString()+" : attente.");
+         await new Promise(r=>setTimeout(r,30000));
+        }})();'
 
     - name: 🛠️ Deploy & Restart natively
       env:
