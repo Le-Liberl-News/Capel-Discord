@@ -21,7 +21,7 @@ function createLynx({siege,now=()=>siege._state.at,geometry=null,scale=1}){
    const fx=-Math.sin(c.yaw),fz=-Math.cos(c.yaw);
    if(c.fire&&t>=(ship.nextShot??0)){ship.nextShot=t+110;const dir={x:fx*Math.cos(c.pitch),y:Math.sin(c.pitch),z:fz*Math.cos(c.pitch)};let target=null,dist=90;
     for(const e of state.enemies){if(!e.flying||e.hp<=0||e.escaped)continue;const dx=e.x-ship.x,dy=e.y-ship.y,dz=e.z-ship.z,along=dx*dir.x+dy*dir.y+dz*dir.z;if(along>0&&along<dist&&dx*dx+dy*dy+dz*dz-along*along<2.2**2){target=e;dist=along;}}
-    if(target){const damage=Math.min(12,target.hp);target.hp-=damage;siege.registerDamage({actor:p.id,target,amount:damage,lethal:target.hp<=0});if(target.hp<=0)siege.recordDeath(target);}
+    if(target){const damage=Math.min(12,target.hp);require('../../utils/activityDamage').applyDamage(target,damage,t,{actor:p.id});siege.registerDamage({actor:p.id,target,amount:damage,lethal:target.hp<=0});if(target.hp<=0)siege.recordDeath(target);}
     ship.shots.push({at:t,from:{x:ship.x,y:ship.y,z:ship.z},to:{x:ship.x+dir.x*dist,y:ship.y+dir.y*dist,z:ship.z+dir.z*dist},hit:!!target});
    }
   }

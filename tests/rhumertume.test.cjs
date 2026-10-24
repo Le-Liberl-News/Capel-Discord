@@ -70,7 +70,7 @@ test('the gauges: capitals and "!" for rage, "?" and emojis for madness; pom, ci
  assert.ok(moods('Quoi ???? 🎃🎃 :smile:')[1]>=40);
  assert.ok(moods('pom pom citrouille. Calme.')[0]<0);
 });
-test('the bite: now and then a pom bites someone who spoke lately, who may catch it; twice a day at most for each pom',async()=>{
+test('the bite: now and then a pom bites someone who spoke lately, who may catch it; once a day at most for each pom',async()=>{
  let now=at('2026-10-26T09:00:00Z'),roll=.5;
  const {r,said}=setup({now:()=>now,random:()=>roll});
  await r.infect('Tita');said.length=0;
@@ -81,10 +81,10 @@ test('the bite: now and then a pom bites someone who spoke lately, who may catch
  assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,['evolution Kloe 0->1']);
  assert.ok(r.isInfected('Kloe'));
  const bites=()=>said.filter(x=>/rage incontrôlable/.test(x.text)).length;
- await r.message('Joshua','Coucou.');await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),2);   // a second bite
- await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),2);                                       // no third one that day
- await r.infect('Nial');await r.message('Nial','Pom.');await r.after('Nial');assert.equal(bites(),3);                // another pom still can
- now=at('2026-10-27T09:00:00Z');await r.message('Joshua','Coucou.');await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),4);   // a new day
+ await r.message('Joshua','Coucou.');await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),1);   // no second bite
+ await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),1);                                       // no third one that day
+ await r.infect('Nial');await r.message('Nial','Pom.');await r.after('Nial');assert.equal(bites(),2);                // another pom still can
+ now=at('2026-10-27T09:00:00Z');await r.message('Joshua','Coucou.');await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),3);   // a new day
 });
 test('madness: the pom hurts itself',async()=>{
  let now=at('2026-10-26T09:00:00Z');

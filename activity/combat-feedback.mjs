@@ -25,7 +25,7 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
   // a damage event of the server: combo hits and parry counters get their own impact and a shake
   impact(id,event,delay=0){
    if(event.amount>0)this.hurt(id,delay);
-   if(event.combo!=null){this.comboCount(id,event.combo,event.comboHold,delay);setTimeout(()=>sounds?.playAny(HIT_SOUNDS),delay*1000);}
+   if(event.combo!=null){if(!event.hideNumber)this.comboCount(id,event.combo,event.comboHold,delay);setTimeout(()=>sounds?.playAny(HIT_SOUNDS,{position:event.point??event.soundPosition}),delay*1000);}
    if(event.combo==null&&!event.parry)return false;
    shakes.set(id,{started:performance.now()+delay*1000,strength:event.parry?.16:Math.min(.14,.06+.012*event.combo)});
    const own=!event.parry&&event.nativeEffect&&event.nativeEffect!==moves.COMBO.hitEffect;if(own)return false;
@@ -48,28 +48,28 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     // a swing that touched nobody
     // what was already shown, per attack (ids may contain ':', e.g. the training AI's)
     let done=shown.get(id);if(!done)shown.set(id,done=new Set());
-    const fresh=now-event.localStart<1000;
-    if(event.missed&&!done.has('miss')){done.add('miss');if(fresh)sounds?.play('miss');}
-    if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))sounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])sounds?.play(CRAFT_SOUNDS[event.character]);}
+    const sourcePosition=()=>avatars.get(event.actor)?.position??event.origin;const eventSounds=sounds?.at?.(sourcePosition)??sounds;const fresh=now-event.localStart<1000;
+    if(event.missed&&!done.has('miss')){done.add('miss');if(fresh)eventSounds?.play('miss');}
+    if(!done.has('start')){done.add('start');if(fresh&&isDodge(event))eventSounds?.play('dash');else if(fresh&&event.kind==='craft'&&CRAFT_SOUNDS[event.character])eventSounds?.play(CRAFT_SOUNDS[event.character]);}
     const spec=combatSpec(event.character,event.kind);
-    playReanCraftSounds(event,now,done,sounds);
+    playReanCraftSounds(event,now,done,eventSounds);
     if(event.character==='Don'&&event.special==='donCannon'&&!event.cancelled){
       const elapsed=now-event.localStart,marks=event.kind==='basic'?[['don-shot',140],...(event.explodedAt==null?[]:[['don-explosion',event.explodedAt-event.started]])]:[['don-slam',spec.impactAt]];
-      for(const [sound,at]of marks)if(elapsed>=at&&!done.has(sound)){done.add(sound);if(elapsed-at<(sound==='don-explosion'?1500:350))sounds?.play(sound);}
+      for(const [sound,at]of marks)if(elapsed>=at&&!done.has(sound)){done.add(sound);if(elapsed-at<(sound==='don-explosion'?1500:350))eventSounds?.play(sound,{position:sound==='don-explosion'?event.explosionPoint??event.impactPoint??event.projectile?.point??sourcePosition():sourcePosition()});}
     }
 
-    if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of (spec.coinShot?[['block',spec.throwAt,.25],['josette-shot',spec.fireAt,.75]]:spec.zeroth?[['block',1900,.35],['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8],['hit4',spec.hitTimes[1],.8]]:spec.hitTimes.map((at,i)=>['hit'+(i%4+1),at,i===spec.hitTimes.length-1?.65:.35]))){const key='daybreak-sound:'+name+':'+at,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)sounds?.play(name,{gain});}}}
+    if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of (spec.coinShot?[['block',spec.throwAt,.25],['josette-shot',spec.fireAt,.75]]:spec.zeroth?[['block',1900,.35],['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8],['hit4',spec.hitTimes[1],.8]]:spec.hitTimes.map((at,i)=>['hit'+(i%4+1),at,i===spec.hitTimes.length-1?.65:.35]))){const key='daybreak-sound:'+name+':'+at,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)eventSounds?.play(name,{gain});}}}
     const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':event.character==='Josette'&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
     if(sound&&!event.cancelled&&!event.reflectedProjectile){
      for(const shot of releasedShots(event,spec,now)){
       const key='sound:'+shot.index;if(done.has(key))continue;done.add(key);
-      if(shot.age<150)sounds?.play(sound,{gain:event.character==='Carna'?.3:1});
+      if(shot.age<150)eventSounds?.play(sound,{gain:event.character==='Carna'?.3:1});
      }
     }
     for(const hit of event.hits??[]){
      if(hit.parried&&!done.has('parry:'+hit.id)){done.add('parry:'+hit.id);labels.push({el:callout('Parade !','#9fe8ff'),id:hit.id,started:now});}
      // a basic attack stopped by a guard facing it
-     if(hit.blocked&&!done.has('block:'+hit.id+':'+hit.at)){done.add('block:'+hit.id+':'+hit.at);burst('spark',hit.point,2.8,0,hit.point?null:hit.id);sounds?.play('block');}
+     if(hit.blocked&&!done.has('block:'+hit.id+':'+hit.at)){done.add('block:'+hit.id+':'+hit.at);burst('spark',hit.point,2.8,0,hit.point?null:hit.id);eventSounds?.play('block',{position:hit.point??avatars.get(hit.id)?.position});}
     }
     // dodge: puffs of dust left on the ground along the way
     const owner=avatars.get(event.actor);

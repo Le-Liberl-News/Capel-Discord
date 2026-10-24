@@ -1,10 +1,10 @@
-// Rhumertume (Halloween 2026): four times a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
+// Rhumertume (Halloween 2026): three times a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
 // of the healthy roster starts turning into a pom-tiron (at most one player character per Paris day); an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
 // (30% after an hour, 60% after about 3h30, every word but one in eight after about 7 hours) and are shown in a Sky bubble; its
 // avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx after 3h30, Pomdeterx after 7 hours
 // (each patient's own times, drawn within two hours either side),
-// each step announced with a Pokémon-like evolution GIF. Now and then (twice a day at most for each pom) a pom flies into a rage and bites
+// each step announced with a Pokémon-like evolution GIF. Now and then (once a day at most for each pom) a pom flies into a rage and bites
 // whoever spoke lately, who may catch the illness. How the player writes feeds two gauges, rage (capitals, "!") and
 // madness ("?", emojis, which makes the pom hurt itself); "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
 // Once a day at a saved random time from 10:00 to 23:00, three poms corner three healthy characters (utils/pomSiege.js);
@@ -13,7 +13,7 @@ const {PermissionFlagsBits}=require('discord.js');
 const {weightedPick,weightedSample}=require('./pomSelection.cjs');
 const HOUR=3600000,LAST_DAY='2026-10-31';
 const WINDOW=[10*60,13*60];
-const CASES_PER_DAY=4;
+const CASES_PER_DAY=3,SPREAD_CASES_PER_DAY=3,MAX_CASES_PER_DAY=6;
 // stages 2 and 3 come after 3h30 and 7 hours, give or take two hours (drawn for each patient; the third at least an hour after the second)
 const STAGE_TIMES=[3.5*HOUR,7*HOUR],STAGE_SPREAD=2*HOUR;
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
@@ -22,8 +22,8 @@ const PREFIX=['','Pom','Pompom','Pomdeter'];
 // third stage is the « Pom funèbre »
 const ASPI="Pom-d’aspi",FUNEBRE='Pom-funèbre',ASPI_CHANCE=1/2;
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
-// the bite: a chance on each message of a pom, until that pom has bitten twice that day (Paris)
-const BITE_CHANCE=.25,BITES_PER_POM=2;
+// the bite: a chance on each message of a pom, until that pom has bitten once that day (Paris)
+const BITE_CHANCE=.25,BITES_PER_POM=1;
 const RAGE=['Pris·e de rage, {perso} mord {victime} !','{perso} se jette sur {victime} en hurlant.'];
 const MADNESS=['{perso} se cogne la tête contre un mur en riant.','{perso} se met à sautiller partout sans raison apparente.'];
 const parisFormat=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
@@ -64,7 +64,7 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  const recent=new Map();   // character -> last time it spoke in the roleplay chat
  // the day's times (minutes, Paris), drawn once inside the window; a day picked up late only gets the times still ahead
  function scheduledMinutes(date,minutes){
-  const list=state.schedule[date]==null?[]:[].concat(state.schedule[date]),before=list.length;
+  const savedList=[].concat(state.schedule[date]??[]),before=savedList.length,list=savedList.slice(0,dailyCases);
   while(list.length<dailyCases&&minutes<WINDOW[1]){const from=Math.max(WINDOW[0],minutes);list.push(from+Math.floor(random()*(WINDOW[1]-from+1)));}
   if(list.length!==before||!Array.isArray(state.schedule[date])){state.schedule[date]=list.sort((a,b)=>a-b);save();log(`rhumertume: cas du ${date} à ${state.schedule[date].map(m=>`${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`).join(', ')}`);}
   return state.schedule[date];
@@ -110,6 +110,9 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   if(state.infected[character]!=null)return true;
   if(drawsOver())return false;
   const date=parisParts(now()).date,assigned=await assignedToday(),controlled=assigned.has(character);
+  // Three spontaneous cases plus at most three secondary cases; manual administrator actions remain explicit overrides.
+  const manual=cause.startsWith('/pomifier'),daily=Object.entries(state.infected).filter(([c,at])=>parisParts(at).date===date&&!state.patients[c]?.cause?.startsWith('/pomifier')),secondaryCases=daily.filter(([c])=>state.patients[c]?.cause&&!state.patients[c].cause.startsWith('tirage du jour'));
+  if(!manual&&(daily.length>=MAX_CASES_PER_DAY||!cause.startsWith('tirage du jour')&&secondaryCases.length>=SPREAD_CASES_PER_DAY)){delete state.pending[character];save();log('rhumertume: plafond quotidien de contamination atteint');return false;}
   if(controlled&&playerCases(date,assigned,character).size>=1){
    delete state.pending[character];state.drawn[date]=drawnOn(date).filter(c=>c!==character);save();log('rhumertume: plafond joueur atteint, '+character+' reste sain');return false;
   }
@@ -225,7 +228,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  }
  const fill=(template,values)=>template.replace(/\{(\w+)\}/g,(_,k)=>values[k]);
  const pick=list=>list[Math.floor(random()*list.length)];
- // after the pom's message: now and then a bite (twice a day at most for each pom; the victim may catch it), a self-inflicted mishap
+ // after the pom's message: now and then a bite (once a day at most for each pom; the victim may catch it), a self-inflicted mishap
  // when madness is high
  // a wizard pom's bite is a spell (utils/pomWizard.js): it flies over its victim on its vacuum and casts; the victim
  // turns white and shrinks, or fades away and, a few seconds later, falls ill (the same chance as a bite's contagion)

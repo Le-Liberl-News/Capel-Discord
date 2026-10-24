@@ -9,7 +9,7 @@ import {
 } from "./dialogue-text.mjs";
 const fonts=new Map();
 export function ensureDialogueFont(assets){const url=new URL('dialogue/AveriaSansLibre-Regular.ttf',assets).href;if(!fonts.has(url))fonts.set(url,new FontFace('AveriaSky','url("'+url+'")').load().then(font=>{document.fonts.add(font);return font;}).catch(error=>{fonts.delete(url);throw error;}));return fonts.get(url);}
-export async function createDialogues(assets) {
+export async function createDialogues(assets,{voiceGain=()=>1}={}) {
   const url = (name) => new URL("dialogue/" + name, assets).href;
   await ensureDialogueFont(assets);
   await Promise.all(
@@ -64,7 +64,7 @@ export async function createDialogues(assets) {
     );
   }
   function open(author, message, time,avatar) {
-    voices.speak(avatar.character);
+    voices.speak(avatar.character,voiceGain(avatar));
     const width = widthFor(message),
       pages = paginateDialogue(
         message.text,

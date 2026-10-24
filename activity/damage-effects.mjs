@@ -1,3 +1,4 @@
+export function showDamageNumber(localId,targetId,event,localOnly=false){return !localOnly||targetId!==localId&&(event?.actor??event?.from)===localId;}
 let damageLabelId=0;
 export function damageLabel(amount){const text=String(Math.round(amount)),width=text.length*40+36,id='damage-glow-'+(++damageLabelId);return {width,markup:`<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 ${width} 100" style="overflow:visible"><defs><filter id="${id}" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="900" font-style="italic" fill="#ff2222" stroke="#ff2222" stroke-width="5" filter="url(#${id})">${text}</text><text x="${width/2}" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="900" font-style="italic" fill="white" stroke="#e92929" stroke-width="2" paint-order="stroke fill">${text}</text></svg>`};}
 import {loadBakedEffect,bakedEffectSprite} from './baked-effects.mjs';
@@ -38,7 +39,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
    const number=document.createElement("div");number.className="sky-damage";
    number.style.cssText="position:absolute;pointer-events:none;display:flex;transform-origin:50% 100%;z-index:18";
    const label=damageLabel(amount);number.innerHTML=label.markup;
-   if(heal)number.style.filter='hue-rotate(115deg)';container.append(number);
+   if(heal)number.style.filter='hue-rotate(115deg)';if(!impact?.hideNumber)container.append(number);
    const occupied=new Set(hits.filter(h=>h.id===id).map(h=>h.lane));let lane=0;while(occupied.has(lane))lane++;
    hits.push({id,sprite,effect,extra,number,impact,bulletHit,labelWidth:label.width,time:-delay,lane});
   },
@@ -55,7 +56,7 @@ export async function createDamageEffects(THREE,scene,container,url,loading) {
     hit.sprite.visible=!hit.impact?.quiet&&hit.time<(hit.bulletHit?1:hit.effect ? .8 : .35);
     if(hit.effect){hit.effect.draw(hit.time*1000);hit.sprite.material.opacity=1;}else {hit.sprite.scale.setScalar(.65+hit.time*3);hit.sprite.material.opacity=Math.max(0,1-hit.time/.35);hit.sprite.material.map.offset.x=Math.min(3,Math.floor(hit.time*14))*.25;}
     const screen=new THREE.Vector3(p.x,p.y+h+.3,p.z).project(camera);
-    hit.number.hidden=screen.z>1||screen.z< -1||Math.abs(screen.x)>1.1||Math.abs(screen.y)>1.1;
+    hit.number.hidden=!!hit.impact?.hideNumber||screen.z>1||screen.z< -1||Math.abs(screen.x)>1.1||Math.abs(screen.y)>1.1;
     hit.number.style.left=((screen.x+1)*width/2)+"px";
     hit.number.style.top=((1-screen.y)*height/2-40*hit.time-hit.lane*64)+"px";
     hit.number.style.opacity=String(Math.min(1,(1.5-hit.time)/.65));

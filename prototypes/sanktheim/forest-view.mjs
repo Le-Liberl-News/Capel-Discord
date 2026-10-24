@@ -29,8 +29,8 @@ export function createForestView({T,model,asset,getState,getOwn,send,sounds,scal
     if(axeTemplate){active.add(p.id);let axe=axes.get(p.id);if(!axe){axe=new T.Group();const prop=axeTemplate.clone(true);prop.position.y=-1.05;axe.add(prop);root.add(axe);axes.set(p.id,axe);}const dx=d.x-p.x/scale,dz=d.z-p.z/scale,angle=Math.atan2(dx,dz);axe.position.set(p.x/scale+Math.cos(angle)*.45,p.y/scale+1.2,p.z/scale-Math.sin(angle)*.45);axe.rotation.set(0,angle,0);axe.rotateX(-.8+Math.sin(beat*Math.PI*2)*1.05);}
   }}for(const [id,axe]of axes)if(!active.has(id)){axe.removeFromParent();axes.delete(id);}
 
-  if(chopping&&time-lastSound>900){lastSound=time;sounds.play('siege-wall-hit',{gain:.13});}
-  for(const e of state.events)if(e.type==='tree-felled'&&!seen.has(e.id)){seen.add(e.id);if(state.at-e.at<1200&&own){const gain=Math.max(0,1-Math.hypot(own.x-e.position.x,own.z-e.position.z)/25);if(gain)sounds.play('siege-wall-break',{gain:gain*.35});}}
+  if(chopping&&time-lastSound>900){lastSound=time;sounds.play('siege-wall-hit',{gain:.13,position:own});}
+  for(const e of state.events)if(e.type==='tree-felled'&&!seen.has(e.id)){seen.add(e.id);if(state.at-e.at<1200&&own){const gain=Math.max(0,1-Math.hypot(own.x-e.position.x,own.z-e.position.z)/25);if(gain)sounds.play('siege-wall-break',{gain:.35,position:e.position});}}
  }
  return {ready,update,error(message){lastError=message;errorUntil=performance.now()+2500;},dispose(){disposed=true;root.removeFromParent();button.remove();document.removeEventListener('keydown',key,true);const materials=new Set();root.traverse(o=>{o.geometry?.dispose();for(const m of o.material?[].concat(o.material):[])materials.add(m);});const textures=new Set();for(const m of materials){if(m.map&&m.map!==crossMap)textures.add(m.map);m.dispose();}for(const map of textures)map.dispose();crossMap.dispose();}};
 }

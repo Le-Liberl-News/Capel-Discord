@@ -1,3 +1,4 @@
+import audioDistance from './audio-distance.cjs';
 import surfaceWalk from './surface-walk.cjs';
 import surfaceJump from './surface-jump.cjs';
 import {createFootContactView} from './foot-contact-view.mjs';
@@ -60,7 +61,7 @@ import {createCraftCapture} from "./craft-capture.mjs";
 import {createCombatControls} from "./combat-controls.mjs";
 import renneMechanics from "./native-combat.cjs";
 import terminalWorld from "./terminal-world.cjs";
-import {createDamageEffects,damageAmount,newDamageEvents} from "./damage-effects.mjs";
+import {createDamageEffects,damageAmount,newDamageEvents,showDamageNumber} from "./damage-effects.mjs";
 import {CAMERA_PITCH,CAMERA_ZOOM,movementKeys,keyboardLayout,viewportSize,remapKey} from "./controls.mjs";
 import {positionOf,avatarAtPosition} from "./avatar-state.mjs";
 import pomInput from './pom-input.cjs';
@@ -70,7 +71,7 @@ import { cameraDistance, configureSkyMaterial, createMapShadows, createContactSh
 import { versionAsset } from "./scene-visibility.mjs";
 import { createXRayPass } from "./xray-pass.mjs";
 import { createCombatFeedback } from "./combat-feedback.mjs";
-import { createCombatSounds } from "./combat-sounds.mjs";
+import { createCombatSounds,effectsVolume } from "./combat-sounds.mjs";
 import { createCtfView } from "./ctf-view.mjs";
 import combatMoves from "./combat-moves.cjs";
 import { createShotPrediction } from "./shot-prediction.mjs";
@@ -218,7 +219,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(avatar.shadow){scene.remove(avatar.shadow);avatar.shadow.geometry.dispose();avatar.shadow.material.dispose();}
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();avatar.craftTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
-  const dialogues = await createDialogues(ASSETS);
+  const dialogues = await createDialogues(ASSETS,venue?.spatialAudio?{voiceGain:avatar=>effectsVolume()*audioDistance.gainAt(avatars.get(localId)?.position,avatar.position)}:{});
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
   const mapInteractions=await createMapInteractions({scene,model,assets:ASSETS,items:towerLayout?.interactions??[],dialogues,localId:()=>localId});
@@ -559,7 +560,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     menu.style.top = Math.min(event.clientY, innerHeight - 180) + "px";
   }
   const damageEffects=await createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading);
-  const combatSounds=createCombatSounds(ASSETS);let ctfView=null;
+  const combatSounds=createCombatSounds(ASSETS,venue?.spatialAudio?{listener:()=>avatars.get(localId)?.position,defaultPosition:()=>avatars.get(localId)?.position}:{});let ctfView=null;
   const combatFeedback=combatPreparation?await createCombatFeedback(THREE,scene,ASSETS,labels,combatSounds):null;
   const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
@@ -593,7 +594,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.guardHold=player.guardHold??null;
       // another fighter raised their guard: play their basic attack pose
       if(player.parry?.at&&player.parry.at!==avatar.parryAt){avatar.parryAt=player.parry.at;if(player.id!==localId)avatar.parryPose={kind:'basic',character:player.character,localStart:performance.now()};}
-      if(player.jump?.id&&player.jump.id!==avatar.jumpSoundId){avatar.jumpSoundId=player.jump.id;if(player.id!==localId)combatSounds.play('jump',{gain:.7});}
+      if(player.jump?.id&&player.jump.id!==avatar.jumpSoundId){avatar.jumpSoundId=player.jump.id;if(player.id!==localId)combatSounds.play('jump',{gain:.7,position:avatar.position});}
       avatar.team=player.team??null;avatar.teamId=player.teamId??player.team??null;avatar.maxHp=player.maxHp??playerHealth.PLAYER_MAX_HP;avatar.enemy=!!player.enemy;avatar.enemyAttack=player.attack;avatar.jump=player.jump;avatar.knockback=player.knockback??null;avatar.dimensionLift=player.dimensionLift??null;avatar.fallAnimation=player.fallAnimation??null;avatar.siegDive=player.siegDive??null;avatar.catCling=player.catCling??null;avatar.climbing=!!player.climbing;
       avatar.npc = !!player.npc;
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
@@ -1252,7 +1253,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     for(const avatar of avatars.values())avatar.shadow?.userData.update?.(time,lightState);
     if(previewDrinkingClock){previewDrinkingClock.tick(environment.npcs);dialogues.receive(environment.npcs.filter(n=>n.utterance).map(n=>({...n.utterance,author:n.id})));}
     drinkingTable?.update(time,avatars);
-    offscreenOpponents.update({camera,avatars,ownId:localId,inTower,width:viewport.width,height:viewport.height,enabled:combatCamera&&!introPlaying&&!health.spectator&&health.hp>0});
+    offscreenOpponents.update({camera,avatars,ownId:localId,inTower,width:viewport.width,height:viewport.height,enabled:!venue?.hideOffscreenOpponents&&combatCamera&&!introPlaying&&!health.spectator&&health.hp>0});
     mapInteractions.update(time,avatars.get(localId));
     dialogues.update(time, avatars, venueView?.renderCamera??camera);
     venueView?.update?.({time,seconds,camera,avatars,dayNight,sun:arenaSun,collision,weather:venue.weather});
@@ -1351,12 +1352,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     async sync(players) {
       const present = new Set([localId]);
       for (const player of players) {
-        const before=avatars.get(player.id);if(before?.hp>0&&player.hp>before.hp&&!player.silentHealing)damageEffects.heal(player.id,player.hp-before.hp);
+        const before=avatars.get(player.id);if(!venue?.localDamageOnly&&before?.hp>0&&player.hp>before.hp&&!player.silentHealing)damageEffects.heal(player.id,player.hp-before.hp);
         const lost=damageAmount(before,player);
         // smoke ticks would give away where the hidden players are: only the player being hurt sees them
         const events=newDamageEvents(before,player).filter(e=>!e.smoke||player.id===localId);
-        if(events.length)for(const event of events){const delay=Math.min(.8,(event.at-events[0].at)/1000),own=combatFeedback&&guarded('impact',()=>combatFeedback.impact(player.id,event,delay));damageEffects.hit(player.id,event.amount,false,delay,own?{...event,quiet:true}:event);}
-        else if(lost&&!player.damageEvents)damageEffects.hit(player.id,lost);
+        if(events.length)for(const rawEvent of events){const event=venue?.localDamageOnly?{...rawEvent,soundPosition:before?.position,hideNumber:!showDamageNumber(localId,player.id,rawEvent,true)}:rawEvent;const delay=Math.min(.8,(event.at-events[0].at)/1000),own=combatFeedback&&guarded('impact',()=>combatFeedback.impact(player.id,event,delay));damageEffects.hit(player.id,event.amount,false,delay,own?{...event,quiet:true}:event);}
+        else if(lost&&!player.damageEvents)damageEffects.hit(player.id,lost,false,0,venue?.localDamageOnly?{hideNumber:true}:null);
         if (player.id === localId) {
           localCombo=player.combo??null;
           const current = avatars.get(localId);
