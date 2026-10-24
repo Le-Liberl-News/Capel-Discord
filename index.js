@@ -473,7 +473,8 @@ client.on('messageCreate', async message => {
             const buffer = await response.arrayBuffer();
             return {
                 attachment: Buffer.from(buffer),
-                name: attachment.name
+                name: attachment.name,
+                image: /^image\/(png|jpe?g|webp|gif)/.test(attachment.contentType || '')
             };
         })
     );
@@ -499,9 +500,12 @@ client.on('messageCreate', async message => {
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         }
         // the rhumertume: the pom's bubble in place of the text, its name and avatar
-        const malade = message.channelId === roleplayId ? await rhumertume.message(pseudo, texte) : null;
+        // the pictures joined go into the bubble (stretched to them); the other files stay attached
+        const images = fichiersTelecharges.filter(f => f.image);
+        const malade = message.channelId === roleplayId ? await rhumertume.message(pseudo, texte, images.map(f => f.attachment)) : null;
         if (malade) { payload.content = malade.content; payload.username = malade.username; payload.avatarURL = malade.avatarURL; }
-        const fichiers = [...(malade?.files ?? []), ...fichiersTelecharges];
+        const joints = fichiersTelecharges.filter(f => !(malade?.images && f.image)).map(({ attachment, name }) => ({ attachment, name }));
+        const fichiers = [...(malade?.files ?? []), ...joints];
         if (fichiers.length > 0) payload.files = fichiers;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );

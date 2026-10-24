@@ -216,14 +216,15 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   return {text:textOf(character,text),avatarURL:avatarOf(character),username:nameOf(character)};
  }
  // the roleplay chat: the bubble in place of the text; the gauges take the message in
- async function message(character,text){
+ // images: the pictures joined to the message (Buffers), drawn in the bubble; out.images says they were
+ async function message(character,text,images=[]){
   recent.set(character,now());
   if(stage(character)==null)return null;
   const p=patient(character),hours=(now()-p.updated)/HOUR,[rage,madness]=moods(text);
   const clamp=v=>Math.max(0,Math.min(100,v));
   p.rage=clamp(p.rage-GAUGE_DECAY*hours+rage);p.madness=clamp(p.madness-GAUGE_DECAY*hours+madness);p.updated=now();save();
   const lvl=level(character),said=textOf(character,text),out={content:'',username:nameOf(character,lvl),avatarURL:avatarOf(character,lvl)};
-  try{out.files=[await pictures().renderBubble(said,lvl)];}catch(error){log('rhumertume: bubble: '+error.message);out.content=said;}
+  try{out.files=[await pictures().renderBubble(said,lvl,Date.now(),images)];out.images=images.length>0;}catch(error){log('rhumertume: bubble: '+error.message);out.content=said;}
   return out;
  }
  const fill=(template,values)=>template.replace(/\{(\w+)\}/g,(_,k)=>values[k]);
