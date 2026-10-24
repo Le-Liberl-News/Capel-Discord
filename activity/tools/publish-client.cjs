@@ -13,6 +13,7 @@ const fs = require("node:fs/promises"),
   for (const [source, target] of [
     ["deploy/index.php", "index.php"],
     ["deploy/api.php", "api.php"],
+    ["deploy/.htaccess", ".htaccess"],
     ["bundle.js", "bundle.js"],
   ])
     await fs.copyFile(path.join(root, source), path.join(output, target));
