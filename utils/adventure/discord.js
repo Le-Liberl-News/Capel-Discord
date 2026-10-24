@@ -1,6 +1,6 @@
 // The adventure on Discord: /aventure (admins) posts the invitation in the adventure channel, its button opens the
-// game in the player's DMs, and every DM of a player is a command. For now only administrators and the users of
-// `allowed` may play (the button checks it; a DM is only read from someone who started through the button).
+// game in the player's DMs, and every DM of a player is a command. Anyone who sees the invitation may play (the channel
+// itself is hidden for now); a DM is only read from someone who started through the button.
 // When `final.players` players stand in the final room, each of them gets the victory text and the roleplay
 // channel the closing one. Players' states survive restarts (store). « /reset » in the DMs starts a player over.
 // Each player's last exchanges are kept (logs) for the platform's editor, which follows the games and sends hints
@@ -22,7 +22,7 @@ function chunks(text){
  }
  if(rest)out.push(rest);return out;
 }
-function createAdventureDiscord({client,data,store,channelId,closingChannelId,allowed=[],files=FILES,log=console.error}){
+function createAdventureDiscord({client,data,store,channelId,closingChannelId,files=FILES,log=console.error}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];
@@ -41,7 +41,6 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
  }
  const replyText=result=>result.replies.filter(Boolean).join('\n\n');
  const queues=new Map();
- const mayPlay=interaction=>allowed.includes(interaction.user.id)||Boolean(interaction.memberPermissions?.has(PermissionFlagsBits.Administrator));
  // a reply: its texts, then the room's picture when the player enters or looks at it
  // a reply to a player: its texts, then the room's picture when they enter or look at it and the action's animation;
  // kept in the player's log with what was attached (`id`)
@@ -105,7 +104,6 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
    return true;
   }
   if(!(interaction.isButton?.()&&interaction.customId===BUTTON))return false;
-  if(!mayPlay(interaction)){await interaction.reply({content:"L'aventure n'est pas encore ouverte.",flags:64});return true;}
   await interaction.deferReply({flags:64});
   const id=interaction.user.id,known=state.players[id];
   const player=known||game.fresh();
