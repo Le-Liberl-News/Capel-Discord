@@ -5,8 +5,9 @@
 // and comes down at the next one. Its flamethrowers burn whoever stands under it, its pods fire homing missiles at
 // the nearest defender or at the Lynx, and part of the poms spawn on its deck and jump down from it.
 const APPEAR_AFTER=180000,MAX_HP=5000000,ARRIVAL_DATE='2026-10-30',ARRIVAL_HOUR=12;
-const DECK_Y=18.4,DROP_TIME=1800,DROP_REACH=16,BURN_RADIUS=11,BURN_DAMAGE=16,MISSILE_REACH=70,LYNX_REACH=90,MISSILE_SPEED=40,MISSILE_EVERY=4000,MISSILE_DAMAGE=30,LYNX_DAMAGE=250,TRAIL_STEP=4,ASSAULT_RATE=.004;
-const HIT_RADIUS=6,HIT_HEIGHT=16;   // metres, as the combat sees it
+// SIZE: the model's scale in the battle (it is drawn 1.5 times smaller than built); its measures follow
+const SIZE=1/1.5,DECK_Y=18.4*SIZE,DECK_SPOT=3*SIZE,DECK_WAIT=2500,DROP_TIME=1400,DROP_REACH=16*SIZE,BURN_RADIUS=11*SIZE,BURN_DAMAGE=16,MISSILE_REACH=70,LYNX_REACH=90,MISSILE_SPEED=70,MISSILE_EVERY=4000,MISSILE_DAMAGE=30,LYNX_DAMAGE=250,TRAIL_STEP=4,ASSAULT_RATE=.004;
+const HIT_RADIUS=6*SIZE,HIT_HEIGHT=16*SIZE;   // metres, as the combat sees it
 const {SCALE}=require('./world-space.cjs');
 // the forest path, from the map's western edge to the gate (read off the terrain seen from above), and how far
 // along it each point lies
@@ -53,7 +54,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
   const e=enemy(f);e.hp=f.hp=Math.max(1,Math.min(f.maxHP,e.hp));Object.assign(e,{x:f.x,y:f.y,z:f.z});
   // the poms jumping off its deck
   for(const p of state.enemies){
-   if(!p.deckDrop)continue;const d=p.deckDrop,s=Math.min(1,(t-d.at)/DROP_TIME),floor=p.flying?2.7:0;
+   if(!p.deckDrop)continue;const d=p.deckDrop,s=Math.max(0,Math.min(1,(t-d.at-DECK_WAIT)/DROP_TIME)),floor=p.flying?2.7:0;   // a moment on the deck, then the jump
    p.x=d.from.x+(d.to.x-d.from.x)*s;p.z=d.from.z+(d.to.z-d.from.z)*s;p.y=d.from.y+(floor-d.from.y)*s*s+Math.sin(Math.PI*s)*3;
    if(s>=1){p.y=floor;p.deckDrop=null;}
   }
@@ -63,7 +64,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
   if(t>=f.nextMissile){
    const target=targets(f)[0];f.nextMissile=t+MISSILE_EVERY;
    if(target){
-    const side=f.salvo++%2?1:-1,origin={x:f.x+side*11,y:f.y+15,z:f.z+3},aim=target.actor,distance=Math.hypot(aim.x-origin.x,aim.y-origin.y,aim.z-origin.z);
+    const side=f.salvo++%2?1:-1,origin={x:f.x+side*11*SIZE,y:f.y+15*SIZE,z:f.z+3*SIZE},aim=target.actor,distance=Math.hypot(aim.x-origin.x,aim.y-origin.y,aim.z-origin.z);
     const missile={id:'mechapom-missile-'+t+'-'+side,to:target.id,hitAt:t+350+distance/MISSILE_SPEED*1000};f.missiles.push(missile);
     emit('mechapom-missile','',{from:f.id,to:target.id,origin,aim:{x:aim.x,y:aim.y,z:aim.z},side,hitAt:missile.hitAt});
    }
@@ -84,7 +85,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
  function onSpawn(p){
   const f=state.mechapom;if(!f?.grounded||!state.wave||p.mechapom||hash(p.id+'deck'+state.at)%2)return;
   const angle=hash(p.id+'angle')%360*Math.PI/180;
-  p.x=f.x+Math.cos(angle)*3;p.z=f.z+Math.sin(angle)*3;p.y=DECK_Y;
+  p.x=f.x+Math.cos(angle)*DECK_SPOT;p.z=f.z+Math.sin(angle)*DECK_SPOT;p.y=DECK_Y;
   p.deckDrop={at:state.at,from:{x:p.x,y:DECK_Y,z:p.z},to:{x:f.x+Math.cos(angle)*DROP_REACH,z:f.z+Math.sin(angle)*DROP_REACH}};
  }
  // the wave is over: it takes off
@@ -92,4 +93,4 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
  return {update,onSpawn,takeOff};
 }
 const giant=e=>!!(e?.siegeTank||e?.mechapom);
-module.exports={createMechapom,giant,along,ROUTE,MAX_HP,DECK_Y,APPEAR_AFTER,ARRIVAL_DATE};
+module.exports={createMechapom,giant,along,ROUTE,MAX_HP,SIZE,DECK_Y,APPEAR_AFTER,ARRIVAL_DATE};

@@ -170,11 +170,11 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,missileSpee
   for(const [sx,sz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const bolt=mesh(paint(new T.CylinderGeometry(.1,.13,.14,6),C.rivet),panels,null,patch);bolt.position.set(sx*(w/2-.16),.12,sz*(h/2-.16));}
  }
 
- // underneath: a hatch plate and four flamethrowers on swivels
+ // underneath: a hatch plate and two flamethrowers on swivels, at the front
  const belly=surface(new T.Vector3(0,-1,0)).point;
  const plate=mesh(paint(new T.CylinderGeometry(4,3.4,.8,8),[C.gun,C.dark],{scale:1/4}),hatch,'belly',hull);plate.position.copy(belly).add(new T.Vector3(0,-.2,0));
  const guns=[],MUZZLE=2.35,down=new T.Vector3(0,-1,0);
- for(const [n,[sx,sz]] of [[-1,1],[1,1],[-1,-1],[1,-1]].entries()){
+ for(const [n,[sx,sz]] of [[-1,1],[1,1]].entries()){
   const gun=new T.Group();gun.name='flamethrower-'+n;gun.userData.own=true;gun.position.set(sx*2.6,belly.y-.9,sz*2.4+.6);hull.add(gun);
   const mount=mesh(paint(new T.DodecahedronGeometry(1,0),[C.dark,C.gun]),panels,'flamethrower-swivel',hull);mount.position.copy(gun.position);
   const housing=mesh(paint(new T.CylinderGeometry(.8,.9,.9,8),[C.dark,C.gun]),panels,'flamethrower-housing',gun);housing.position.y=-.4;
@@ -290,7 +290,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,missileSpee
   pod.pod.updateMatrixWorld(true);body.position.copy(pod.pod.localToWorld(tube.clone()));
   const heading=new T.Vector3(0,0,1).applyQuaternion(pod.pod.getWorldQuaternion(new T.Quaternion())).normalize();
   body.quaternion.setFromUnitVectors(Z,heading);
-  const trail=firePuff(1.1,.9);if(trail){trail.position.z=-1.15;body.add(trail);}   // behind its tail
+  const trail=null;   // no trail: a missile is a quick dash
   effects.add(body);flying.push({body,heading,trail,born:seconds,track,target:first.clone()});
  }
  function plainMissile(){
