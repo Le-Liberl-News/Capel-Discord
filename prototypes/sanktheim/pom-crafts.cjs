@@ -6,7 +6,7 @@ function createPomCrafts({state,geometry,hurt,damageWall,wallX,emit,multiplier=.
  const all=()=>[...state.enemies,...Object.values(state.players)],defenders=()=>[...state.soldiers,...Object.values(state.players).filter(p=>p.online&&!p.pomControlled),...state.turrets,...state.barricades].filter(a=>a.hp>0);
  const allowed=a=>a&&a.hp>0&&a.online!==false&&!state.stoppedAt&&!a.cling&&!a.climb&&!a.mineLaunch&&state.at>=(a.stunUntil??0);
  const mobility=require('./pom-mobility.cjs').createPomMobility({state,geometry,hurt,emit,clear,multiplier});
- function clear(a){for(const v of [...state.soldiers,...Object.values(state.players)])if(v.pomBoundBy===a.id){v.pomBoundUntil=0;delete v.pomBoundBy;}a.pomCraft=null;a.combatLockedUntil=0;a.nativeSeen=null;}
+ function clear(a){for(const v of [...state.soldiers,...Object.values(state.players)])if(v.pomBoundBy===a.id){v.pomBoundUntil=0;delete v.pomBoundBy;}if(a.pomCraft?.type==='catch')a.grapple=null;a.pomCraft=null;a.combatLockedUntil=0;a.nativeSeen=null;}
  function action(id,data,scale=1){const a=state.players[id];if(!a?.pomControlled)return {error:'Réservé aux poms.'};return begin(a,{...data,ai:false},scale);}
  function begin(a,data,scale=1){const type=kind(a),t=state.at,c=a.pomCraft;
   if(!type||!allowed(a))return {error:'Craft indisponible.'};
@@ -16,7 +16,7 @@ function createPomCrafts({state,geometry,hurt,damageWall,wallX,emit,multiplier=.
    if(t-c.heldAt>1500){clear(a);return {error:'Charge interrompue.'};}c.heldAt=t;
    if(data.phase==='hold')return {ok:true};
    const d=data.direction,n=Math.hypot(d?.x??0,d?.z??0);if(!Number.isFinite(n)||n<.01)return {error:'Direction invalide.'};
-   if(a.y/scale>3&&!a.onWall)return {error:'Posez-vous avant de foncer.'};const power=clamp((t-c.at)/1000,0,1);Object.assign(c,{phase:'dash',launchAt:t,power,direction:{x:d.x/n,z:d.z/n},distance:c.ai?150:9+41*power,speed:35+65*power,hits:[],travelled:0});a.nextPomCraft=t+9000;a.heading={dx:d.x/n,dz:d.z/n};a.combatLockedUntil=t+6000;a.jump=null;a.falling=false;emit('pom-ball-launch','',{from:a.id,position:{x:a.x/scale,y:a.y/scale,z:a.z/scale},power});return {ok:true};
+   if(a.y/scale>3&&!a.onWall)return {error:'Posez-vous avant de foncer.'};const power=clamp((t-c.at)/1000,0,1);Object.assign(c,{phase:'dash',launchAt:t,power,direction:{x:d.x/n,z:d.z/n},distance:c.ai?150:20+130*power,speed:60+90*power,hits:[],travelled:0});a.nextPomCraft=t+9000;a.heading={dx:d.x/n,dz:d.z/n};a.combatLockedUntil=t+6000;a.jump=null;a.falling=false;emit('pom-ball-launch','',{from:a.id,position:{x:a.x/scale,y:a.y/scale,z:a.z/scale},power});return {ok:true};
   }
   if(type==='ball'&&data.phase!=='begin'&&!data.ai)return {error:'Aucune charge en cours.'};
   if(c||t<(a.nextPomCraft??0))return {error:'Craft en recharge.'};
@@ -30,7 +30,7 @@ function createPomCrafts({state,geometry,hurt,damageWall,wallX,emit,multiplier=.
  function update(dt){const t=state.at;
   for(const v of defenders())if(v.pomBump){const c=v.pomBump,k=clamp((t-c.at)/550,0,1);v.x=c.from.x+(c.to.x-c.from.x)*k;v.z=c.from.z+(c.to.z-c.from.z)*k;v.y=c.from.y+Math.sin(k*Math.PI)*.7;if(k===1){v.y=c.from.y;v.pomBump=null;}}
   for(const a of all()){
-   if(a.pomControlled&&!a.pomCraft)mobility.barrier(a);
+   if(a.grapple&&!a.pomCraft)mobility.catchPom(a);else if(a.pomControlled&&!a.pomCraft)mobility.barrier(a);
    const c=a.pomCraft;if(!c)continue;
    if(mobility.update(a,dt))continue;
    if(!allowed(a)||a.online===false||kind(a)!==c.type){clear(a);continue;}

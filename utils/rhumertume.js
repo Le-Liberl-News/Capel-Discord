@@ -1,7 +1,7 @@
 // Rhumertume (Halloween 2026): three times a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
 // of the healthy roster starts turning into a pom-tiron (at most one player character per Paris day); an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat one word in three becomes "pom", from the
-// first symptoms on and for good, and the words are shown in a Sky bubble; its avatar is a pom wearing the character's
+// first symptoms on and for good; its avatar is a pom wearing the character's
 // hair, in two stages: the cute one, Pomx, at once, then after about 3h30 (each patient's own time, drawn within two hours
 // either side) a final form drawn among five (Pompomx, Pom-d'aspix, Pomdeterx, Pom-funèbrex, Pomgaroux), announced with a
 // Pokémon-like evolution GIF. Now and then (once a day at most for each pom) a pom flies into a rage and bites
@@ -218,17 +218,15 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   if(stage(character)==null)return null;
   return {text:textOf(character,text),avatarURL:avatarOf(character),username:nameOf(character)};
  }
- // the roleplay chat: the bubble in place of the text; the gauges take the message in
- // images: the pictures joined to the message (Buffers), drawn in the bubble; out.images says they were
- async function message(character,text,images=[]){
+ // the roleplay chat: the pom's words in place of the text, under its name and avatar; the gauges take the message in
+ async function message(character,text){
   recent.set(character,now());
   if(stage(character)==null)return null;
   const p=patient(character),hours=(now()-p.updated)/HOUR,[rage,madness]=moods(text);
   const clamp=v=>Math.max(0,Math.min(100,v));
   p.rage=clamp(p.rage-GAUGE_DECAY*hours+rage);p.madness=clamp(p.madness-GAUGE_DECAY*hours+madness);p.updated=now();save();
-  const lvl=level(character),said=textOf(character,text),out={content:'',username:nameOf(character,lvl),avatarURL:avatarOf(character,lvl)};
-  try{out.files=[await pictures().renderBubble(said,lvl,Date.now(),images)];out.images=images.length>0;}catch(error){log('rhumertume: bubble: '+error.message);out.content=said;}
-  return out;
+  const lvl=level(character);
+  return {content:textOf(character,text),username:nameOf(character,lvl),avatarURL:avatarOf(character,lvl)};
  }
  const fill=(template,values)=>template.replace(/\{(\w+)\}/g,(_,k)=>values[k]);
  const pick=list=>list[Math.floor(random()*list.length)];

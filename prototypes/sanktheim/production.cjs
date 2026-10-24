@@ -25,7 +25,12 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
  const isOwner=id=>String(id)===String(ownerId);
  const identity=req=>{const {id}=lobby.identity(bearer(req));return {id:'player-'+id,userId:id};};
- app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');res.json({ready,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length});});
+ // the last joinings' load times (arena-front.mjs reports them), to see where a slow start goes
+ const joinTimings=[];
+ app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');
+  // the wave under way and the next one: the deployment waits for a quiet moment (.github/workflows/deploy.yml)
+  const view=ready?siege.snapshot():null,wave=view?.wave?{number:view.wave.number,ends:view.wave.ends}:null;
+  res.json({ready,wave,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
  app.use('/api/siege',async(req,res)=>{
   try{
    const user=identity(req);await access.assertMember(user.userId);
@@ -39,6 +44,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
    if(route==='/navigation')return res.json(arena.navigation(req.query.layer==='roof'));
    if(route==='/state')return res.json(world.snapshot(siege.snapshot()));
    if(route==='/music')return res.json(require('./music.json'));
+   if(route==='/timings'){const b=req.body??{},player=siege._state.players[user.id];joinTimings.unshift({at:new Date(now()).toISOString(),character:player?.character??null,marks:Array.isArray(b.marks)?b.marks.slice(0,40):[],files:b.files,kb:b.kb,slowest:Array.isArray(b.slowest)?b.slowest.slice(0,15):[]});joinTimings.length=Math.min(joinTimings.length,10);return res.json({ok:true});}
    if(route==='/entered'){pending.delete(user.userId);saveEntries();return res.json({ok:true});}
    if(route==='/arena'){siege.advance(now());return res.json({...await arena.update(user,req.body??{}),siege:world.snapshot(siege.snapshot())});}
    if(route==='/admin-stop'){

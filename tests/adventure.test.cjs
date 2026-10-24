@@ -51,12 +51,11 @@ const button=(user,admin=false)=>{const r={};return {r,i:{isButton:()=>true,cust
 const dm=(user,content)=>({author:{id:user.id,bot:false},guild:null,content,channel:{send:async m=>user.send(m)}});
 const tick=()=>new Promise(r=>setImmediate(r));
 
-test('only administrators and allowed users may enter, and the game goes on in DMs',async()=>{
+test('anyone may enter through the button, and the game goes on in DMs',async()=>{
  const {sent,client,user}=fakeDiscord(),saved=[];
- const adv=createAdventureDiscord({client,data,store:{load:()=>null,save:s=>saved.push(JSON.stringify(s))},channelId:'c',closingChannelId:'rp',allowed:['744964573249011712'],files:require('node:path').join(__dirname,'fixtures-aventure')});
- const stranger=button(user('1'));await adv.handle(stranger.i);assert.match(stranger.r.reply.content,/pas encore ouverte/);assert.equal(sent.dm.length,0);
- assert.equal(adv.message(dm(user('1'),'nord')),false);
- const allowed=button(user('744964573249011712'));await adv.handle(allowed.i);assert.match(allowed.r.reply.content,/message privé/);
+ const adv=createAdventureDiscord({client,data,store:{load:()=>null,save:s=>saved.push(JSON.stringify(s))},channelId:'c',closingChannelId:'rp',files:require('node:path').join(__dirname,'fixtures-aventure')});
+ assert.equal(adv.message(dm(user('1'),'nord')),false);   // a DM before the button is not read
+ const player=button(user('744964573249011712'));await adv.handle(player.i);assert.match(player.r.reply.content,/message privé/);
  assert.ok(sent.dm.some(([,m])=>/gigantesque porte/.test(m.content)));
  const admin=button(user('2'),true);await adv.handle(admin.i);assert.ok(adv.state.players['2']);
  adv.message(dm(user('2'),'regarder la porte'));await tick();await tick();

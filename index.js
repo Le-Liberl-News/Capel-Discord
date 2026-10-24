@@ -232,7 +232,7 @@ const capelModel=require("./activity/assets/sky/capel.json");
 // until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
 const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
 // Halloween text adventure: invitation in the adventure channel, played in DMs (admins and 744964573249011712 for now)
-const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',closingChannelId:process.env.ROLEPLAY_ID,allowed:['744964573249011712','188414629376950273']});
+const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',closingChannelId:process.env.ROLEPLAY_ID});
 client.on('messageCreate',message=>{adventure.message(message);});
 // the games followed and the hints sent from the platform's editor
 require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});
@@ -473,8 +473,7 @@ client.on('messageCreate', async message => {
             const buffer = await response.arrayBuffer();
             return {
                 attachment: Buffer.from(buffer),
-                name: attachment.name,
-                image: /^image\/(png|jpe?g|webp|gif)/.test(attachment.contentType || '')
+                name: attachment.name
             };
         })
     );
@@ -499,14 +498,10 @@ client.on('messageCreate', async message => {
             username: pseudo,
             avatarURL: `${BASE_URL}/pp/${encodeURIComponent(pseudo + ko)}.webp`
         }
-        // the rhumertume: the pom's bubble in place of the text, its name and avatar
-        // the pictures joined go into the bubble (stretched to them); the other files stay attached
-        const images = fichiersTelecharges.filter(f => f.image);
-        const malade = message.channelId === roleplayId ? await rhumertume.message(pseudo, texte, images.map(f => f.attachment)) : null;
+        // the rhumertume: the pom's words in place of the text, its name and avatar
+        const malade = message.channelId === roleplayId ? await rhumertume.message(pseudo, texte) : null;
         if (malade) { payload.content = malade.content; payload.username = malade.username; payload.avatarURL = malade.avatarURL; }
-        const joints = fichiersTelecharges.filter(f => !(malade?.images && f.image)).map(({ attachment, name }) => ({ attachment, name }));
-        const fichiers = [...(malade?.files ?? []), ...joints];
-        if (fichiers.length > 0) payload.files = fichiers;
+        if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );
         if (malade) rhumertume.after(pseudo).catch(e => console.error('Rhumertume :', e.message));

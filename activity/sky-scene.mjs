@@ -141,6 +141,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const loaded = map==='anterose'?{scene:new THREE.Group()}:venue?.loadModel?await venue.loadModel(THREE,GLTFLoader):map==="hangar"?{scene:new THREE.Group()}:isArena?await loadArenaModel(ASSETS,version,map):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
+  venue?.mark?.("scene-model");
   const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;const venueView=venue?.mount?.({THREE,scene,model,renderer});
   if(map==="tower4")removeNativeBackdrop(model);
   const rooftopSky=venue?null:map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena&&map!=='gehenna'?await createAxisSky(THREE,scene,mapAssets,loading):null;
@@ -195,6 +196,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let grid = venue?.grid??await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
+  venue?.mark?.("scene-grid");
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = venue?null:isArena ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
@@ -224,9 +226,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   // one before over the network)
   const altinaPending=createAltinaCompanionView(THREE,scene,ASSETS,catalogue),siegDivePending=createSiegDiveView(THREE,scene,ASSETS);
   const dialogues = await createDialogues(ASSETS,venue?.spatialAudio?{voiceGain:avatar=>effectsVolume()*audioDistance.gainAt(avatars.get(localId)?.position,avatar.position)}:{});
+  venue?.mark?.("scene-dialogues");
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
   const mapInteractions=await createMapInteractions({scene,model,assets:ASSETS,items:towerLayout?.interactions??[],dialogues,localId:()=>localId});
+  venue?.mark?.("scene-interactions");
   const previewRoom=__ACTIVITY_PREVIEW__&&inDungeon?(towerLayout.rooms??[])[Number(new URLSearchParams(location.search).get('room'))]:null;
   const spawn = previewRoom?{x:previewRoom.x,y:previewRoom.y,z:previewRoom.z}:grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=await combatPreparation;
@@ -249,7 +253,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const altinaAim=()=>{const a=renneCombat?.current(localId);return altinaSword.aiming(a,performance.now()-(a?.localStart??0))?a:null;};
   let altinaSteerAt=0;
   let altinaCameraBlend=0,altinaPreviousAim=false,altinaDivePending=false;const altinaCameraPosition=new THREE.Vector3(),altinaCameraQuaternion=new THREE.Quaternion();
-  const fpsActive=()=>!!renneCombat&&(['Josette','Carna','Don'].includes(avatars.get(localId)?.character)||!!altinaAim())&&!avatars.get(localId)?.dead&&!health.spectator&&!duelIntro?.active(performance.now());
+  // a pom riding a vacuum in Sanktheim (venue.pomFlight): it flies, fast, seen in first person (pom-flight.cjs)
+  const pomFlyer=()=>!!venue?.pomFlight&&!!health.pomControlled&&health.hp>0&&(!!health.flying||health.kind==='funebre'),POM_FLIGHT_SPEED=14;
+  const fpsActive=()=>(!!renneCombat&&(['Josette','Carna','Don'].includes(avatars.get(localId)?.character)||!!altinaAim())||pomFlyer())&&!avatars.get(localId)?.dead&&!health.spectator&&!duelIntro?.active(performance.now());
   const altinaPrompt=document.createElement('button');altinaPrompt.textContent='Viser le sol : cliquer / toucher pour plonger';altinaPrompt.style.cssText='position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:28;padding:10px 16px;background:#231c39e8;color:#ffe9bc;border:1px solid #c5a7ef;border-radius:6px;font:16px AveriaSky;max-width:85vw';altinaPrompt.hidden=true;altinaPrompt.addEventListener('click',()=>altinaDive());document.body.append(altinaPrompt);
   let craftTarget=false,lastCombatDash=null,mobileTargetId=null;
   // once the duel intro hands the camera back: the nearest opponent, put straight ahead, and on phones locked on
@@ -334,13 +340,22 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(!queueAction('parry'))return false;
     combatControls.started('parry',me.character);combatFeedback?.parryPressed(localId);me.parryPose={kind:'basic',character:me.character,localStart:performance.now()};return true;
   }
-  let pomCraftHeld=false,pomCraftRefresh=0;
+  let pomCraftHeld=false,pomCraftRefresh=0,pomCraftStart=0,pomAimPitch=null,pomAimArrow=null;
+  // the pompom's roll, being charged: an arrow on the ground, like a bowling lane's, its length the power so far
+  function drawPomAim(me,time){
+    if(!pomCraftHeld||!me){if(pomAimArrow)pomAimArrow.visible=false;return;}
+    if(!pomAimArrow){const shape=new THREE.Shape([[-.22,0],[.22,0],[.22,3],[.7,3],[0,4.3],[-.7,3],[-.22,3]].map(([x,y])=>new THREE.Vector2(x,y))),geometry=new THREE.ShapeGeometry(shape);geometry.rotateX(Math.PI/2);
+      pomAimArrow=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:.95,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));pomAimArrow.renderOrder=10;pomAimArrow.userData.noXRay=true;scene.add(pomAimArrow);}
+    const power=Math.min(1,(time-pomCraftStart)/1000),d=combatMoves.cameraFacing(yaw);
+    pomAimArrow.visible=true;pomAimArrow.position.set(me.position.x+d.dx*1.3,me.position.y+.1,me.position.z+d.dz*1.3);pomAimArrow.rotation.y=Math.atan2(d.dx,d.dz);
+    pomAimArrow.scale.set(1,1,.8+power*3.2);pomAimArrow.material.color.setRGB(1,.82-.5*power,.48-.4*power);
+  }
   function pomCraftInput(phase,event){
     if(!venue?.pomCrafts||!health.pomControlled||health.stage!==2||health.flying||['garou','funebre','daspi'].includes(health.kind))return false;
     if(phase==='end'||phase==='cancel'){if(pomCraftHeld){pomCraftHeld=false;const d=combatMoves.cameraFacing(yaw);queueAction('pom-craft',undefined,undefined,undefined,{phase:phase==='cancel'||!event?'cancel':'release',direction:{x:d.dx,z:d.dz}});}return true;}
     if(pomCraftHeld)return true;
     if(!connected||health.hp<=0||health.spectator||health.canMove===false||!combatControls.ready('craft'))return true;
-    if(queueAction('pom-craft',undefined,undefined,undefined,{phase:'begin'})){pomCraftHeld=true;pomCraftRefresh=performance.now()+400;path=[];movementTrace=[];}return true;
+    if(queueAction('pom-craft',undefined,undefined,undefined,{phase:'begin'})){pomCraftHeld=true;pomCraftStart=performance.now();pomCraftRefresh=pomCraftStart+400;path=[];movementTrace=[];}return true;
   }
   function startAttack(kind,event=cursor,confirmed=false) {
     if(kind==='parry')return startParry();
@@ -604,7 +619,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       avatar.foodStock=player.foodStock??[];avatar.cooking=player.cooking??null;avatar.walking = !!player.moving;
       avatar.stunUntil=player.stunUntil??0;avatar.frozenUntil=player.stoneUntil;avatar.downUntil=player.downUntil;avatar.speed = player.speed ?? 0.8;avatar.spawnedAt=player.spawnedAt;avatar.summoned=player.summoned;avatar.deathAt=player.deathAt;
       if (player.heading) avatar.heading = player.heading;
-      avatar.target = { x: player.x, y: player.y ?? 0, z: player.z };
+      avatar.flyer=!!player.flyer;avatar.target = { x: player.x, y: player.y ?? 0, z: player.z };
       return avatar;
     }
     if (avatar) {
@@ -741,7 +756,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(event.code==="KeyV"){event.preventDefault();if(!event.repeat)guardInput('begin');return;}
     if(event.code==="KeyX"){if(!event.repeat)keyboardInteraction();return;}
     if(!event.repeat && ["KeyF","KeyG","KeyC","KeyV"].includes(event.code)){event.preventDefault();const kind=combatKeyAction(event.code,avatars.get(localId)?.character);if(kind){if(kind!=='craft'||!cookingInput('begin'))startAttack(kind);}return;}
-    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"||health.spectator){keys.add(" ");return;}if(!event.repeat){if(canJump)startJump();else keyboardInteraction();}return;}
+    if(event.code === "Space") {event.preventDefault();if(avatars.get(localId)?.character==="Sieg"||health.spectator||pomFlyer()){keys.add(" ");return;}if(!event.repeat){if(canJump)startJump();else keyboardInteraction();}return;}
     if (
       [
         "ArrowUp",
@@ -951,15 +966,16 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(pomCraftHeld&&time>=pomCraftRefresh){pomCraftRefresh=time+400;if(health.hp<=0||!connected){pomCraftInput('cancel');}else queueAction('pom-craft',undefined,undefined,undefined,{phase:'hold'});}
     const seconds = Math.max(0,Math.min((time - lastTime) / 1000, 0.1));
     lastTime = time;
-    if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Carna","Don","Sieg"].includes(avatars.get(localId)?.character))yaw=faceOpponent()??Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
+    if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Carna","Don","Sieg"].includes(avatars.get(localId)?.character))yaw=faceOpponent()??Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&!!me&&!me.dead&&(me.character==="Sieg"&&!me.prop||pomFlyer());
     if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;const push={origin:{x:target.point.x,y:target.point.y-.8,z:target.point.z},end:{x:target.point.x+(target.point.x>=-1?1.5:-1.5),y:target.point.y-.8,z:target.point.z},started:previewCollapse.started+585,duration:250};if(age>=585){Object.assign(a.position,projectionMechanics.projectionPosition(push,Date.now()));a.knockback=age<835?push:null;}a.downUntil=age>=835&&age<3335?previewCollapse.started+3335:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3400)previewCollapse=null;}
     if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
     const freeSpectator=!!health.spectator;const isFPS=fpsActive(),altinaAiming=!!altinaAim();if(altinaAiming&&!altinaPreviousAim){altinaCameraPosition.copy(camera.position);altinaCameraQuaternion.copy(camera.quaternion);}altinaPreviousAim=altinaAiming;altinaPrompt.hidden=!altinaAiming;canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if((!isFPS&&!health.lynxControl&&!health.vehicleControl&&!canvas.hasAttribute('data-siege-lynx-pending')&&!canvas.hasAttribute('data-siege-lynx-camera')&&!canvas.hasAttribute('data-siege-pom-camera'))||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?(altinaAiming?1.05:0):isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     towerGates?.draw(time);if(towerGates&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')){const direction=towerGates.check(me.position);if(direction)queueAction('tower_step',direction);}
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
-    camera=introPlaying?introCamera:isFlying||isFPS||freeSpectator?flightCamera:walkingCamera;renderer.localClippingEnabled=!!cutaway&&!introPlaying;if(introPlaying){introCamera.aspect=viewport.width/viewport.height;introCamera.updateProjectionMatrix();}
-    const distance=isFlying||freeSpectator?3.4782608696:cameraDistance(map);
+    // aiming the pompom's roll: a camera with perspective, behind it, to see how far the horizon goes
+    camera=introPlaying?introCamera:isFlying||isFPS||freeSpectator||pomCraftHeld?flightCamera:walkingCamera;renderer.localClippingEnabled=!!cutaway&&!introPlaying;if(introPlaying){introCamera.aspect=viewport.width/viewport.height;introCamera.updateProjectionMatrix();}
+    const distance=isFlying||freeSpectator?3.4782608696:pomCraftHeld?6.5:cameraDistance(map);
     if(mobileTargetId){
       const target=avatars.get(mobileTargetId);
       if(!connected||!me||me.dead||health.spectator||!mobileTarget.canLockTarget(mobileTargetId,target,localId,inTower,me.teamId))mobileTargetId=null;
@@ -968,19 +984,23 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const kick=gunRecoil(renneCombat?.current(localId),me?.character,time,isFPS&&!introPlaying);yaw+=kick.yaw;if(kick.pitch)pitch=Math.max(-1.35,Math.min(1.35,pitch+kick.pitch));
     if (keys.has("e")) yaw += seconds * 1.5;
     if (keys.has("r")) yaw -= seconds * 1.5;
+    // aiming the pompom's roll: the camera comes down to see the horizon, left and right turn the aim
+    if(pomCraftHeld&&me){const controls=movementKeys(keyboardLayout()),turn=Number(keys.has('arrowright')||keys.has(controls.right))-Number(keys.has('arrowleft')||keys.has(controls.left))+combatControls.vector().x;yaw-=turn*seconds*1.6;pomAimPitch??=pitch;pitch+=(.2-pitch)*Math.min(1,seconds*6);}
+    else if(pomAimPitch!=null){pitch=pomAimPitch;pomAimPitch=null;}
+    drawPomAim(me,time);
     camera.position.set(
       follow.x + Math.sin(yaw) * Math.cos(pitch) * distance,
-      follow.y + (isFlying?.4:0) + Math.sin(pitch) * distance,
+      follow.y + (isFlying||pomCraftHeld?.4:0) + Math.sin(pitch) * distance,
       follow.z - Math.cos(yaw) * Math.cos(pitch) * distance,
     );
     if(isFlying){
       const target={x:follow.x,y:follow.y+.4,z:follow.z},desired={x:camera.position.x,y:camera.position.y,z:camera.position.z},hit=collision.sweep(target,desired,.1);
       if(hit){const length=Math.hypot(desired.x-target.x,desired.y-target.y,desired.z-target.z),fraction=Math.max(.01,(hit.distance-.12)/length);camera.position.set(target.x+(desired.x-target.x)*fraction,target.y+(desired.y-target.y)*fraction,target.z+(desired.z-target.z)*fraction);}
     }
-    camera.lookAt(follow.x,follow.y+(isFlying?.4:0),follow.z);
+    camera.lookAt(follow.x,follow.y+(isFlying||pomCraftHeld?.4:0),follow.z);
     yaw=donCraftYaw(isFPS&&!introPlaying?renneCombat?.current(localId):null,time,yaw,me?.position);
     pitch=donCraftCamera(isFPS&&!introPlaying?renneCombat?.current(localId):null,time,pitch,me?.position);
-    if(isFPS&&me){camera.position.set(me.position.x,me.position.y+1.45,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+1.45-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
+    if(isFPS&&me){const eye=pomFlyer()?.75:1.45;camera.position.set(me.position.x,me.position.y+eye,me.position.z);camera.lookAt(me.position.x-Math.sin(yaw)*Math.cos(pitch),me.position.y+eye-Math.sin(pitch),me.position.z+Math.cos(yaw)*Math.cos(pitch));}
     if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';altinaPrompt.disabled=altinaCameraBlend<1;}else altinaCameraBlend=0;
     const surfEvent=renneCombat?.current(localId);if(me&&surfEvent?.special==='altinaSword'&&time-surfEvent.localStart<altinaSword.PHASE.surfEnd){const turn=Math.max(-1,Math.min(1,Number(keys.has('arrowright')||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has('arrowleft')||keys.has(movementKeys(keyboardLayout()).left))+combatControls.vector().x)),direction=altinaSword.cameraSurfDirection(yaw,time-surfEvent.localStart>=altinaSword.PHASE.prep?turn:0);surfEvent.surfHeading=direction;surfEvent.surfFacing=altinaSword.cameraSurfDirection(yaw);if(time-altinaSteerAt>=70){altinaSteerAt=time;queueAction('attack',undefined,undefined,undefined,{kind:'altinaSteer',direction,facing:surfEvent.surfFacing});}if(time-surfEvent.localStart>=altinaSword.PHASE.prep){let pos=surfEvent.localSurfPosition??surfEvent.surfPosition??surfEvent.origin;if(surfEvent.surfUpdatedAt!==surfEvent.localSurfRevision&&surfEvent.surfPosition){const server=surfEvent.surfPosition;pos=Math.hypot(pos.x-server.x,pos.z-server.z)>2?{...server}:{x:pos.x+(server.x-pos.x)*.35,y:server.y,z:pos.z+(server.z-pos.z)*.35};surfEvent.localSurfRevision=surfEvent.surfUpdatedAt;}surfEvent.localSurfPosition=altinaSword.moveSurf(pos,direction,seconds,p=>{const cell=nearestCell(walkingGrid,p);const x=Math.round((p.x-walkingGrid.origin.x)/walkingGrid.step),z=Math.round((p.z-walkingGrid.origin.z)/walkingGrid.step);return x>=0&&z>=0&&x<walkingGrid.width&&z<walkingGrid.height&&walkingGrid.cells[z*walkingGrid.width+x]!==null?collision.floor(p.x,p.z,p.y+.6):null;},collision);if(Math.hypot(direction.x,direction.z)>.001)surfEvent.surfHeading=direction;}}
     if(carnaHeld&&me?.character==='Carna'&&!renneCombat?.current(localId)&&combatControls.ready('basic'))startAttack('basic',cursor,true);const activeCarna=renneCombat?.current(localId);if(me?.character==='Carna'&&['basic','craft'].includes(activeCarna?.kind)&&time-activeCarna.localStart<renneMechanics.combatSpec('Carna',activeCarna.kind).fireDuration&&time-carnaAimAt>50){carnaAimAt=time;const direction=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));const ray={origin:{x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction:{x:direction.x,y:direction.y,z:direction.z}};queueAction('attack',undefined,undefined,undefined,{kind:'aim',ray});}
@@ -1022,7 +1042,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(isFlying){
         const lift=Number(keys.has(" "))-Number(keys.has("control"));
         const direction=airForward.multiplyScalar(vertical).addScaledVector(airRight,horizontal);direction.y+=lift;
-        path=[];marker.visible=false;flightMotion=flight.moveFlight(me.position,direction,seconds,airBounds,collision,recordMovement);
+        path=[];marker.visible=false;flightMotion=flight.moveFlight(me.position,direction,seconds,airBounds,collision,recordMovement,pomFlyer()?POM_FLIGHT_SPEED*(health.movementFactor??1):undefined);
+        // over the wall's far side the hook awaits (the server's): the pom stops just past it instead of going on
+        const limit=pomFlyer()&&venue.pomFlightLimit;if(limit&&me.position.y>limit.low&&me.position.x>limit.x+.3){me.position.x=limit.x+.3;flightMotion.moving=false;}
       }else if (!patEvent&&(horizontal || vertical)) {
         // analog: the stick's angle and tilt are kept as they are (keys give a full-speed push)
         const tilt = Math.min(1, Math.hypot(horizontal, vertical)) / Math.hypot(horizontal, vertical);
@@ -1048,7 +1070,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         isPom = id.startsWith("world:pom");
       if (isPom && ballState && (ballState.mode !== "held" || predictedShots.has(id)))
         flying.set(id, projectiles.get(id)?.update(seconds, avatar.position));
-      const beforeSurfaceMove=venue?.surfaceMovement&&avatar===me?{...avatar.position}:null;const surfaceTraceStart=movementTrace.length;
+      const beforeSurfaceMove=venue?.surfaceMovement&&avatar===me&&!isFlying?{...avatar.position}:null;const surfaceTraceStart=movementTrace.length;
       const motion = avatar.scriptControlled?{moving:!!avatar.scriptWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}:isPom
         ? {
             moving: ballState?.mode === "flight" || predictedShots.has(id),
@@ -1069,7 +1091,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
             ? {moving:!!avatar.introWalking,dx:avatar.heading.dx,dz:avatar.heading.dz}
           : id === localId
             ? !movementAllowed||guardHeld ? {moving:false,dx:0,dz:0} : isFlying?flightMotion:patMotion??(steering?(p,input,...rest)=>guarded('steer',()=>venue?.surfaceMovement?surfaceWalk.steer(p,input,...rest):steer(walkingGrid,p,input,...rest))??{moving:false,dx:0,dz:0}:(p,_input,...rest)=>advance(p,path,...rest))(avatar.position, steering, seconds, renneCombat?.current(localId)&&renneMechanics.combatSpec(me.character,renneCombat.current(localId).kind)?.lockMovement?0:3.5*(health.movementFactor??1), recordMovement)
-            : avatar.character==="Sieg"&&!avatar.prop?flight.approachFlight(avatar.position,avatar.target,seconds):advance(
+            : avatar.character==="Sieg"&&!avatar.prop||avatar.flyer?flight.approachFlight(avatar.position,avatar.target,seconds,avatar.flyer?POM_FLIGHT_SPEED*1.3:undefined):advance(
                 avatar.position,
                 avatar.target ? [avatar.target] : [],
                 seconds,
@@ -1269,6 +1291,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(!venue?.recording)requestAnimationFrame(render);
   }
   if(!venue?.recording)requestAnimationFrame(render);
+  venue?.mark?.("scene-built");
   return {
     ...(venue?.recording?{drawRecording(pose){venue.recording.camera=pose;renderFrame(performance.now());}}:{}),
     spawn,
@@ -1465,7 +1488,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       const me = avatars.get(localId);
       if(venue?.surfaceJumps&&landedJump&&health.lastLandedJump!==landedJump&&(health.jump?.id===landedJump||actionQueue.some(a=>a.id===landedJump)))return;
       if(health.dimensionLift||health.catCling||localJump||inTower&&health.jump&&health.jump.id!==landedJump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
-      if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
+      if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg"||pomFlyer())) {
         jumpDiagnostic('correct',{serverPosition:position,serverJump:health.jump,lastServerLanding:health.lastLandedJump});recordCorrection(me.position,position,submitted,map);
         Object.assign(me.position, position);
         path = [];

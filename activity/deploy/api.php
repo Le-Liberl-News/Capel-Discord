@@ -12,6 +12,7 @@ $routes = [
     'siege/music' => '/api/siege/music',
     'siege/arena' => '/api/siege/arena',
     'siege/admin-stop' => '/api/siege/admin-stop',
+    'siege/timings' => '/api/siege/timings',
 
     'state' => '/api/state',
     'profile' => '/api/profile',
