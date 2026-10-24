@@ -77,7 +77,7 @@ function createAdventure(data){
   if(!w.length)return {replies:[messages.unknown]};
   const said=w.map(x=>nouns.get(x)??directions.get(x)??x),first=commands.get(w[0])??verbs.get(w[0])??w[0];
   if(first==='inventaire'&&w.length===1)return {replies:[inventory(state)]};
-  if(first==='aide')return {replies:[messages.help||"Pour vous déplacer, utilisez les points cardinaux : « nord », « sud », « est », « ouest ».\nPour voir les objets en votre possession, écrivez « inventaire ».\nPour observer votre entourage, écrivez uniquement « regarder ».\nEnfin, pour toute autre action, écrivez des actions simples à l'infinitif comme « ouvrir la porte », « prendre la clé », « regarder la statue », etc."]};
+  if(first==='aide')return {replies:[messages.help||"Pour vous déplacer, utilisez les points cardinaux : « nord », « sud », « est », « ouest ».\nPour voir les objets en votre possession, écrivez « inventaire ».\nPour observer votre entourage, écrivez uniquement « regarder ».\nPour toute autre action, écrivez des actions simples à l'infinitif comme « ouvrir la porte », « prendre la clé », « regarder la statue », etc.\nEnfin, si vous vous sentez perdus et souhaitez un petit indice pour vous aider dans votre progression, vous pouvez entrer la commande « réfléchir ». Faites-en usage avec parcimonie."]};
   // a direction alone, or "aller nord"
   const direction=directions.get(w[0])??(first==='aller'&&w[1]?directions.get(w[1]):undefined);
   const verb=verbs.get(w[0])??w[0];
