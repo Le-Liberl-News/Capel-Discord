@@ -6,7 +6,7 @@ function createPomMobility({state,geometry,hurt,emit,clear,multiplier}){
  const validAnchor=id=>definitions().find(a=>a.id===id);
  function lock(a){a.input={x:0,z:0};a.jump=null;a.falling=false;a.climb=null;a.moving=false;a.combatLockedUntil=state.at+1000;a.nativeSeen=null;}
  function catchPom(a){if(a.pomCraft?.type==='catch')return;const from=pos(a),floor=geometry()?.floor(-62,from.z,3)??.04;a.pomCraft=createCatch(from,state.at,floor);a.grapple=a.pomCraft;a.pomCraft.announced=true;lock(a);emit('pom-wall-catch','',{from:a.id,position:from});}
- function needsCatch(a,previous){return a.pomControlled&&a.online!==false&&a.hp>0&&a.x>INSIDE_X&&(!previous||previous.x<=INSIDE_X)&&(a.y>=4||!state.walls.some(w=>w.hp<=0&&Math.abs(w.z-a.z)<w.width/2));}
+ function needsCatch(a,previous){return a.pomControlled&&a.online!==false&&a.hp>0&&!a.cling&&a.x>INSIDE_X&&(!previous||previous.x<=INSIDE_X)&&(a.y>=4||a.pomCraft?.phase==='flight'&&!state.walls.some(w=>w.hp<=0&&Math.abs(w.z-a.z)<w.width/2));}
  function barrier(a,previous){if(!needsCatch(a,previous))return false;catchPom(a);return true;}
  function begin(a,data,scale){const t=state.at,c=a.pomCraft;
   if(c?.type==='sling'&&c.phase==='attached'){
