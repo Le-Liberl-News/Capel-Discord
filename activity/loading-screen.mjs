@@ -2,7 +2,7 @@
 // loading manager, used by the scenes' loaders). It covers everything, menus included, so nothing can be clicked
 // while a fight, the tower or a duel is being loaded.
 import * as THREE from 'three';
-const PICTURES={arena:'loading/arena.jpg',axis:'loading/axis.jpg',gehenna:'loading/gehenna.jpg',tower1:'loading/tower.jpg',tower2:'loading/tower.jpg',tower3:'loading/tower.jpg',tower4:'loading/tower.jpg'};
+const PICTURES={arena:'loading/arena.jpg',axis:'loading/axis.jpg',gehenna:'loading/gehenna.jpg',tower1:'loading/tower.jpg',tower2:'loading/tower.jpg',tower3:'loading/tower.jpg',tower4:'loading/tower.jpg',sanktheim:'loading/sanktheim.jpg'};
 export function createLoadingScreen({assets}){
  // shown and hidden through `display` (an inline display beats the hidden attribute)
  const root=document.createElement('div');root.id='sky-loading';
@@ -18,6 +18,8 @@ export function createLoadingScreen({assets}){
  let onQuit=null;quit.onclick=()=>onQuit?.();
  track.append(bar);root.append(blur,card,title,track,label,quit);document.body.append(root);
  let shown=false,waiting=false,best=0,done=0,total=0,creep=null;
+ // a page that empties the body (the siege's own screen) puts it back on the way
+ const attach=()=>{if(!root.isConnected)document.body.append(root);};
  const draw=()=>{bar.style.width=Math.round(best*100)+'%';if(!waiting)label.textContent=total?`Chargement… ${done} / ${total}`:'Chargement…';};
  // the share never goes back, even when new files are discovered on the way
  const progress=(loaded,count)=>{if(!shown)return;done=loaded;total=count;best=Math.max(best,Math.min(.97,count?loaded/count:0));draw();};
@@ -28,7 +30,7 @@ export function createLoadingScreen({assets}){
   show(map,name){
    const picture=PICTURES[map],url=picture?'url('+JSON.stringify(new URL(picture,assets).href)+')':'none';
    blur.style.backgroundImage=url;card.style.backgroundImage=url;card.style.display=picture?'':'none';title.textContent=name??'';
-   shown=true;waiting=false;quit.style.display='none';best=.03;done=total=0;draw();root.style.display='flex';
+   attach();shown=true;waiting=false;quit.style.display='none';best=.03;done=total=0;draw();root.style.display='flex';
    // between the files it can count (data, set-up) the bar still creeps on, slower and slower, up to 60 %
    clearInterval(creep);creep=setInterval(()=>{if(best<.6){best+=(.6-best)*.04;draw();}},200);
   },
@@ -38,6 +40,8 @@ export function createLoadingScreen({assets}){
    if(!shown)this.show(map,name);
    clearInterval(creep);waiting=true;best=1;draw();label.textContent=text;onQuit=leave;quit.style.display=leave?'':'none';
   },
+  // a step of a load the files alone do not tell (the siege's start): the bar is at least that far
+  step(share){if(!shown)return;attach();best=Math.max(best,Math.min(.97,share));draw();},
   hide(){if(!shown)return;shown=false;waiting=false;quit.style.display='none';clearInterval(creep);best=1;draw();setTimeout(()=>{if(!shown)root.style.display='none';},300);},
   get visible(){return shown;},
   get waiting(){return shown&&waiting;}

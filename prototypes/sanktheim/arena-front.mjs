@@ -38,7 +38,9 @@ let starting;
 export function startSiege(options={}){return starting??=startSiegeOnce(options);}
 async function startSiegeOnce(options){
 // how long the joining takes, step by step (since the page opened): sent once the player can move, for the status route
-const marks=options.marks??[],mark=name=>marks.push([name,Math.round(performance.now())]);mark('siege-start');
+// and the loading screen's bar, step by step (the shares are those steps' usual times), gone at the first frame
+const SHARES={'siege-start':.08,requests:.15,state:.2,'scene-model':.45,'scene-grid':.6,'scene-dialogues':.7,'scene-built':.85,scene:.9,playable:.96};
+const marks=options.marks??[],mark=name=>{marks.push([name,Math.round(performance.now())]);if(SHARES[name])options.progress?.(SHARES[name]);if(name==='first-frame')options.loaded?.();};mark('siege-start');
 const production=!!options.token;let previewSession;if(!production&&!options.recording){previewSession=sessionStorage.getItem('siege-preview-session');if(!previewSession){previewSession=crypto.randomUUID();sessionStorage.setItem('siege-preview-session',previewSession);}}document.body.classList.add('siege-mode');
 if(production)for(const id of ['reset','test-side','wave','damage','stop'])document.getElementById(id).hidden=true;
 const asset=p=>!production?p:p.startsWith('/atelier-combat/')?new URL('sanktheim/map/model.gltf',ASSETS).href:new URL(p.replace(/^\/assets\/sky\//,'').replace(/^\/assets\/siege\//,'sanktheim/props/').replace(/^\/assets\/pom\//,'chat/pom/').replace(/^\/assets\/vacuum.png$/,'chat/vacuum.png'),ASSETS).href;
