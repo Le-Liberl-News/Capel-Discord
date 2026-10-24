@@ -9,10 +9,11 @@
 // hull: the body's group, which the crew's sprites join, at the points of `crew` (hull coordinates, on the deck).
 // While walking it lifts one leg at a time, slowly; its root has to move forward (+Z) at SPEED units a second for
 // the planted feet to stay put, and onStep(leg,worldPosition) is called as each foot lands (to shake the ground).
-// target: a world position (the nearest player); within REACH of a flamethrower it turns toward it, else it burns
-// the ground under it. textures.fire is the game's fire (effects/fire-frames.png, four frames): the jets are made
+// target: a world position (the nearest player); within FIRE_REACH of a flamethrower it turns toward it, else it
+// burns the ground under it; within LIGHT_REACH the headlights follow it, else they sweep around like a prison's
+// searchlights. textures.fire is the game's fire (effects/fire-frames.png, four frames): the jets are made
 // of it. What only plays at run time (fire, light beams, lights) is marked userData.effect.
-export const TEXTURES=['plates','panels','hatch','grille'],FIRE_REACH=26;
+export const TEXTURES=['plates','panels','hatch','grille'],FIRE_REACH=26,LIGHT_REACH=45;
 
 export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
  const rng=seeded(seed),pick=list=>list[Math.floor(rng()*list.length)],jitter=a=>(rng()*2-1)*a;
@@ -59,8 +60,6 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
   const dir=b.clone().sub(a),o=mesh(paint(new T.BoxGeometry(w,dir.length(),d),color),m,name,parent);
   o.position.copy(a).add(b).multiplyScalar(.5);face(o,dir);return o;
  }
- // an ellipse in a horizontal plane, as a closed curve
- class Ring extends T.Curve{constructor(rx,rz,y){super();Object.assign(this,{rx,rz,y});}getPoint(t,out=new T.Vector3()){const a=t*Math.PI*2;return out.set(Math.cos(a)*this.rx,this.y,Math.sin(a)*this.rz);}}
 
  // the body: a wide ball, dented like a ball of wool, its top cut off for a deck
  const R=7,SX=1.3,SZ=1.05,SQUASH=.86,BC=14,LON=24,LAT=14,DECK=R*SQUASH*.74;
@@ -74,11 +73,28 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
    v.multiplyScalar(k);p.setXYZ(i,v.x*SX,v.y*SQUASH,v.z*SZ);
   }
  }
- // the armour is open where the face sits (the face's own frame covers the edges) and above the deck (its rim does)
- const shell=sphere.toNonIndexed(),kept=[],sp=shell.attributes.position.array;
- for(let i=0;i<sp.length;i+=9){const cx=(sp[i]+sp[i+3]+sp[i+6])/3,cy=(sp[i+1]+sp[i+4]+sp[i+7])/3,cz=(sp[i+2]+sp[i+5]+sp[i+8])/3;
-  if(!(cz>3&&Math.abs(cx)<3.7&&Math.abs(cy+.5)<3.2)&&cy<DECK)kept.push(...sp.slice(i,i+9));}
+ // the armour is open where the face sits (the face's own frame covers the edges); it is cut exactly at the deck's
+ // height (each triangle clipped by the plane), and the cut's outline is kept, for the deck to fill it
+ const shell=sphere.toNonIndexed(),kept=[],sp=shell.attributes.position.array,cut=[];
+ for(let i=0;i<sp.length;i+=9){
+  const tri=[0,3,6].map(k=>new T.Vector3(sp[i+k],sp[i+k+1],sp[i+k+2])),centre=tri[0].clone().add(tri[1]).add(tri[2]).divideScalar(3);
+  if(centre.z>3&&Math.abs(centre.x)<3.7&&Math.abs(centre.y+.5)<3.2)continue;
+  const poly=[];
+  tri.forEach((a,k)=>{const b=tri[(k+1)%3],ain=a.y<=DECK,bin=b.y<=DECK;if(ain)poly.push(a);
+   if(ain!==bin){const at=a.clone().lerp(b,(DECK-a.y)/(b.y-a.y));at.y=DECK;poly.push(at);cut.push(at);}});
+  for(let k=1;k<poly.length-1;k++)for(const v of [poly[0],poly[k],poly[k+1]])kept.push(v.x,v.y,v.z);
+ }
  shell.setAttribute('position',new T.Float32BufferAttribute(kept,3));shell.deleteAttribute('normal');shell.deleteAttribute('uv');
+ // the outline, around the vertical axis, and its radius at any angle
+ const outline=[];
+ for(const v of cut.sort((a,b)=>Math.atan2(a.z,a.x)-Math.atan2(b.z,b.x)))
+  if(!outline.length||outline.at(-1).distanceTo(v)>.05)outline.push(v);
+ const edgeAt=angle=>{
+  const n=outline.length,angles=outline.map(v=>Math.atan2(v.z,v.x));let k=angles.findIndex(a=>a>angle);if(k<0)k=0;
+  const a=outline[(k-1+n)%n],b=outline[k],a0=angles[(k-1+n)%n],a1=angles[k]+(k===0?Math.PI*2:0),t=((angle<a0?angle+Math.PI*2:angle)-a0)/Math.max(1e-6,a1-a0);
+  return Math.hypot(a.x,a.z)*(1-t)+Math.hypot(b.x,b.z)*t;
+ };
+ const onEdge=(angle,inset=0,y=DECK)=>{const r=edgeAt(angle)-inset;return new T.Vector3(Math.cos(angle)*r,y,Math.sin(angle)*r);};
  const patches=new Map();
  mesh(paint(shell,centre=>{
   const key=Math.floor(Math.atan2(centre.z,centre.x)*2.4)+':'+Math.floor(centre.y/2.4);
@@ -97,20 +113,23 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
  const inFace=d=>d.z>.35&&Math.abs(d.x)<.55&&d.y>-.55&&d.y<.45;
 
  // the deck: a plated floor, a hatch, a railing all around; the crew stands on it
- const DX=R*SX*.68,DZ=R*SZ*.68;   // where the ball is cut (sin of acos .74)
- const floor=new T.CylinderGeometry(1,1,.35,24);floor.scale(DX+.3,1,DZ+.3);
- mesh(paint(new T.TubeGeometry(new Ring(DX+.1,DZ+.1,DECK+.05),48,.45,5,true),[C.bronze,C.burnt,C.dark],{scale:1/2}),plates,'deck-rim',hull);
- mesh(paint(floor,()=>pick([C.deck,C.deck,C.gun,C.bronze]),{scale:1/3,noise:.05}),panels,'deck',hull).position.y=DECK+.12;
- const trap=mesh(paint(new T.BoxGeometry(2.4,.25,2.4),C.gun,{scale:1/2.4}),hatch,'deck-hatch',hull);trap.position.set(0,DECK+.4,-DZ*.45);
+ // the floor fills the cut exactly: a fan from the centre to its outline
+ const DX=edgeAt(0),DZ=edgeAt(Math.PI/2),fan=[];
+ for(let k=0;k<outline.length;k++){const a=outline[k],b=outline[(k+1)%outline.length];fan.push(0,DECK,0,b.x,DECK,b.z,a.x,DECK,a.z);}
+ const floor=new T.BufferGeometry();floor.setAttribute('position',new T.Float32BufferAttribute(fan,3));
+ mesh(paint(floor,()=>pick([C.deck,C.deck,C.gun,C.bronze]),{scale:1/3,noise:.05}),panels,'deck',hull);
+ const ring=(inset,y,count=48)=>new T.CatmullRomCurve3(Array.from({length:count},(_,k)=>onEdge(k/count*Math.PI*2,inset,y)),true);
+ mesh(paint(new T.TubeGeometry(ring(0,DECK+.05),64,.4,5,true),[C.bronze,C.burnt,C.dark],{scale:1/2}),plates,'deck-rim',hull);
+ const trap=mesh(paint(new T.BoxGeometry(2.4,.25,2.4),C.gun,{scale:1/2.4}),hatch,'deck-hatch',hull);trap.position.set(0,DECK+.12,-DZ*.45);
  for(let k=0;k<32;k++){
-  const a=k/32*Math.PI*2,post=mesh(paint(new T.BoxGeometry(.2,1.7,.2),C.dark),panels,'railing',hull);
-  post.position.set(Math.cos(a)*(DX-.3),DECK+1.1,Math.sin(a)*(DZ-.3));
+  const post=mesh(paint(new T.BoxGeometry(.2,1.9,.2),C.dark),panels,'railing',hull);post.position.copy(onEdge(k/32*Math.PI*2,.55,DECK+.95));
  }
- for(const [y,r] of [[DECK+1.95,.12],[DECK+1.15,.08]])
-  mesh(paint(new T.TubeGeometry(new Ring(DX-.3,DZ-.3,y),64,r,4,true),[C.bronze,C.dark],{scale:1/2}),panels,'railing',hull);
- const crew=[[0,.15],[-.42,.3],[.42,.3],[-.55,-.25],[.55,-.25],[.18,-.5],[-.2,-.05]].map(([x,z])=>new T.Vector3(x*DX,DECK+.3,z*DZ));
+ for(const [y,r] of [[DECK+1.85,.12],[DECK+1.05,.08]])
+  mesh(paint(new T.TubeGeometry(ring(.55,y),64,r,4,true),[C.bronze,C.dark],{scale:1/2}),panels,'railing',hull);
+ const crew=[[0,.15],[-.42,.3],[.42,.3],[-.55,-.25],[.55,-.25],[.18,-.5],[-.2,-.05]].map(([x,z])=>new T.Vector3(x*DX,DECK+.05,z*DZ));
 
- // the face, as on the pom-tiron: a dark rounded window in the armour, its rim; the eyes are headlights
+ // the face, as on the pom-tiron: a dark rounded window in the armour, its rim; the eyes are headlights, on swivels
+ const eyes=[];
  {
   const {point,normal}=surface(new T.Vector3(0,-.08,1)),front=new T.Group();front.name='face';front.position.copy(point).addScaledVector(normal,-.35);face(front,normal,Z);hull.add(front);
   const rounded=(w,h,r)=>{const s=new T.Shape();s.moveTo(-w+r,-h);s.lineTo(w-r,-h);s.quadraticCurveTo(w,-h,w,-h+r);s.lineTo(w,h-r);s.quadraticCurveTo(w,h,w-r,h);s.lineTo(-w+r,h);s.quadraticCurveTo(-w,h,-w,h-r);s.lineTo(-w,-h+r);s.quadraticCurveTo(-w,-h,-w+r,-h);return s;};
@@ -119,7 +138,7 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
    p.setXYZ(i,Math.sin(x/rx)*(rx+z),Math.sin(y/ry)*(ry+z),(Math.cos(x/rx)-1)*rx+(Math.cos(y/ry)-1)*ry+z);}return geometry;};
   mesh(paint(bend(new T.ExtrudeGeometry(rounded(3.2,2.6,1.3),{depth:.4,bevelEnabled:false,curveSegments:3})),c=>c.y>1.6?C.faceDark:C.face,{noise:.05,scale:1/4}),panels,'face-window',front);
   const frame=new T.Shape(rounded(4,3.4,1.8).getPoints(3));frame.holes.push(new T.Path(rounded(3.2,2.6,1.3).getPoints(3).reverse()));
-  mesh(paint(bend(new T.ExtrudeGeometry(frame,{depth:.9,bevelEnabled:false,curveSegments:3})),[C.ember,C.burnt,C.orange],{scale:1/4}),plates,'face-rim',front);
+  mesh(paint(bend(new T.ExtrudeGeometry(frame,{depth:3,bevelEnabled:false,curveSegments:3}).translate(0,0,-2.1)),[C.ember,C.burnt,C.orange],{scale:1/4}),plates,'face-rim',front);
   for(const s of [-1,1]){
    const eye=new T.Group();eye.name=s<0?'headlight-left':'headlight-right';eye.position.set(s*1.3,.35,.5);front.add(eye);
    const housing=mesh(paint(new T.CylinderGeometry(.72,.85,.8,8),[C.gun,C.dark]),panels,null,eye);housing.rotation.x=Math.PI/2;housing.position.z=.3;
@@ -127,10 +146,11 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
    const visor=mesh(paint(new T.BoxGeometry(1.8,.2,1.1),C.dark),panels,'visor',eye);visor.position.set(0,.85,.55);visor.rotation.x=.3;
    const glass=mesh(new T.CircleGeometry(.58,8),lamp,'headlight-glass',eye);glass.position.z=.71;
    // the beam, and its light
-   const cone=new T.ConeGeometry(3.4,18,10,1,true);cone.translate(0,-9,0);cone.rotateX(-Math.PI/2);
+   const cone=new T.ConeGeometry(5,30,10,1,true);cone.translate(0,-15,0);cone.rotateX(-Math.PI/2);
    const shaft=effect(mesh(cone,beamMaterial,'beam',eye));shaft.position.z=.75;shaft.rotation.x=.14;
    const light=effect(new T.SpotLight(0xfff0d0,350,90,.32,.6,1.4));light.name='headlight';light.position.z=.8;eye.add(light);
    light.target.position.set(0,-4,30);eye.add(light.target);
+   eyes.push({eye,phase:s*.35,aim:new T.Quaternion()});
   }
  }
 
@@ -237,6 +257,19 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
   const sag=lifted?Math.sin(Math.PI*lifted.s):0;
   hull.position.y=BC-.15*sag;hull.rotation.z=lifted?(lifted.leg.rest.x<0?1:-1)*.015*sag:0;
   root.updateMatrixWorld(true);
+  for(const e of eyes){
+   // toward the target when it is near enough, else sweeping slowly from side to side, now and then lower
+   let dir=null;
+   if(target){
+    e.eye.getWorldPosition(world);
+    if(world.distanceTo(target)<LIGHT_REACH){
+     e.eye.parent.getWorldQuaternion(parentInverse).invert();local.copy(target).sub(world).applyQuaternion(parentInverse).normalize();
+     const angle=local.angleTo(Z);dir=angle>1.1?Z.clone().lerp(local,1.1/angle).normalize():local;
+    }
+   }
+   if(!dir){const yaw=Math.sin(seconds*.3+e.phase)*.75,pitch=.3+.12*Math.sin(seconds*.47+e.phase*2);dir=new T.Vector3(Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));}
+   want.setFromUnitVectors(Z,dir);e.aim.slerp(want,Math.min(1,dt*1.8));e.eye.quaternion.copy(e.aim);
+  }
   for(const g of guns){
    // toward the target when it is close, else down; at most 75° from down, turning slowly
    let dir=down;
