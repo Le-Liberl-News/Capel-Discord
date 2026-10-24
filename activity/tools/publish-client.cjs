@@ -18,8 +18,12 @@ const fs = require("node:fs/promises"),
     await fs.copyFile(path.join(root, source), path.join(output, target));
   await fs.cp(path.join(root, "assets"), path.join(output, "assets"), {
     recursive: true,
-    filter:source=>!/(?:^|[\\/])hallow(?:een(?:-dungeon)?|[1-5])(?:[\\/]|$)/i.test(source),
+    filter:source=>!/(?:^|[\\/])liberl(?:[\\/]|$)/i.test(source)&&!/(?:^|[\\/])hallow(?:een(?:-dungeon)?|[1-5])(?:[\\/]|$)/i.test(source),
   });
+  // Remove the retired merged map from an existing release directory, too.
+  const retired=path.resolve(output,'assets/sky/liberl');
+  if(!retired.startsWith(path.resolve(output)+path.sep))throw Error('Unsafe retired asset path');
+  await fs.rm(retired,{recursive:true,force:true});
   const files = {};
   async function hash(folder) {
     for (const e of await fs.readdir(folder, { withFileTypes: true })) {

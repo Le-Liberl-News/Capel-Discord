@@ -7,7 +7,7 @@ const render={avatarURL:(c,l)=>`pom/${c}-${l}.png`,renderEvolution:async(c,f,t)=
 const names=['Kloe','Tita','Nial','Joshua'];
 function setup({now,random=()=>.5,cases=['Tita'],data=null}){
  const today=parisParts(now()).date;const said=[],store=memory(data??{drawn:{[today]:['fixture-1','fixture-2']}});
- const r=createRhumertume({store,now,random,charactersOfTheDay:async()=>cases,characterNames:names,render,announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
+ const r=createRhumertume({dailyCases:2,store,now,random,charactersOfTheDay:async()=>cases,characterNames:names,render,announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
  return {r,said,store};
 }
 test('words become pom with the stage, punctuation, links and mentions stay',()=>{
@@ -120,7 +120,7 @@ test('when nobody has played yet, daily cases use the healthy unassigned pool im
 
 test('an evolution that cannot be announced does not hold back the cases of the day',async()=>{
  let fail=true;const said=[],logs=[];
- const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,640]},drawn:{},infected:{Kloe:at('2026-10-20T00:00:00+02:00')},patients:{Kloe:{announced:1,rage:0,madness:0,updated:0,lastRage:0,lastMadness:0}}}),
+ const r=createRhumertume({dailyCases:2,store:memory({schedule:{'2026-10-20':[600,640]},drawn:{},infected:{Kloe:at('2026-10-20T00:00:00+02:00')},patients:{Kloe:{announced:1,rage:0,madness:0,updated:0,lastRage:0,lastMadness:0}}}),
   now:()=>at('2026-10-20T11:00:00+02:00'),random:()=>.5,charactersOfTheDay:async()=>['Tita','Nial'],characterNames:names,render,log:l=>logs.push(l),
   announce:async text=>{if(fail&&/se transforme/.test(text))throw Error('Discord');said.push(text);}});
  await r.tick();
@@ -129,7 +129,7 @@ test('an evolution that cannot be announced does not hold back the cases of the 
 });
 test('three poms besiege unassigned healthy characters once at the saved random daily time',async()=>{
  const said=[],sieges=[],t0=at('2026-10-20T08:00:00+02:00');let now=at('2026-10-20T09:00:00+02:00');
- const r=createRhumertume({store:memory({schedule:{'2026-10-20':[600,601]},drawn:{'2026-10-20':['Nial','Tita']},infected:{Nial:t0,Tita:t0,Kloe:t0},patients:{}}),
+ const r=createRhumertume({dailyCases:2,store:memory({schedule:{'2026-10-20':[600,601]},drawn:{'2026-10-20':['Nial','Tita']},infected:{Nial:t0,Tita:t0,Kloe:t0},patients:{}}),
   now:()=>now,random:()=>.6,charactersOfTheDay:async()=>['Estelle','Joshua','Olivier','Nial'],characterNames:[...names,'Soldat','Matelot','Marchand'],render,wait:async()=>{},
   renderSiege:async(defenders,attackers,outcome)=>{sieges.push({defenders,attackers,outcome});return {attachment:Buffer.from('gif'),name:'siege.gif',outcome,fallen:defenders.slice(1).map(d=>d.character),escaped:defenders[0].character,duration:6000};},
   announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
@@ -177,7 +177,7 @@ test("a wizard pom's bite is a spell: the victim fades away and falls ill a few 
  // healthy Kloe fades away (random 0: the wizard form, the bite, the contagion); an ill Kloe can only shrink
  for(const [ill,outcome,victimSprite] of [[false,'vanish',0],[true,'shrink',1]]){
   let now=at('2026-10-26T09:00:00Z');const start=now,said=[],spells=[];
-  const r=createRhumertume({store:memory({drawn:{'2026-10-26':['fixture-1','fixture-2']}}),now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render,wait:async()=>{},
+  const r=createRhumertume({dailyCases:2,store:memory({drawn:{'2026-10-26':['fixture-1','fixture-2']}}),now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render,wait:async()=>{},
    renderWizard:async(c,sprite,v,vs,o)=>{spells.push([c,sprite,v,vs,o]);return {attachment:Buffer.from('gif'),name:'sort.gif',duration:7000};},
    announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
   await r.infect('Tita');now=start+2*3600000;await r.tick();   // stage 2, the wizard form

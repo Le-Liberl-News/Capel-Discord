@@ -1,4 +1,4 @@
-// Rhumertume (Halloween 2026): twice a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
+// Rhumertume (Halloween 2026): four times a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
 // of the healthy roster starts turning into a pom-tiron (at most one player character per Paris day); an administrator can also infect a character with /pomifier.
 // The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
 // (30% after an hour, 60% after about 3h30, every word but one in eight after about 7 hours) and are shown in a Sky bubble; its
@@ -13,7 +13,7 @@ const {PermissionFlagsBits}=require('discord.js');
 const {weightedPick,weightedSample}=require('./pomSelection.cjs');
 const HOUR=3600000,LAST_DAY='2026-10-31';
 const WINDOW=[10*60,13*60];
-const CASES_PER_DAY=2;
+const CASES_PER_DAY=4;
 // stages 2 and 3 come after 3h30 and 7 hours, give or take two hours (drawn for each patient; the third at least an hour after the second)
 const STAGE_TIMES=[3.5*HOUR,7*HOUR],STAGE_SPREAD=2*HOUR;
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
@@ -55,7 +55,7 @@ function moods(text){
  return [rage-calm,madness-calm];
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
-function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],hasCraft=character=>!!require('../activity/native-combat.cjs').combatSpec(character,'craft'),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
+function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],dailyCases=CASES_PER_DAY,hasCraft=character=>!!require('../activity/native-combat.cjs').combatSpec(character,'craft'),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
  const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},pending:{},...(store.load()??{})};
  state.playerCases??={};state.siegeSchedule??={};state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
  const save=()=>store.save(state);
@@ -65,7 +65,7 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  // the day's times (minutes, Paris), drawn once inside the window; a day picked up late only gets the times still ahead
  function scheduledMinutes(date,minutes){
   const list=state.schedule[date]==null?[]:[].concat(state.schedule[date]),before=list.length;
-  while(list.length<CASES_PER_DAY&&minutes<WINDOW[1]){const from=Math.max(WINDOW[0],minutes);list.push(from+Math.floor(random()*(WINDOW[1]-from+1)));}
+  while(list.length<dailyCases&&minutes<WINDOW[1]){const from=Math.max(WINDOW[0],minutes);list.push(from+Math.floor(random()*(WINDOW[1]-from+1)));}
   if(list.length!==before||!Array.isArray(state.schedule[date])){state.schedule[date]=list.sort((a,b)=>a-b);save();log(`rhumertume: cas du ${date} à ${state.schedule[date].map(m=>`${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`).join(', ')}`);}
   return state.schedule[date];
  }
@@ -173,10 +173,10 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  const list=names=>names.length<2?names.join(''):names.slice(0,-1).join(', ')+' et '+names.at(-1);
  const shuffled=items=>items.map(v=>[random(),v]).sort((a,b)=>a[0]-b[0]).map(([,v])=>v);
  async function siege(date,minutes){
-  if(state.sieges[date]||minutes>=SIEGE_HOURS[1])return;
+  if(state.sieges[date]||minutes>=SIEGE_HOURS[1]&&state.siegeSchedule[date]==null)return;
   if(state.siegeSchedule[date]==null){const from=Math.max(SIEGE_HOURS[0],minutes);state.siegeSchedule[date]=from+Math.floor(random()*(SIEGE_HOURS[1]-from));save();log(`rhumertume: embuscade du ${date} à ${Math.floor(state.siegeSchedule[date]/60)}h${String(state.siegeSchedule[date]%60).padStart(2,'0')}`);}
   if(minutes<state.siegeSchedule[date])return;
-  const poms=Object.keys(state.infected);
+  const dailyAttacks=[].concat(state.bites[date]??[]);const poms=Object.keys(state.infected).filter(character=>dailyAttacks.filter(b=>b.pom===character).length<BITES_PER_POM);
   if(poms.length<3)return;
   const assigned=await assignedToday(),npcs=healthy(characterNames).filter(n=>!assigned.has(n)),players=playerCases(date,assigned).size<1?healthy([...assigned]):[];
   const defenders=weightedSample(npcs,3,hasCraft,random);
@@ -194,6 +194,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   state.sieges[date]={attackers,defenders,outcome,fallen};save();
   try{await announce(`${list(attackers.map(c=>nameOf(c)))} encerclent ${list(defenders)}, acculé·es dos à dos !`,result?[{attachment:result.attachment,name:result.name}]:[]);}
   catch(error){delete state.sieges[date];save();throw error;}
+  state.bites[date]=[...[].concat(state.bites[date]??[]),...attackers.map(pom=>({pom,kind:'ambush'}))];save();
   log(`rhumertume: siège (${outcome}) de ${attackers.join(', ')} contre ${defenders.join(', ')}`);
   await wait(result?.duration??0);
   await announce(OUTCOME_TEXT[outcome]({defenders,fallen,escaped}),[]);

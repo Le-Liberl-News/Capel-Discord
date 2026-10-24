@@ -3,7 +3,7 @@ function createMines({state,geometry,hurt,emit,land=(_,e)=>hurt(e,Math.max(e.hp,
  state.mines??=[];
  function install(owner,q){
   if(state.mines.filter(m=>!m.spent).length>=MAX_MINES)return {error:'Dix mines maximum sur la carte.'};
-  if(!q||![q.x,q.y,q.z].every(Number.isFinite)||q.x<-65||q.x>20||Math.abs(q.z)>42)return {error:'Emplacement invalide.'};
+  if(!q||![q.x,q.y,q.z].every(Number.isFinite)||q.x<-360||q.x>20||Math.abs(q.z)>110)return {error:'Emplacement invalide.'};
   const floor=geometry()?.floor(q.x,q.z,q.y+.3);
   if(floor==null||Math.abs(q.y-floor)>.4)return {error:'Placez la mine sur une surface praticable.'};
   if(state.mines.some(m=>!m.spent&&Math.hypot(m.x-q.x,m.z-q.z)<1&&Math.abs(m.y-floor)<1))return {error:'Une mine occupe déjà cet emplacement.'};

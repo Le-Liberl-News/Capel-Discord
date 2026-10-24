@@ -258,7 +258,7 @@ const activiteService = createActivityLobby({
     onDrink:event=>activityTavern.drink(event),
     onSay:require("./utils/activitySpeech").createActivitySpeech({relay:activityRoleplay,players:()=>state.players,matchFor:actor=>activiteService.matchFor(actor)}),
     onCraft:event=>activityRoleplay.craft({...event,match:activiteService.matchFor(event.actor)}),
-    airship:require('./utils/activityAirshipTerrain').loadAirshipTerrain(path.join(__dirname,'activity/assets/sky/liberl')),
+    airship:null,
     rolent: {
       grid: require('./activity/assets/sky/rolent/navigation.json'),
       residents: require('./activity/assets/sky/rolent/residents.json'),
@@ -303,8 +303,8 @@ const activiteService = createActivityLobby({
       geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/axis/anterose.gltf'), 'utf8'))),
     },
     grid: require("./activity/terminal-world.cjs").terminalNavigation(require("./activity/assets/sky/navigation.json"),capelModel),
-    residents: require('./activity/assets/sky/residents.json'),
-    geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/anterose.gltf'),'utf8')),[{...capelModel,model:JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/capel/model.gltf'),'utf8'))}]),
+    residents: {npcs:[],disablePoms:true},
+    geometry: null,
     resolveCharacter: userId => testCharacters.resolve(userId,require('./commands/anonyme.js').getPseudoAnonyme)
 });
 const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});

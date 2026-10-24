@@ -78,6 +78,7 @@ jobs:
           --exclude='credentials.json' \
           --exclude='node_modules/' \
           --exclude='uploads/' \
+          --exclude='activity/assets/sky/liberl/' \
           -e "ssh -o StrictHostKeyChecking=yes -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
           ./ "$SSH_TARGET:$TARGET_DIR/" 3<<<"$VPS_PASS"
         

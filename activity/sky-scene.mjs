@@ -39,11 +39,7 @@ import {createSiegDiveView} from './sieg-dive-view.mjs';
 import {createTavernTables} from './tavern-tables.mjs';
 import {createRooftopSky,removeNativeBackdrop} from "./rooftop-sky.mjs";
 import {AXIS_LIGHTS,createAxisSky,installSkyGlow} from "./axis-sky.mjs";
-import {createAirshipScene} from './airship-scene.mjs';
-import hangarWorld from './hangar-world.cjs';
-import {loadLynx} from './lynx-model.mjs';
-import airshipPhysics from './airship-physics.cjs';
-import airshipConfig from './assets/sky/liberl/airship.json';
+
 import {createMovingPlatformView} from "./moving-platform-view.mjs";
 import {createSupportEffects} from "./support-effects.mjs";
 import dungeonMechanics from "./dungeon-mechanics.cjs";
@@ -96,7 +92,7 @@ export const ASSETS = new URL(
 );
 export function prepareTrainingArena(){const version=new URL(import.meta.url).searchParams.get('v')??'rooftop-sky-20261009-4';return preloadArena(ASSETS,version);}
 export async function createSkyScene(canvas, map = "anterose", {localTraining=false,venue=null}={}) {
-  installCinematicStyle();if(map==='liberl')return createAirshipScene(canvas,ASSETS);
+  installCinematicStyle();if(map==='liberl'||map==='hangar')map='anterose';
   const inDungeon=map==='custom',floorNumber=Number(map.slice(5))||1,inTower=/^tower[1-4]$/.test(map)||inDungeon;
   // the two duel venues: Grancel ("arena") and the top of the Axis Pillar ("axis")
   const isArena=map==='arena'||map==='axis'||map==='gehenna'||map==='thors',combatCamera=combatMoves.usesCombatFacing(map);
@@ -140,7 +136,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   // Walls are no longer cut away around the action: fighters and effects show through them instead (xray-pass.mjs).
   const cutaway = null, xray = isArena ? createXRayPass(THREE) : null;
   renderer.localClippingEnabled = !!cutaway;
-  const loaded = venue?.loadModel?await venue.loadModel(THREE,GLTFLoader):map==="hangar"?{scene:new THREE.Group()}:isArena?await loadArenaModel(ASSETS,version,map):await new GLTFLoader(loading).loadAsync(
+  const loaded = map==='anterose'?{scene:new THREE.Group()}:venue?.loadModel?await venue.loadModel(THREE,GLTFLoader):map==="hangar"?{scene:new THREE.Group()}:isArena?await loadArenaModel(ASSETS,version,map):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
   const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;const venueView=venue?.mount?.({THREE,scene,model,renderer});
@@ -148,24 +144,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const rooftopSky=venue?null:map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena&&map!=='gehenna'?await createAxisSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;
   const teamPanel=inTower&&!inDungeon?createTowerTeam(ASSETS,catalogue):null;
-  const terminal=map==="anterose"?await fetch(versionAsset(new URL("capel.json",ASSETS),version)).then(r=>r.json()):null;
+  const terminal=null;
   let terminalObject=null;
   if(terminal){const asset=await new GLTFLoader(loading).loadAsync(new URL(terminal.model,ASSETS).href);terminalObject=asset.scene;terminalObject.position.set(terminal.position.x,terminal.position.y,terminal.position.z);terminalObject.rotation.y=terminal.rotation;model.add(terminalObject);}
 
   scene.add(model);if(map==='gehenna')scene.background=new THREE.Color(0x180d12);
-  let lynxObject=null;
-  if(map==='hangar'||map==='anterose'){
-   const deck=new THREE.Group();if(map==='anterose')deck.position.set(airshipConfig.door.x,airshipConfig.door.y,airshipConfig.door.z+12);model.add(deck);
-   const paving=document.createElement('canvas');paving.width=paving.height=128;const ctx=paving.getContext('2d');ctx.fillStyle='#807765';ctx.fillRect(0,0,128,128);ctx.strokeStyle='#625c50';ctx.lineWidth=3;ctx.strokeRect(0,0,128,128);ctx.beginPath();ctx.moveTo(0,64);ctx.lineTo(128,64);ctx.moveTo(64,0);ctx.lineTo(64,64);ctx.moveTo(32,64);ctx.lineTo(32,128);ctx.stroke();const stone=new THREE.CanvasTexture(paving);stone.colorSpace=THREE.SRGBColorSpace;stone.wrapS=stone.wrapT=THREE.RepeatWrapping;stone.repeat.set(10,12);
-   const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,24),new THREE.MeshBasicMaterial({map:stone,side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;deck.add(floor);
-   const lynx=await loadLynx(THREE,ASSETS,10,loading);deck.add(lynx);if(map==='hangar')lynxObject=lynx;
-
-  }
-  let hangarDoor=null,wasNearHangarDoor=null;
-  if(map==='anterose'){
-   hangarDoor=new THREE.Group();hangarDoor.position.set(airshipConfig.door.x,airshipConfig.door.y,airshipConfig.door.z);
-   const door=new THREE.Mesh(new THREE.BoxGeometry(2.8,3,.5),new THREE.MeshBasicMaterial({color:0x564333,transparent:true,opacity:0,depthWrite:false}));door.position.y=1.15;hangarDoor.add(door);model.add(hangarDoor);
-  }
+  const lynxObject=null,hangarDoor=null;
   model.updateMatrixWorld(true);
   const nativeCollision = collisionModule.createSurfaceCollision(THREE, model);
   const collision = venue?.collision?.(nativeCollision)??nativeCollision;
@@ -192,8 +176,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     }
   });
   const skyGlow=map==="axis"?installSkyGlow(model):null;
-  const tavernBeer=map==="anterose"?createTavernBeer(THREE,scene):null;
-  const tavernTables=map==='anterose'?await createTavernTables(THREE,model,collision,ASSETS):null;
+  const tavernBeer=null;
+  const tavernTables=null;
   const horrorMembranes=inDungeon?await createHorrorMembranes(model,ASSETS,towerLayout.membranes):null;
   const mapDecor=inDungeon?await createMapDecorView(model,ASSETS,towerLayout):null;
   const arenaSun=['arena','thors'].includes(map)?createArenaSun(renderer,scene,model):null;
@@ -209,7 +193,6 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let grid = venue?.grid??await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
-  if(map==="hangar")grid=hangarWorld.grid;
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = venue?null:isArena ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
@@ -548,12 +531,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       return;
     }
     if(mapInteractions.interact(me,camera))return;
-    if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door)&&raycaster.intersectObject(hangarDoor,true).length){queueAction('hangar_enter');return;}
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)&&raycaster.intersectObject(lynxObject,true).length){queueAction('flight_board');return;}
     const options = [];
     if(drinkingTable?.nearby(me.position))options.push(["Démarrer un concours de boisson","drinking_contest",undefined]);
-    if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door))options.push(['Accéder au Lynx','hangar_enter',undefined]);
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6))options.push(['Piloter le Lynx','flight_board',undefined]);
 
 
     if(tavernBeer&&tavernWorld.beerNearby(me.position))options.push(["Boire une bi\u00e8re","drink",undefined]);
@@ -738,8 +717,6 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let cursor={clientX:innerWidth/2,clientY:innerHeight/2};
   function keyboardInteraction() {
     const me=avatars.get(localId);if(!me||health.hp===0||health.spectator)return;
-    if(hangarDoor&&airshipPhysics.airshipNearby(me.position,airshipConfig.door)){queueAction('hangar_enter');return;}
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)&&(!terminal||Math.hypot(me.position.x-airshipConfig.lobby.x,me.position.z-airshipConfig.lobby.z)<Math.hypot(me.position.x-terminal.position.x,me.position.z-terminal.position.z))){queueAction('flight_board');return;}
     if(terminal&&terminalWorld.terminalNearby(me.position,terminal)){path=[];notifyTerminal();return;}
     const ball=environment.poms.find(p=>p.owner===localId);
     if(ball || environment.game?.role==="hunter") {interaction(cursor);return;}
@@ -747,7 +724,6 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const pom=environment.poms.filter(p=>p.mode==="rest"&&Math.hypot(p.x-me.position.x,p.z-me.position.z)<=2 && Math.abs(p.y-me.position.y)<1.8).sort((a,b)=>Math.hypot(a.x-me.position.x,a.z-me.position.z)-Math.hypot(b.x-me.position.x,b.z-me.position.z))[0];
     if(towerLayout&&floorNumber<(towerLayout.totalFloors??4)&&Math.hypot(me.position.x-towerLayout.exit.x,me.position.z-towerLayout.exit.z)<2.2){queueAction("tower_step","up");return;}
     if(towerLayout&&floorNumber>1&&Math.hypot(me.position.x-towerLayout.start.x,me.position.z-towerLayout.start.z)<2.2){queueAction("tower_step","down");return;}
-    if(lynxObject&&airshipPhysics.airshipNearby(me.position,airshipConfig.lobby,6)){queueAction('flight_board');return;}
     if(drinkingTable?.nearby(me.position))drinkingTable.open();else if(tavernBeer&&tavernWorld.beerNearby(me.position))queueAction("drink");else if(pom)queueAction("pickup",pom.id);else if(nearby[0])queueAction("talk",nearby[0].id);
   }
   function keydown(rawEvent) {
@@ -975,7 +951,6 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
     const freeSpectator=!!health.spectator;const isFPS=fpsActive(),altinaAiming=!!altinaAim();if(altinaAiming&&!altinaPreviousAim){altinaCameraPosition.copy(camera.position);altinaCameraQuaternion.copy(camera.quaternion);}altinaPreviousAim=altinaAiming;altinaPrompt.hidden=!altinaAiming;canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?(altinaAiming?1.05:0):isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
-    if(hangarDoor&&connected&&me){const nearDoor=!isFlying&&airshipPhysics.airshipNearby(me.position,airshipConfig.door,1.3);if(nearDoor&&wasNearHangarDoor===false&&health.hp>0&&!actionQueue.some(a=>a.type==='hangar_enter'))queueAction('hangar_enter');wasNearHangarDoor=nearDoor;}
     towerGates?.draw(time);if(towerGates&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')){const direction=towerGates.check(me.position);if(direction)queueAction('tower_step',direction);}
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
     camera=introPlaying?introCamera:isFlying||isFPS||freeSpectator?flightCamera:walkingCamera;renderer.localClippingEnabled=!!cutaway&&!introPlaying;if(introPlaying){introCamera.aspect=viewport.width/viewport.height;introCamera.updateProjectionMatrix();}
@@ -1004,7 +979,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(altinaAiming){pitch=Math.max(.45,Math.min(1.48,pitch));altinaCameraBlend=Math.min(1,altinaCameraBlend+seconds*5);camera.position.lerpVectors(altinaCameraPosition,camera.position.clone(),altinaCameraBlend);camera.quaternion.slerpQuaternions(altinaCameraQuaternion,camera.quaternion.clone(),altinaCameraBlend);crosshair.title='Choisir le point de chute : clic / toucher';altinaPrompt.disabled=altinaCameraBlend<1;}else altinaCameraBlend=0;
     const surfEvent=renneCombat?.current(localId);if(me&&surfEvent?.special==='altinaSword'&&time-surfEvent.localStart<altinaSword.PHASE.surfEnd){const turn=Math.max(-1,Math.min(1,Number(keys.has('arrowright')||keys.has(movementKeys(keyboardLayout()).right))-Number(keys.has('arrowleft')||keys.has(movementKeys(keyboardLayout()).left))+combatControls.vector().x)),direction=altinaSword.cameraSurfDirection(yaw,time-surfEvent.localStart>=altinaSword.PHASE.prep?turn:0);surfEvent.surfHeading=direction;surfEvent.surfFacing=altinaSword.cameraSurfDirection(yaw);if(time-altinaSteerAt>=70){altinaSteerAt=time;queueAction('attack',undefined,undefined,undefined,{kind:'altinaSteer',direction,facing:surfEvent.surfFacing});}if(time-surfEvent.localStart>=altinaSword.PHASE.prep){let pos=surfEvent.localSurfPosition??surfEvent.surfPosition??surfEvent.origin;if(surfEvent.surfUpdatedAt!==surfEvent.localSurfRevision&&surfEvent.surfPosition){const server=surfEvent.surfPosition;pos=Math.hypot(pos.x-server.x,pos.z-server.z)>2?{...server}:{x:pos.x+(server.x-pos.x)*.35,y:server.y,z:pos.z+(server.z-pos.z)*.35};surfEvent.localSurfRevision=surfEvent.surfUpdatedAt;}surfEvent.localSurfPosition=altinaSword.moveSurf(pos,direction,seconds,p=>{const cell=nearestCell(walkingGrid,p);const x=Math.round((p.x-walkingGrid.origin.x)/walkingGrid.step),z=Math.round((p.z-walkingGrid.origin.z)/walkingGrid.step);return x>=0&&z>=0&&x<walkingGrid.width&&z<walkingGrid.height&&walkingGrid.cells[z*walkingGrid.width+x]!==null?collision.floor(p.x,p.z,p.y+.6):null;},collision);if(Math.hypot(direction.x,direction.z)>.001)surfEvent.surfHeading=direction;}}
     if(carnaHeld&&me?.character==='Carna'&&!renneCombat?.current(localId)&&combatControls.ready('basic'))startAttack('basic',cursor,true);const activeCarna=renneCombat?.current(localId);if(me?.character==='Carna'&&['basic','craft'].includes(activeCarna?.kind)&&time-activeCarna.localStart<renneMechanics.combatSpec('Carna',activeCarna.kind).fireDuration&&time-carnaAimAt>50){carnaAimAt=time;const direction=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));const ray={origin:{x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction:{x:direction.x,y:direction.y,z:direction.z}};queueAction('attack',undefined,undefined,undefined,{kind:'aim',ray});}
-    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!isFPS||(!altinaAiming&&me?.character!=='Carna'&&josetteBlend>.05);
+    const localAttack=renneCombat?.current(localId),josetteBlend=josetteView?.update({camera,position:me?.position,attack:localAttack,spec:localAttack?renneMechanics.combatSpec(me.character,localAttack.kind):null,active:isFPS&&!introPlaying&&!health.vehicleControl&&!health.lynxControl,time,moving:me?.walking||keys.size>0,yaw,character:me?.character})??0;crosshair.hidden=!!health.vehicleControl||!!health.lynxControl||!isFPS||(!altinaAiming&&me?.character!=='Carna'&&josetteBlend>.05);
     if(camera===walkingCamera&&combatCamera)frameCombatCamera(walkingCamera,zoom,viewport.width/viewport.height,true);
     if(introPlaying||!freeSpectator)duelIntro?.update(time,avatars,camera,follow);
     if(isFPS&&!introPlaying&&josetteBlend<.01){const shake=donShotShake(localAttack,time);camera.translateX(shake.x);camera.translateY(shake.y);camera.rotateZ(shake.roll);}
@@ -1225,7 +1200,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       status.textContent = "0 / "+(health.maxHp??playerHealth.PLAYER_MAX_HP)+" PV"+(health.noRespawn?"":" · Réapparition dans " + remaining + " s");
     }
     for (const [id, a] of avatars) {
-      if (id.startsWith("world:pom") || a.prop) { if(nameplates.has(id)) nameplates.get(id).hidden=true; continue; }
+      if (id.startsWith("world:pom") || a.prop || a.hideNameplate) { if(nameplates.has(id)) nameplates.get(id).hidden=true; continue; }
       let label = nameplates.get(id);
       if (!label) {
         label = document.createElement("div");
@@ -1311,7 +1286,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     attack:startAttack,
     captureNotice(text){status.textContent=text;},
     terminalPoint(){return terminal?{...terminal.position,y:terminal.position.y+.7}:null;},
-    lynxPoint(){return lynxObject?{...airshipConfig.lobby,y:airshipConfig.lobby.y+.9}:null;},
+    lynxPoint(){return null;},
     setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { cookingInput('end');touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
     async resetSession(player) { mobileTargetId=null;touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); landedJump=null;localJump=null;jumpPending=false;marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
     messages(messages) {
