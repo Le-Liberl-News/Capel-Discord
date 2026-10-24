@@ -1,12 +1,12 @@
 // Pictures an action of the adventure can send with its reply ("animation" in rpg/data/aventure.json), drawn from
 // what the player said. "cartes": the office's card table seen from above; the cards typed ("distribuer 20-13-1-100")
-// are dealt one by one by the player, at the bottom, as at tarot: first to the right, then around the table the other
-// way from a clock's hands, the dealer's own card last.
+// are dealt one by one by the player, at the bottom: first to the left, then around the table the way of a clock's
+// hands, the dealer's own card last.
 const {createCanvas}=require('@napi-rs/canvas');
 const {parts}=require('../pomRendering');
 const W=480,H=410,CX=W/2,CY=H/2;
-// where the cards land, in the order they are dealt: right, opposite, left, the dealer's own
-const SEATS=[{x:CX+170,y:CY},{x:CX,y:CY-140},{x:CX-170,y:CY},{x:CX,y:CY+140}];
+// where the cards land, in the order they are dealt: left, opposite, right, the dealer's own
+const SEATS=[{x:CX-170,y:CY},{x:CX,y:CY-140},{x:CX+170,y:CY},{x:CX,y:CY+140}];
 const DECK={x:CX,y:CY+70};
 const FLIGHT=9,PAUSE=4;
 
