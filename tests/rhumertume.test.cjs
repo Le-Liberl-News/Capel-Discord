@@ -65,8 +65,8 @@ test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',
  assert.equal(await r.message('Kloe','Bonjour'),null);
  await r.infect('Tita');now+=8*HOUR;
  const m=await r.message('Tita','Bonjour tout le monde');
- assert.equal(m.content,'');assert.equal(m.username,'Pomdetertita');assert.equal(m.avatarURL,'pom/Tita-3.png');
- assert.equal(m.files[0].name,'bulle 3');assert.equal(m.files[0].text,'Bonjour tout le monde');   // random .5: above one in three, no word changes
+ assert.equal(m.username,'Pomdetertita');assert.equal(m.avatarURL,'pom/Tita-3.png');assert.equal(m.files,undefined);
+ assert.equal(m.content,'Bonjour tout le monde');   // random .5: above one in three, no word changes
 });
 test('the gauges: capitals and "!" for rage, "?" and emojis for madness; pom, citrouille and full stops calm them',()=>{
  assert.ok(moods('JE VAIS TOUS VOUS MANGER !!!')[0]>=40);
