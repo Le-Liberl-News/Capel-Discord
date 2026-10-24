@@ -8,8 +8,9 @@
 // Everything is text; a room may have a picture (its "image", a file of rpg/data/aventure/), sent on entering it
 // and with « regarder ».
 const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('discord.js');
-const path=require('node:path'),fs=require('node:fs');
+const path=require('node:path'),fs=require('node:fs'),crypto=require('node:crypto');
 const {createAdventure}=require('./engine');
+const {renderAnimation}=require('./animations');
 const FILES=path.join(__dirname,'../../rpg/data/aventure');
 const BUTTON='aventure:jouer',LIMIT=1900;
 // Discord refuses messages over 2000 characters: cut between paragraphs, then lines, then words
@@ -24,38 +25,72 @@ function chunks(text){
 function createAdventureDiscord({client,data,store,channelId,closingChannelId,allowed=[],files=FILES,log=console.error}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
- state.logs??={};state.names??={};
+ state.logs??={};state.names??={};state.won??=[];
  let version=0;   // bumped on every change, so the platform only gets the games when they moved
- const save=()=>{version++;store.save(state);};
+ const listeners=new Set();   // told of every change (the platform's sync sends it at once)
+ const save=()=>{version++;store.save(state);for(const listener of listeners)listener();};
+ // the animations drawn since the platform last got them, by their SHA-1: the editor and the spectators show them
+ const pendingMedia=new Map();
  const LOG_SIZE=120;
  // one line of a player's game: a command, the bot's reply, a hint
- function note(id,kind,text){
-  if(!text)return;
+ function note(id,kind,text,media=[]){
+  if(!text&&!media.length)return;
   const lines=state.logs[id]??=[];
-  lines.push({at:Date.now(),kind,text:String(text).slice(0,4000)});
+  lines.push({at:Date.now(),kind,text:String(text||'').slice(0,4000),room:state.players[id]?.room,...(media.length?{media}:{})});
   if(lines.length>LOG_SIZE)lines.splice(0,lines.length-LOG_SIZE);
  }
  const replyText=result=>result.replies.filter(Boolean).join('\n\n');
  const queues=new Map();
  const mayPlay=interaction=>allowed.includes(interaction.user.id)||Boolean(interaction.memberPermissions?.has(PermissionFlagsBits.Administrator));
  // a reply: its texts, then the room's picture when the player enters or looks at it
- async function send(channel,result,player){
+ // a reply to a player: its texts, then the room's picture when they enter or look at it and the action's animation;
+ // kept in the player's log with what was attached (`id`)
+ async function send(channel,result,player,id){
   const parts=chunks(result.replies.filter(Boolean).join('\n\n'));
+  const attached=[],media=[];
   const image=(result.moved||result.look)&&game.room(player.room)?.image;
-  const file=image&&fs.existsSync(path.join(files,image))?{attachment:path.join(files,image),name:path.basename(image)}:null;
-  if(image&&!file)log('Aventure, image absente :',image);
-  for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&file?{files:[file]}:{}),allowedMentions:{parse:[]}});
-  if(!parts.length&&file)await channel.send({files:[file]});
+  if(image){
+   if(fs.existsSync(path.join(files,image))){attached.push({attachment:path.join(files,image),name:path.basename(image)});media.push({type:'image',file:image});}
+   else log('Aventure, image absente :',image);
+  }
+  // an action's animation (the cards dealt…), drawn from what the player said; the text goes without it if it fails
+  if(result.animation){
+   try{
+    const animation=await renderAnimation(result.animation.name,result.animation.words);
+    if(animation){
+     const sha=crypto.createHash('sha1').update(animation.attachment).digest('hex');
+     attached.push(animation);media.push({type:'animation',sha});pendingMedia.set(sha,animation.attachment);
+    }
+   }catch(e){log('Aventure, animation :',result.animation.name,e.message);}
+  }
+  if(id){note(id,'reply',replyText(result),media);save();}
+  for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&attached.length?{files:attached}:{}),allowedMentions:{parse:[]}});
+  if(!parts.length&&attached.length)await channel.send({files:attached});
  }
+ const tell=async(id,content,what)=>{
+  if(!content)return;
+  try{const user=await client.users.fetch(id);await user.send({content,allowedMentions:{parse:[]}});note(id,'reply',content);}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
+ };
+ // the final room: the adventure ends for everyone once `final.players` players stand in it (players of any games,
+ // they do not need to have played together); until then, those who arrived wait and hear of each newcomer.
+ // Arriving after the end still gets the victory.
  async function reach(userId){
   if(state.reached.includes(userId))return;
   state.reached.push(userId);save();
-  const need=data.final?.players||1;
-  if(state.done||state.reached.length<need)return;
-  state.done=true;save();
-  for(const id of state.reached){
-   try{const user=await client.users.fetch(id);await user.send({content:data.final.victory,allowedMentions:{parse:[]}});}catch(e){log('Aventure, victoire :',id,e.code??e);}
+  const need=data.final?.players||1,count=state.reached.length;
+  // a win is told once to each player, even one who starts over after the end
+  const win=async id=>{if(state.won.includes(id))return;state.won.push(id);await tell(id,data.final.victory,'victoire');};
+  if(state.done){await win(userId);save();return;}
+  if(count<need){
+   const waiting=(data.messages?.waiting||'Il faut être {total} dans cette salle pour achever l’aventure : vous êtes {n} pour l’instant. Attendez vos compagnons…')
+    .replaceAll('{n}',String(count)).replaceAll('{total}',String(need));
+   for(const id of state.reached)await tell(id,id===userId?waiting:(data.messages?.joined||'Un compagnon vous a rejoint ({n}/{total}).').replaceAll('{n}',String(count)).replaceAll('{total}',String(need)),'attente');
+   save();
+   return;
   }
+  state.done=true;save();
+  for(const id of state.reached)await win(id);
+  save();
   if(data.final.closing&&closingChannelId){
    try{const channel=await client.channels.fetch(closingChannelId);await channel.send({content:data.final.closing,allowedMentions:{parse:[]}});}catch(e){log('Aventure, clôture :',e.code??e);}
   }
@@ -78,8 +113,7 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
   try{
    const dm=await interaction.user.createDM();
    const opening=known?{replies:[data.messages?.resume||'Vous reprenez votre aventure.',game.describe(player)],look:true}:game.start(player);
-   await send(dm,opening,player);
-   note(id,'reply',replyText(opening));
+   await send(dm,opening,player,id);
   }catch(e){
    log('Aventure, MP :',e.code??e);
    await interaction.editReply({content:"Je n'arrive pas à t'écrire en message privé : autorise les MP des membres du serveur puis réessaie."});return true;
@@ -100,14 +134,14 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
    if(msg.content.trim().toLowerCase()==='/reset'){
     const player=game.fresh(),start=game.start(player);
     const restart={...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]};
-    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);note(id,'reply',replyText(restart));save();
-    await send(msg.channel,restart,player);
+    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);
+    await send(msg.channel,restart,player,id);
     return;
    }
    const player=state.players[id];
    if(state.done&&state.reached.includes(id)){const over=data.messages?.over||'Votre aventure est terminée.';note(id,'reply',over);save();await msg.channel.send({content:over});return;}
-   const result=game.handle(player,msg.content);note(id,'reply',replyText(result));save();
-   await send(msg.channel,result,player);
+   const result=game.handle(player,msg.content);
+   await send(msg.channel,result,player,id);
    if(result.final)await reach(id);
   }).catch(e=>log('Aventure :',e));
   queues.set(id,next);
@@ -122,6 +156,10 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
   await user.send({content:(data.messages?.hint||'💡 **Indice** : ')+text,allowedMentions:{parse:[]}});
   note(id,'hint',text);save();
  }
- return {handle,message,state,snapshot,hint,version:()=>version};
+ // the animations the platform does not have yet, and their delivery
+ const media=()=>[...pendingMedia].map(([sha,data])=>({sha,type:'image/gif',data:data.toString('base64')}));
+ const mediaSent=shas=>{for(const sha of shas)pendingMedia.delete(sha);};
+ const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
+ return {handle,message,state,snapshot,hint,media,mediaSent,subscribe,version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,BUTTON};
