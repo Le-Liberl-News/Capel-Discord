@@ -1,14 +1,16 @@
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const point=a=>({x:a.x,y:a.y,z:a.z});
-function kind(a){return !a.flying&&!['daspi','garou','funebre','tank'].includes(a.kind)?a.stage===3?'vines':a.stage===2?'ball':null:null;}
+function kind(a){if(a.kind==='garou')return 'leap';return !a.flying&&!['daspi','garou','funebre','tank'].includes(a.kind)?a.stage===3?'vines':a.stage===2?'ball':null:null;}
 function segment(a,b,p){const dx=b.x-a.x,dz=b.z-a.z,n=dx*dx+dz*dz,k=clamp(((p.x-a.x)*dx+(p.z-a.z)*dz)/(n||1),0,1);return {k,d:Math.hypot(a.x+dx*k-p.x,a.z+dz*k-p.z)};}
 function createPomCrafts({state,geometry,hurt,damageWall,wallX,emit,multiplier=.5}){
  const all=()=>[...state.enemies,...Object.values(state.players)],defenders=()=>[...state.soldiers,...Object.values(state.players).filter(p=>p.online&&!p.pomControlled),...state.turrets,...state.barricades].filter(a=>a.hp>0);
  const allowed=a=>a&&a.hp>0&&a.online!==false&&!state.stoppedAt&&!a.cling&&!a.climb&&!a.mineLaunch&&state.at>=(a.stunUntil??0);
+ const mobility=require('./pom-mobility.cjs').createPomMobility({state,geometry,hurt,emit,clear,multiplier});
  function clear(a){for(const v of [...state.soldiers,...Object.values(state.players)])if(v.pomBoundBy===a.id){v.pomBoundUntil=0;delete v.pomBoundBy;}a.pomCraft=null;a.combatLockedUntil=0;a.nativeSeen=null;}
  function action(id,data,scale=1){const a=state.players[id];if(!a?.pomControlled)return {error:'Réservé aux poms.'};return begin(a,{...data,ai:false},scale);}
  function begin(a,data,scale=1){const type=kind(a),t=state.at,c=a.pomCraft;
   if(!type||!allowed(a))return {error:'Craft indisponible.'};
+  if(type==='leap'||type==='vines'&&data.anchor||c?.type==='sling')return mobility.begin(a,data,scale);
   if(data.phase==='cancel'){if(c?.phase==='charge')clear(a);return {ok:true};}
   if(type==='ball'&&c?.phase==='charge'&&['hold','release'].includes(data.phase)){
    if(t-c.heldAt>1500){clear(a);return {error:'Charge interrompue.'};}c.heldAt=t;
@@ -28,7 +30,9 @@ function createPomCrafts({state,geometry,hurt,damageWall,wallX,emit,multiplier=.
  function update(dt){const t=state.at;
   for(const v of defenders())if(v.pomBump){const c=v.pomBump,k=clamp((t-c.at)/550,0,1);v.x=c.from.x+(c.to.x-c.from.x)*k;v.z=c.from.z+(c.to.z-c.from.z)*k;v.y=c.from.y+Math.sin(k*Math.PI)*.7;if(k===1){v.y=c.from.y;v.pomBump=null;}}
   for(const a of all()){
+   if(a.pomControlled&&!a.pomCraft)mobility.barrier(a);
    const c=a.pomCraft;if(!c)continue;
+   if(mobility.update(a,dt))continue;
    if(!allowed(a)||a.online===false||kind(a)!==c.type){clear(a);continue;}
    a.moving=false;
    if(c.type==='vines'){

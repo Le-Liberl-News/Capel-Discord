@@ -1,13 +1,13 @@
+import anchorLayout from './mobility-anchors.cjs';
 import {loadNativeProp} from './native-prop.mjs';
-import expansion from './expansion.cjs';
 import spotlightTime from './spotlight-time.cjs';
 
 export function createRoadLamps({T,scene,asset,scale,getState}){
  const lamps=[],lights=Array.from({length:6},()=>{const light=new T.PointLight(0xffdca0,0,15*scale,1.6);scene.add(light);return light;});let disposed=false,placed=false;
  const ready=loadNativeProp(T,asset,'royal-road-lamp',4.8*scale).then(template=>{
   if(disposed)return;
-  for(let i=0,x=-62;x>=-350;i++,x-=18){
-   const root=template.clone(true),z=expansion.roadZ(x)+1+(i%2?-6.5:6.5);
+  for(const {x,z}of anchorLayout.LAMPS){
+   const root=template.clone(true);
    root.position.set(x*scale,.04*scale,z*scale);scene.add(root);
    const bulb=new T.Mesh(new T.SphereGeometry(.105*scale,8,6),new T.MeshBasicMaterial({color:0xffe5b0}));bulb.material.userData.skyEmissive=true;bulb.raycast=()=>{};bulb.position.set(0,4.12*scale,0);root.add(bulb);lamps.push({root,bulb,x,z});
   }
