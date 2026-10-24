@@ -1,8 +1,8 @@
 // Server hit volumes use metres, independently of the transparent sprite padding.
 const nativeVolumes=require('./assets/sky/combat/hit-volumes.json');
-function bodyHeight(p){return (nativeVolumes[p.character]?.height??(p.character==='Sieg'?.55:p.boss?3.6:p.enemy?1.2:1.65))*(p.character==='Claiomh Solais'?2:1);}
+function bodyHeight(p){if(p.hitHeight)return p.hitHeight;return (nativeVolumes[p.character]?.height??(p.character==='Sieg'?.55:p.boss?3.6:p.enemy?1.2:1.65))*(p.character==='Claiomh Solais'?2:1);}
 function rayBody(origin,direction,p,range=30,padding=0){
- const height=bodyHeight(p),radius=(nativeVolumes[p.character]?.radius??(p.boss?1.1:p.enemy?.4:.3))*(p.character==='Claiomh Solais'?2:1)+padding;
+ const height=bodyHeight(p),radius=p.hitRadius?p.hitRadius+padding:(nativeVolumes[p.character]?.radius??(p.boss?1.1:p.enemy?.4:.3))*(p.character==='Claiomh Solais'?2:1)+padding;
  let near=0,far=range;
  for(const [axis,low,high] of [['x',p.x-radius,p.x+radius],['y',(p.y??0)+.05-padding,(p.y??0)+height+padding],['z',p.z-radius,p.z+radius]]){
   if(Math.abs(direction[axis])<1e-8){if(origin[axis]<low||origin[axis]>high)return null;continue;}

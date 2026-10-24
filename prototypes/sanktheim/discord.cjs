@@ -31,7 +31,7 @@ function createAnnouncements({client,channelId,siege,store,baseUrl,assignedChara
       const join=['intro','warning'].includes(event.type)&&i===0;
       const components=join?[{type:1,components:[{type:2,custom_id:'sanktheim:join',label:'Prendre part à la défense de Sanktheim',style:1},...(event.type==='intro'?[{type:2,custom_id:'sanktheim:stop',label:'Arrêter le siège',style:2}]:[])]}]:undefined;
       const message=await channel.send({embeds:[embed,...(i===0&&appeal?[appeal]:[])],allowedMentions:{parse:[]},nonce,enforceNonce:true,...(components?{components}:{})});
-      ledger[marker]=message.id;if(i===0&&(['threshold','soldier-death','soldier-critical','tank-arrival'].includes(event.type)||event.type==='wave-end'&&event.summary?.walls?.length)){const job={event,messageId:message.id,embeds:[embed,...(appeal?[appeal]:[])]};ledger.mediaJobs[marker]=job;store.save(ledger);scheduleMedia(channel,marker,job);}
+      ledger[marker]=message.id;if(i===0&&(['threshold','soldier-death','soldier-critical','tank-arrival','mechapom-arrival'].includes(event.type)||event.type==='wave-end'&&event.summary?.walls?.length)){const job={event,messageId:message.id,embeds:[embed,...(appeal?[appeal]:[])]};ledger.mediaJobs[marker]=job;store.save(ledger);scheduleMedia(channel,marker,job);}
      }else ledger[marker]??=true;
      store.save(ledger);
     }

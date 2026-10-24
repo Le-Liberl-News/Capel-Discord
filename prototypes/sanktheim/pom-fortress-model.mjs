@@ -5,7 +5,11 @@
 // Lynx's armour textures turned grey (assets/pom-fortress/), tinted by vertex colour; what glows is unlit. The
 // origin is the ground under the body; it faces +Z and is about 24 units tall, twice the wall.
 // createPomFortress(T,{seed,textures:{plates,panels,hatch,grille,fire},missile,onStep,onMissile})
-//  -> {root,hull,crew,effects,animate(seconds,{walking,target}),SPEED}
+//  -> {root,hull,crew,effects,animate(seconds,{walking,target,burning,stance,ground}),fire(track),SPEED}
+// In the game the server decides the shots: autoFire false, and fire(track) launches a missile from the next pod,
+// homing on track() (a world position, or null to keep its last aim). burning false puts the flamethrowers out
+// (in flight). stance (0 to 1) folds the legs under the body, ground is the ground's height in the fortress's own
+// coordinates: a fortress fallen on its belly lies at root.y -8, stance 0, ground 8.
 // hull: the body's group, which the crew's sprites join, at the points of `crew` (hull coordinates, on the deck).
 // While walking it lifts one leg at a time, slowly; its root has to move forward (+Z) at SPEED units a second for
 // the planted feet to stay put, and onStep(leg,worldPosition) is called as each foot lands (to shake the ground).
@@ -18,7 +22,7 @@
 // itself (not the fortress: they leave it), and onMissile(worldPosition) is called where each one bursts.
 export const TEXTURES=['plates','panels','hatch','grille'],FIRE_REACH=26,LIGHT_REACH=45,MISSILE_REACH=70;
 
-export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>{},onMissile=()=>{}}={}){
+export function createPomFortress(T,{seed=7,textures={},missile=null,missileSpeed=16,autoFire=true,onStep=()=>{},onMissile=()=>{}}={}){
  const rng=seeded(seed),pick=list=>list[Math.floor(rng()*list.length)],jitter=a=>(rng()*2-1)*a;
  const root=new T.Group();root.name='pom-fortress';
  const body=new T.Group();body.name='body';root.add(body);
@@ -66,7 +70,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
 
  // the body: a wide ball, dented like a ball of wool, its top cut off for a deck
  const R=7,SX=1.3,SZ=1.05,SQUASH=.86,BC=14,LON=24,LAT=14,DECK=R*SQUASH*.74;
- const hull=new T.Group();hull.name='hull';hull.position.y=BC;body.add(hull);
+ const hull=new T.Group();hull.name='hull';hull.userData.own=true;hull.position.y=BC;body.add(hull);   // it sways as a whole
  const sphere=new T.SphereGeometry(R,LON,LAT),bumps=Array.from({length:110},()=>({at:new T.Vector3(jitter(1),jitter(1),jitter(1)).normalize(),size:.88+rng()*.06,amount:.06+rng()*.07}));
  {
   const p=sphere.attributes.position,v=new T.Vector3();
@@ -143,7 +147,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
   const frame=new T.Shape(rounded(4,3.4,1.8).getPoints(3));frame.holes.push(new T.Path(rounded(3.2,2.6,1.3).getPoints(3).reverse()));
   mesh(paint(bend(new T.ExtrudeGeometry(frame,{depth:3,bevelEnabled:false,curveSegments:3}).translate(0,0,-2.1)),[C.ember,C.burnt,C.orange],{scale:1/4}),plates,'face-rim',front);
   for(const s of [-1,1]){
-   const eye=new T.Group();eye.name=s<0?'headlight-left':'headlight-right';eye.position.set(s*1.3,.35,.5);front.add(eye);
+   const eye=new T.Group();eye.name=s<0?'headlight-left':'headlight-right';eye.userData.own=true;eye.position.set(s*1.3,.35,.5);front.add(eye);
    const housing=mesh(paint(new T.CylinderGeometry(.72,.85,.8,8),[C.gun,C.dark]),panels,null,eye);housing.rotation.x=Math.PI/2;housing.position.z=.3;
    const bezel=mesh(paint(new T.TorusGeometry(.66,.1,4,8),C.bronze),panels,null,eye);bezel.position.z=.72;
    const visor=mesh(paint(new T.BoxGeometry(1.8,.2,1.1),C.dark),panels,'visor',eye);visor.position.set(0,.85,.55);visor.rotation.x=.3;
@@ -171,7 +175,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
  const plate=mesh(paint(new T.CylinderGeometry(4,3.4,.8,8),[C.gun,C.dark],{scale:1/4}),hatch,'belly',hull);plate.position.copy(belly).add(new T.Vector3(0,-.2,0));
  const guns=[],MUZZLE=2.35,down=new T.Vector3(0,-1,0);
  for(const [n,[sx,sz]] of [[-1,1],[1,1],[-1,-1],[1,-1]].entries()){
-  const gun=new T.Group();gun.name='flamethrower-'+n;gun.position.set(sx*2.6,belly.y-.9,sz*2.4+.6);hull.add(gun);
+  const gun=new T.Group();gun.name='flamethrower-'+n;gun.userData.own=true;gun.position.set(sx*2.6,belly.y-.9,sz*2.4+.6);hull.add(gun);
   const mount=mesh(paint(new T.DodecahedronGeometry(1,0),[C.dark,C.gun]),panels,'flamethrower-swivel',hull);mount.position.copy(gun.position);
   const housing=mesh(paint(new T.CylinderGeometry(.8,.9,.9,8),[C.dark,C.gun]),panels,'flamethrower-housing',gun);housing.position.y=-.4;
   const barrel=mesh(paint(new T.CylinderGeometry(.5,.65,1.6,8),C.gun,{scale:1/2}),grille,'flamethrower-barrel',gun);barrel.position.y=-1.4;
@@ -180,10 +184,10 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
   // the jet: the game's fire, frames of it flying out of the muzzle and swelling
   const jet=effect(new T.Group());jet.name='fire-'+n;jet.position.y=-MUZZLE;gun.add(jet);
   const puffs=[];
-  if(textures.fire)for(let k=0;k<18;k++){
+  if(textures.fire)for(let k=0;k<10;k++){
    const map=textures.fire.clone();map.repeat.set(.25,1);
    const puff=new T.Sprite(new T.SpriteMaterial({map,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));puff.renderOrder=5;jet.add(puff);
-   puffs.push({puff,offset:k/18,frame:Math.floor(rng()*4),drift:new T.Vector3(jitter(1),0,jitter(1))});
+   puffs.push({puff,offset:k/10,frame:Math.floor(rng()*4),drift:new T.Vector3(jitter(1),0,jitter(1))});
   }else{   // no fire given: a plain cone
    const cone=new T.ConeGeometry(2.4,9,8,3,true);cone.translate(0,-4.5,0);
    mesh(cone,glow(0xff6a12,'flame',{transparent:true,opacity:.7,depthWrite:false,side:T.DoubleSide}),null,jet);
@@ -198,7 +202,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
   const ball=mesh(paint(new T.DodecahedronGeometry(1.2,0),[C.dark,C.gun]),panels,'shoulder',arm);ball.position.copy(shoulder).addScaledVector(normal,.2);
   const elbow=ball.position.clone().add(new T.Vector3(s*1.7,.3,1));
   beam(ball.position,elbow,.9,.9,[C.gun,C.ember],panels,arm,'arm');
-  const pod=new T.Group();pod.name='pod';pod.position.copy(elbow).add(new T.Vector3(s*.9,.5,.9));pod.rotation.set(.05,-s*.1,0);arm.add(pod);
+  const pod=new T.Group();pod.name='pod';pod.userData.own=true;pod.position.copy(elbow).add(new T.Vector3(s*.9,.5,.9));pod.rotation.set(.05,-s*.1,0);arm.add(pod);
   const sides=s<0?6:10,radius=1.5;
   const casing=mesh(paint(shake(new T.CylinderGeometry(radius,radius*1.05,4.6,sides,2),.04),()=>pick([C.gun,C.gun,C.dark,C.ember,C.burnt]),{scale:1/4}),plates,'pod-casing',pod);casing.rotation.x=Math.PI/2;
   for(const z of [-1.4,1]){const band=mesh(paint(new T.CylinderGeometry(radius*1.08,radius*1.08,.35,sides),C.bronze),panels,null,pod);band.rotation.x=Math.PI/2;band.position.z=z;}
@@ -219,7 +223,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
   const hip=hull.position.clone().add(point).addScaledVector(normal,.3);
   const leg=new T.Group();leg.name='leg-'+n;body.add(leg);
   mesh(paint(new T.DodecahedronGeometry(1.3,0),[C.dark,C.gun]),panels,'hip',leg).position.copy(hip);
-  const thigh=new T.Group(),shin=new T.Group();thigh.name='thigh';shin.name='shin';leg.add(thigh,shin);
+  const thigh=new T.Group(),shin=new T.Group();thigh.name='thigh';shin.name='shin';thigh.userData.own=shin.userData.own=true;leg.add(thigh,shin);
   // along +Y from their joint; +Z faces up
   mesh(paint(shake(new T.CylinderGeometry(.6,.95,THIGH,6,2),.05).translate(0,THIGH/2,0),()=>pick([C.gun,C.dark,C.gun]),{scale:1/3}),panels,null,thigh);
   mesh(paint(new T.BoxGeometry(1.7,THIGH*.62,.4).translate(0,THIGH*.45,.75),[C.ember,C.orange,C.burnt],{scale:1/3}),plates,'thigh-armour',thigh);
@@ -239,6 +243,34 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
   leg.shin.position.copy(knee);orient(leg.shin,foot.clone().sub(knee),Y);
  }
  for(const leg of legs)pose(leg);
+ // one mesh per material for all that does not move on its own (hundreds of rivets, plates and bars would be as
+ // many draw calls); what moves (userData.own: legs, swivels, pods, headlights) is merged within itself
+ const painted=new Set([plates,panels,hatch,grille]);
+ function compact(group){
+  group.updateMatrixWorld(true);
+  const inverse=group.matrixWorld.clone().invert(),buckets=new Map(),merged=[];
+  (function walk(node){for(const child of [...node.children]){
+   if(child.userData.own){compact(child);continue;}
+   if(child.isMesh&&painted.has(child.material)&&child.geometry.attributes.color&&!child.geometry.index){(buckets.get(child.material)??buckets.set(child.material,[]).get(child.material)).push(child);merged.push(child);}
+   walk(child);
+  }})(group);
+  for(const [m,meshes]of buckets){
+   const out={position:[],normal:[],color:[],uv:[]},matrix=new T.Matrix4(),normal=new T.Matrix3(),v=new T.Vector3();
+   for(const o of meshes){
+    matrix.multiplyMatrices(inverse,o.matrixWorld);normal.getNormalMatrix(matrix);const g=o.geometry.attributes;
+    for(let i=0;i<g.position.count;i++){
+     v.fromBufferAttribute(g.position,i).applyMatrix4(matrix);out.position.push(v.x,v.y,v.z);
+     v.fromBufferAttribute(g.normal,i).applyMatrix3(normal).normalize();out.normal.push(v.x,v.y,v.z);
+     out.color.push(g.color.getX(i),g.color.getY(i),g.color.getZ(i));out.uv.push(g.uv?g.uv.getX(i):0,g.uv?g.uv.getY(i):0);
+    }
+   }
+   const geometry=new T.BufferGeometry();for(const [k,a]of Object.entries(out))geometry.setAttribute(k,new T.Float32BufferAttribute(a,k==='uv'?2:3));
+   const whole=new T.Mesh(geometry,m);whole.name=group.name+'-'+m.name;group.add(whole);
+  }
+  // the merged meshes go; what they carried that was not merged stays where it was
+  for(const o of merged){for(const child of [...o.children])if(!merged.includes(child))group.attach(child);o.removeFromParent();o.geometry.dispose();}
+ }
+ compact(body);
 
  // the gait: one leg at a time, in turn; each step takes STEP seconds, SWING of them in the air
  const STEP=1.9,SWING=1.5,CYCLE=STEP*legs.length;
@@ -246,19 +278,20 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
  // the missiles: out of a tube, a short straight push, then homing on the target, turning at most TURN radians a
  // second; they burst on it, on the ground, or after LIFE seconds
  const effects=new T.Group();effects.name='pom-fortress-effects';
- const flying=[],bursts=[],SALVO=3.2,MISSILE_SPEED=16,TURN=1.6,LIFE=7;
+ const flying=[],bursts=[],SALVO=3.2,TURN=3.2,LIFE=5;
  let nextSalvo=0,salvo=0;
  const firePuff=(size,opacity=1)=>{
   if(!textures.fire)return null;const map=textures.fire.clone();map.repeat.set(.25,1);
   const sprite=new T.Sprite(new T.SpriteMaterial({map,transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity}));sprite.scale.setScalar(size);sprite.renderOrder=5;return sprite;
  };
- function launch(pod,target,seconds){
+ function launch(pod,track,seconds){
+  const first=track();if(!first)return;
   const tube=pod.tubes[salvo%pod.tubes.length],body=missile?missile.clone(true):plainMissile();
   pod.pod.updateMatrixWorld(true);body.position.copy(pod.pod.localToWorld(tube.clone()));
   const heading=new T.Vector3(0,0,1).applyQuaternion(pod.pod.getWorldQuaternion(new T.Quaternion())).normalize();
   body.quaternion.setFromUnitVectors(Z,heading);
   const trail=firePuff(1.1,.9);if(trail){trail.position.z=-1.15;body.add(trail);}   // behind its tail
-  effects.add(body);flying.push({body,heading,trail,born:seconds,target:target.clone()});
+  effects.add(body);flying.push({body,heading,trail,born:seconds,track,target:first.clone()});
  }
  function plainMissile(){
   const g=new T.Group();
@@ -272,12 +305,12 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
  }
  function fly(seconds,dt,target){
   for(const m of [...flying]){
-   const age=seconds-m.born;if(target)m.target.copy(target);
+   const age=seconds-m.born,now=m.track();if(now)m.target.copy(now);
    if(age>.35){   // homing
     const want=m.target.clone().sub(m.body.position).normalize(),angle=m.heading.angleTo(want);
     if(angle>1e-4)m.heading.lerp(want,Math.min(1,TURN*dt/angle)).normalize();
    }
-   m.body.position.addScaledVector(m.heading,MISSILE_SPEED*dt*(age<.35?.6:1));m.body.quaternion.setFromUnitVectors(Z,m.heading);
+   m.body.position.addScaledVector(m.heading,missileSpeed*dt*(age<.35?.6:1));m.body.quaternion.setFromUnitVectors(Z,m.heading);
    if(m.trail){m.trail.material.map.offset.x=(Math.floor(seconds*16)%4)*.25;m.trail.scale.setScalar(.9+Math.random()*.5);}
    if(m.body.position.distanceTo(m.target)<1.4||m.body.position.y<.2||age>LIFE){
     burst(m.body.position,seconds);effects.remove(m.body);m.trail?.material.dispose();m.trail?.material.map.dispose();flying.splice(flying.indexOf(m),1);
@@ -289,7 +322,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
   }
  }
  let last=null;
- function animate(seconds,{walking=true,target=null}={}){
+ function animate(seconds,{walking=true,target=null,burning=true,stance=1,ground=0}={}){
   const dt=last==null?0:Math.min(.1,Math.max(0,seconds-last));last=seconds;
   let lifted=null;
   for(const leg of legs){
@@ -299,7 +332,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
     if(p<f){const s=p/f,e=s*s*(3-2*s);z=-STRIDE/2+STRIDE*e;y=LIFT*Math.sin(Math.PI*s);swinging=true;lifted={leg,s};}
     else z=STRIDE/2-STRIDE*(p-f)/(1-f);
    }
-   leg.foot.set(leg.rest.x,y,leg.rest.z+z);pose(leg);
+   leg.foot.set(leg.rest.x*(.45+.55*stance),ground+y,(leg.rest.z+z)*(.45+.55*stance));pose(leg);
    if(leg.swinging&&!swinging){root.updateMatrixWorld(true);onStep(leg.n,body.localToWorld(world.copy(leg.foot)));}
    leg.swinging=swinging;
   }
@@ -334,7 +367,7 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
    }
    pod.aim.slerp(goal,Math.min(1,dt*1.5));pod.pod.quaternion.copy(pod.aim);
   }
-  if(near&&seconds>=nextSalvo){launch(pods[salvo%pods.length],target,seconds);salvo++;nextSalvo=seconds+SALVO/pods.length;}
+  if(autoFire&&near&&seconds>=nextSalvo){const aim=target.clone();launch(pods[salvo%pods.length],()=>aim,seconds);salvo++;nextSalvo=seconds+SALVO/pods.length;}
   fly(seconds,dt,target);
   for(const g of guns){
    // toward the target when it is close, else down; at most 75° from down, turning slowly
@@ -348,13 +381,14 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>
    }
    want.setFromUnitVectors(down,dir);g.aim.slerp(want,Math.min(1,dt*2.5));g.gun.quaternion.copy(g.aim);
    for(const q of g.puffs){
-    const age=(seconds*1.15+q.offset)%1,frame=(q.frame+Math.floor(seconds*14+q.offset*7))%4;
+    const age=(seconds*1.8+q.offset)%1,frame=(q.frame+Math.floor(seconds*14+q.offset*7))%4;
     q.puff.position.set(q.drift.x*age*age*1.6,-age*13,q.drift.z*age*age*1.6);
-    q.puff.scale.setScalar(1.4+age*5.5);q.puff.material.opacity=age<.08?age/.08:Math.max(0,1-(age-.08)/.92)*.95;
+    q.puff.visible=burning;q.puff.scale.setScalar(1.8+age*6.5);q.puff.material.opacity=age<.08?age/.08:Math.max(0,1-(age-.08)/.92)*.95;
     q.puff.material.map.offset.x=frame*.25;
    }
   }
  }
- return {root,hull,crew,effects,animate,SPEED:STRIDE/(CYCLE-SWING)};
+ function fire(track){launch(pods[salvo%pods.length],track,last??0);salvo++;}
+ return {root,hull,crew,effects,animate,fire,SPEED:STRIDE/(CYCLE-SWING)};
 }
 function seeded(seed){let s=seed>>>0||1;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0,(s^s>>>14)>>>0)/4294967296);}

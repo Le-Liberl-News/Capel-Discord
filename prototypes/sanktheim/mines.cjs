@@ -16,7 +16,7 @@ function createMines({state,geometry,hurt,emit,land=(_,e)=>hurt(e,Math.max(e.hp,
   if(!state.wave||state.stoppedAt)return;
   for(const m of state.mines){if(m.spent||state.at<m.armedAt)continue;const hit=targets.find(e=>e.hp>0&&!e.escaped&&!e.flying&&!e.mineLaunch&&Math.abs(e.y-m.y)<.7&&Math.hypot(e.x-m.x,e.z-m.z)<.85);if(!hit)continue;
    m.spent=true;m.explodedAt=state.at;emit('mine-explosion','',{from:m.id,position:{x:m.x,y:m.y,z:m.z}});
-   for(const e of targets)if(e.hp>0&&!e.escaped&&!e.mineLaunch&&Math.abs(e.y-m.y)<1.1&&Math.hypot(e.x-m.x,e.z-m.z)<2.2){if(e.siegeTank){hurt(e,500);continue;}e.mineLaunch={at:state.at,owner:m.owner,x:e.x,y:e.y,z:e.z};e.combatLockedUntil=state.at+FLIGHT;e.cling=null;e.leap=null;e.climb=null;e.jump=null;e.input={x:0,z:0};}
+   for(const e of targets)if(e.hp>0&&!e.escaped&&!e.mineLaunch&&Math.abs(e.y-m.y)<1.1&&Math.hypot(e.x-m.x,e.z-m.z)<2.2){if(e.siegeTank||e.mechapom){hurt(e,500);continue;}e.mineLaunch={at:state.at,owner:m.owner,x:e.x,y:e.y,z:e.z};e.combatLockedUntil=state.at+FLIGHT;e.cling=null;e.leap=null;e.climb=null;e.jump=null;e.input={x:0,z:0};}
   }
   state.mines=state.mines.filter(m=>!m.spent||state.at-m.explodedAt<3000);
  }
