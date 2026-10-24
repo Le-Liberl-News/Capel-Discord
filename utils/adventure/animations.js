@@ -31,7 +31,8 @@ function card(x,cx,cy,value,angle,face=true){
  x.restore();
 }
 function renderCards(words){
- const values=String(words.join('-')).split('-').filter(Boolean).slice(0,8);
+ // only the cards of the deck (1 to 21, and the 100); anything else is left out, as if it had not been typed
+ const values=String(words.join('-')).split('-').filter(value=>/^\d+$/.test(value)&&((+value>=1&&+value<=21)||+value===100)).map(Number).slice(0,8);
  if(!values.length)return null;
  const frames=[],delays=[],landed=[];
  const frame=(moving,delay)=>{

@@ -153,6 +153,10 @@ test('the cards are dealt in a GIF',async()=>{
  const gif=await renderAnimation('cartes',['20-13-1-100']);
  assert.equal(gif.name,'distribution.gif');assert.equal(gif.attachment.subarray(0,6).toString(),'GIF89a');
  assert.equal(await renderAnimation('cartes',[]),null);
+ // a value outside the deck is not dealt: the same GIF as without it
+ const clean=await renderAnimation('cartes',['20-13-1-100']),noisy=await renderAnimation('cartes',['20-abc-13-0-1-22-100']);
+ assert.ok(noisy.attachment.equals(clean.attachment));
+ assert.equal(await renderAnimation('cartes',['abc','0','42']),null);
  await assert.rejects(renderAnimation('rien',[]),/inconnue/);
 });
 test('in the final room, players wait for the others; one arriving after the end still wins',async()=>{
