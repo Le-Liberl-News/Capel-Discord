@@ -12,6 +12,8 @@ async function renderHighlightDirect(event){
  if(event.type==='scene-replay')return require('./scene-renderer.cjs').renderScene(event.clip,{fps:6,width:384,height:256});
  if(event.type==='tank-arrival'&&event.crew?.length)return require('./tank-highlight.cjs').renderTankHighlight(event);
  if(event.type==='tank-arrival')return {attachment:fs.readFileSync(path.join(root,'tank-advance.gif')),name:'char-des-poms.gif'};
+ // the Mechapom fortress: its arrival, rendered beforehand (tools/mechapom-arrival.html)
+ if(event.type==='mechapom-arrival')return {attachment:fs.readFileSync(path.join(root,'mechapom-arrival.gif')),name:'forteresse-mechapom.gif'};
  if(event.type==='threshold'){
   if(!wallIds.has(event.wall)||!thresholds.includes(event.healthPercent))return null;
   if(event.replay?.hit&&fs.existsSync(path.join(root,event.wall+'-'+event.healthPercent+'.json')))return require('./highlight-replay.cjs').renderReplay(event);

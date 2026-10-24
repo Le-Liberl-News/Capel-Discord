@@ -159,6 +159,8 @@ test('the cards are dealt in a GIF',async()=>{
  assert.equal(await renderAnimation('cartes',['abc','0','42']),null);
  await assert.rejects(renderAnimation('rien',[]),/inconnue/);
 });
+
+test('a card exists once: a number typed again leaves its seat empty, the Excuse included',async()=>{const {renderAnimation}=require('../utils/adventure/animations');const frames=gif=>{let n=0;for(let i=0;i<gif.length-1;i++)if(gif[i]===0x21&&gif[i+1]===0xf9)n++;return n;};const all=await renderAnimation('cartes',['1-2-7-3']),twice=await renderAnimation('cartes',['1-1-7-1']),excuse=await renderAnimation('cartes',['100-100']),two=await renderAnimation('cartes',['100-1']);assert.ok(frames(twice.attachment)<frames(all.attachment));assert.ok(frames(excuse.attachment)<frames(two.attachment));});
 test('in the final room, players wait for the others; one arriving after the end still wins',async()=>{
  const {sent,client,user}=fakeDiscord();
  const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:2,victory:'Victoire !',closing:'Fin.'}};

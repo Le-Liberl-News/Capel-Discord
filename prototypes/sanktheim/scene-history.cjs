@@ -6,7 +6,7 @@ function sceneSnapshot(state,scale=1){
  return clone({at:state.at,started:state.started,stoppedAt:state.stoppedAt,wave:state.wave?{id:state.wave.id,number:state.wave.number,started:state.wave.started,ends:state.wave.ends}:null,
   walls:state.walls,soldiers:(state.soldiers??[]).map(actor),players:Object.values(state.players??{}).filter(a=>a.online).map(actor),enemies:(state.enemies??[]).map(actor),
   shells:state.shells??[],fires:state.fires??[],corpses:state.corpses??[],forestry:{...state.forestry,costs:require('./forestry.cjs').COSTS},capel:require('./turrets.cjs').CAPEL,mines:state.mines??[],turrets:state.turrets??[],barricades:state.barricades??[],
-  weather:state.weather,night:time.hour>=20||time.hour<7,local:time,counts:state.counts,population:(state.enemies??[]).filter(a=>!a.siegeTank).length,nextWave:state.at+3600000,
+  weather:state.weather,night:time.hour>=20||time.hour<7,local:time,counts:state.counts,population:(state.enemies??[]).filter(a=>!a.siegeTank&&!a.mechapom).length,nextWave:state.at+3600000,
   events:(state.events??[]).slice(-80).map(({replay,...e})=>e)});
 }
 function createSceneHistory({siege,arena,now=Date.now,retention=12000}){

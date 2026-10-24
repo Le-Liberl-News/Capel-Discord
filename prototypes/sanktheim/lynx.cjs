@@ -25,8 +25,9 @@ function createLynx({siege,now=()=>siege._state.at,geometry=null,scale=1}){
    accumulator+=dt;while(accumulator>=flight.DT){accumulator-=flight.DT;const from={x:ship.x,y:ship.y,z:ship.z};flight.step(ship,c);const hit=sweep(from,ship,1);if(hit||ship.y<floor(ship.x,ship.z)+1){ship.hp=Math.max(0,ship.hp-200);ship.mode='landing';ship.y=Math.max(ship.y,floor(ship.x,ship.z)+3);break;}}
    const list=targets();targeting.updateLock(ship,list,c,t,blocked);
    if(c.fire&&t>=(ship.nextShot??0)){ship.nextShot=t+100;const dir=flight.axes(ship).forward,from=flight.add(ship,flight.mul(dir,4));let target=null,dist=150;const end=flight.add(from,flight.mul(dir,dist)),obstacle=sweep(from,end,.08);if(obstacle)dist=Math.min(dist,obstacle.distance/scale);
-    for(const e of list){const aim=targeting.point(e),delta={x:aim.x-from.x,y:aim.y-from.y,z:aim.z-from.z},along=flight.dot(delta,dir);if(along>0&&along<dist&&flight.dot(delta,delta)-along*along<1.5**2){target=e;dist=along;}}
+    for(const e of list){const aim=targeting.point(e),delta={x:aim.x-from.x,y:aim.y-from.y,z:aim.z-from.z},along=flight.dot(delta,dir);if(along>0&&along<dist&&flight.dot(delta,delta)-along*along<(e.mechapom?4:1.5)**2){target=e;dist=along;}}
     if(target)damage(target,12,p,t);ship.shots.push({at:t,from,to:flight.add(from,flight.mul(dir,dist)),hit:!!target});
+
    }
    if(ship.missileRequested){delete ship.missileRequested;if(ship.targetLock?.phase==='locked'&&t>=(ship.nextMissile??0)&&ship.missiles.length<6){const dir=flight.axes(ship).forward,from=flight.add(ship,flight.mul(dir,4));ship.missiles.push({...from,id:'lynx-missile-'+(++missileSequence)+'-'+t,at:t,target:ship.targetLock.target,direction:dir,speed:38});ship.nextMissile=t+3000;ship.missileLaunched=t;}else{ship.weaponMessage=ship.targetLock?.phase==='locked'?'Missile en recharge':'Verrouillez une cible';ship.weaponMessageUntil=t+1200;}}
   }

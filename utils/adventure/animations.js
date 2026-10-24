@@ -1,12 +1,15 @@
 // Pictures an action of the adventure can send with its reply ("animation" in rpg/data/aventure.json), drawn from
 // what the player said. "cartes": the office's card table seen from above; the cards typed ("distribuer 20-13-1-100")
-// are dealt one by one by the player, at the bottom, as at tarot: first to the right, then around the table the other
-// way from a clock's hands, the dealer's own card last.
-const {createCanvas}=require('@napi-rs/canvas');
+// are dealt one by one by the player, at the bottom: first to the left, then around the table the way of a clock's
+// hands, the dealer's own card last. The faces are the real tarot cards (tarot/, the 100 is the Excuse); each exists
+// once, so a number typed again leaves its seat empty.
+const path=require('node:path'),fs=require('node:fs');
+const {createCanvas,loadImage}=require('@napi-rs/canvas');
 const {parts}=require('../pomRendering');
 const W=480,H=410,CX=W/2,CY=H/2;
-// where the cards land, in the order they are dealt: right, opposite, left, the dealer's own
-const SEATS=[{x:CX+170,y:CY},{x:CX,y:CY-140},{x:CX-170,y:CY},{x:CX,y:CY+140}];
+// where the cards land, in the order they are dealt: left, opposite, right, the dealer's own
+const SEATS=[{x:CX-170,y:CY},{x:CX,y:CY-128},{x:CX+170,y:CY},{x:CX,y:CY+118}];
+const CW=53,CH=101;   // a card, the pictures' proportions (76 x 145)
 const DECK={x:CX,y:CY+70};
 const FLIGHT=9,PAUSE=4;
 
@@ -16,35 +19,39 @@ function table(x){
  x.strokeStyle='#3f7a4d';x.lineWidth=3;x.strokeRect(14,14,W-28,H-28);
  x.fillStyle='#f4ecd8';x.textAlign='center';x.textBaseline='alphabetic';x.font='bold 16px sans-serif';x.fillText('vous',CX,H-12);
 }
-function card(x,cx,cy,value,angle,face=true){
+let faces=null;
+async function loadFaces(){
+ faces??=Promise.all([...Array.from({length:21},(_,i)=>i+1),100].map(async n=>[n,await loadImage(fs.readFileSync(path.join(__dirname,'tarot',n===100?'excuse.jpg':n+'.jpg')))])).then(list=>new Map(list));
+ return faces;
+}
+// face: the card's picture; none: its back
+function card(x,cx,cy,face,angle){
  x.save();x.translate(cx,cy);x.rotate(angle);
- x.fillStyle='rgba(0,0,0,.35)';x.fillRect(-25,-35,54,74);
- x.fillStyle=face?'#f4ecd8':'#7a2430';x.fillRect(-27,-37,54,74);
- x.strokeStyle='#3a2a1a';x.lineWidth=2;x.strokeRect(-27,-37,54,74);
- if(face){
-  x.fillStyle='#2b1d12';x.textAlign='center';x.textBaseline='middle';
-  const text=String(value);x.font=`bold ${text.length>2?20:26}px sans-serif`;x.fillText(text,0,2);
-  x.font='10px sans-serif';x.fillText(text,-17,-28);
- }else{
-  x.strokeStyle='#e8c37a';x.lineWidth=1.5;x.strokeRect(-21,-31,42,62);
- }
+ x.fillStyle='rgba(0,0,0,.35)';x.fillRect(-CW/2+2,-CH/2+2,CW,CH);
+ if(face)x.drawImage(face,-CW/2,-CH/2,CW,CH);
+ else{x.fillStyle='#7a2430';x.fillRect(-CW/2,-CH/2,CW,CH);x.strokeStyle='#e8c37a';x.lineWidth=1.5;x.strokeRect(-CW/2+6,-CH/2+6,CW-12,CH-12);}
+ x.strokeStyle='#3a2a1a';x.lineWidth=1.5;x.strokeRect(-CW/2,-CH/2,CW,CH);
  x.restore();
 }
-function renderCards(words){
+async function renderCards(words){
  // only the cards of the deck (1 to 21, and the 100); anything else is left out, as if it had not been typed
  const values=String(words.join('-')).split('-').filter(value=>/^\d+$/.test(value)&&((+value>=1&&+value<=21)||+value===100)).map(Number).slice(0,8);
  if(!values.length)return null;
+ const pictures=await loadFaces(),given=new Set();
+ // a card already dealt cannot be dealt again: its seat stays empty
+ const deal=values.map(value=>given.has(value)?null:(given.add(value),value)),real=deal.filter(v=>v!=null).length;
  const frames=[],delays=[],landed=[];
  const frame=(moving,delay)=>{
   const c=createCanvas(W,H),x=c.getContext('2d');
   table(x);
-  if(landed.length+(moving?1:0)<values.length)card(x,DECK.x,DECK.y,'',0,false);   // the deck, until the last card leaves
-  for(const l of landed)card(x,l.x,l.y,l.value,l.angle);
-  if(moving)card(x,moving.x,moving.y,moving.value,moving.angle,moving.face);
+  if(landed.length+(moving?1:0)<real)card(x,DECK.x,DECK.y,null,0);   // the deck, until the last card leaves
+  for(const l of landed)card(x,l.x,l.y,pictures.get(l.value),l.angle);
+  if(moving)card(x,moving.x,moving.y,moving.face?pictures.get(moving.value):null,moving.angle);
   frames.push(c);delays.push(delay);
  };
  frame(null,600);
- values.forEach((value,i)=>{
+ deal.forEach((value,i)=>{
+  if(value==null){frame(null,PAUSE*100);return;}   // nothing for this seat
   const seat=SEATS[i%SEATS.length],angle=(i%2?-1:1)*.12;
   const to={x:seat.x+(i>=SEATS.length?18:0),y:seat.y+(i>=SEATS.length?10:0)};
   for(let f=1;f<=FLIGHT;f++){

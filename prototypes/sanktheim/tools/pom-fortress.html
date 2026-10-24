@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forteresse pom-tiron</title>
+<!-- The pom-tiron's walking fortress (../pom-fortress-model.mjs) beside a wall as tall as Sanktheim's (12 units).
+     Serve the repository and open /prototypes/sanktheim/tools/pom-fortress.html. Half resolution, pixelated: the
+     PSP look. Wheel: zoom, left drag: turn, right drag: move. « Marche » walks it (the camera shakes at each step);
+     « Joueur » sends a blue marker around it: the headlights follow it, the pods fire homing missiles at it (the
+     tank's), its flamethrowers turn toward it when it comes close; a few poms
+     stand on the deck. « .glb » saves the model, at rest, textures included, without what only plays at run time
+     (fire, beams, lights) nor the poms. -->
+<style>
+ html,body{margin:0;height:100%;background:#1d1a22;overflow:hidden;font:14px system-ui,sans-serif;color:#eee}
+ canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+ #bar{position:fixed;left:12px;top:10px;display:flex;gap:6px;flex-wrap:wrap}
+ #bar button{background:#3b3340;color:#fff;border:1px solid #6b5c70;border-radius:4px;padding:4px 9px;cursor:pointer}
+ #bar button.on{background:#8a4a1c}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="bar"><button data-view="0,.12,48">Face</button><button data-view=".75,.2,52">3/4</button><button data-view="1.57,.08,52">Profil</button><button data-view="3.14,.25,52">Dos</button><button data-view="2.4,.85,56">Dessus</button><button id="walk" class="on">Marche</button><button id="player" class="on">Joueur</button><button id="wall">Muraille</button><button id="pixel">Pixels</button><button id="glb">.glb</button></div>
+<script type="module">
+import * as T from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
+import {createPomFortress,TEXTURES} from '../pom-fortress-model.mjs';
+import {loadNativeProp} from '../native-prop.mjs';
+const renderer=new T.WebGLRenderer({antialias:false});document.body.prepend(renderer.domElement);
+let pixel=.5,walking=true,shake=0;
+const scene=new T.Scene();scene.background=new T.Color(0x2a2433);scene.fog=new T.Fog(0x2a2433,90,200);
+const camera=new T.PerspectiveCamera(40,1,.1,600);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,12,0);controls.enableDamping=true;
+scene.add(new T.HemisphereLight(0xffe8d0,0x30283a,1.6));
+const sun=new T.DirectionalLight(0xfff0dc,2.2);sun.position.set(20,35,25);scene.add(sun);
+const ground=new T.Mesh(new T.CircleGeometry(120,32),new T.MeshStandardMaterial({color:0x4d5a37,flatShading:true,roughness:1}));ground.rotation.x=-Math.PI/2;scene.add(ground);
+// Sanktheim's wall, for the scale: 12 units high
+const wall=new T.Group();wall.position.set(-30,0,0);scene.add(wall);
+const stone=new T.MeshStandardMaterial({color:0x8f8778,flatShading:true,roughness:1});
+const block=(w,h,d,x,y,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),stone);m.position.set(x,y,z);wall.add(m);};
+block(4,11,60,0,5.5,0);
+for(let z=-29;z<=29;z+=2.5)block(4,1,1.2,0,11.5,z);
+const loader=new T.TextureLoader(),textures={};
+await Promise.all([...TEXTURES.map(async name=>{textures[name]=await loader.loadAsync(`../assets/pom-fortress/${name}.png`);}),
+ loader.loadAsync('../../../activity/assets/sky/effects/fire-frames.png').then(map=>{textures.fire=map;})]);
+// the tank's missile, as the game loads it
+const missile=await loadNativeProp(T,path=>'../../../activity'+path,'missile',.55).catch(()=>null);
+// a step or a burst: the camera shakes, the closer the stronger
+const jolt=(at,range,k=1)=>{shake=Math.max(shake,k*(1-Math.min(1,at.distanceTo(camera.position)/range)));};
+const fortress=createPomFortress(T,{textures,missile,onStep:(leg,at)=>jolt(at,120),onMissile:at=>jolt(at,60,.6)});
+const {root,hull,crew,effects,animate,SPEED}=fortress;scene.add(root,effects);
+// the crew, as in the game: the poms' sprites
+for(const [i,at] of crew.entries()){
+ const name=['pom-tiron','agate-2','estelle-aspi','aina-2','joshua-2','pom-tiron','olivier-aspi'][i];
+ loader.loadAsync(name==='pom-tiron'?'../../../activity/assets/sky/chat/pom-tiron.png':`../../../activity/assets/sky/chat/pom/${name}.png`).then(map=>{
+  map.colorSpace=T.SRGBColorSpace;map.magFilter=map.minFilter=T.NearestFilter;
+  const sprite=new T.Sprite(new T.SpriteMaterial({map,transparent:true,alphaTest:.08}));sprite.scale.setScalar(2.4);sprite.position.copy(at).add(new T.Vector3(0,1.1,0));sprite.userData.crew=true;hull.add(sprite);
+ }).catch(()=>{});
+}
+// the player: a blue marker going round, now and then close enough to be burnt
+const player=new T.Mesh(new T.CapsuleGeometry(.6,1.2,2,6),new T.MeshStandardMaterial({color:0x3a7bff,flatShading:true}));scene.add(player);let chasing=true;
+function resize(){renderer.setPixelRatio(pixel);renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+window.view=(yaw,pitch,dist)=>{const t=controls.target;camera.position.set(t.x+Math.sin(yaw)*Math.cos(pitch)*dist,t.y+Math.sin(pitch)*dist,t.z+Math.cos(yaw)*Math.cos(pitch)*dist);controls.update();};
+view(.75,.2,52);
+for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>view(...b.dataset.view.split(',').map(Number));
+document.getElementById('walk').onclick=e=>{walking=!walking;e.target.classList.toggle('on',walking);};
+document.getElementById('player').onclick=e=>{chasing=!chasing;player.visible=chasing;e.target.classList.toggle('on',chasing);};
+document.getElementById('wall').onclick=()=>{wall.visible=!wall.visible;};
+document.getElementById('pixel').onclick=()=>{pixel=pixel<1?1:.5;resize();};
+// the model at rest, as a binary glTF
+window.exportGLB=async()=>{
+ const z=root.position.z,hidden=[];root.position.z=0;animate(0,{walking:false});
+ root.traverse(o=>{if((o.userData.effect||o.userData.crew)&&o.visible){o.visible=false;hidden.push(o);}});
+ const glb=await new GLTFExporter().parseAsync(root,{binary:true,onlyVisible:true});
+ for(const o of hidden)o.visible=true;root.position.z=z;return glb;
+};
+document.getElementById('glb').onclick=async()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([await exportGLB()]));a.download='pom-fortress.glb';a.click();};
+Object.assign(window,{fortress:root,renderer,scene,camera,controls,animate});
+const clock=new T.Clock();let last=0;
+renderer.setAnimationLoop(()=>{
+ const t=clock.getElapsedTime(),dt=t-last;last=t;
+ // it walks forward over 20 units, then starts again
+ if(walking){root.position.z+=SPEED*Math.min(dt,.1);if(root.position.z>10)root.position.z-=20;}
+ const r=18+14*Math.sin(t*.21);player.position.set(Math.cos(t*.3)*r,1.2,root.position.z+Math.sin(t*.3)*r);
+ animate(t,{walking,target:chasing?player.position:null});controls.update();
+ if(shake>.01){camera.position.y+=Math.sin(t*90)*shake*.35;shake*=.9;}
+ renderer.render(scene,camera);
+});
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 const V=require('./lynx-flight.cjs');
 const RANGE=150,CONE=Math.cos(.8),ACQUIRE=1200,GRACE=700;
-const point=e=>({x:e.x,y:e.y+(e.siegeTank?1.4:.9),z:e.z});
+const point=e=>({x:e.x,y:e.y+(e.mechapom?6.2:e.siegeTank?1.4:.9),z:e.z});
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 function valid(e){return e&&e.hp>0&&!e.escaped&&e.online!==false;}
 function eligible(ship,target,blocked){if(!valid(target))return false;const p=point(target),delta={x:p.x-ship.x,y:p.y-ship.y,z:p.z-ship.z},d=V.length(delta);return d<RANGE&&V.dot(V.axes(ship).forward,V.unit(delta))>CONE&&!blocked(ship,p);}
