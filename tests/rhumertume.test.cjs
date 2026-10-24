@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {createRhumertume,pomify,pomifyFinal,progress,moods,parisParts}=require('../utils/rhumertume');
+const {createRhumertume,pomify,progress,moods,parisParts}=require('../utils/rhumertume');
 const memory=(data=null)=>({load:()=>data&&JSON.parse(JSON.stringify(data)),save:d=>{data=JSON.parse(JSON.stringify(d));}});
 const at=s=>Date.parse(s),HOUR=3600000;
 // pictures without canvas: their names tell what was drawn
@@ -14,12 +14,6 @@ test('words become pom with the stage, punctuation, links and mentions stay',()=
  assert.equal(pomify("Bonjour, l'ami ! Tu VIENS ? https://x.fr/a <@123> :smile:",1),"Pom, pom ! Pom POM ? https://x.fr/a <@123> :smile:");
  assert.equal(pomify('Rien ne change.',0),'Rien ne change.');
  assert.equal(pomify('un deux trois quatre',.5,(()=>{const r=[.1,.9,.2,.8];return()=>r.shift();})()),'pom deux pom quatre');
-});
-test('at the last stage one word in eight stays readable, with "...." here and there',()=>{
- const text='un deux trois quatre cinq six sept huit neuf dix onze douze treize quatorze quinze seize';
- const out=pomifyFinal(text,()=>.99).split(' ');
- assert.equal(out.length,16);assert.equal(out.filter(w=>w!=='pom').length,2);assert.equal(out[7],'huit');assert.equal(out[15],'seize');
- assert.match(pomifyFinal('un deux',()=>0),/\.\.\./);
 });
 test('30% of the words after an hour, 60% after 3h30, all of them after 7 hours',()=>{
  assert.equal(progress(0),0);
@@ -43,18 +37,27 @@ test('a day picked up after 13:00 gets no draw, an earlier one only times still 
  now=at('2026-10-22T09:30:00Z');await r.tick();
  assert.ok(store.load().schedule['2026-10-22'].every(m=>m>=11*60+30));
 });
-test('PomX, PompomX from 3h30, PomdeterX from 7 hours, each step announced once like a Pokémon evolution',async()=>{
+test('PomX, then one evolution only, after about 3h30, into a final form; announced once like a Pokémon evolution',async()=>{
  let now=at('2026-10-25T09:00:00Z');
- const {r,said}=setup({now:()=>now});
+ const {r,said}=setup({now:()=>now});   // random .5: the evolution at 3h30, the third final form (Pomdeter)
  await r.infect('Tita');said.length=0;
  assert.equal(r.nameOf('Tita'),'Pomtita');assert.equal(r.roleplay('Tita','Salut').avatarURL,'pom/Tita-1.png');
- now+=3.5*HOUR;await r.tick();await r.tick();
- assert.deepEqual(said,[{text:'Pomtita se transforme en Pompomtita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:['evolution Tita 1->2']}]);
- assert.equal(r.nameOf('Tita'),'Pompomtita');
- now+=3.5*HOUR;await r.tick();
- assert.deepEqual(said[1],{text:'Pompomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:['evolution Tita 2->3']});
+ now+=3.4*HOUR;await r.tick();assert.equal(said.length,0);assert.equal(r.level('Tita'),1);
+ now+=.2*HOUR;await r.tick();await r.tick();
+ assert.deepEqual(said,[{text:'Pomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:['evolution Tita 1->3']}]);
  assert.equal(r.roleplay('Tita','Salut').username,'Pomdetertita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
- await r.tick();assert.equal(said.length,2);
+ now+=20*HOUR;await r.tick();assert.equal(said.length,1);assert.equal(r.level('Tita'),3);
+});
+test('the five final forms, drawn evenly',async()=>{
+ for(const [random,name,level] of [[0,'Pom-d’aspitita',2],[.2,'Pompomtita',2],[.4,'Pomdetertita',3],[.6,'Pom-funèbretita',3],[.8,'Pomgaroutita',3]]){
+  let now=at('2026-10-25T09:00:00Z');const {r}=setup({now:()=>now,random:()=>random});
+  await r.infect('Tita');now+=8*HOUR;await r.tick();
+  assert.equal(r.nameOf('Tita'),name);assert.equal(r.level('Tita'),level);
+ }
+});
+test('one word in three becomes pom, for every pom and at all times',()=>{
+ const seq=[.1,.5,.9,.3,.34,.2];let i=0;
+ assert.equal(pomify('un deux trois quatre cinq six',1/3,()=>seq[i++]),'pom deux trois pom cinq pom');
 });
 test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',async()=>{
  let now=at('2026-10-25T09:00:00Z');
@@ -63,7 +66,7 @@ test('a pom speaks in a bubble, under its pom name; the healthy speak as usual',
  await r.infect('Tita');now+=8*HOUR;
  const m=await r.message('Tita','Bonjour tout le monde');
  assert.equal(m.content,'');assert.equal(m.username,'Pomdetertita');assert.equal(m.avatarURL,'pom/Tita-3.png');
- assert.equal(m.files[0].name,'bulle 3');assert.match(m.files[0].text,/pom/i);
+ assert.equal(m.files[0].name,'bulle 3');assert.equal(m.files[0].text,'Bonjour tout le monde');   // random .5: above one in three, no word changes
 });
 test('the gauges: capitals and "!" for rage, "?" and emojis for madness; pom, citrouille and full stops calm them',()=>{
  assert.ok(moods('JE VAIS TOUS VOUS MANGER !!!')[0]>=40);
@@ -80,7 +83,7 @@ test('the bite: now and then a pom bites someone who spoke lately, who may catch
  assert.equal(said[0].text,'Pomtita rentre dans une rage incontrôlable.\nPris·e de rage, Pomtita mord Kloe !');assert.deepEqual(said[0].files,['morsure Tita 1 Kloe 0']);
  assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,['evolution Kloe 0->1']);
  assert.ok(r.isInfected('Kloe'));
- const bites=()=>said.filter(x=>/rage incontrôlable/.test(x.text)).length;
+ const bites=()=>said.filter(x=>/rage incontrôlable|enfourche son aspirateur/.test(x.text)).length;   // a wizard pom's bite is a spell
  await r.message('Joshua','Coucou.');await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),1);   // no second bite
  await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),1);                                       // no third one that day
  await r.infect('Nial');await r.message('Nial','Pom.');await r.after('Nial');assert.equal(bites(),2);                // another pom still can
@@ -91,7 +94,7 @@ test('madness: the pom hurts itself',async()=>{
  const {r,said}=setup({now:()=>now,random:()=>.99});
  await r.infect('Nial');said.length=0;now+=6*HOUR;   // random .99: stage 2 at about 5h30
  for(let i=0;i<3;i++){await r.message('Nial','Hein ??? Quoi ??? 🎃🎃🎃🎃');await r.after('Nial');}
- assert.equal(said.length,1);assert.equal(said[0].text,'Pompomnial se met à sautiller partout sans raison apparente.');
+ assert.equal(said.length,1);assert.equal(said[0].text,'Pomgarounial se met à sautiller partout sans raison apparente.');   // random .99: the last final form
 });
 test('the sick stay sick after October 31, but nobody new falls ill',async()=>{
  let now=at('2026-10-31T10:00:00Z');
@@ -125,7 +128,7 @@ test('an evolution that cannot be announced does not hold back the cases of the 
   announce:async text=>{if(fail&&/se transforme/.test(text))throw Error('Discord');said.push(text);}});
  await r.tick();
  assert.equal(said.filter(t=>/semble/.test(t)).length,2);assert.ok(logs.some(l=>/evolution: Discord/.test(l)));
- fail=false;await r.tick();assert.ok(said.some(t=>/Pompomkloe se transforme/.test(t)));
+ fail=false;await r.tick();assert.ok(said.some(t=>/Pomkloe se transforme en Pomdeterkloe/.test(t)));
 });
 test('three poms besiege unassigned healthy characters once at the saved random daily time',async()=>{
  const said=[],sieges=[],t0=at('2026-10-20T08:00:00+02:00');let now=at('2026-10-20T09:00:00+02:00');
@@ -135,19 +138,20 @@ test('three poms besiege unassigned healthy characters once at the saved random 
   announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
  await r.tick();assert.equal(sieges.length,0);                       // before 10:00
  now=at('2026-10-20T18:00:00+02:00');await r.tick();
- assert.equal(sieges.length,1);assert.equal(sieges[0].outcome,'flee');assert.ok(sieges[0].attackers.every(a=>a.stage>=2));
+ assert.equal(sieges.length,1);assert.equal(sieges[0].outcome,'flee');assert.ok(sieges[0].attackers.every(a=>a.stage!==1));   // evolved poms (a picture: a stage, or a form's name)
  const intro=said.find(s=>/encerclent/.test(s.text));assert.deepEqual(intro.files,['siege.gif']);assert.match(intro.text,/acculé·es dos à dos/);
  const [escaped,...fallen]=sieges[0].defenders.map(d=>d.character);
  assert.ok(said.some(s=>s.text===`${escaped} parvient à s'enfuir… ${fallen.join(' et ')} tombent sous les morsures des poms.`));
  for(const c of fallen)assert.ok(r.isInfected(c));assert.ok(!r.isInfected(escaped));
  const before=said.length;await r.tick();assert.equal(sieges.length,1);assert.ok(said.slice(before).every(s=>!/encerclent/.test(s.text)));
 });
-test('stages 2 and 3 come within two hours of 3h30 and 7 hours, drawn for each patient',async()=>{
- for(const [random,second,third] of [[0,1.5,5],[.5,3.5,7],[.999,5.5,9]]){
-  let now=at('2026-10-26T09:00:00Z');const start=now,{r}=setup({now:()=>now,random:()=>random});
-  await r.infect('Nial');
-  const level=h=>{now=start+h*HOUR;return r.level('Nial');};
-  assert.equal(level(second-.05),1);assert.equal(level(second+.05),2);assert.equal(level(third-.05),2);assert.equal(level(third+.05),3);
+test('the evolution comes within two hours of 3h30, drawn for each patient, and only once',async()=>{
+ for(const [random,second] of [[0,1.5],[.5,3.5],[.999,5.5]]){
+  let now=at('2026-10-26T09:00:00Z');const start=now,{r,said}=setup({now:()=>now,random:()=>random});
+  await r.infect('Nial');said.length=0;
+  now=start+(second-.05)*HOUR;await r.tick();assert.equal(r.level('Nial'),1);
+  now=start+(second+.05)*HOUR;await r.tick();assert.ok(r.level('Nial')>1);
+  now=start+30*HOUR;await r.tick();assert.equal(said.filter(s=>/se transforme/.test(s.text)).length,1);
  }
 });
 test('a case cut short before its announcement is announced on the next tick, never kept silent',async()=>{
@@ -162,16 +166,15 @@ test('a case cut short before its announcement is announced on the next tick, ne
  assert.equal(store.load().pending.Anelace,undefined);assert.match(store.load().patients.Anelace.cause,/tirage du jour/);
 });
 
-test('garou evolution is picked once at stage three, persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>0,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');const initial=store.load();initial.patients.Tita.variant='pompom';store.save(initial);r=make();now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.ok(calls.includes('garou'));assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,1);});
-test("the second stage's other form: Pom-d'aspi, with its own picture and evolution, then the Pom funèbre",async()=>{
+test('a garou final form persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>.9,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');r=make();now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.ok(calls.includes('garou'));assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,1);});
+test("the wizard pom: Pom-d'aspi, with its own picture and evolution, for good",async()=>{
  let now=at('2026-10-26T09:00:00Z');const start=now;
- const {r,said}=setup({now:()=>now,random:()=>0});   // random 0: the wizard form, at the shortest times
+ const {r,said}=setup({now:()=>now,random:()=>0});   // random 0: the wizard form, at the shortest time
  await r.infect('Tita');said.length=0;
  now=start+2*3600000;await r.tick();
  assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.deepEqual(said.at(-1).files,['evolution Tita 1->aspi']);
  assert.equal((await r.message('Tita','Bonjour.')).avatarURL,'pom/Tita-aspi.png');
- now=start+5.5*3600000;await r.tick();
- assert.match(said.at(-1).text,/Pom-d’aspitita se transforme en Pom-funèbretita/);assert.deepEqual(said.at(-1).files,['evolution Tita aspi->funebre']);assert.equal(r.nameOf('Tita'),'Pom-funèbretita');
+ now=start+20*3600000;await r.tick();assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.equal(said.filter(s=>/se transforme/.test(s.text)).length,1);
 });
 test("a wizard pom's bite is a spell: the victim fades away and falls ill a few seconds later, or shrinks",async()=>{
  // healthy Kloe fades away (random 0: the wizard form, the bite, the contagion); an ill Kloe can only shrink
@@ -190,9 +193,9 @@ test("a wizard pom's bite is a spell: the victim fades away and falls ill a few 
   if(!ill)assert.ok(said.slice(intro+2).some(s=>/Kloe semble développer/.test(s.text)));
  }
 });
-test('a pom already shown at the usual second stage keeps the usual form at the third',async()=>{
+test('a pom shown at the second stage before this version keeps that form and evolves no more',async()=>{
  const start=at('2026-10-26T09:00:00Z');let now=start+6*3600000;
- const {r,said}=setup({now:()=>now,random:()=>0,cases:[],data:{infected:{Tita:start},patients:{Tita:{announced:2,rage:0,madness:0,updated:start,lastMadness:0,times:[2*3600000,5*3600000]}}}});
- await r.tick();
- assert.equal(r.nameOf('Tita'),'Pomdetertita');assert.ok(said.some(s=>s.text==='Pompomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)'&&s.files[0]==='evolution Tita 2->3'));
+ const {r,said}=setup({now:()=>now,random:()=>0,cases:[],data:{infected:{Tita:start},patients:{Tita:{announced:2,variant:'pompom',rage:0,madness:0,updated:start,lastMadness:0,times:[2*3600000,5*3600000]}}}});
+ await r.tick();now+=10*3600000;await r.tick();
+ assert.equal(r.nameOf('Tita'),'Pompomtita');assert.equal(r.level('Tita'),2);assert.ok(!said.some(s=>/se transforme/.test(s.text)));
 });

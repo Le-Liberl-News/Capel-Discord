@@ -1,10 +1,10 @@
 // Rhumertume (Halloween 2026): three times a day, at unpredictable times between 10:00 and 13:00 (Paris), one of the characters
 // of the healthy roster starts turning into a pom-tiron (at most one player character per Paris day); an administrator can also infect a character with /pomifier.
-// The illness belongs to the character, whoever plays it. In the roleplay chat its words become "pom" little by little
-// (30% after an hour, 60% after about 3h30, every word but one in eight after about 7 hours) and are shown in a Sky bubble; its
-// avatar is a pom wearing the character's hair, in three stages: Pomx at once, Pompomx after 3h30, Pomdeterx after 7 hours
-// (each patient's own times, drawn within two hours either side),
-// each step announced with a Pokémon-like evolution GIF. Now and then (once a day at most for each pom) a pom flies into a rage and bites
+// The illness belongs to the character, whoever plays it. In the roleplay chat one word in three becomes "pom", from the
+// first symptoms on and for good, and the words are shown in a Sky bubble; its avatar is a pom wearing the character's
+// hair, in two stages: the cute one, Pomx, at once, then after about 3h30 (each patient's own time, drawn within two hours
+// either side) a final form drawn among five (Pompomx, Pom-d'aspix, Pomdeterx, Pom-funèbrex, Pomgaroux), announced with a
+// Pokémon-like evolution GIF. Now and then (once a day at most for each pom) a pom flies into a rage and bites
 // whoever spoke lately, who may catch the illness. How the player writes feeds two gauges, rage (capitals, "!") and
 // madness ("?", emojis, which makes the pom hurt itself); "pom", "citrouille", "potiron" and plain full stops calm both. New cases stop after October 31; the sick stay sick.
 // Once a day at a saved random time from 10:00 to 23:00, three poms corner three healthy characters (utils/pomSiege.js);
@@ -14,13 +14,16 @@ const {weightedPick,weightedSample}=require('./pomSelection.cjs');
 const HOUR=3600000,LAST_DAY='2026-10-31';
 const WINDOW=[10*60,13*60];
 const CASES_PER_DAY=3,SPREAD_CASES_PER_DAY=3,MAX_CASES_PER_DAY=6;
-// stages 2 and 3 come after 3h30 and 7 hours, give or take two hours (drawn for each patient; the third at least an hour after the second)
+// the evolution comes after 3h30, give or take two hours (drawn for each patient; the second time is no longer used)
 const STAGE_TIMES=[3.5*HOUR,7*HOUR],STAGE_SPREAD=2*HOUR;
 const AVATAR_URL='https://leliberlnews.fr/activite/assets/sky/chat/pom-tiron.png';
 const PREFIX=['','Pom','Pompom','Pomdeter'];
-// the second stage has another form, the wizard pom « Pom-d'aspi » (drawn once for each patient, at that stage), whose
-// third stage is the « Pom funèbre »
-const ASPI="Pom-d’aspi",FUNEBRE='Pom-funèbre',ASPI_CHANCE=1/2;
+const ASPI="Pom-d’aspi",FUNEBRE='Pom-funèbre';
+// the final forms, one drawn at the evolution: [form, the stage its picture and strength belong to, kind]. The wizard
+// pom (« aspi ») is Pom-d'aspi at the second stage and Pom funèbre at the third
+const FINALS=[['aspi',2,'pom'],['pompom',2,'pom'],['pompom',3,'pom'],['aspi',3,'pom'],['pompom',3,'garou']];
+// the share of the words turned into "pom", the same for every pom at all times
+const POM_SHARE=1/3;
 const GAUGE_DECAY=8,ACTION_AT=70,AFTER_ACTION=35,CONTAGION=.3,RECENT=30*60000;
 // the bite: a chance on each message of a pom, until that pom has bitten once that day (Paris)
 const BITE_CHANCE=.25,BITES_PER_POM=1;
@@ -33,18 +36,12 @@ function pom(word){return word.length>1&&word===word.toLocaleUpperCase('fr')&&wo
 const words=(text,replace)=>String(text).split(PROTECTED).map((part,i)=>i%2?part:part.replace(WORD,replace)).join('');
 // Each word turns into "pom" with the given probability; links, mentions, emojis and punctuation are kept.
 function pomify(text,stage,random=Math.random){return words(text,word=>stage>=1||random()<stage?pom(word):word);}
-// The last stage: one word in eight stays readable, and the pom trails off "...." here and there.
-function pomifyFinal(text,random=Math.random){
- let n=0,keep=-1;
- return words(text,word=>{if(n%8===0)keep=n+Math.floor(random()*8);const out=n++===keep?word:pom(word);return random()<.22?out+['...','....','.....'][Math.floor(random()*3)]:out;});
-}
 // share of the words turned into "pom", time since the first symptoms
 function progress(elapsed,[second,third]=STAGE_TIMES){
  const points=[[0,0],[HOUR,.3],[second,.6],[third,1]];
  for(let i=1;i<points.length;i++){const [t0,s0]=points[i-1],[t1,s1]=points[i];if(elapsed<t1)return s0+(s1-s0)*Math.max(0,elapsed-t0)/(t1-t0);}
  return 1;
 }
-const levelOf=share=>share>=1?3:share>=.6?2:1;
 const count=(text,re)=>(String(text).match(re)||[]).length;
 // what a message adds to the gauges: [rage, madness]
 function moods(text){
@@ -73,7 +70,17 @@ function createRhumertume({store,now=()=>Date.now(),random=Math.random,character
  const drawnOn=date=>state.drawn[date]==null?[]:[].concat(state.drawn[date]).filter(Boolean);
  // 0 right after the first symptoms, 1 seven hours later; null when healthy
  function stage(character){const since=state.infected[character];return since==null?null:progress(now()-since,state.patients[character]?.times);}
- const level=character=>{const s=stage(character);return s==null?0:levelOf(s);};
+ // 1 (the cute pom) until its evolution time, then its final form's stage for good (the form drawn the first time it
+ // is needed); a pom shown at a later stage before this version stays there
+ function level(character){
+  const since=state.infected[character];if(since==null)return 0;
+  const p=state.patients[character];
+  if(!p?.final&&p?.announced>=2)return p.announced;
+  if(now()-since<(p?.times?.[0]??STAGE_TIMES[0]))return 1;
+  if(!p){const elapsed=now()-since;return elapsed>=STAGE_TIMES[1]?3:elapsed>=STAGE_TIMES[0]?2:1;}   // infected before patients were kept: its old stage
+  if(!p.final){const [variant,lvl,kind]=FINALS[Math.min(FINALS.length-1,Math.floor(random()*FINALS.length))];Object.assign(p,{variant,kind,final:lvl});save();}
+  return p.final;
+ }
  // Pomestelle, Pompomestelle, Pomdeterestelle: the character's name runs on, without its capital
 const aspi=character=>state.patients[character]?.variant==='aspi';
  // the stage's picture: 1, 2 or 3, or for the wizard forms 'aspi' (second stage) and 'funebre' (third)
@@ -133,13 +140,9 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  async function evolutions(){
   for(const character of Object.keys(state.infected)){
    const p=patient(character),lvl=level(character);
-   if(lvl<=p.announced)continue;
-   // the form is drawn on reaching the second stage; a pom already shown at that stage keeps the usual form
-   const legacyGround=!p.variant&&p.announced>=2;
-   if(lvl>=2&&!p.variant){p.variant=p.announced<2&&random()<ASPI_CHANCE?'aspi':'pompom';save();}
-   if(lvl===3&&!p.kind){p.kind=!aspi(character)&&!legacyGround&&random()<.25?'garou':'pom';save();}
+   if(lvl<=p.announced)continue;   // not yet, or announced already
    const army=Object.keys(state.infected).length;
-   await announceWith(`${nameOf(character,lvl-1)} se transforme en ${nameOf(character,lvl)}. L’armée des pom-tirons se renforce ! (${army} lieutenant${army>1?'s':''} pom-tirons)`,()=>pictures().renderEvolution(character,spriteOf(character,lvl-1),spriteOf(character,lvl)));
+   await announceWith(`${nameOf(character,1)} se transforme en ${nameOf(character,lvl)}. L’armée des pom-tirons se renforce ! (${army} lieutenant${army>1?'s':''} pom-tirons)`,()=>pictures().renderEvolution(character,spriteOf(character,1),spriteOf(character,lvl)));
    p.announced=lvl;save();
   }
  }
@@ -209,7 +212,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   if(state.infected[character])throw Error(`${character} est déjà atteint·e.`);
   if(!await catches(character,'/pomifier'))throw Error('Un personnage contrôlé par un joueur a déjà été pomifié aujourd’hui.');
  }
- const textOf=(character,text)=>level(character)===3?pomifyFinal(text,random):pomify(text,stage(character),random);
+ const textOf=(character,text)=>pomify(text,POM_SHARE,random);
  // the activity's roleplay: text, avatar and name only
  function roleplay(character,text){
   if(stage(character)==null)return null;
@@ -285,4 +288,4 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  return {tick,infect,stage,level,variant,nameOf,roleplay,message,after,handle,gauges:c=>state.patients[c]&&{rage:state.patients[c].rage,madness:state.patients[c].madness},
   isInfected:character=>stage(character)!=null,infected:()=>Object.keys(state.infected)};
 }
-module.exports={createRhumertume,pomify,pomifyFinal,progress,moods,parisParts,AVATAR_URL,LAST_DAY};
+module.exports={createRhumertume,pomify,progress,moods,parisParts,AVATAR_URL,LAST_DAY};
