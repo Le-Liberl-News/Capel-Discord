@@ -1,0 +1,18 @@
+# The activity's files on the website (published by activity/tools/publish-client.cjs).
+# The scenes (glTF, their buffers inline) and the JSON leave compressed: the Sanktheim forest goes from 13.7 MB to
+# about 1.6 MB. Pictures, sounds and scenes keep for an hour, then the browser asks again and is told whether they
+# changed (304); the client and its entry points are always checked.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE model/gltf+json application/json text/javascript application/javascript text/css text/plain image/svg+xml
+  <FilesMatch "\.(gltf|json|bin|js)$">
+    SetOutputFilter DEFLATE
+  </FilesMatch>
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(png|jpe?g|webp|gif|gltf|bin|json|ogg|mp3|wav|ttf|woff2?)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+  <FilesMatch "^(index\.php|api\.php|release\.json|bundle\.js)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

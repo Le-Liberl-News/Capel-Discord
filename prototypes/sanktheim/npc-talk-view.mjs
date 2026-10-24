@@ -6,5 +6,7 @@ export function createNpcTalkView({canvas,getState,getOwn,send,scale}){
  function down(e){if(e.button===2&&talk()){e.preventDefault();e.stopImmediatePropagation();}}
  function context(e){if(nearby()){e.preventDefault();e.stopImmediatePropagation();}}
  button.onclick=talk;document.addEventListener('keydown',key,true);canvas.addEventListener('pointerdown',down,true);canvas.addEventListener('contextmenu',context,true);
- return {update(){if(disposed)return;const s=nearby();button.hidden=!s;if(s)button.textContent='Parler à '+s.name+' · E / clic droit';},dispose(){disposed=true;button.remove();document.removeEventListener('keydown',key,true);canvas.removeEventListener('pointerdown',down,true);canvas.removeEventListener('contextmenu',context,true);}};
+ // pomgarou meat in hand and a hungry soldier: talking feeds them (wildlife.cjs)
+ const hunger=s=>{const at=getState().at;return Math.max(0,(s.hunger??100)-(at-(s.hungerAt??at))/86400000*100);};
+ return {update(){if(disposed)return;const s=nearby();button.hidden=!s;if(s){const h=hunger(s),feed=getOwn()?.meat>0&&h<75;button.textContent=(feed?'Nourrir '+s.name+' (faim '+Math.round(h)+' %)':'Parler à '+s.name)+' · E / clic droit';}},dispose(){disposed=true;button.remove();document.removeEventListener('keydown',key,true);canvas.removeEventListener('pointerdown',down,true);canvas.removeEventListener('contextmenu',context,true);}};
 }

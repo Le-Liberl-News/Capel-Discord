@@ -1,4 +1,6 @@
 const ATTACK=['Défendez la muraille ouest !','Ils sont trop nombreux !','Couvrez les cordes !','Les volants ! Il nous faut des tourelles !','Pour la reine Alicia !!','Ne les laissez pas entrer dans Zeiss !',"Mais d'où sortent toutes ces saloperies ?!",'On est submergés !'];
+// a soldier fed with pomgarou meat
+const FED=['Ah, enfin un vrai repas ! Merci !','Ça a un drôle de goût de pom... Mais ça cale, merci.',"De la viande de pomgarou ? J'ai trop faim pour poser des questions."];
 const REST=['Je sais pas combien de temps on va pouvoir tenir...','On a vraiment besoin de renforts.',"Y a déjà plus grand chose à manger. Va falloir songer à cuisiner un de ces poms si ça continue.","Vivement que ça soit à moi de faire la sieste, j'en peux plus.",'Aidios, je vous en prie... Si je revois une seule de ces boules de poil...','Je veux rentrer à la maison...','Mais que fait le général Morgan ?!'];
 const PREPARE=['Vous avez entendu ça ?',"C'est ces satanés pom-garous...",'Branle-bas de combat !'];
 const NIGHTMARE="Non... Non....m'approche pas, maudite bête !!! Ah, ouf... juste un cauchemar...";
@@ -10,6 +12,8 @@ function characterLines(s,state){
 }
 function interact(state,p,target,{scale=1,geometry=null}={}){
  const s=state.soldiers.find(s=>s.id===target);if(!p?.online||p.hp<=0||p.vehicleControl||p.lynxControl||p.pomControlled||!s||s.hp<=0)return {error:'Aucun garde disponible.'};if(s.sleeping)return {error:'Ce garde se repose.'};if(Math.hypot(p.x-s.x,p.z-s.z)>3.5*scale||Math.abs(p.y-s.y)>2*scale)return {error:'Approchez du garde.'};if(geometry?.sweep({x:p.x,y:p.y+.8*scale,z:p.z},{x:s.x,y:s.y+.8*scale,z:s.z},.05*scale))return {error:'Ce garde est derrière un obstacle.'};if(state.at<(p.nextTalk??0))return {error:'Un instant...'};
- p.nextTalk=state.at+1500;p.dialogueVisits??={};const index=p.dialogueVisits[s.id]??0;p.dialogueVisits[s.id]=index+1;return {ok:true,dialogue:{author:s.id,character:s.name,text:characterLines(s,state)[index%3]}};
+ p.nextTalk=state.at+1500;
+ // a hungry soldier and pomgarou meat in hand: the defender feeds them
+ const fed=require('./wildlife.cjs').feed(state,p,s);if(fed!=null)return {ok:true,fed:true,dialogue:{author:s.id,character:s.name,text:FED[Math.floor(fed)%FED.length]}};p.dialogueVisits??={};const index=p.dialogueVisits[s.id]??0;p.dialogueVisits[s.id]=index+1;return {ok:true,dialogue:{author:s.id,character:s.name,text:characterLines(s,state)[index%3]}};
 }
 module.exports={updateDialogue,interact,characterLines,ATTACK,REST,NIGHTMARE};
