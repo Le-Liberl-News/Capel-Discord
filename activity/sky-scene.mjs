@@ -1399,7 +1399,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       jumpDiagnostic('world',{serverTime:result.health?.serverTime,confirmed:result.health?.jump,action:result.actionResult,serverPosition:result.position,lastServerLanding:result.health?.lastLandedJump});
       if(canJump){jumpClockOffset=syncJumpClock(result);if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects?.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
         if(confirmed){if(confirmed.id!==landedJump&&!(venue?.surfaceJumps&&!surfaceJumpClock.acceptsConfirmation(confirmed,latestJumpIntent))){if(!venue?.surfaceJumps||localJump?.id!==confirmed.id)localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}}
-        else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
+        // the server landed this very jump a moment before us: we finish its arc ourselves (same landing) instead of
+        // jumping to where the server is now, already landed and walking on
+        else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)&&!(venue?.surfaceJumps&&localJump.trajectory&&result.health?.lastLandedJump===localJump.id&&Date.now()+jumpClockOffset<localJump.started+localJump.trajectory.at(-1).t+400)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
       }
       duelIntro?.receive(result.duel?.result?null:result.duel,result.health?.serverTime);
       duelFinish?.receive(result.duel,localId,result.health?.serverTime);
