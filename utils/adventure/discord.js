@@ -10,6 +10,7 @@
 const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('discord.js');
 const path=require('node:path'),fs=require('node:fs');
 const {createAdventure}=require('./engine');
+const {renderAnimation}=require('./animations');
 const FILES=path.join(__dirname,'../../rpg/data/aventure');
 const BUTTON='aventure:jouer',LIMIT=1900;
 // Discord refuses messages over 2000 characters: cut between paragraphs, then lines, then words
@@ -24,7 +25,7 @@ function chunks(text){
 function createAdventureDiscord({client,data,store,channelId,closingChannelId,allowed=[],files=FILES,log=console.error}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
- state.logs??={};state.names??={};
+ state.logs??={};state.names??={};state.won??=[];
  let version=0;   // bumped on every change, so the platform only gets the games when they moved
  const save=()=>{version++;store.save(state);};
  const LOG_SIZE=120;
@@ -32,7 +33,7 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
  function note(id,kind,text){
   if(!text)return;
   const lines=state.logs[id]??=[];
-  lines.push({at:Date.now(),kind,text:String(text).slice(0,4000)});
+  lines.push({at:Date.now(),kind,text:String(text).slice(0,4000),room:state.players[id]?.room});
   if(lines.length>LOG_SIZE)lines.splice(0,lines.length-LOG_SIZE);
  }
  const replyText=result=>result.replies.filter(Boolean).join('\n\n');
@@ -44,18 +45,37 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,al
   const image=(result.moved||result.look)&&game.room(player.room)?.image;
   const file=image&&fs.existsSync(path.join(files,image))?{attachment:path.join(files,image),name:path.basename(image)}:null;
   if(image&&!file)log('Aventure, image absente :',image);
-  for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&file?{files:[file]}:{}),allowedMentions:{parse:[]}});
-  if(!parts.length&&file)await channel.send({files:[file]});
+  // an action's animation (the cards dealt…), drawn from what the player said; the text goes without it if it fails
+  let animation=null;
+  if(result.animation){try{animation=await renderAnimation(result.animation.name,result.animation.words);}catch(e){log('Aventure, animation :',result.animation.name,e.message);}}
+  const attached=[file,animation].filter(Boolean);
+  for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&attached.length?{files:attached}:{}),allowedMentions:{parse:[]}});
+  if(!parts.length&&attached.length)await channel.send({files:attached});
  }
+ const tell=async(id,content,what)=>{
+  if(!content)return;
+  try{const user=await client.users.fetch(id);await user.send({content,allowedMentions:{parse:[]}});note(id,'reply',content);}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
+ };
+ // the final room: the adventure ends for everyone once `final.players` players stand in it (players of any games,
+ // they do not need to have played together); until then, those who arrived wait and hear of each newcomer.
+ // Arriving after the end still gets the victory.
  async function reach(userId){
   if(state.reached.includes(userId))return;
   state.reached.push(userId);save();
-  const need=data.final?.players||1;
-  if(state.done||state.reached.length<need)return;
-  state.done=true;save();
-  for(const id of state.reached){
-   try{const user=await client.users.fetch(id);await user.send({content:data.final.victory,allowedMentions:{parse:[]}});}catch(e){log('Aventure, victoire :',id,e.code??e);}
+  const need=data.final?.players||1,count=state.reached.length;
+  // a win is told once to each player, even one who starts over after the end
+  const win=async id=>{if(state.won.includes(id))return;state.won.push(id);await tell(id,data.final.victory,'victoire');};
+  if(state.done){await win(userId);save();return;}
+  if(count<need){
+   const waiting=(data.messages?.waiting||'Il faut être {total} dans cette salle pour achever l’aventure : vous êtes {n} pour l’instant. Attendez vos compagnons…')
+    .replaceAll('{n}',String(count)).replaceAll('{total}',String(need));
+   for(const id of state.reached)await tell(id,id===userId?waiting:(data.messages?.joined||'Un compagnon vous a rejoint ({n}/{total}).').replaceAll('{n}',String(count)).replaceAll('{total}',String(need)),'attente');
+   save();
+   return;
   }
+  state.done=true;save();
+  for(const id of state.reached)await win(id);
+  save();
   if(data.final.closing&&closingChannelId){
    try{const channel=await client.channels.fetch(closingChannelId);await channel.send({content:data.final.closing,allowedMentions:{parse:[]}});}catch(e){log('Aventure, clôture :',e.code??e);}
   }

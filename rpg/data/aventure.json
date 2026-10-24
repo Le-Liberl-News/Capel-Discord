@@ -1500,7 +1500,8 @@
       "effect": [
         "escalier_decouvert"
       ],
-      "text": "Une partie du mur ouest commence à trembler puis s'effondre, révélant un escalier."
+      "text": "Une partie du mur ouest commence à trembler puis s'effondre, révélant un escalier.",
+      "animation": "cartes"
     },
     {
       "place": [
@@ -1511,7 +1512,8 @@
       "mustnot": [
         "escalier_decouvert"
       ],
-      "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet. Il va falloir tenter une autre distribution."
+      "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet. Il va falloir tenter une autre distribution.",
+      "animation": "cartes"
     },
     {
       "place": [
@@ -3173,7 +3175,8 @@
       "noun": [
         "1-100-20-13"
       ],
-      "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet.\nPourtant, vous êtes certain d'avoir la solution sur le bout de la langue."
+      "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet.\nPourtant, vous êtes certain d'avoir la solution sur le bout de la langue.",
+      "animation": "cartes"
     },
     {
       "place": [

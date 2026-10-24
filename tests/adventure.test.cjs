@@ -110,7 +110,8 @@ test('each exchange is kept for the platform, and a hint written there is sent i
  assert.ok(adv.version()>before);
  const [game]=adv.snapshot();
  assert.equal(game.id,'123456');assert.equal(game.name,'Twn');assert.equal(game.state.room,'2');
- assert.deepEqual(game.log.map(l=>l.kind),['reply','command','reply']);assert.equal(game.log[1].text,'nord');
+ assert.deepEqual(game.log.map(l=>l.kind),['reply','command','reply','reply']);assert.equal(game.log[1].text,'nord');
+ assert.match(game.log[3].text,/Il faut être 2/);assert.equal(game.log[2].room,'2');
  await adv.hint('123456','Cherchez la chatière.');
  assert.match(sent.dm.at(-1)[1].content,/Indice.*Cherchez la chatière\./);
  assert.equal(adv.snapshot()[0].log.at(-1).kind,'hint');
@@ -126,4 +127,44 @@ test('the sync sends the games once they changed and delivers the hints, reporti
  await sync.tick();await sync.tick();sync.stop();
  assert.equal(calls[0].players.length,1);assert.equal(calls[1].players,undefined);
  assert.deepEqual(delivered,['Indice']);assert.deepEqual(calls[1].failed,[{id:8,error:'50007'}]);
+});
+test('an elided letter goes with its apostrophe, and numbers said in a row make one word',()=>{
+ assert.deepEqual(words("S'asseoir sur la chaise"),['asseoir','chaise']);
+ assert.deepEqual(words('s'),['s']);
+ assert.deepEqual(words('distribuer 20, 13, 1, 100'),['distribuer','20-13-1-100']);
+ assert.deepEqual(words('distribuer 20 13-1 100'),['distribuer','20-13-1-100']);
+ const game=createAdventure({start:1,rooms:[{id:1,description:'Salle.',exits:{sud:1}}],actions:[{place:[1],verb:"s'asseoir",noun:['chaise'],text:'Assis.'},{place:[1],verb:'distribuer',noun:['1-2-3-4'],text:'Bravo.',animation:'cartes'}]});
+ const s=game.fresh();
+ assert.equal(game.handle(s,"s'asseoir sur la chaise").replies[0],'Assis.');
+ const dealt=game.handle(s,'distribuer 1, 2, 3, 4');
+ assert.equal(dealt.replies[0],'Bravo.');assert.deepEqual(dealt.animation,{name:'cartes',words:['1-2-3-4']});
+});
+test('an action marked "alone" answers the verb alone; another one without noun answers the verb with anything else',()=>{
+ const game=createAdventure({start:1,rooms:[{id:1,description:'Salle.'}],actions:[
+  {place:[1],verb:'regarder',noun:[],text:'Rien de tel ici.'},{place:[1],verb:'regarder',noun:[],alone:true,text:'Une pièce vide.'},
+  {place:[1],verb:'regarder',noun:['porte'],text:'Une porte.'}]});
+ const s=game.fresh();
+ assert.equal(game.handle(s,'regarder').replies[0],'Une pièce vide.');
+ assert.equal(game.handle(s,'regarder la table').replies[0],'Rien de tel ici.');
+ assert.equal(game.handle(s,'regarder la porte').replies[0],'Une porte.');
+});
+test('the cards are dealt in a GIF',async()=>{
+ const {renderAnimation}=require('../utils/adventure/animations');
+ const gif=await renderAnimation('cartes',['20-13-1-100']);
+ assert.equal(gif.name,'distribution.gif');assert.equal(gif.attachment.subarray(0,6).toString(),'GIF89a');
+ assert.equal(await renderAnimation('cartes',[]),null);
+ await assert.rejects(renderAnimation('rien',[]),/inconnue/);
+});
+test('in the final room, players wait for the others; one arriving after the end still wins',async()=>{
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:2,victory:'Victoire !',closing:'Fin.'}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c',closingChannelId:'rp'});
+ for(const id of ['a','b','c'])await adv.handle(button(user(id),true).i);
+ const go=async id=>{adv.message(dm(user(id),'nord'));for(let i=0;i<30;i++)await tick();};
+ await go('a');
+ assert.ok(sent.dm.some(([id,m])=>id==='a'&&/Il faut être 2.*vous êtes 1/.test(m.content)));
+ await go('b');
+ assert.equal(sent.dm.filter(([,m])=>m.content==='Victoire !').length,2);assert.equal(sent.channels.rp.length,1);
+ await go('c');
+ assert.ok(sent.dm.some(([id,m])=>id==='c'&&m.content==='Victoire !'));assert.equal(sent.channels.rp.length,1);
 });

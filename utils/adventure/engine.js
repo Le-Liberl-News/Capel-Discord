@@ -7,10 +7,18 @@
 const STOPWORDS=new Set(['le','la','les','l','un','une','des','du','de','d','au','aux','a','vers','sur','dans','avec','en','et','ce','cet','cette','ces','mon','ma','mes','son','sa','ses','y','par']);
 const DEFAULT_DIRECTIONS={nord:['n','nord'],sud:['s','sud'],est:['e','est'],ouest:['o','ouest'],haut:['monter','haut','h'],bas:['descendre','bas','b']};
 const DEFAULT_COMMANDS={inventaire:['inventaire','inv','i'],regarder:['regarder','regarde','r','observer'],aide:['aide','help','?'],aller:['aller','va','vais','marcher','avancer','entrer','entre','go']};
-// "Ouvre-la porte, avec l'énorme clé !" -> ['ouvre','porte','enorme','cle'] (no accents, no articles)
+// "Ouvre la porte, avec l'énorme Clé !" -> ['ouvre','porte','enorme','cle'] (no accents, no articles); an elided
+// letter goes with its apostrophe ("s'asseoir" -> 'asseoir', not "s" for south); a hyphen stays in its word; numbers
+// said in a row make one word, whatever separates them ("20, 13 1-100" -> '20-13-1-100')
 function words(text){
- return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[^a-z0-9?\s-]/g,' ')
+ const list=String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(?:qu|[a-z])['’]/g,'').replace(/[’']/g,' ').replace(/[^a-z0-9?\s-]/g,' ')
   .split(/\s+/).filter(w=>w&&!STOPWORDS.has(w));
+ const out=[];
+ for(const word of list){
+  if(/^\d+(?:-\d+)*$/.test(word)&&out.length&&/^\d+(?:-\d+)*$/.test(out[out.length-1]))out[out.length-1]+='-'+word;
+  else out.push(word);
+ }
+ return out;
 }
 const norm=w=>words(w).join(' ');
 function createAdventure(data){
@@ -60,7 +68,9 @@ function createAdventure(data){
   return (data.actions||[]).filter(a=>norm(a.verb)===verb||verbs.get(norm(a.verb))===verb)
    .filter(a=>{const places=(a.place||[0]).map(String);return places.includes('0')||places.includes(state.room);})
    .filter(a=>(a.noun||[]).every(n=>said.includes(nouns.get(norm(n))??norm(n))))
-   .sort((a,b)=>(b.noun||[]).length-(a.noun||[]).length);
+   // "alone": only when nothing follows the verb ("regarder" alone, not "regarder truc"), and then before the others
+   .filter(a=>!(a.alone&&said.length))
+   .sort((a,b)=>(b.noun||[]).length-(a.noun||[]).length||(b.alone?1:0)-(a.alone?1:0));
  }
  function handle(state,text){
   const w=words(text);
@@ -76,8 +86,10 @@ function createAdventure(data){
    const done=list.find(a=>holds(state,a));
    if(!done)return {replies:[list.find(a=>a.fail)?.fail??messages.fail]};
    apply(state,done);
-   if(done.move!=null)return enter(state,done.move,done.text);
-   return {replies:[done.text||messages.fail]};
+   // "animation": a picture made from what was said (utils/adventure/animations.js), sent with the reply
+   const animation=done.animation?{name:done.animation,words:said.slice(1)}:undefined;
+   if(done.move!=null)return {...enter(state,done.move,done.text),animation};
+   return {replies:[done.text||messages.fail],animation};
   }
   if(direction)return go(state,direction);
   return {replies:[messages.unknown]};
