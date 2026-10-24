@@ -51,6 +51,25 @@ def read(index):
     a=data['accessors'][index];v=data['bufferViews'][a['bufferView']]
     n={'SCALAR':1,'VEC2':2,'VEC3':3,'VEC4':4}[a['type']];fmt={5126:'f',5123:'H',5125:'I',5121:'B'}[a['componentType']]
     return [struct.unpack_from('<'+fmt*n,buffer,v.get('byteOffset',0)+a.get('byteOffset',0)+j*v.get('byteStride',struct.calcsize(fmt)*n)) for j in range(a['count'])]
+# Replace the two original tall torch poles with Third/u41ev00 at runtime.
+removed_torch_triangles=0
+for native_mesh in data['meshes']:
+    kept_primitives=[]
+    for primitive in native_mesh['primitives']:
+        ps=read(primitive['attributes']['POSITION']);ids=[v[0] for v in read(primitive['indices'])] if 'indices' in primitive else list(range(len(ps)));kept=[]
+        for j in range(0,len(ids),3):
+            tri=ids[j:j+3]
+            pole=any(all(abs(ps[k][0]-x)<.8 and abs(ps[k][2]+10)<.8 and 11.85<ps[k][1]<16.8 for k in tri) for x in [19.200029,27.00003])
+            if pole:removed_torch_triangles+=1
+            else:kept.extend(tri)
+        if not kept:continue
+        if len(kept)!=len(ids):
+            while len(buffer)%4:buffer.append(0)
+            offset=len(buffer);buffer.extend(struct.pack('<'+'I'*len(kept),*kept));vi=len(data['bufferViews']);data['bufferViews'].append(dict(buffer=0,byteOffset=offset,byteLength=len(kept)*4,target=34963));primitive['indices']=len(data['accessors']);data['accessors'].append(dict(bufferView=vi,componentType=5125,count=len(kept),type='SCALAR',min=[min(kept)],max=[max(kept)]))
+        kept_primitives.append(primitive)
+    native_mesh['primitives']=kept_primitives
+print('Replaced native torch triangles:',removed_torch_triangles)
+
 def clip(poly,axis,bound,greater):
     result=[]
     for a,b in zip(poly,poly[1:]+poly[:1]):

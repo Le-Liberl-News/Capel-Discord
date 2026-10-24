@@ -1,0 +1,6 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),drive=require('./vehicle-drive.cjs');
+const initial=()=>({x:0,y:0,z:0,yaw:0,speed:0,pilot:'player'});
+test('held throttle keeps moving during a five second packet gap',()=>{const p=drive.createPrediction();p.receive(initial());let previous=p.sample({forward:1,side:0},1/60);for(let i=0;i<300;i++){const next=p.sample({forward:1,side:0},1/60);assert.ok(next.z<previous.z);assert.ok(Math.abs(next.z-previous.z)<.31);previous=next;}});
+test('snapshot correction preserves visible pose without a teleport',()=>{const p=drive.createPrediction();p.receive(initial());let shown;for(let i=0;i<120;i++)shown=p.sample({forward:1,side:0},1/60);p.receive({...initial(),z:-4,speed:12});const next=p.sample({forward:1,side:0},0);assert.ok(Math.abs(next.z-shown.z)<1e-9);});
+test('steering responds before another network snapshot',()=>{const p=drive.createPrediction();p.receive({...initial(),speed:15});let next;for(let i=0;i<30;i++)next=p.sample({forward:1,side:1},1/60);assert.ok(next.yaw<-.3);assert.ok(next.x>0);});
+test('collision prevents prediction crossing an obstacle',()=>{const v=initial();drive.advance(v,{forward:1,side:0},5,(from,q)=>q.z< -2?null:q);assert.ok(v.z>=-2);});
