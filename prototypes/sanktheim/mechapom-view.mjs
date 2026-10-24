@@ -13,7 +13,7 @@ export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds})
   await Promise.all([...TEXTURES.map(async name=>{textures[name]=await loader.loadAsync(asset(`/assets/siege/pom-fortress/${name}.png`));}),
    loader.loadAsync(asset('/assets/sky/effects/fire-frames.png')).then(map=>{map.colorSpace=T.SRGBColorSpace;textures.fire=fireMap=map;})]);
   const missile=await loadNativeProp(T,asset,'missile',.4).catch(()=>null);
-  const fortress=createPomFortress(T,{textures,missile,missileSpeed:70*scale,autoFire:false,onStep:(leg,at)=>onShake(at,.35),onMissile:at=>sounds?.play('don-explosion',{gain:.8,position:at})});
+  const fortress=createPomFortress(T,{textures,missile,missileSpeed:70*scale,autoFire:false,lights:false,onStep:(leg,at)=>onShake(at,.35),onMissile:at=>sounds?.play('don-explosion',{gain:.8,position:at})});
   fortress.root.scale.setScalar(scale*SIZE);
   scene.add(fortress.root,fortress.effects);
   return fortress;

@@ -22,7 +22,9 @@
 // itself (not the fortress: they leave it), and onMissile(worldPosition) is called where each one bursts.
 export const TEXTURES=['plates','panels','hatch','grille'],FIRE_REACH=26,LIGHT_REACH=45,MISSILE_REACH=70;
 
-export function createPomFortress(T,{seed=7,textures={},missile=null,missileSpeed=16,autoFire=true,onStep=()=>{},onMissile=()=>{}}={}){
+// lights: real spotlights in its headlights; a scene already running recompiles every material when lights are
+// added, so the game goes without them (the beams stay)
+export function createPomFortress(T,{seed=7,textures={},missile=null,missileSpeed=16,autoFire=true,lights=true,onStep=()=>{},onMissile=()=>{}}={}){
  const rng=seeded(seed),pick=list=>list[Math.floor(rng()*list.length)],jitter=a=>(rng()*2-1)*a;
  const root=new T.Group();root.name='pom-fortress';
  const body=new T.Group();body.name='body';root.add(body);
@@ -155,8 +157,8 @@ export function createPomFortress(T,{seed=7,textures={},missile=null,missileSpee
    // the beam, and its light
    const cone=new T.ConeGeometry(5,30,10,1,true);cone.translate(0,-15,0);cone.rotateX(-Math.PI/2);
    const shaft=effect(mesh(cone,beamMaterial,'beam',eye));shaft.position.z=.75;shaft.rotation.x=.14;
-   const light=effect(new T.SpotLight(0xff2a18,450,90,.32,.6,1.4));light.name='headlight';light.position.z=.8;eye.add(light);
-   light.target.position.set(0,-4,30);eye.add(light.target);
+   if(lights){const light=effect(new T.SpotLight(0xff2a18,450,90,.32,.6,1.4));light.name='headlight';light.position.z=.8;eye.add(light);
+    light.target.position.set(0,-4,30);eye.add(light.target);}
    eyes.push({eye,phase:s*.35,aim:new T.Quaternion()});
   }
  }

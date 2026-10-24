@@ -1350,7 +1350,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       await setAvatar({ ...spawn, ...player });
     },
     async sync(players) {
-      const present = new Set([localId]);
+      // the others' avatars are set side by side: a crowd of new characters (a wave joined in its midst) waits for
+      // the slowest picture once, not for each in turn
+      const present = new Set([localId]),others=[];
       for (const player of players) {
         const before=avatars.get(player.id);if(!venue?.localDamageOnly&&before?.hp>0&&player.hp>before.hp&&!player.silentHealing)damageEffects.heal(player.id,player.hp-before.hp);
         const lost=damageAmount(before,player);
@@ -1368,9 +1370,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
           continue;
         }
         present.add(player.id);
-        await setAvatar(player);
-        const updated=avatars.get(player.id);if(updated){updated.damageSequence=player.damageSequence??0;updated.damageEvents=player.damageEvents;}
+        others.push(setAvatar(player).then(()=>{const updated=avatars.get(player.id);if(updated){updated.damageSequence=player.damageSequence??0;updated.damageEvents=player.damageEvents;}}));
       }
+      await Promise.all(others);
       for (const [id, avatar] of avatars)
         if (!present.has(id)) {
           removeAvatar(avatar);
