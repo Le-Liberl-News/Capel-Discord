@@ -68,7 +68,7 @@ async function renderFortressReport(summary,{demo=false}={}){
   ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,bx+bw/2,by+1);
  }
  // the legend, bottom left
- const rows=[...REGIONS.map(([,label,color])=>({label,draw:(x,y)=>{ctx.fillStyle=color;ctx.fillRect(x-7,y-7,14,14);}})),...SYMBOLS.map(([kind,label,color])=>({label,draw:(x,y)=>symbol(ctx,kind,color,x,y,7)})),
+ const rows=[...REGIONS.map(([,label,color])=>({label,draw:(x,y)=>{ctx.fillStyle=color;ctx.fillRect(x-7,y-7,14,14);}})),...SYMBOLS.map(([kind,label,color])=>({label:kind==='auto'&&summary.autoTurretKills!=null?label+' · '+summary.autoTurretKills+' victime'+(summary.autoTurretKills>1?'s':''):label,draw:(x,y)=>symbol(ctx,kind,color,x,y,7)})),
   ...(m?[{label:'Forteresse Mechapom',draw:(x,y)=>drawMechapom(ctx,{x:0,z:0,heading:0},()=>[x,y],7)},{label:'Sillage brûlé',draw:(x,y)=>{ctx.strokeStyle='#ffb048';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-9,y);ctx.lineTo(x+9,y);ctx.stroke();}}]:[])];
  const half=Math.ceil(rows.length/2),lw=380,lh=half*22+18,lx=16,ly=HEADER+height-lh-16;
  ctx.fillStyle='rgba(16,27,35,.82)';ctx.fillRect(lx,ly,lw,lh);ctx.strokeStyle='#b39153';ctx.lineWidth=1;ctx.strokeRect(lx,ly,lw,lh);
