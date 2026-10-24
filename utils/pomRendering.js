@@ -59,6 +59,22 @@ function bubble(x,tex,tail,height,dx=0,dy=0){
  x.save();x.translate(LEFT+4+dx-tw,h/2-th/2+dy);x.translate(0,th);x.scale(1,-1);x.translate(tw,0);x.rotate(Math.PI/2);x.drawImage(tail,0,0,th,tw);x.restore();
  return {h,ox:LEFT+24+dx,oy:25+dy};
 }
+// the pictures joined to the message, under the words, in the bubble: as wide as the text at most, 360 px high at
+// most, one under the other (a GIF: its first frame)
+const PICTURE_W=W-LEFT-54,PICTURE_H=360,PICTURE_GAP=10;
+async function joined(images=[]){
+ const out=[];
+ for(const buffer of images){try{const picture=await loadImage(buffer),k=Math.min(1,PICTURE_W/picture.width,PICTURE_H/picture.height);
+  out.push({picture,w:Math.max(1,Math.round(picture.width*k)),h:Math.max(1,Math.round(picture.height*k))});}catch{}}
+ return out;
+}
+// the words' height and the pictures': the bubble's content
+function content(list,height,pictures){
+ const words=list.length?height:0;let y=words;
+ const placed=pictures.map(p=>{y+=y?PICTURE_GAP:0;const at={...p,y};y+=p.h;return at;});
+ return {height:Math.max(y,LINE),placed};
+}
+function drawPictures(x,placed,b){for(const p of placed)x.drawImage(p.picture,b.ox,b.oy+p.y,p.w,p.h);}
 function text(x,word,px,py,size,fill,shade='#000'){x.font=font(size);x.textBaseline='top';x.fillStyle=shade;x.fillText(word,px+1,py+2);x.fillStyle=fill;x.fillText(word,px,py);}
 function seeded(seed){let s=seed>>>0||1;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0,(s^s>>>14)>>>0)/4294967296);}
 // one GIF on a transparent background; each frame quantized on its own; once=true: no loop extension (plays once).
@@ -81,17 +97,20 @@ function encode(frames,delays,{once=false}={}){
  });
  gif.finish();return Buffer.from(gif.bytes());
 }
-async function renderBubble(message,stage,seed=Date.now()){
+async function renderBubble(message,stage,seed=Date.now(),images=[]){
  const {frame,tail,inverted}=await load(),list=words(message),probe=createCanvas(10,10).getContext('2d'),pictures=await emojiPictures(list);
+ const attached=await joined(images);
  if(stage<=1){
-  const {lines,height}=layout(probe,list,W-LEFT-54,0,pictures);const c=createCanvas(W,height+64),x=c.getContext('2d');
+  const {lines,height:textH}=layout(probe,list,W-LEFT-54,0,pictures),{height,placed}=content(list,textH,attached);
+  const c=createCanvas(W,height+64),x=c.getContext('2d');
   const b=bubble(x,frame,tail,height);for(const [w,px,py] of lines)put(x,pictures,w,b.ox+px,b.oy+py,t=>text(x,t,b.ox+px,b.oy+py,24,'#fff'));
+  drawPictures(x,placed,b);
   const img=x.getImageData(0,0,c.width,c.height);flatten(img.data);x.putImageData(img,0,0);   // the same opaque bubble as the GIFs
   return {attachment:c.toBuffer('image/png'),name:'pom.png'};
  }
  const rng=seeded(seed),frames=[];
  if(stage===2){
-  const {lines,height}=layout(probe,list,W-LEFT-54,30,pictures);
+  const {lines,height:textH}=layout(probe,list,W-LEFT-54,30,pictures),{height,placed}=content(list,textH,attached);
   for(let f=0;f<10;f++){
    const c=createCanvas(W,height+66),x=c.getContext('2d');
    const sx=Math.round(rng()*6-3),sy=Math.round(rng()*4-2),b=bubble(x,frame,tail,height,sx,sy);
@@ -100,14 +119,16 @@ async function renderBubble(message,stage,seed=Date.now()){
     else if(isAngry(w))text(x,w,b.ox+px+Math.round(rng()*4-2),b.oy+py-3+Math.round(rng()*3-2),24+Math.round(2+rng()*4),'#ff6046');
     else text(x,w,b.ox+px,b.oy+py,24,'#fff');
    }
+   drawPictures(x,placed,b);
    frames.push(c);
   }
   return {attachment:encode(frames,70),name:'pom.gif'};
  }
- const {lines,height}=layout(probe,list,W-LEFT-54,0,pictures);
+ const {lines,height:textH}=layout(probe,list,W-LEFT-54,0,pictures),{height,placed}=content(list,textH,attached);
  for(let f=0;f<14;f++){
   const c=createCanvas(W,height+66),x=c.getContext('2d');
   const b=bubble(x,inverted,tail,height,Math.round(rng()*4-2));
+  drawPictures(x,placed,b);
   for(const [w,px,py] of lines){
    if(w.match(EMOJI)){put(x,pictures,w,b.ox+px,b.oy+py,t=>text(x,t,b.ox+px,b.oy+py,24,'#18081e','#fff5e6'));continue;}
    const core=w.replace(/[.!?…,\u00a0]/g,''),legible=core&&core===core.toLocaleUpperCase('fr')&&!/POM/.test(core);
