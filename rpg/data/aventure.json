@@ -26,7 +26,10 @@
           "must": [
             "chatiere_vue"
           ],
-          "fail": "Vous n'arrivez pas à atteindre la poignée de la porte. Elle est trop haute."
+          "fail": "Vous n'arrivez pas à atteindre la poignée de la porte. Elle est trop haute.",
+          "effect": [
+            "entree_effectuee"
+          ]
         }
       },
       "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
@@ -412,7 +415,16 @@
       "name": "Couloirs infinis",
       "exits": {
         "nord": 15,
-        "sud": 17,
+        "sud": {
+          "to": 17,
+          "must": [
+            "couloir_ouvert"
+          ],
+          "effect": [
+            "fin_du_jeu_proche"
+          ],
+          "text": "Vous ne devriez pas être bloqué ici. C'est un bug, signalez-le."
+        },
         "ouest": 20,
         "est": 20
       },
@@ -744,7 +756,10 @@
       "noun": [
         "chatiere"
       ],
-      "move": 2
+      "move": 2,
+      "effect": [
+        "entree_effectuee"
+      ]
     },
     {
       "place": [
@@ -873,13 +888,15 @@
       ],
       "verb": "regarder",
       "noun": [
-        "porte",
         "est"
       ],
       "mustnot": [
         "bibliotheque_ouverte"
       ],
-      "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)"
+      "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)",
+      "effect": [
+        "cadenas_vu"
+      ]
     },
     {
       "place": [
@@ -1032,7 +1049,10 @@
       ],
       "verb": "regarder",
       "noun": [],
-      "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considérés comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nDeux portes sont ouvertes : une vers l'ouest et une vers le nord. La troisième porte à l'est est fermée par un cadenas."
+      "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considérés comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nDeux portes sont ouvertes : une vers l'ouest et une vers le nord. Une troisième porte à l'est est fermée par un cadenas.",
+      "effect": [
+        "cadenas_vu"
+      ]
     },
     {
       "place": [
@@ -1377,7 +1397,10 @@
       "mustnot": [
         "escalier_decouvert"
       ],
-      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*",
+      "effect": [
+        "cartes_vues"
+      ]
     },
     {
       "place": [
@@ -1390,7 +1413,10 @@
       "mustnot": [
         "escalier_decouvert"
       ],
-      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*"
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*",
+      "effect": [
+        "cartes_vues"
+      ]
     },
     {
       "place": [
@@ -1766,7 +1792,10 @@
       ],
       "verb": "regarder",
       "noun": [],
-      "text": "De longs bacs sont rangés le long des rebords du sous-sol, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fumante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux."
+      "text": "De longs bacs sont rangés le long des rebords du sous-sol, qui s'étend telle un long corridor vers l'est. Une odeur indescriptible arrive jusqu'à vos narines : fumante comme celle du bois de chauffage, un peu acide comme celle des oranges, avec un petit je-ne-sais-quoi de ferrugineux.",
+      "effect": [
+        "cave_trouvee"
+      ]
     },
     {
       "place": [
@@ -1794,7 +1823,10 @@
       ],
       "verb": "regarder",
       "noun": [],
-      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse."
+      "text": "Une femme se trouve de l'autre côté des barreaux. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse.",
+      "effect": [
+        "femme_trouvee"
+      ]
     },
     {
       "place": [
@@ -1814,7 +1846,10 @@
       "noun": [
         "fyodor"
       ],
-      "text": "La femme fronce les sourcils et tourne lentement la tête vers le haut, sur sa gauche. Elle se met à se balancer lentement et ouvre la bouche :\n« Le rouge est la couleur du sang... Le violet est la couleur du vin... Le gris est une couleur de lin... Et le blanc est une couleur en devenir... Quand il enveloppe un objet, c'est comme si le blanc devenait... l'objet.\nEt surtout... ne vous fiez pas qu'à vos yeux... si vous avez des oreilles. »"
+      "text": "La femme fronce les sourcils et tourne lentement la tête vers le haut, sur sa gauche. Elle se met à se balancer lentement et ouvre la bouche :\n« Le rouge est la couleur du sang... Le violet est la couleur du vin... Le gris est une couleur de lin... Et le blanc est une couleur en devenir... Quand il enveloppe un objet, c'est comme si le blanc devenait... l'objet.\nEt surtout... ne vous fiez pas qu'à vos yeux... si vous avez des oreilles. »",
+      "effect": [
+        "monologue_entendu"
+      ]
     },
     {
       "place": [
@@ -2018,7 +2053,10 @@
       "must": [
         "vinyle_pose"
       ],
-      "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour béni où, joie, nous n'étions pas encore perdus... »"
+      "text": "Vous fermez les yeux. Alors, la voix se fait plus claire et chuchote : « Je vous aime, vous prisonnière de l'ambre. Comment faire lorsqu'on est perdu, quand toutes les voies semblent simultanément ouvertes et fermées ? Comment faire... ?\nIl faut se perdre. Tourner en rond. Remonter le temps. Jusqu'au jour béni où, joie, nous n'étions pas encore perdus... »",
+      "effect": [
+        "yeux_fermes"
+      ]
     },
     {
       "place": [
@@ -2177,7 +2215,10 @@
       "tool": [
         "vinyle_1"
       ],
-      "text": "Vous posez le disque sur le gramophone. Il se met à tourner et à jouer une musique mélancolique accompagnée d'un harmonica. Arrivé à la fin du disque, il s'arrête de tourner et vous le reprenez dans votre inventaire."
+      "text": "Vous posez le disque sur le gramophone. Il se met à tourner et à jouer une musique mélancolique accompagnée d'un harmonica. Arrivé à la fin du disque, il s'arrête de tourner et vous le reprenez dans votre inventaire.",
+      "effect": [
+        "vinyle_1_pose"
+      ]
     },
     {
       "place": [
@@ -3192,6 +3233,9 @@
       ],
       "tool": [
         "vinyle_1"
+      ],
+      "effect": [
+        "vinyle_1_pose"
       ]
     },
     {
@@ -3211,6 +3255,377 @@
       ],
       "effect": [
         "vinyle_pose"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Vous n'avez pas beaucoup d'options. La porte vous bloque, mais il faut trouver un moyen de la franchir malgré tout.",
+      "mustnot": [
+        "entree_effectuee"
+      ]
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "toquer",
+      "noun": [],
+      "text": "Bien tenté. Mais personne ne vient pour vous ouvrir. Il va falloir vous débrouiller seul."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Bien, vous êtes à l'intérieur. Il s'agit maintenant d'explorer un peu, de regarder ce qu'il y a.",
+      "must": [
+        "entree_effectuee"
+      ],
+      "mustnot": [
+        "cadenas_vu"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Un cadenas verrouille l'accès à l'aile est du manoir. Quel pourrait bien être son code ?\nMenez votre enquête.",
+      "must": [
+        "cadenas_vu"
+      ],
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "must": [
+        "bibliotheque_ouverte"
+      ],
+      "mustnot": [
+        "livre_range"
+      ],
+      "text": "Bon, vous avez désormais accès à la bibliothèque, c'est déjà ça.\nAucune voie évidente ne semble s'offrir pour la suite, mais vous pouvez trouver des objets ici et là. L'un de ces objets a de grandes chances de vous être utile. À vous de trouver quoi en faire ensuite."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "must": [
+        "livre_range"
+      ],
+      "mustnot": [
+        "cartes_vues"
+      ],
+      "text": "Très bien, vous avez trouvé l'issue secrète de la bibliothèque. Regardons à quoi cela nous donne accès."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Intrigant, ce tapis de cartes, n'est-ce pas... ?\nCependant, il semblerait que vous n'ayez pas encore toutes les clés en main pour résoudre son mystère. \nPour l'instant, il vaut mieux faire un peu de repérage.",
+      "must": [
+        "cartes_vues"
+      ],
+      "mustnot": [
+        "lampe_obtenue",
+        "cave_trouvee"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "L'est des sous-sols est trop sombre, mais vous n'avez rien pour vous éclairer...\nPeut-être avez-vous manqué un objet quelque part ?",
+      "must": [
+        "cartes_vues",
+        "cave_trouvee"
+      ],
+      "mustnot": [
+        "lampe_obtenue"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Une lampe ! Vous avez trouvé de quoi vous éclairer dans l'obscurité, splendide... !\nMais où peut-elle vous être utile ? Après tout, rien ne nous dit qu'elle vous sera utile dans un endroit que vous avez déjà visité...",
+      "must": [
+        "cartes_vues",
+        "lampe_obtenue"
+      ],
+      "mustnot": [
+        "cave_trouvee"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Une lampe ! Vous avez trouvé de quoi vous éclairer dans l'obscurité, splendide... !\nUn endroit plongé dans l'obscurité, ça ne vous rappelle rien ?",
+      "must": [
+        "cartes_vues",
+        "lampe_obtenue",
+        "cave_trouvee"
+      ],
+      "mustnot": [
+        "femme_trouvee"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Qui peut être cette femme... ? De quoi pourriez-vous lui parler... ?\nElle ne semble pas très bavarde, c'est le moins qu'on puisse dire. Mais peut-être qu'en abordant le bon sujet...",
+      "must": [
+        "femme_trouvee"
+      ],
+      "mustnot": [
+        "monologue_entendu"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "La femme a enfin parlé... Mais ses paroles sont pour le moins cryptiques.\nVous allez sans doute devoir relire ses mots maintes fois avant d'en saisir tout à fait le sens...",
+      "must": [
+        "monologue_entendu"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Enfin ! Vous avez enfin percé le mystère de la distribution des cartes ! (vous pouvez vous en féliciter, ce n'était pas évident)\nAllez, il est maintenant temps de refaire un peu de repérage.",
+      "must": [
+        "escalier_decouvert"
+      ],
+      "mustnot": [
+        "cle_tombee",
+        "vinyle_pris"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Mince, la clé est tombée dans le trou. Mais ce fracas métallique que vous avez entendu au moment de la chute... il devrait vous évoquer quelque chose.",
+      "must": [
+        "cle_tombee"
+      ],
+      "mustnot": [
+        "vinyle_pris",
+        "cle_prise"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Bien, vous avez retrouvé la clé. Vous savez comment s'utilise une clé, j'espère... ?",
+      "mustnot": [
+        "vinyle_pris",
+        "couloir_ouvert"
+      ],
+      "must": [
+        "cle_prise"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "must": [
+        "couloir_ouvert"
+      ],
+      "mustnot": [
+        "vinyle_pris"
+      ],
+      "text": "La suite du couloir est ouverte. Maintenant, il est peut-être temps d'explorer un endroit que vous avez ignoré jusqu'à maintenant."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Un disque vinyle, tiens tiens. Qu'allez-vous pouvoir en faire ?",
+      "mustnot": [
+        "cle_tombee",
+        "vinyle_1_pose"
+      ],
+      "tool": [
+        "vinyle_1"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Étrange, poser le vinyle sur le gramophone n'a eu aucun effet.\nPeut-être que ce n'est pas le bon disque... ? Ou alors peut-être que la place de ce disque n'est pas sur ce gramophone... ?",
+      "mustnot": [
+        "cle_tombee"
+      ],
+      "tool": [
+        "vinyle_1"
+      ],
+      "must": [
+        "vinyle_1_pose"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "OK, il y avait un autre disque. Que pourrait-on faire avec, cette fois-ci... ?",
+      "tool": [
+        "vinyle_2"
+      ],
+      "mustnot": [
+        "cle_prise"
+      ],
+      "must": [
+        "cle_tombee"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Le disque tourne sans fin sur le gramophone, mais vous n'entendez rien...\nQue faire... ?",
+      "must": [
+        "vinyle_pose"
+      ],
+      "mustnot": [
+        "cle_tombee"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Le disque tourne sans fin sur le gramophone, mais vous n'entendez rien...\nBon, en attendant, vous n'aviez pas une clé à récupérer ? Vous savez, celle qui est tombée avec un grand fracas métallique.",
+      "must": [
+        "vinyle_pose",
+        "cle_tombee"
+      ],
+      "mustnot": [
+        "cle_prise"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Le disque tourne sans fin sur le gramophone, mais vous n'entendez rien...\nAu fait, vous avez récupéré une clé. Vous ne voulez pas ouvrir quelque chose avec... ?",
+      "must": [
+        "vinyle_pose",
+        "cle_prise"
+      ],
+      "mustnot": [
+        "couloir_ouvert"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Le disque tourne sans fin sur le gramophone, mais vous n'entendez rien...\nEt la porte est ouverte vers le sud, mais vous êtes toujours bloqué...\nPourtant, un disque qui tourne sur un gramophone, ça devrait nécessairement émettre quelque chose...\nÇa semble un peu surnaturel, mais il doit sûrement y avoir un moyen de percevoir ce qu'émet le gramophone.",
+      "must": [
+        "vinyle_pose",
+        "couloir_ouvert"
+      ],
+      "mustnot": [
+        "yeux_fermes"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "must": [
+        "yeux_fermes",
+        "couloir_ouvert"
+      ],
+      "text": "On entendrait donc un message à l'étage d'en haut grâce au gramophone qui tourne en bas... ?\nC'est un peu capillotracté mais passons. Le message est sûrement un indice pour se repérer dans les couloirs brumeux.",
+      "mustnot": [
+        "fin_du_jeu_proche"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "On entendrait donc un message à l'étage d'en haut grâce au gramophone qui tourne en bas... ?\nC'est un peu capillotracté mais passons. Maintenant, il s'agit d'ouvrir une de ces portes fermées dans le couloir.",
+      "must": [
+        "yeux_fermes"
+      ],
+      "mustnot": [
+        "couloir_ouvert"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Votre cœur s'accélère. Vous sentez que vous êtes proche du but. Allez, encore un petit effort !",
+      "must": [
+        "fin_du_jeu_proche"
       ]
     }
   ]
