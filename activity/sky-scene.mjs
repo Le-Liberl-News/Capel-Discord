@@ -141,6 +141,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const loaded = map==='anterose'?{scene:new THREE.Group()}:venue?.loadModel?await venue.loadModel(THREE,GLTFLoader):map==="hangar"?{scene:new THREE.Group()}:isArena?await loadArenaModel(ASSETS,version,map):await new GLTFLoader(loading).loadAsync(
     new URL("anterose.gltf", mapAssets).href,
   );
+  venue?.mark?.("scene-model");
   const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;const venueView=venue?.mount?.({THREE,scene,model,renderer});
   if(map==="tower4")removeNativeBackdrop(model);
   const rooftopSky=venue?null:map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena&&map!=='gehenna'?await createAxisSky(THREE,scene,mapAssets,loading):null;
@@ -195,6 +196,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let grid = venue?.grid??await fetch(versionAsset(new URL("navigation.json", mapAssets), version), { cache: "no-store" }).then((r) =>
     r.json(),
   );
+  venue?.mark?.("scene-grid");
   if(terminal)grid=terminalWorld.terminalNavigation(grid,terminal);
   const spectatorGrid = venue?null:isArena ? await fetch(versionAsset(new URL("spectator-navigation.json", mapAssets), version)).then(r => r.json()) : null;
   const movingPlatforms=inTower&&towerLayout.movingPlatforms?.length?await createMovingPlatformView(THREE,scene,ASSETS,towerLayout,grid,dayNight):null;
@@ -224,9 +226,11 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   // one before over the network)
   const altinaPending=createAltinaCompanionView(THREE,scene,ASSETS,catalogue),siegDivePending=createSiegDiveView(THREE,scene,ASSETS);
   const dialogues = await createDialogues(ASSETS,venue?.spatialAudio?{voiceGain:avatar=>effectsVolume()*audioDistance.gainAt(avatars.get(localId)?.position,avatar.position)}:{});
+  venue?.mark?.("scene-dialogues");
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
   const mapInteractions=await createMapInteractions({scene,model,assets:ASSETS,items:towerLayout?.interactions??[],dialogues,localId:()=>localId});
+  venue?.mark?.("scene-interactions");
   const previewRoom=__ACTIVITY_PREVIEW__&&inDungeon?(towerLayout.rooms??[])[Number(new URLSearchParams(location.search).get('room'))]:null;
   const spawn = previewRoom?{x:previewRoom.x,y:previewRoom.y,z:previewRoom.z}:grid.spawn ?? pointAt(grid, nearestCell(grid, { x: 0, z: 0 }));
   const renneCombat=await combatPreparation;
@@ -1268,6 +1272,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(!venue?.recording)requestAnimationFrame(render);
   }
   if(!venue?.recording)requestAnimationFrame(render);
+  venue?.mark?.("scene-built");
   return {
     ...(venue?.recording?{drawRecording(pose){venue.recording.camera=pose;renderFrame(performance.now());}}:{}),
     spawn,

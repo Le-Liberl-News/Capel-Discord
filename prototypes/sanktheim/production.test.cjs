@@ -18,6 +18,9 @@ test('published siege authenticates daily characters, denies test/admin forgery 
   for(let i=1;i<=4;i++){clock+=100;const r=await(await fetch(url+'/arena',{method:'POST',headers,body:JSON.stringify({movement:{x:-23*2/3,y:11.75*2/3,z:.6*i,sequence:i,trace:[{x:-23*2/3,z:.6*i,sequence:i}]}})})).json();assert.ok(Math.abs(r.position.z-.6*i)<.01,'100ms movement must not be rejected between the 250ms simulation ticks');}
   const interaction={customId:'sanktheim:enter',user:{id:'123'},channel:{isDMBased:()=>true},launchActivity:async()=>{}};await service.handle(interaction);assert.equal(service.wantsEntry('123'),true);assert.equal(service.wantsEntry('123'),true);
   await fetch(url+'/entered',{method:'POST',headers,body:'{}'});assert.equal(service.wantsEntry('123'),false);
+  // the joining's load times, shown on the public status
+  await fetch(url+'/timings',{method:'POST',headers,body:JSON.stringify({marks:[['siege-start',120],['playable',9000]],files:3,kb:40,slowest:[{file:'map/model.gltf',start:200,end:8000,kb:30}]})});
+  const status=await (await fetch(url+'/status')).json();assert.equal(status.joinTimings[0].character,'Julia');assert.deepEqual(status.joinTimings[0].marks.at(-1),['playable',9000]);
 
  }finally{service.close();await new Promise(r=>server.close(r));fs.rmSync(runtime,{recursive:true,force:true});}
 });

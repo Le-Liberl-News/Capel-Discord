@@ -41,7 +41,7 @@ const etat = {
   messageCursor: 0,
 };
 let siegeMode=false,siegeOpening=null;
-function enterSiege(){if(siegeOpening)return siegeOpening;siegeOpening=(async()=>{const result=await fetchJson(apiUrl("siege/session"),{headers:{Authorization:"Bearer "+etat.token}});if(!result.player)throw Error("Siège indisponible.");siegeMode=true;clearTimeout(trainingTimer);training=null;trainingBusy=false;scene?.dispose();music?.dispose();home.show(false);await openSiege({token:etat.token,apiUrl});})();siegeOpening.catch(()=>{if(!siegeMode)siegeOpening=null;});return siegeOpening;}
+function enterSiege(){if(siegeOpening)return siegeOpening;siegeOpening=(async()=>{const marks=[["siege-asked",Math.round(performance.now())]];const result=await fetchJson(apiUrl("siege/session"),{headers:{Authorization:"Bearer "+etat.token}});marks.push(["siege-allowed",Math.round(performance.now())]);if(!result.player)throw Error("Siège indisponible.");siegeMode=true;clearTimeout(trainingTimer);training=null;trainingBusy=false;scene?.dispose();music?.dispose();home.show(false);await openSiege({token:etat.token,apiUrl,marks});})();siegeOpening.catch(()=>{if(!siegeMode)siegeOpening=null;});return siegeOpening;}
 
 let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
