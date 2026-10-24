@@ -7,7 +7,8 @@
 <!-- The pom-tiron's walking fortress (../pom-fortress-model.mjs) beside a wall as tall as Sanktheim's (12 units).
      Serve the repository and open /prototypes/sanktheim/tools/pom-fortress.html. Half resolution, pixelated: the
      PSP look. Wheel: zoom, left drag: turn, right drag: move. « Marche » walks it (the camera shakes at each step);
-     « Joueur » sends a blue marker around it, its flamethrowers turn toward it when it comes close; a few poms
+     « Joueur » sends a blue marker around it: the headlights follow it, the pods fire homing missiles at it (the
+     tank's), its flamethrowers turn toward it when it comes close; a few poms
      stand on the deck. « .glb » saves the model, at rest, textures included, without what only plays at run time
      (fire, beams, lights) nor the poms. -->
 <style>
@@ -26,6 +27,7 @@ import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {createPomFortress,TEXTURES} from '../pom-fortress-model.mjs';
+import {loadNativeProp} from '../native-prop.mjs';
 const renderer=new T.WebGLRenderer({antialias:false});document.body.prepend(renderer.domElement);
 let pixel=.5,walking=true,shake=0;
 const scene=new T.Scene();scene.background=new T.Color(0x2a2433);scene.fog=new T.Fog(0x2a2433,90,200);
@@ -43,9 +45,12 @@ for(let z=-29;z<=29;z+=2.5)block(4,1,1.2,0,11.5,z);
 const loader=new T.TextureLoader(),textures={};
 await Promise.all([...TEXTURES.map(async name=>{textures[name]=await loader.loadAsync(`../assets/pom-fortress/${name}.png`);}),
  loader.loadAsync('../../../activity/assets/sky/effects/fire-frames.png').then(map=>{textures.fire=map;})]);
-// a step: the camera shakes, the closer the stronger
-const fortress=createPomFortress(T,{textures,onStep:(leg,at)=>{shake=Math.max(shake,1-Math.min(1,at.distanceTo(camera.position)/120));}});
-const {root,hull,crew,animate,SPEED}=fortress;scene.add(root);
+// the tank's missile, as the game loads it
+const missile=await loadNativeProp(T,path=>'../../../activity'+path,'missile',.55).catch(()=>null);
+// a step or a burst: the camera shakes, the closer the stronger
+const jolt=(at,range,k=1)=>{shake=Math.max(shake,k*(1-Math.min(1,at.distanceTo(camera.position)/range)));};
+const fortress=createPomFortress(T,{textures,missile,onStep:(leg,at)=>jolt(at,120),onMissile:at=>jolt(at,60,.6)});
+const {root,hull,crew,effects,animate,SPEED}=fortress;scene.add(root,effects);
 // the crew, as in the game: the poms' sprites
 for(const [i,at] of crew.entries()){
  const name=['pom-tiron','agate-2','estelle-aspi','aina-2','joshua-2','pom-tiron','olivier-aspi'][i];

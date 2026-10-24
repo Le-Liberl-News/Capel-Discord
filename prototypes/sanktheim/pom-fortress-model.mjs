@@ -4,8 +4,8 @@
 // (they turn toward whoever comes too close) and a missile pod on each flank. Low-poly (PS1 / PSP, as in Sky): the
 // Lynx's armour textures turned grey (assets/pom-fortress/), tinted by vertex colour; what glows is unlit. The
 // origin is the ground under the body; it faces +Z and is about 24 units tall, twice the wall.
-// createPomFortress(T,{seed,textures:{plates,panels,hatch,grille,fire},onStep})
-//  -> {root,hull,crew,animate(seconds,{walking,target}),SPEED}
+// createPomFortress(T,{seed,textures:{plates,panels,hatch,grille,fire},missile,onStep,onMissile})
+//  -> {root,hull,crew,effects,animate(seconds,{walking,target}),SPEED}
 // hull: the body's group, which the crew's sprites join, at the points of `crew` (hull coordinates, on the deck).
 // While walking it lifts one leg at a time, slowly; its root has to move forward (+Z) at SPEED units a second for
 // the planted feet to stay put, and onStep(leg,worldPosition) is called as each foot lands (to shake the ground).
@@ -13,9 +13,12 @@
 // burns the ground under it; within LIGHT_REACH the headlights follow it, else they sweep around like a prison's
 // searchlights. textures.fire is the game's fire (effects/fire-frames.png, four frames): the jets are made
 // of it. What only plays at run time (fire, light beams, lights) is marked userData.effect.
-export const TEXTURES=['plates','panels','hatch','grille'],FIRE_REACH=26,LIGHT_REACH=45;
+// Within MISSILE_REACH, the pods turn toward the target and fire homing missiles in turn (missile: the tank's
+// native missile, facing +Z, cloned for each; else a plain one). They fly in `effects`, a group for the scene
+// itself (not the fortress: they leave it), and onMissile(worldPosition) is called where each one bursts.
+export const TEXTURES=['plates','panels','hatch','grille'],FIRE_REACH=26,LIGHT_REACH=45,MISSILE_REACH=70;
 
-export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
+export function createPomFortress(T,{seed=7,textures={},missile=null,onStep=()=>{},onMissile=()=>{}}={}){
  const rng=seeded(seed),pick=list=>list[Math.floor(rng()*list.length)],jitter=a=>(rng()*2-1)*a;
  const root=new T.Group();root.name='pom-fortress';
  const body=new T.Group();body.name='body';root.add(body);
@@ -23,8 +26,8 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
  const material=(name,map)=>{const m=new T.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.8,metalness:.2,side:T.DoubleSide,map:map??null});m.name=name;return m;};
  const plates=material('plates',textures.plates),panels=material('panels',textures.panels),hatch=material('hatch',textures.hatch),grille=material('grille',textures.grille);
  const glow=(color,name,extra={})=>Object.assign(new T.MeshBasicMaterial({color,...extra}),{name});
- const lamp=glow(0xfff4e0,'headlight'),heat=glow(0xffb52e,'heat');
- const beamMaterial=glow(0xfff0c8,'beam',{transparent:true,opacity:.06,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending});
+ const lamp=glow(0xff3424,'headlight'),heat=glow(0xffb52e,'heat');
+ const beamMaterial=glow(0xff2a18,'beam',{transparent:true,opacity:.09,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending});
  const effect=object=>{object.userData.effect=true;return object;};
  // the tints: the textures are grey, around .55, so the colours are brighter than meant
  const C={orange:0xff8a2a,ember:0xe8561c,burnt:0xb8461c,light:0xffb048,bronze:0xb08850,dark:0x55525a,gun:0x7a7570,deck:0x8a8378,
@@ -148,7 +151,7 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
    // the beam, and its light
    const cone=new T.ConeGeometry(5,30,10,1,true);cone.translate(0,-15,0);cone.rotateX(-Math.PI/2);
    const shaft=effect(mesh(cone,beamMaterial,'beam',eye));shaft.position.z=.75;shaft.rotation.x=.14;
-   const light=effect(new T.SpotLight(0xfff0d0,350,90,.32,.6,1.4));light.name='headlight';light.position.z=.8;eye.add(light);
+   const light=effect(new T.SpotLight(0xff2a18,450,90,.32,.6,1.4));light.name='headlight';light.position.z=.8;eye.add(light);
    light.target.position.set(0,-4,30);eye.add(light.target);
    eyes.push({eye,phase:s*.35,aim:new T.Quaternion()});
   }
@@ -188,6 +191,7 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
   guns.push({gun,puffs,aim:new T.Quaternion()});
  }
 
+ const pods=[];
  // the flanks: a missile pod on each, low, on a short arm (one hexagonal, one round: salvaged parts)
  for(const s of [-1,1]){
   const {point:shoulder,normal}=surface(new T.Vector3(s,.28,.3)),arm=new T.Group();arm.name=s<0?'arm-left':'arm-right';hull.add(arm);
@@ -201,8 +205,9 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
   const cap=mesh(paint(new T.CylinderGeometry(radius*.98,radius*.98,.14,sides),C.dark,{scale:1/2}),hatch,null,pod);cap.rotation.x=Math.PI/2;cap.position.z=2.33;
   for(const [hx,hy] of [[0,0],...Array.from({length:6},(_,k)=>[Math.cos(k/6*Math.PI*2)*.86,Math.sin(k/6*Math.PI*2)*.86])]){
    const tube=mesh(paint(new T.CylinderGeometry(.32,.32,.4,6),C.dark),panels,null,pod);tube.rotation.x=Math.PI/2;tube.position.set(hx,hy,2.45);
-   const missile=mesh(paint(new T.ConeGeometry(.23,.55,6),c=>c.y>.05?C.red:C.white),panels,'missile',pod);missile.rotation.x=Math.PI/2;missile.position.set(hx,hy,2.5);
+   const tip=mesh(paint(new T.ConeGeometry(.23,.55,6),c=>c.y>.05?C.red:C.white),panels,'missile',pod);tip.rotation.x=Math.PI/2;tip.position.set(hx,hy,2.5);
   }
+  pods.push({pod,rest:pod.quaternion.clone(),aim:pod.quaternion.clone(),tubes:[[0,0],...Array.from({length:6},(_,k)=>[Math.cos(k/6*Math.PI*2)*.86,Math.sin(k/6*Math.PI*2)*.86])].map(([x,y])=>new T.Vector3(x,y,2.7))});
  }
 
  // the legs: six, three a side; a hip, a thigh rising to a high knee, a long shin ending in a claw, posed (two
@@ -238,6 +243,51 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
  // the gait: one leg at a time, in turn; each step takes STEP seconds, SWING of them in the air
  const STEP=1.9,SWING=1.5,CYCLE=STEP*legs.length;
  const world=new T.Vector3(),local=new T.Vector3(),want=new T.Quaternion(),parentInverse=new T.Quaternion();
+ // the missiles: out of a tube, a short straight push, then homing on the target, turning at most TURN radians a
+ // second; they burst on it, on the ground, or after LIFE seconds
+ const effects=new T.Group();effects.name='pom-fortress-effects';
+ const flying=[],bursts=[],SALVO=3.2,MISSILE_SPEED=16,TURN=1.6,LIFE=7;
+ let nextSalvo=0,salvo=0;
+ const firePuff=(size,opacity=1)=>{
+  if(!textures.fire)return null;const map=textures.fire.clone();map.repeat.set(.25,1);
+  const sprite=new T.Sprite(new T.SpriteMaterial({map,transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity}));sprite.scale.setScalar(size);sprite.renderOrder=5;return sprite;
+ };
+ function launch(pod,target,seconds){
+  const tube=pod.tubes[salvo%pod.tubes.length],body=missile?missile.clone(true):plainMissile();
+  pod.pod.updateMatrixWorld(true);body.position.copy(pod.pod.localToWorld(tube.clone()));
+  const heading=new T.Vector3(0,0,1).applyQuaternion(pod.pod.getWorldQuaternion(new T.Quaternion())).normalize();
+  body.quaternion.setFromUnitVectors(Z,heading);
+  const trail=firePuff(1.1,.9);if(trail){trail.position.z=-1.15;body.add(trail);}   // behind its tail
+  effects.add(body);flying.push({body,heading,trail,born:seconds,target:target.clone()});
+ }
+ function plainMissile(){
+  const g=new T.Group();
+  mesh(paint(new T.CylinderGeometry(.22,.22,1.4,6).rotateX(Math.PI/2),C.gun),panels,null,g);
+  mesh(paint(new T.ConeGeometry(.22,.5,6).rotateX(Math.PI/2).translate(0,0,.95),C.red),panels,null,g);
+  return g;
+ }
+ function burst(at,seconds){
+  onMissile(at.clone());
+  const puff=firePuff(1);if(puff){puff.position.copy(at);effects.add(puff);bursts.push({puff,born:seconds});}
+ }
+ function fly(seconds,dt,target){
+  for(const m of [...flying]){
+   const age=seconds-m.born;if(target)m.target.copy(target);
+   if(age>.35){   // homing
+    const want=m.target.clone().sub(m.body.position).normalize(),angle=m.heading.angleTo(want);
+    if(angle>1e-4)m.heading.lerp(want,Math.min(1,TURN*dt/angle)).normalize();
+   }
+   m.body.position.addScaledVector(m.heading,MISSILE_SPEED*dt*(age<.35?.6:1));m.body.quaternion.setFromUnitVectors(Z,m.heading);
+   if(m.trail){m.trail.material.map.offset.x=(Math.floor(seconds*16)%4)*.25;m.trail.scale.setScalar(.9+Math.random()*.5);}
+   if(m.body.position.distanceTo(m.target)<1.4||m.body.position.y<.2||age>LIFE){
+    burst(m.body.position,seconds);effects.remove(m.body);m.trail?.material.dispose();m.trail?.material.map.dispose();flying.splice(flying.indexOf(m),1);
+   }
+  }
+  for(const b of [...bursts]){
+   const t=(seconds-b.born)/.6;b.puff.scale.setScalar(2+t*7);b.puff.material.opacity=Math.max(0,1-t);b.puff.material.map.offset.x=(Math.min(3,Math.floor(t*4)))*.25;
+   if(t>=1){effects.remove(b.puff);b.puff.material.map.dispose();b.puff.material.dispose();bursts.splice(bursts.indexOf(b),1);}
+  }
+ }
  let last=null;
  function animate(seconds,{walking=true,target=null}={}){
   const dt=last==null?0:Math.min(.1,Math.max(0,seconds-last));last=seconds;
@@ -270,6 +320,22 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
    if(!dir){const yaw=Math.sin(seconds*.3+e.phase)*.75,pitch=.3+.12*Math.sin(seconds*.47+e.phase*2);dir=new T.Vector3(Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));}
    want.setFromUnitVectors(Z,dir);e.aim.slerp(want,Math.min(1,dt*1.8));e.eye.quaternion.copy(e.aim);
   }
+  // the pods: toward the target within reach (at most .6 radians off their rest), firing in turn; else at rest
+  let near=false;
+  for(const pod of pods){
+   let goal=pod.rest;
+   if(target){
+    pod.pod.getWorldPosition(world);
+    if(world.distanceTo(target)<MISSILE_REACH){
+     near=true;pod.pod.parent.getWorldQuaternion(parentInverse).invert();local.copy(target).sub(world).applyQuaternion(parentInverse).normalize();
+     const forward=Z.clone().applyQuaternion(pod.rest),angle=forward.angleTo(local);
+     goal=want.setFromUnitVectors(forward,angle>.6?forward.clone().lerp(local,.6/angle).normalize():local).multiply(pod.rest);
+    }
+   }
+   pod.aim.slerp(goal,Math.min(1,dt*1.5));pod.pod.quaternion.copy(pod.aim);
+  }
+  if(near&&seconds>=nextSalvo){launch(pods[salvo%pods.length],target,seconds);salvo++;nextSalvo=seconds+SALVO/pods.length;}
+  fly(seconds,dt,target);
   for(const g of guns){
    // toward the target when it is close, else down; at most 75° from down, turning slowly
    let dir=down;
@@ -289,6 +355,6 @@ export function createPomFortress(T,{seed=7,textures={},onStep=()=>{}}={}){
    }
   }
  }
- return {root,hull,crew,animate,SPEED:STRIDE/(CYCLE-SWING)};
+ return {root,hull,crew,effects,animate,SPEED:STRIDE/(CYCLE-SWING)};
 }
 function seeded(seed){let s=seed>>>0||1;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0,(s^s>>>14)>>>0)/4294967296);}
