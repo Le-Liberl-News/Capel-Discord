@@ -14,7 +14,7 @@ function createPomCrafts({state,geometry,hurt,damageWall,wallX,emit,multiplier=.
    if(t-c.heldAt>1500){clear(a);return {error:'Charge interrompue.'};}c.heldAt=t;
    if(data.phase==='hold')return {ok:true};
    const d=data.direction,n=Math.hypot(d?.x??0,d?.z??0);if(!Number.isFinite(n)||n<.01)return {error:'Direction invalide.'};
-   if(a.y/scale>3&&!a.onWall)return {error:'Posez-vous avant de foncer.'};const power=clamp((t-c.at)/1000,0,1);Object.assign(c,{phase:'dash',launchAt:t,power,direction:{x:d.x/n,z:d.z/n},distance:c.ai?150:9+41*power,speed:35+65*power,hits:[],travelled:0});a.nextPomCraft=t+9000;a.heading={dx:d.x/n,dz:d.z/n};a.combatLockedUntil=t+6000;a.jump=null;a.falling=false;emit('pom-ball-launch','',{from:a.id,position:{x:a.x/scale,y:a.y/scale,z:a.z/scale},power});return {ok:true};
+   if(a.y/scale>3&&!a.onWall)return {error:'Posez-vous avant de foncer.'};const power=clamp((t-c.at)/1000,0,1);Object.assign(c,{phase:'dash',launchAt:t,power,direction:{x:d.x/n,z:d.z/n},distance:c.ai?150:20+130*power,speed:60+90*power,hits:[],travelled:0});a.nextPomCraft=t+9000;a.heading={dx:d.x/n,dz:d.z/n};a.combatLockedUntil=t+6000;a.jump=null;a.falling=false;emit('pom-ball-launch','',{from:a.id,position:{x:a.x/scale,y:a.y/scale,z:a.z/scale},power});return {ok:true};
   }
   if(type==='ball'&&data.phase!=='begin'&&!data.ai)return {error:'Aucune charge en cours.'};
   if(c||t<(a.nextPomCraft??0))return {error:'Craft en recharge.'};

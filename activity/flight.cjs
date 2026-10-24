@@ -10,9 +10,9 @@ function sweepFlight(from,to,geometry){
  return !body?feet:!feet?body:body.distance<=feet.distance?body:feet;
 }
 function clearFlight(from,to,geometry){const length=Math.hypot(to.x-from.x,to.y-from.y,to.z-from.z);const hit=sweepFlight(from,to,geometry);return !hit||hit.distance>=length-.025;}
-function moveFlight(position,vector,seconds,bounds,geometry,record=()=>{}) {
+function moveFlight(position,vector,seconds,bounds,geometry,record=()=>{},speed=FLIGHT_SPEED) {
  const magnitude=Math.hypot(vector.x,vector.y,vector.z);if(!magnitude)return {moving:false,dx:0,dz:0};
- const scale=FLIGHT_SPEED*Math.max(0,Math.min(.1,seconds))/Math.max(1,magnitude),from={...position};
+ const scale=speed*Math.max(0,Math.min(.1,seconds))/Math.max(1,magnitude),from={...position};
  const next={x:Math.max(bounds.minX,Math.min(bounds.maxX,position.x+vector.x*scale)),y:Math.max(bounds.minY,Math.min(bounds.maxY,position.y+vector.y*scale)),z:Math.max(bounds.minZ,Math.min(bounds.maxZ,position.z+vector.z*scale))};
  if(vector.y<0&&geometry?.floor){const floor=geometry.floor(next.x,next.z,position.y+.05);if(Number.isFinite(floor)&&position.y>=floor-.02&&next.y<floor+.08)next.y=floor+.08;}
  let destination=next;
