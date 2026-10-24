@@ -220,6 +220,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(avatar.shadow){scene.remove(avatar.shadow);avatar.shadow.geometry.dispose();avatar.shadow.material.dispose();}
     if (!avatar.prop) { avatar.mesh.geometry.dispose(); if(avatar.battleTextures){avatar.initialTexture.dispose();for(const texture of avatar.battleTextures.values())texture.dispose();}else{avatar.initialTexture.dispose();avatar.walkingTexture?.dispose();avatar.craftTexture?.dispose();} avatar.mesh.material.dispose(); }
   }
+  // views that need nothing from what follows start now, side by side with it (each would otherwise wait for the
+  // one before over the network)
+  const altinaPending=createAltinaCompanionView(THREE,scene,ASSETS,catalogue),siegDivePending=createSiegDiveView(THREE,scene,ASSETS);
   const dialogues = await createDialogues(ASSETS,venue?.spatialAudio?{voiceGain:avatar=>effectsVolume()*audioDistance.gainAt(avatars.get(localId)?.position,avatar.position)}:{});
   let previewDrinkingClock=null,previewDimension=null,previewCollapse=null;
   const drinkingTable=map==="anterose"?await createDrinkingTable(THREE,scene,ASSETS):null;
@@ -233,10 +236,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   const craftCapture=(renneCombat&&!inTower&&!localTraining)?createCraftCapture(THREE,renderer,scene,ASSETS,event=>notifyCapture(event)):null;
   const gunRecoil=createGunRecoil(renneMechanics.combatSpec);
   const donCraftCamera=createDonCraftCamera();
-  const altinaCompanion=await createAltinaCompanionView(THREE,scene,ASSETS,catalogue);
-  const stunView=renneCombat?await createStunView(THREE,scene,ASSETS):null;
-  const josetteView=renneCombat?await createJosetteView(THREE,ASSETS):null;
-  const siegDiveView=await createSiegDiveView(THREE,scene,ASSETS);let divePending=null;
+  const [altinaCompanion,stunView,josetteView,siegDiveView]=await Promise.all([altinaPending,renneCombat?createStunView(THREE,scene,ASSETS):null,renneCombat?createJosetteView(THREE,ASSETS):null,siegDivePending]);let divePending=null;
   const combatControls=createCombatControls((kind,event)=>startAttack(kind,event),(phase,event)=>pomCraftInput(phase,event)||cookingInput(phase,event),phase=>guardInput(phase));
   function aimForAttack(event,groundOnly=false) {
     const me=avatars.get(localId);if(!me)return null;
@@ -563,9 +563,8 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     menu.style.left = Math.min(event.clientX, innerWidth - 260) + "px";
     menu.style.top = Math.min(event.clientY, innerHeight - 180) + "px";
   }
-  const damageEffects=await createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading);
   const combatSounds=createCombatSounds(ASSETS,venue?.spatialAudio?{listener:()=>avatars.get(localId)?.position,defaultPosition:()=>avatars.get(localId)?.position}:{});let ctfView=null;
-  const combatFeedback=combatPreparation?await createCombatFeedback(THREE,scene,ASSETS,labels,combatSounds):null;
+  const [damageEffects,combatFeedback]=await Promise.all([createDamageEffects(THREE,scene,labels,new URL("effects/fire-frames.png",ASSETS),loading),combatPreparation?createCombatFeedback(THREE,scene,ASSETS,labels,combatSounds):null]);
   const textureLoader = new THREE.TextureLoader(loading);
   const textures = new Map();
   const muellerTarget=new THREE.Mesh(new THREE.RingGeometry(.98,1,64),new THREE.MeshBasicMaterial({color:0xc58aff,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide}));muellerTarget.rotation.x=-Math.PI/2;muellerTarget.visible=false;scene.add(muellerTarget);

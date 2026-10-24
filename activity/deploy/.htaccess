@@ -8,6 +8,25 @@
     SetOutputFilter DEFLATE
   </FilesMatch>
 </IfModule>
+# the same hour, for hosts without mod_headers (the cache headers above do not reach the browser there)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png "access plus 1 hour"
+  ExpiresByType image/jpeg "access plus 1 hour"
+  ExpiresByType image/webp "access plus 1 hour"
+  ExpiresByType model/gltf+json "access plus 1 hour"
+  ExpiresByType application/json "access plus 1 hour"
+  ExpiresByType audio/ogg "access plus 1 hour"
+  ExpiresByType audio/mpeg "access plus 1 hour"
+  ExpiresByType audio/wav "access plus 1 hour"
+  ExpiresByType audio/x-wav "access plus 1 hour"
+  ExpiresByType font/ttf "access plus 1 hour"
+  ExpiresByType text/javascript "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
+  <FilesMatch "^release\.json$">
+    ExpiresActive Off
+  </FilesMatch>
+</IfModule>
 <IfModule mod_headers.c>
   <FilesMatch "\.(png|jpe?g|webp|gif|gltf|bin|json|ogg|mp3|wav|ttf|woff2?)$">
     Header set Cache-Control "public, max-age=3600"

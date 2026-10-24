@@ -4,7 +4,8 @@ import {loadNativeProp} from './native-prop.mjs';
 // at a wave's start and rising back at its end; walking, its headlights, flamethrowers and pods turned toward the
 // nearest defender; the missiles the server fires, homing on their target; the fire it leaves along its route.
 const SKY=140,LANDING=8,TAKE_OFF=12,REACH=45,SIZE=1/1.5;   // SIZE: as in mechapom.cjs
-export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds}){
+// ready: resolves once the game is playable; its 3D model and textures load only then
+export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds,ready=Promise.resolve()}){
  let view=null,loading=false,landed=false,shake=0,clock=0;   // clock: its own seconds (the scene hands the frame's length)
  // a step, a landing: the ground shakes, the closer the stronger
  const onShake=(at,strength)=>{const own=getOwn();const d=own?Math.hypot(own.x-at.x,own.z-at.z):60;shake=Math.max(shake,strength*Math.max(0,1-d/(80*scale)));};const seen=new Set(),fires=new Map(),loader=new T.TextureLoader();let fireMap=null;
@@ -44,7 +45,7 @@ export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds})
  function update({time,seconds,serverAt,camera}){
   clock+=seconds;const m=getState().mechapom;
   if(!m){if(view){view.root.visible=false;}return;}
-  if(!view){if(!loading){loading=true;load().then(v=>{view=v;}).catch(error=>{loading=false;console.error(error);});}return;}
+  if(!view){if(!loading){loading=true;ready.then(load).then(v=>{view=v;}).catch(error=>{loading=false;console.error(error);});}return;}
   const age=Math.max(0,(serverAt-m.since)/1000);
   const height=m.grounded?SKY*Math.max(0,1-age/LANDING)**2:SKY*Math.min(1,age/TAKE_OFF)**2;
   view.root.visible=true;view.root.position.set(m.x,m.y+height,m.z);view.root.rotation.y=Math.PI/2-(m.heading??0);   // facing along the path
