@@ -172,3 +172,25 @@ test('in the final room, players wait for the others; one arriving after the end
  await go('c');
  assert.ok(sent.dm.some(([id,m])=>id==='c'&&m.content==='Victoire !'));assert.equal(sent.channels.rp.length,1);
 });
+test('an animation sent is kept in the log and handed once to the platform',async()=>{
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,rooms:[{id:1,description:'Bureau.'}],actions:[{place:[1],verb:'distribuer',noun:[],text:'Rien.',animation:'cartes'}],final:{room:2,players:1}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ await adv.handle(button(user('123456'),true).i);
+ adv.message(dm(user('123456'),'distribuer 1, 2, 3, 4'));for(let i=0;i<40;i++)await tick();
+ const reply=adv.snapshot()[0].log.at(-1);
+ assert.equal(reply.media[0].type,'animation');assert.match(reply.media[0].sha,/^[0-9a-f]{40}$/);
+ assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.gif');
+ const media=adv.media();assert.equal(media.length,1);assert.equal(media[0].sha,reply.media[0].sha);
+ adv.mediaSent([media[0].sha]);assert.equal(adv.media().length,0);
+});
+test('the sync sends a game as soon as it moves',async()=>{
+ const {startAdventureSync}=require('../utils/adventure/platformSync');
+ let version=1,listener=null;const calls=[];
+ const adventure={version:()=>version,snapshot:()=>[],media:()=>[],hint:async()=>{},subscribe:fn=>{listener=fn;return()=>{};}};
+ const fetch=async(url,options)=>{calls.push(JSON.parse(options.body));return {ok:true,status:200,json:async()=>({hints:[]})};};
+ const sync=startAdventureSync({adventure,token:'t',fetch,every:1e9,gather:5,log:()=>{}});
+ version=2;listener();listener();
+ await new Promise(r=>setTimeout(r,60));sync.stop();
+ assert.equal(calls.length,1);assert.deepEqual(calls[0].players,[]);
+});
