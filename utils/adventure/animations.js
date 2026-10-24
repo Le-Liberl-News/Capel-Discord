@@ -26,11 +26,14 @@ async function loadFaces(){
 }
 // a card's two sides, framed, as pictures
 let back=null;
+// the face: the picture alone, its corners rounded as the card's (the pictures' own corners show their white
+// background); the back: drawn, framed
 function side(picture){
  const c=createCanvas(CW,CH),x=c.getContext('2d');
- if(picture)x.drawImage(picture,0,0,CW,CH);
- else{x.fillStyle='#7a2430';x.fillRect(0,0,CW,CH);x.strokeStyle='#e8c37a';x.lineWidth=1.5;x.strokeRect(6,6,CW-12,CH-12);}
- x.strokeStyle='#3a2a1a';x.lineWidth=1.5;x.strokeRect(.75,.75,CW-1.5,CH-1.5);
+ x.beginPath();x.roundRect(0,0,CW,CH,4);x.clip();
+ if(picture){x.drawImage(picture,0,0,CW,CH);return c;}
+ x.fillStyle='#7a2430';x.fillRect(0,0,CW,CH);x.strokeStyle='#e8c37a';x.lineWidth=1.5;x.strokeRect(6,6,CW-12,CH-12);
+ x.strokeStyle='#3a2a1a';x.lineWidth=1.5;x.beginPath();x.roundRect(.75,.75,CW-1.5,CH-1.5,4);x.stroke();
  return c;
 }
 const sides=new Map();
