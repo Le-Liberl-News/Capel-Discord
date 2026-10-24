@@ -472,17 +472,15 @@
   "verbs": {
     "prendre": [
       "prends",
-      "prenez",
       "ramasser",
-      "ramasse",
       "attraper",
-      "attrape",
       "saisir",
-      "soulever"
+      "soulever",
+      "sortir",
+      "retirer"
     ],
     "ouvrir": [
       "ouvre",
-      "ouvrez",
       "deverrouiller"
     ],
     "ranger": [
@@ -491,7 +489,8 @@
       "déposer",
       "insérer",
       "glisser",
-      "remettre"
+      "remettre",
+      "inserer"
     ],
     "regarder": [
       "voir",
@@ -524,6 +523,13 @@
       "demonter",
       "demolir",
       "detruire"
+    ],
+    "dormir": [
+      "coucher"
+    ],
+    "pousser": [
+      "deplacer",
+      "tirer"
     ]
   },
   "nouns": {
@@ -665,6 +671,15 @@
       "barreaux",
       "pierre",
       "pierres"
+    ],
+    "porte": [
+      "poignee",
+      "serrure",
+      "verrou"
+    ],
+    "papier-peint": [
+      "mur",
+      "murs"
     ]
   },
   "actions": [
@@ -799,7 +814,8 @@
       ],
       "text": "Le cadenas s'ouvre avec un cliquetis. L'accès à l'aile Est est désormais débloqué.",
       "effect": [
-        "bibliotheque_ouverte"
+        "bibliotheque_ouverte",
+        "cadenas_vu"
       ]
     },
     {
@@ -2428,16 +2444,6 @@
       ],
       "verb": "ouvrir",
       "noun": [
-        "porte"
-      ],
-      "text": "Laquelle souhaitez-vous ouvrir : la porte est ou la porte sud ?"
-    },
-    {
-      "place": [
-        15
-      ],
-      "verb": "ouvrir",
-      "noun": [
         "est"
       ],
       "must": [
@@ -2530,6 +2536,16 @@
         "chambre_ouverte"
       ],
       "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon."
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ouvrir",
+      "noun": [
+        "porte"
+      ],
+      "text": "Laquelle souhaitez-vous ouvrir : la porte est ou la porte sud ?"
     },
     {
       "place": [
@@ -3759,6 +3775,191 @@
         "porte"
       ],
       "text": "Vous refermez la porte, constatez qu'elle ne cachait rien, puis la réouvrez.\nLe ciel soit loué : elle ne s'est pas verrouillée automatiquement."
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ranger",
+      "noun": [
+        "couteau",
+        "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte à l'aide de la pointe du couteau que vous avez récupéré dans le salon.",
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "tool": [
+        "couteau"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ranger",
+      "noun": [
+        "cuillere",
+        "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la cuillère que vous avez récupérée dans le salon.",
+      "tool": [
+        "cuillere"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ranger",
+      "noun": [
+        "fourchette",
+        "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon.",
+      "tool": [
+        "fourchette"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "tourner",
+      "noun": [
+        "couteau",
+        "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte à l'aide de la pointe du couteau que vous avez récupéré dans le salon.",
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
+      "tool": [
+        "couteau"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "tourner",
+      "noun": [
+        "cuillere",
+        "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la cuillère que vous avez récupérée dans le salon.",
+      "tool": [
+        "cuillere"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "tourner",
+      "noun": [
+        "fourchette",
+        "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon.",
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "tool": [
+        "fourchette"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        10
+      ],
+      "verb": "couper",
+      "noun": [
+        "corde"
+      ],
+      "text": "Quelque chose vous dit que ce n'est pas une bonne idée."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "dormir",
+      "noun": [],
+      "text": "Vous vous allongez et tentez de vous endormir. Mais trop d'idées vous tournent dans la tête, vous n'y parvenez pas."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "pousser",
+      "noun": [],
+      "text": "Une voix s'infiltre dans vos pensées :\n« N'éloignez pas cet objet de sa position... Toute chose, tout être... est vouée à se rapprocher... de sa destinée... »"
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "retourner",
+      "noun": [],
+      "text": "Envisager les choses par leur revers est souvent judicieux. Cependant, vous n'aurez pas besoin de le faire durant cette aventure."
+    },
+    {
+      "place": [
+        13
+      ],
+      "verb": "prendre",
+      "noun": [
+        "coffre"
+      ],
+      "text": "Vous pensez sérieusement pouvoir emporter ce coffre avec vous ?\nPetit rappel : vous êtes actuellement haut comme trois pommes."
+    },
+    {
+      "place": [
+        13
+      ],
+      "verb": "regarder",
+      "noun": [
+        "papier-peint"
+      ],
+      "text": "Le papier-peint représente la savane lointaine, dans des couleurs chaudes et réconfortantes."
+    },
+    {
+      "place": [
+        5,
+        9
+      ],
+      "verb": "prendre",
+      "noun": [
+        "laine"
+      ],
+      "text": "Honnêtement, vous n'avez pas très envie de toucher cette laine."
     }
   ]
 }
