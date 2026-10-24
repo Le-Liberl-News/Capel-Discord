@@ -423,7 +423,7 @@
           "effect": [
             "fin_du_jeu_proche"
           ],
-          "text": "Vous ne devriez pas être bloqué ici. C'est un bug, signalez-le."
+          "fail": "Vous ne devriez pas être bloqué ici. C'est un bug, signalez-le."
         },
         "ouest": 20,
         "est": 20
