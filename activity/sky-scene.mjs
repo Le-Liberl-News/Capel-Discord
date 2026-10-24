@@ -1,3 +1,4 @@
+import surfaceJumpClock from './surface-jump-clock.cjs';
 import audioDistance from './audio-distance.cjs';
 import surfaceWalk from './surface-walk.cjs';
 import surfaceJump from './surface-jump.cjs';
@@ -393,7 +394,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   let autoPickupAt=0;
   let movementSequence = 0;
   let movementTrace = [];
-  let surfaceNavKey='';let landedJump=null,localJump=null,jumpPending=false,jumpClockOffset=0,jumpReadyAt=0;
+  const surfaceClock=surfaceJumpClock.createClock(),jumpDiagnostics=[];
+  function jumpDiagnostic(kind,extra={}){if(!__ACTIVITY_PREVIEW__||!venue?.surfaceJumps)return;jumpDiagnostics.push({kind,time:Date.now()+jumpClockOffset,local:localJump?{id:localJump.id,started:localJump.started,origin:localJump.origin}:null,intent:latestJumpIntent,landedJump,pending:jumpPending,position:{...avatars.get(localId)?.position},...extra});if(jumpDiagnostics.length>150)jumpDiagnostics.shift();}
+  function syncJumpClock(result){const server=result.health?.serverTime??Date.now(),received=result.clientReceivedAt??Date.now();return venue?.surfaceJumps?surfaceClock.offset(server,received):server-received;}
+  let surfaceNavKey='';let latestJumpIntent=null;let landedJump=null,localJump=null,jumpPending=false,jumpClockOffset=0,jumpReadyAt=0;
   const recordMovement = (point) => {
     movementTrace.push({ ...point, sequence: ++movementSequence });
     if (movementTrace.length > 1024) movementTrace.shift();
@@ -461,7 +465,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();
     let dx=right.x*horizontal+forward.x*vertical,dz=right.z*horizontal+forward.z*vertical;
     if(!horizontal&&!vertical&&path.length){dx=path[0].x-me.position.x;dz=path[0].z-me.position.z;}const length=Math.hypot(dx,dz);const direction={dx:length?dx/length:0,dz:length?dz/length:0};
-    combatSounds.play('jump');landedJump=null;const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};if(venue?.surfaceJumps)localJump.trajectory=surfaceJump.plan(localJump.origin,direction,collision);jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
+    combatSounds.play('jump');landedJump=null;const action=queueAction("jump",undefined,undefined,undefined,{direction,origin:{...me.position},started:Date.now()+jumpClockOffset});if(!action)return;localJump={id:action.id,started:Date.now()+jumpClockOffset,origin:{...me.position},...direction};if(venue?.surfaceJumps){latestJumpIntent={id:localJump.id,started:localJump.started};localJump.trajectory=surfaceJump.plan(localJump.origin,direction,collision);jumpDiagnostic('start',{end:localJump.trajectory.at(-1)});}jumpReadyAt=Date.now()+jumpClockOffset+1250;jumpPending=true;path=[];marker.visible=false;
   }
   const jumpButton=document.createElement("button");jumpButton.id="sky-jump";jumpButton.type="button";jumpButton.textContent="↥";jumpButton.title=jumpButton.ariaLabel="Sauter";jumpButton.hidden=!canJump;// on pointerdown: a phone sends no click for a second finger while the first one holds the move stick
   jumpButton.addEventListener("pointerdown",event=>{event.preventDefault();startJump();});jumpButton.addEventListener("click",event=>{if(event.detail===0)startJump();jumpButton.blur();});document.body.append(jumpButton);
@@ -950,7 +954,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if(__ACTIVITY_PREVIEW__&&!localTraining&&!new URLSearchParams(location.search).has('frame_id')){const cook=avatars.get(localId);if(cook?.character==='Phyllis'){if(cook.cooking&&cookingHeld)cook.cooking.heldUntil=Date.now()+1500;cookingMechanics.cookingTick(cook,Date.now());health.foodStock=cook.foodStock??[];health.cooking=cook.cooking;health.movementFactor=cook.cooking?.08:1;}}const introPlaying=!!duelIntro?.active(time);if(wasIntro&&!introPlaying&&!health.spectator&&!["Josette","Carna","Don","Sieg"].includes(avatars.get(localId)?.character))yaw=faceOpponent()??Math.PI/2;wasIntro=introPlaying;const me = avatars.get(localId),isFlying=!introPlaying&&me?.character==="Sieg"&&!me.prop&&!me.dead;
     if(previewCollapse){const age=Date.now()-previewCollapse.started;for(const target of previewCollapse.targets){const a=avatars.get(target.id);if(!a)continue;const push={origin:{x:target.point.x,y:target.point.y-.8,z:target.point.z},end:{x:target.point.x+(target.point.x>=-1?1.5:-1.5),y:target.point.y-.8,z:target.point.z},started:previewCollapse.started+585,duration:250};if(age>=585){Object.assign(a.position,projectionMechanics.projectionPosition(push,Date.now()));a.knockback=age<835?push:null;}a.downUntil=age>=835&&age<3335?previewCollapse.started+3335:0;a.fallAnimation=age>=585&&age<1035?{started:previewCollapse.started+585,duration:450,sign:target.point.x>=-1?1:-1}:null;}if(age>3400)previewCollapse=null;}
     if(previewDimension){const age=Date.now()-previewDimension.started;for(const target of previewDimension.targets){const a=avatars.get(target.id);if(!a)continue;if(age>=2600&&age<3400)a.dimensionLift={origin:target.point,started:previewDimension.started+2600,duration:800,height:2};else if(age>=3400){a.dimensionLift=null;Object.assign(a.position,target.point);}}if(age>4000)previewDimension=null;}
-    const freeSpectator=!!health.spectator;const isFPS=fpsActive(),altinaAiming=!!altinaAim();if(altinaAiming&&!altinaPreviousAim){altinaCameraPosition.copy(camera.position);altinaCameraQuaternion.copy(camera.quaternion);}altinaPreviousAim=altinaAiming;altinaPrompt.hidden=!altinaAiming;canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if(!isFPS||document.querySelector("#sky-terminal[open]"))releaseMouse();
+    const freeSpectator=!!health.spectator;const isFPS=fpsActive(),altinaAiming=!!altinaAim();if(altinaAiming&&!altinaPreviousAim){altinaCameraPosition.copy(camera.position);altinaCameraQuaternion.copy(camera.quaternion);}altinaPreviousAim=altinaAiming;altinaPrompt.hidden=!altinaAiming;canvas.style.cursor=isFPS?"none":"";crosshair.hidden=!isFPS;if((!isFPS&&!health.lynxControl&&!health.vehicleControl&&!canvas.hasAttribute('data-siege-lynx-pending')&&!canvas.hasAttribute('data-siege-lynx-camera'))||document.querySelector("#sky-terminal[open]"))releaseMouse();
     if(isFlying!==wasFlying||isFPS!==wasFPS){wasFlying=isFlying;wasFPS=isFPS;camera=isFlying||isFPS||health.spectator?flightCamera:walkingCamera;pitch=isFPS?(altinaAiming?1.05:0):isFlying?.25:CAMERA_PITCH;path=[];keys.clear();marker.visible=false;resize();}
     towerGates?.draw(time);if(towerGates&&connected&&me&&health.hp>0&&!localJump&&!actionQueue.some(a=>a.type==='tower_step')){const direction=towerGates.check(me.position);if(direction)queueAction('tower_step',direction);}
     if(movingPlatforms){walkingGrid=movingPlatforms.update(Date.now()+jumpClockOffset,me,!!localJump);if(movingPlatforms.relative(me?.position??{},Date.now()+jumpClockOffset))movementTrace=[];}
@@ -1159,10 +1163,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     renneCombat?.update(localId,craftCapture,camera,avatars);
     stunView?.update(avatars,Date.now()+jumpClockOffset);
     footContactView.update(avatars,camera);
-    damageEffects.update(seconds,camera,avatars,viewport.width,viewport.height);
+    damageEffects.update(seconds,venueView?.renderCamera??camera,avatars,viewport.width,viewport.height);
     if(guardHeld){guardDirection=combatMoves.cameraFacing(yaw);if(!connected||!movementAllowed||me?.dead||health.hp<=0||health.spectator)guardInput('end');else if(performance.now()>=guardRefreshAt&&queueAction('parry',undefined,undefined,undefined,{phase:'keep',direction:{x:guardDirection.dx,z:guardDirection.dz}}))guardRefreshAt=performance.now()+combatMoves.PARRY.holdRefresh;}
     if(ctfView)guarded('ctf',()=>ctfView.update(avatars,camera,performance.now()));
-    if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,camera,viewport.width,viewport.height);});
+    if(combatFeedback)guarded('feedback',()=>{combatFeedback.update(renneCombat?.actions??new Map(),avatars,venueView?.renderCamera??camera,viewport.width,viewport.height);});
     if (me&&!freeSpectator)
       follow.lerp(
         new THREE.Vector3(me.position.x*(map==="hangar"?.35:1), me.position.y, me.position.z*(map==="hangar"?.35:1)),
@@ -1279,7 +1283,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     trainingGeometry:()=>({grid,geometry:collision}),
     playerCharacter:()=>avatars.get(localId)?.character,
     catalogue,
-    ...(__ACTIVITY_PREVIEW__ ? { avatarSizes:()=>[...avatars.values()].filter(a=>a.character==='Claiomh Solais').map(a=>({character:a.character,sceneScale:a.sceneScale,renderScale:a.mesh.scale.x,bodyHeight:a.info.bodyHeight,sourcePixelRatio:a.info.sourcePixelRatio})),setAmbience:key=>arenaAtmosphere?.select('preview',key),ambience:()=>arenaAtmosphere?.state(),setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,combatEffects:renneCombat?.effectStats(),triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
+    ...(__ACTIVITY_PREVIEW__ ? { jumpDiagnostics:()=>jumpDiagnostics,avatarSizes:()=>[...avatars.values()].filter(a=>a.character==='Claiomh Solais').map(a=>({character:a.character,sceneScale:a.sceneScale,renderScale:a.mesh.scale.x,bodyHeight:a.info.bodyHeight,sourcePixelRatio:a.info.sourcePixelRatio})),setAmbience:key=>arenaAtmosphere?.select('preview',key),ambience:()=>arenaAtmosphere?.state(),setDayTime:time=>dayNight.setTime(time), dayTime:()=>dayNight.state(), localAvatar:()=>{const a=avatars.get(localId);return a?{id:localId,character:a.character,prop:a.prop,pose:Math.round(a.info.rows*(1-a.mesh.material.map.offset.y)-1),position:{...a.position},footY:a.mesh.position.y+(a.footOffset??0)*(a.character==="Sieg"&&!a.perched?camera.matrixWorld.elements[5]:1),perched:!!a.perched}:null;}, renderInfo:()=>({calls:renderer.info.render.calls,combatEffects:renneCombat?.effectStats(),triangles:renderer.info.render.triangles,perspective:camera.isPerspectiveCamera===true,pitch,camera:camera.position.toArray(),shadows:!!mapShadows,receivers:mapShadows?.overlays.length??0}), projectilePosition: id => { const a=avatars.get(id); return a ? {x:a.mesh.position.x,y:a.mesh.position.y,z:a.mesh.position.z} : null; } } : {}),
     onAction(callback) { notifyAction = callback; },
     onTerminal(callback) {notifyTerminal=callback;},
     onRematch(callback){notifyRematch=callback;},
@@ -1289,7 +1293,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     terminalPoint(){return terminal?{...terminal.position,y:terminal.position.y+.7}:null;},
     lynxPoint(){return null;},
     setConnected(value) { connected = value; touchButton.disabled=!value||health.hp===0||!!health.spectator||health.canMove===false; if (!value) { cookingInput('end');touches.reset();disarmTouch(); path=[]; keys.clear(); marker.visible=false; } },
-    async resetSession(player) { mobileTargetId=null;touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); landedJump=null;localJump=null;jumpPending=false;marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
+    async resetSession(player) { mobileTargetId=null;touches.reset();disarmTouch();actionQueue.length=0; predictedShots.clear(); for (const playback of projectiles.values()) playback.cancelPrediction(); path=[]; movementTrace=[]; movementSequence=0; keys.clear(); landedJump=null;latestJumpIntent=null;localJump=null;jumpPending=false;marker.visible=false; localId=player.id; await setAvatar(player); Object.assign(avatars.get(localId).position,positionOf(player)); connected=false; },
     messages(messages) {
       dialogues.receive(messages);
     },
@@ -1386,12 +1390,14 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       renneCombat?.receive(result.combat?.attacks??[],result.health?.serverTime??Date.now());
       const dash=result.health?.combatDash;
       if(dash&&dash!==lastCombatDash){lastCombatDash=dash;const me=avatars.get(localId);if(me&&!renneCombat?.dash(localId))Object.assign(me.position,result.position);path=[];movementTrace=[];localJump=null;craftTarget=me?.character==='Julia'&&juliaCombo?.stage<3?'craft':false;combatControls.targeting(craftTarget||null);}
-      dayNight.sync(result.health?.serverTime);jumpClockOffset=(result.health?.serverTime??Date.now())-(result.clientReceivedAt??Date.now());
+      dayNight.sync(result.health?.serverTime);jumpClockOffset=syncJumpClock(result);
       const bird=avatars.get(localId);
     if(bird){bird.frozenUntil=result.health?.frozenUntil;bird.downUntil=result.health?.downUntil;const previous=bird.siegDive,confirmed=result.health?.siegDive;if(confirmed){bird.siegDive=confirmed;divePending=null;}else if(!divePending||result.actionResult?.id===divePending){bird.siegDive=null;if(result.actionResult?.error&&result.actionResult.id===divePending)combatControls.rejected('craft');divePending=null;if(previous)Object.assign(bird.position,result.position);}if(previous||bird.siegDive){path=[];movementTrace=[];}}
       const pushed=avatars.get(localId);if(pushed){const previous=pushed.knockback;pushed.knockback=result.health?.knockback??null;pushed.dimensionLift=result.health?.dimensionLift??null;pushed.fallAnimation=result.health?.fallAnimation??null;if(pushed.knockback||previous){path=[];movementTrace=[];localJump=null;if(!pushed.knockback)Object.assign(pushed.position,result.position);}}
-      if(canJump){jumpClockOffset=(result.health?.serverTime??Date.now())-(result.clientReceivedAt??Date.now());if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects?.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
-        if(confirmed){if(confirmed.id!==landedJump){localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}}
+      if(venue?.surfaceJumps&&result.actionResult?.id===landedJump&&result.actionResult.error)landedJump=null;
+      jumpDiagnostic('world',{serverTime:result.health?.serverTime,confirmed:result.health?.jump,action:result.actionResult,serverPosition:result.position,lastServerLanding:result.health?.lastLandedJump});
+      if(canJump){jumpClockOffset=syncJumpClock(result);if(!jumpPending)jumpReadyAt=result.health?.jumpReadyAt??0;dungeonEffects?.receive(result.fire??[],result.health?.serverTime??Date.now());const confirmed=result.health?.jump;
+        if(confirmed){if(confirmed.id!==landedJump&&!(venue?.surfaceJumps&&!surfaceJumpClock.acceptsConfirmation(confirmed,latestJumpIntent))){if(!venue?.surfaceJumps||localJump?.id!==confirmed.id)localJump=confirmed;jumpPending=false;path=[];movementTrace=[];}}
         else if(localJump&&(!jumpPending||result.actionResult?.id===localJump.id)){localJump=null;jumpPending=false;movementTrace=[];path=[];const a=avatars.get(localId);if(a)Object.assign(a.position,result.position);}
       }
       duelIntro?.receive(result.duel?.result?null:result.duel,result.health?.serverTime);
@@ -1453,9 +1459,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     },
     correct(position, submitted) {
       const me = avatars.get(localId);
+      if(venue?.surfaceJumps&&landedJump&&health.lastLandedJump!==landedJump&&(health.jump?.id===landedJump||actionQueue.some(a=>a.id===landedJump)))return;
       if(health.dimensionLift||health.catCling||localJump||inTower&&health.jump&&health.jump.id!==landedJump||renneCombat?.dash(localId)||health.combatDash&&health.serverTime<health.combatLockedUntil||[...(renneCombat?.actions.values()??[])].some(e=>e.actor===localId&&!e.accepted&&!e.cancelled&&(renneMechanics.combatSpec(e.character,e.kind)?.dash||renneMechanics.combatSpec(e.character,e.kind)?.leap)))return;
       if (me && needsCorrection(me.position, position, submitted,me.character==="Sieg")) {
-        recordCorrection(me.position,position,submitted,map);
+        jumpDiagnostic('correct',{serverPosition:position,serverJump:health.jump,lastServerLanding:health.lastLandedJump});recordCorrection(me.position,position,submitted,map);
         Object.assign(me.position, position);
         path = [];
         movementTrace = [];
@@ -1468,7 +1475,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         heading:['Josette','Carna','Don'].includes(avatars.get(localId)?.character)?{dx:-Math.sin(yaw),dz:Math.cos(yaw)}:{...avatars.get(localId)?.heading},
         cookingHeld,
         jumpLanding:landedJump,
-        ...(pending?.origin??this.position()),
+        ...(pending?.origin??(venue?.surfaceJumps&&localJump?localJump.origin:this.position())),
         platform:movingPlatforms?.relative(this.position(),Date.now()+jumpClockOffset)??undefined,
         combatDash:lastCombatDash??undefined,
         trace: movementTrace.map((p) => ({ ...p })),
