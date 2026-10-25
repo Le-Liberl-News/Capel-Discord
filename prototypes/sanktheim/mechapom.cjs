@@ -48,7 +48,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
   if(!f){if(!w||w.started<state.mechapomArmedAt||t<w.started+APPEAR_AFTER)return;f=appear();}
   const k=progress(f),{x,z,heading}=along(k),y=ground(x,z);
   if(!f.trail.length||Math.hypot(x-f.trail.at(-1).x,z-f.trail.at(-1).z)>=TRAIL_STEP){f.trail.push({x,y,z});if(f.trail.length>80)f.trail.shift();}
-  Object.assign(f,{x,y,z,heading,progress:k});
+  Object.assign(f,{x,y,z,heading,progress:k,toGate:(1-k)*TOTAL});   // toGate: what is left of its route, for the cinematics
   if(!!w!==f.grounded){f.grounded=!!w;f.since=t;f.missiles=[];}
   if(!w)return;
   const e=enemy(f);e.hp=f.hp=Math.max(1,Math.min(f.maxHP,e.hp));Object.assign(e,{x:f.x,y:f.y,z:f.z});
