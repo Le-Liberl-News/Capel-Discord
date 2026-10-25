@@ -19,7 +19,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const sceneMediaEnabled=false;
  // a blow that takes a wall past a threshold: its replay animated (highlight-replay.cjs, the prepared view of that wall
  // at that threshold), through the shared media gate (utils/mediaRender.js); its still picture when declined
- const thresholdReplay=event=>event.type==='threshold'&&event.replay?.hit?require('../../utils/mediaRender').render(()=>require('./highlights.cjs').renderHighlight(event),{fallback:()=>require('./highlights.cjs').renderHighlight({...event,still:true}),limits:{maxGrowth:192*1048576,maxDuration:20000,maxBytes:4*1048576,minHeadroom:256*1048576}}):null;
+ const thresholdReplay=event=>event.type==='threshold'&&event.replay?.hit?require('../../utils/mediaRender').render(()=>require('./highlights.cjs').renderHighlight(event),{fallback:()=>require('./highlights.cjs').renderHighlight({...event,still:true}),limits:{maxGrowth:96*1048576,maxDuration:20000,maxBytes:4*1048576}}):null;
  const history=sceneMediaEnabled?require('./scene-history.cjs').createSceneHistory({siege,arena,now}):null;
  const warmSpectator=sceneMediaEnabled?require('./spectator-warmup.cjs').createSpectatorWarmup({siege,render:event=>require('./highlights.cjs').renderHighlight(event),log:console.error}):()=>{};
  const recordScene=()=>{if(history)warmSpectator(history.record());};

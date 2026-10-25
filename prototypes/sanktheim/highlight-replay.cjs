@@ -19,7 +19,16 @@ async function renderReplay(event){
  const defs=require('../../activity/assets/sky/effects/hero-frames.json'),effectInfo=defs[hit.kind==='shell'?'sc/msc0640._ef':'third/sc001_12._ef'];
  const canvas=createCanvas(W,H),c=canvas.getContext('2d'),layer=createCanvas(W,H),lc=layer.getContext('2d'),gif=GIFEncoder();
  c.imageSmoothingEnabled=lc.imageSmoothingEnabled=false;
- function overlay(draw,z,depthOffset){lc.clearRect(0,0,W,H);draw(lc);const source=lc.getImageData(0,0,W,H).data,base=c.getImageData(0,0,W,H),dest=base.data;for(let y=36;y<244;y++)for(let x=0;x<W;x++){const i=y*W+x,k=i*4,alpha=source[k+3]/255;if(!alpha||z>depth.readUInt16LE(depthOffset+i*2)/256+.18)continue;for(let n=0;n<3;n++)dest[k+n]=Math.round(source[k+n]*alpha+dest[k+n]*(1-alpha));dest[k+3]=255;}c.putImageData(base,0,0);}
+ // a layer drawn behind what stands nearer (the prepared depth); only its own rectangle (box: x, y, width, height) is
+ // read and written back: the whole picture, twice for every actor of every frame, was most of the render's memory
+ function overlay(draw,z,depthOffset,box){
+  const x0=Math.max(0,Math.floor(box[0])),y0=Math.max(36,Math.floor(box[1])),x1=Math.min(W,Math.ceil(box[0]+box[2])+1),y1=Math.min(244,Math.ceil(box[1]+box[3])+1),w=x1-x0,h=y1-y0;
+  if(w<=0||h<=0)return;
+  lc.clearRect(x0,y0,w,h);draw(lc);
+  const source=lc.getImageData(x0,y0,w,h).data,base=c.getImageData(x0,y0,w,h),dest=base.data;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4,alpha=source[k+3]/255;if(!alpha||z>depth.readUInt16LE(depthOffset+((y0+y)*W+x0+x)*2)/256+.18)continue;for(let n=0;n<3;n++)dest[k+n]=Math.round(source[k+n]*alpha+dest[k+n]*(1-alpha));dest[k+3]=255;}
+  c.putImageData(base,x0,y0);
+ }
 
  const count=atlas.height/H;
  for(let f=event.still?Math.min(8,count-1):0;f<count;f++){
@@ -29,10 +38,11 @@ async function renderReplay(event){
    const poses=a.moving?info.run:info.idle,pose=poses[Math.floor(f*.72)%poses.length],frame=pose*(info.directions??8)+direction;
    const height=info.height/S*meta.pixelsPerUnit,width=height*info.frameWidth/info.frameHeight,center=(info.centerY??info.height/2)/S*meta.pixelsPerUnit;
    const lunge=a.id===hit.from&&hit.kind==='melee'?Math.sin(Math.min(1,f/4)*Math.PI)*5:0;
-   overlay(ctx=>ctx.drawImage(sheet,frame%info.columns*info.frameWidth,Math.floor(frame/info.columns)*info.frameHeight,info.frameWidth,info.frameHeight,screen.x-width/2+lunge,screen.y-center-height/2,width,height),screen.z,offset);
+   const left=screen.x-width/2+lunge,top=screen.y-center-height/2;
+   overlay(ctx=>ctx.drawImage(sheet,frame%info.columns*info.frameWidth,Math.floor(frame/info.columns)*info.frameHeight,info.frameWidth,info.frameHeight,left,top,width,height),screen.z,offset,[left,top,width,height]);
   }
-  if(f>=3&&f<14){const ef=Math.min(effectInfo.frames-1,Math.floor((f-3)*.09*30)),size=(effectInfo.size??4)/S*meta.pixelsPerUnit,fw=effect.width/8,fh=effect.height/Math.ceil(effectInfo.frames/8);overlay(ctx=>{ctx.globalCompositeOperation='lighter';ctx.drawImage(effect,ef%8*fw,Math.floor(ef/8)*fh,fw,fh,impact.x-size/2,impact.y-size/2,size,size);ctx.globalCompositeOperation='source-over';},impact.z-.25,offset);}
-  if(hit.kind==='shell'&&hit.points?.length&&f<4){const p=hit.points[Math.max(0,hit.points.length-4+f)],q=transform(p);overlay(ctx=>{ctx.fillStyle='#ffbe4d';ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fill();},q.z,offset);}
+  if(f>=3&&f<14){const ef=Math.min(effectInfo.frames-1,Math.floor((f-3)*.09*30)),size=(effectInfo.size??4)/S*meta.pixelsPerUnit,fw=effect.width/8,fh=effect.height/Math.ceil(effectInfo.frames/8);overlay(ctx=>{ctx.globalCompositeOperation='lighter';ctx.drawImage(effect,ef%8*fw,Math.floor(ef/8)*fh,fw,fh,impact.x-size/2,impact.y-size/2,size,size);ctx.globalCompositeOperation='source-over';},impact.z-.25,offset,[impact.x-size/2,impact.y-size/2,size,size]);}
+  if(hit.kind==='shell'&&hit.points?.length&&f<4){const p=hit.points[Math.max(0,hit.points.length-4+f)],q=transform(p);overlay(ctx=>{ctx.fillStyle='#ffbe4d';ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fill();},q.z,offset,[q.x-5,q.y-5,10,10]);}
   // Keep the two captions readable, even for a character standing on the rampart.
   c.drawImage(atlas,0,f*H,W,36,0,0,W,36);c.drawImage(atlas,0,f*H+244,W,36,0,244,W,36);
   if(event.still)return {attachment:canvas.toBuffer('image/png'),name:event.wall+'-'+event.healthPercent+'.png'};
