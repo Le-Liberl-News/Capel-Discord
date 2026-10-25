@@ -1,6 +1,6 @@
 // The outskirts (wildlife.cjs): the pond at the end of the path's south branch, by the quarry, its water the game's
 // own (Liberl's sea and foam, scrolling one across the other); the hunter's meat and the garrison's hunger, in a
-// panel under the walls' one.
+// panel inside the walls' one.
 const POND={x:-221,z:61,rx:8,rz:6},DAY=24*3600000,STARVING=15;
 export function createWildsView({T,scene,asset,scale,getState,getOwn}){
  const loader=new T.TextureLoader(),pond=new T.Group();pond.name='pond';scene.add(pond);
@@ -20,7 +20,9 @@ export function createWildsView({T,scene,asset,scale,getState,getOwn}){
  pond.add(shore,bed,deep,shimmer);pond.position.set(POND.x*scale,.04*scale,POND.z*scale);
  // the panel: meat in hand, each soldier's hunger
  const panel=document.createElement('details');panel.style.cssText='position:fixed;left:12px;top:56px;z-index:30;max-width:260px;padding:6px 10px;border:1px solid #b59b67;border-radius:5px;background:#182a2fe6;color:#ffe7b0;font:12px system-ui';
- const title=document.createElement('summary');title.style.cssText='cursor:pointer;font-weight:600';const list=document.createElement('div');panel.append(title,list);document.body.append(panel);
+ const title=document.createElement('summary');title.style.cssText='cursor:pointer;font-weight:600';const list=document.createElement('div');panel.append(title,list);
+ // inside the walls' panel, under its wood and stone, rather than floating over its lines
+ const host=document.getElementById('siege-panel-body');if(host){panel.style.cssText='margin-top:8px;padding:4px 8px;border:1px solid #b59b6788;border-radius:5px;background:#0d1a1d80;color:#ffe7b0;font:12px system-ui';host.append(panel);}else document.body.append(panel);
  let last='';
  const hunger=(s,at)=>Math.max(0,(s.hunger??100)-(at-(s.hungerAt??at))/DAY*100);
  function update({time}){
