@@ -12,6 +12,7 @@ function createWildlife({state,hash,emit,hurt,defenders,garouHP,multiplier=1}){
  const fresh=([x,z],i)=>({id:'pom-wild-'+i,wild:true,character:WILD_NAME,pomCharacter:WILD_NAME,stage:3,kind:'garou',flying:false,hp:garouHP*HP_FACTOR,maxHP:garouHP*HP_FACTOR,
   home:{x,z},x,y:.04,z,nextAttack:0,deadAt:null,dead:false,heading:{dx:1,dz:0}});
  if(!state.wild?.garous?.[0]?.wild)state.wild={garous:DENS.map(fresh)};   // (an earlier draft kept only a record)
+ for(const g of state.wild.garous){const hp=garouHP*HP_FACTOR;if(g.maxHP!==hp){g.hp=g.hp/g.maxHP*hp;g.maxHP=hp;}}
  for(const s of state.soldiers){s.hunger??=100;s.hungerAt??=state.at;}
  const living=()=>state.wild.garous.filter(g=>!g.dead&&g.hp>0);
  function update(dt){
@@ -37,7 +38,7 @@ function createWildlife({state,hash,emit,hurt,defenders,garouHP,multiplier=1}){
  function die(e,killer){
   const g=state.wild.garous.find(g=>g.id===e.id);if(!g||g.dead)return;g.hp=0;
   g.dead=true;g.hp=0;e.deadAt=state.at;
-  state.corpses.push({id:e.id+':'+state.at,character:WILD_NAME,stage:3,kind:'garou',flying:false,x:e.x,y:0,z:e.z,at:state.at});if(state.corpses.length>500)state.corpses.shift();
+  state.corpses.push({id:e.id+':'+state.at,character:WILD_NAME,stage:3,kind:'garou',flying:false,actor:e.id,maxHP:e.maxHP,previousHP:e.lastHitHP??e.maxHP,x:e.x,y:e.y,z:e.z,at:state.at});if(state.corpses.length>500)state.corpses.shift();
   const p=state.players[killer];if(p&&!p.pomControlled){p.meat=(p.meat??0)+1;emit('hunt','',{actor:p.id,meat:p.meat,position:{x:e.x,y:e.y,z:e.z}});}
  }
  // after each wave: the wood fills again

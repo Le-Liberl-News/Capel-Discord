@@ -6,7 +6,7 @@
 // the nearest defender or at the Lynx, and part of the poms spawn on its deck and jump down from it.
 const APPEAR_AFTER=180000,MAX_HP=5000000,ARRIVAL_DATE='2026-10-30',ARRIVAL_HOUR=12;
 // SIZE: the model's scale in the battle (it is drawn 1.5 times smaller than built); its measures follow
-const SIZE=1/1.5,DECK_Y=18.4*SIZE,DECK_SPOT=3*SIZE,DECK_WAIT=2500,DROP_TIME=1400,DROP_REACH=16*SIZE,BURN_RADIUS=11*SIZE,BURN_DAMAGE=16,MISSILE_REACH=70,LYNX_REACH=90,MISSILE_SPEED=70,MISSILE_EVERY=4000,MISSILE_DAMAGE=30,LYNX_DAMAGE=250,TRAIL_STEP=4,ASSAULT_RATE=.004;
+const SIZE=1/1.5,DECK_Y=18.4*SIZE,DECK_SPOT=3*SIZE,DECK_WAIT=2500,DROP_TIME=1400,DROP_REACH=16*SIZE,BURN_RADIUS=11*SIZE,BURN_DAMAGE=16,MISSILE_REACH=70,LYNX_REACH=90,MISSILE_SPEED=70,MISSILE_EVERY=4000,MISSILE_DAMAGE=30,LYNX_DAMAGE=250,ASSAULT_RATE=.004;
 const HIT_RADIUS=6*SIZE,HIT_HEIGHT=16*SIZE;   // metres, as the combat sees it
 const {SCALE}=require('./world-space.cjs');
 // the forest path, from the map's western edge to the gate (read off the terrain seen from above), and how far
@@ -47,7 +47,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
   const t=state.at,w=state.wave;let f=state.mechapom;
   if(!f){if(!w||w.started<state.mechapomArmedAt||t<w.started+APPEAR_AFTER)return;f=appear();}
   const k=progress(f),{x,z,heading}=along(k),y=ground(x,z);
-  if(!f.trail.length||Math.hypot(x-f.trail.at(-1).x,z-f.trail.at(-1).z)>=TRAIL_STEP){f.trail.push({x,y,z});if(f.trail.length>80)f.trail.shift();}
+  if(f.trail?.length)f.trail=[]; // No burning trail behind the fortress.
   Object.assign(f,{x,y,z,heading,progress:k,toGate:(1-k)*TOTAL});   // toGate: what is left of its route, for the cinematics
   if(!!w!==f.grounded){f.grounded=!!w;f.since=t;f.missiles=[];}
   if(!w)return;

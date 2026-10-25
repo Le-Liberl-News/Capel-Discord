@@ -2,7 +2,7 @@ import {createPomFortress,TEXTURES} from './pom-fortress-model.mjs';
 import {loadNativeProp} from './native-prop.mjs';
 // The Mechapom fortress in the battle (mechapom.cjs): the model where the server puts it, coming down from the sky
 // at a wave's start and rising back at its end; walking, its headlights, flamethrowers and pods turned toward the
-// nearest defender; the missiles the server fires, homing on their target; the fire it leaves along its route.
+// nearest defender; the missiles the server fires, homing on their target; its flamethrowers (without a burning trail along its route).
 // Its landing and its take-off are cinematics, for everyone connected at once (they follow the server's clock): the
 // camera low as it comes down, then round it, its name and how far it still is from the gate; at a wave's end a
 // two-second travelling from where the player was looking up to it, then it rises out of sight.
@@ -15,7 +15,7 @@ const ease=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
 export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds,ready=Promise.resolve()}){
  let view=null,loading=false,landed=false,shake=0,clock=0;   // clock: its own seconds (the scene hands the frame's length)
  // a step, a landing: the ground shakes, the closer the stronger
- const onShake=(at,strength)=>{const own=getOwn();const d=own?Math.hypot(own.x-at.x,own.z-at.z):60;shake=Math.max(shake,strength*Math.max(0,1-d/(80*scale)));};const seen=new Set(),fires=new Map(),loader=new T.TextureLoader();let fireMap=null;
+ const onShake=(at,strength)=>{const own=getOwn();const d=own?Math.hypot(own.x-at.x,own.z-at.z):60;shake=Math.max(shake,strength*Math.max(0,1-d/(80*scale)));};const seen=new Set(),loader=new T.TextureLoader();let fireMap=null;
  async function load(){
   const textures={};
   await Promise.all([...TEXTURES.map(async name=>{textures[name]=await loader.loadAsync(asset(`/assets/siege/pom-fortress/${name}.png`));}),
@@ -43,19 +43,6 @@ export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds,r
   const state=getState();let best=null,d=REACH*scale;
   for(const a of [...state.players.filter(p=>!p.pomControlled),...state.soldiers])if(a.hp>0){const k=Math.hypot(a.x-m.x,a.z-m.z);if(k<d){d=k;best=a;}}
   return best&&new T.Vector3(best.x,best.y+.8,best.z);
- }
- // the burnt route: a flame at each of the last points it walked through (the older ones die out)
- function burn(trail){
-  if(!fireMap)return;
-  const keep=new Set();
-  for(const p of trail.slice(-14)){
-   const key=Math.round(p.x*10)+':'+Math.round(p.z*10);keep.add(key);if(fires.has(key))continue;
-   const group=new T.Group();group.position.set(p.x,p.y,p.z);
-   const map=fireMap.clone();map.repeat.set(.25,1);const sprite=new T.Sprite(new T.SpriteMaterial({map,transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.85}));
-   sprite.position.set(0,.9,0);sprite.scale.set(2.4,2.6,1);group.add(sprite);
-   scene.add(group);fires.set(key,group);
-  }
-  for(const [key,group]of fires)if(!keep.has(key)){scene.remove(group);for(const sprite of group.children){sprite.material.map.dispose();sprite.material.dispose();}fires.delete(key);}
  }
  // the cinematics' own camera and caption
  const film=new T.PerspectiveCamera(45,1,.5,900),aim=new T.PerspectiveCamera(),canvas=document.getElementById('scene');let filming=false,from=null;
@@ -101,11 +88,10 @@ export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds,r
    if(getState().at-e.at>2500||!down)continue;
    view.fire(()=>where(e.to));sounds?.play('don-shot',{gain:.6,position:e.origin});
   }
-  burn(m.trail??[]);
+
   shoot(m,age,camera);
   const shaken=filming?film:camera;
   if(shake>.01&&shaken){shaken.translateY(Math.sin(time*.09)*shake*.25);shaken.translateX(Math.cos(time*.07)*shake*.12);shake*=.92;}
-  for(const [i,group]of [...fires.values()].entries())for(const [k,sprite]of group.children.entries())sprite.material.map.offset.x=(Math.floor(time/80)+i+k)%4/4;
  }
  return {update,get camera(){return filming?film:null;}};
 }
