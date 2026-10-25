@@ -500,7 +500,8 @@
       "lire",
       "inspecter",
       "consulter",
-      "consulte"
+      "consulte",
+      "fouiller"
     ],
     "allumer": [
       "activer"
@@ -533,6 +534,14 @@
     ],
     "creuser": [
       "gratter"
+    ],
+    "monter": [
+      "escalader",
+      "grimper"
+    ],
+    "sauter": [
+      "bondir",
+      "sautiller"
     ]
   },
   "nouns": {
@@ -599,7 +608,9 @@
       "rayons"
     ],
     "arts": [
-      "loisirs"
+      "loisirs",
+      "art",
+      "loisir"
     ],
     "couvert": [
       "couverts"
@@ -683,10 +694,13 @@
     ],
     "papier-peint": [
       "mur",
-      "murs"
+      "murs",
+      "motif",
+      "motifs"
     ],
     "poshul": [
-      "humain"
+      "humain",
+      "specimen"
     ],
     "20-13-1-100": [
       "20-13-1-0",
@@ -781,6 +795,32 @@
       "13-1-100-20",
       "13-1-excuse-20",
       "13-1-banjo-20"
+    ],
+    "cuillere": [
+      "cuilleres"
+    ],
+    "couteau": [
+      "couteaux"
+    ],
+    "fourchette": [
+      "fourchettes"
+    ],
+    "machine": [
+      "fontaine"
+    ],
+    "fissure": [
+      "fente"
+    ],
+    "danse": [
+      "jardinage",
+      "decoration",
+      "peinture"
+    ],
+    "album": [
+      "albums",
+      "bd",
+      "bande-dessinée",
+      "bande-dessinées"
     ]
   },
   "actions": [
@@ -1038,6 +1078,22 @@
       "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)",
       "effect": [
         "cadenas_vu"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ],
+      "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)",
+      "effect": [
+        "cadenas_vu"
+      ],
+      "noun": [
+        "cadenas"
       ]
     },
     {
@@ -1776,7 +1832,7 @@
       "noun": [
         "herbe"
       ],
-      "text": "La végétation a repris ses droits dans cette cour. Personne n'a dû entretenir cette cour depuis des lustres."
+      "text": "La végétation a repris ses droits dans cette cour. Personne n'a dû l'entretenir depuis des lustres."
     },
     {
       "place": [
@@ -1797,6 +1853,22 @@
         "escalier"
       ],
       "text": "Un escalier s'enfonce dans les profondeurs au nord-est de la cour. Vous pouvez apercevoir une porte ouverte tout en bas des marches."
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Les grandes fenêtres sont toutes deux orientées vers la cour intérieur. Vous y voyez la grande statue de tout à l'heure à travers la végétation.",
+      "noun": [
+        "fenetre"
+      ]
     },
     {
       "place": [
@@ -3410,7 +3482,24 @@
         "1-100-20-13"
       ],
       "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet.\nPourtant, vous êtes certain d'avoir la solution sur le bout de la langue.",
-      "animation": "cartes"
+      "animation": "cartes",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "distribuer",
+      "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet.\nPourtant, vous sentez que vous êtes sur la bonne piste.",
+      "animation": "cartes",
+      "noun": [
+        "0-20-13-1"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -4135,6 +4224,104 @@
       "text": "L'humain se bouche les oreilles et recule dans sa cage, apeuré.",
       "noun": [
         "poshul"
+      ]
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "ramper",
+      "noun": [],
+      "text": "Vous êtes petit, mais pas à ce point."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "monter",
+      "noun": [],
+      "text": "Même en montant sur la porte, vous ne parvenez pas à l'ouvrir."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "sauter",
+      "noun": [],
+      "text": "Vous sautillez sur place. Quelle énergie !"
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "manger",
+      "noun": [],
+      "text": "Vous n'avez pas vraiment faim."
+    },
+    {
+      "place": [
+        11
+      ],
+      "verb": "regarder",
+      "noun": [
+        "fissure"
+      ],
+      "text": "La fissure est assez large pour faire passer la lumière, mais rien d'autre."
+    },
+    {
+      "place": [
+        6
+      ],
+      "verb": "couper",
+      "noun": [],
+      "text": "Vous avez envie de donner un coup de jeune à cette cour ? C'est tout à fait louable.\nMais ce n'est pas comme ça que vous allez progresser dans votre aventure."
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "noun": [
+        "danse"
+      ],
+      "text": "Il y a plusieurs ouvrages dans cette catégorie, mais rien de particulièrement intéressant."
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Ces livres sont certainement très divertissants, mais après les avoir feuilletés, vous voyez bien qu'ils ne vous seront d'aucune utilité.",
+      "noun": [
+        "album"
+      ]
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Il y a plusieurs ouvrages dans cette catégorie, mais rien de particulièrement intéressant.\nCependant, vous remarquez qu'il y a un espace vide dans la rangée.",
+      "noun": [
+        "cuisine"
       ]
     }
   ]
