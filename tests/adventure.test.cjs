@@ -147,10 +147,10 @@ test('an action marked "alone" answers the verb alone; another one without noun 
  assert.equal(game.handle(s,'regarder la table').replies[0],'Rien de tel ici.');
  assert.equal(game.handle(s,'regarder la porte').replies[0],'Une porte.');
 });
-test('the cards are dealt in a GIF',async()=>{
+test('the dealt cards are shown in a single PNG',async()=>{
  const {renderAnimation}=require('../utils/adventure/animations');
  const gif=await renderAnimation('cartes',['20-13-1-100']);
- assert.equal(gif.name,'distribution.gif');assert.equal(gif.attachment.subarray(0,6).toString(),'GIF89a');
+ assert.equal(gif.name,'distribution.png');assert.equal(gif.attachment.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
  assert.equal(await renderAnimation('cartes',[]),null);
  // a value outside the deck is not dealt: the same GIF as without it
  const clean=await renderAnimation('cartes',['20-13-1-100']),noisy=await renderAnimation('cartes',['20-abc-13-0-1-22-100']);
@@ -159,7 +159,14 @@ test('the cards are dealt in a GIF',async()=>{
  await assert.rejects(renderAnimation('rien',[]),/inconnue/);
 });
 
-test('a card exists once: a number typed again leaves its seat empty, the Excuse included',async()=>{const {renderAnimation}=require('../utils/adventure/animations');const frames=gif=>{let n=0;for(let i=0;i<gif.length-1;i++)if(gif[i]===0x21&&gif[i+1]===0xf9)n++;return n;};const all=await renderAnimation('cartes',['1-2-7-3']),twice=await renderAnimation('cartes',['1-1-7-1']),excuse=await renderAnimation('cartes',['100-100']),two=await renderAnimation('cartes',['100-1']);assert.ok(frames(twice.attachment)<frames(all.attachment));assert.ok(frames(excuse.attachment)<frames(two.attachment));});
+test('duplicate cards leave their seats empty in the static distribution',async()=>{
+ const {renderAnimation}=require('../utils/adventure/animations'),{loadImage,createCanvas}=require('@napi-rs/canvas');
+ async function pixel(words,x,y){const result=await renderAnimation('cartes',[words]),image=await loadImage(result.attachment),canvas=createCanvas(480,410),ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);return [...ctx.getImageData(x,y,1,1).data];}
+ assert.deepEqual(await pixel('1-1-7-1',240,77),[47,93,58,255]);
+ assert.notDeepEqual(await pixel('1-2-7-3',240,77),[47,93,58,255]);
+ assert.deepEqual(await pixel('100-100',240,77),[47,93,58,255]);
+});
+
 test('in the final room, players wait for the others; one arriving after the end still wins',async()=>{
  const {sent,client,user}=fakeDiscord();
  const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:2,victory:'Victoire !',closing:'Fin.'}};
@@ -181,7 +188,7 @@ test('an animation sent is kept in the log and handed once to the platform',asyn
  adv.message(dm(user('123456'),'distribuer 1, 2, 3, 4'));for(let i=0;i<40;i++)await tick();
  const reply=adv.snapshot()[0].log.at(-1);
  assert.equal(reply.media[0].type,'animation');assert.match(reply.media[0].sha,/^[0-9a-f]{40}$/);
- assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.gif');
+ assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.png');
  const media=adv.media();assert.equal(media.length,1);assert.equal(media[0].sha,reply.media[0].sha);
  adv.mediaSent([media[0].sha]);assert.equal(adv.media().length,0);
 });

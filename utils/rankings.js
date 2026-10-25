@@ -32,7 +32,7 @@ async function actualiserClassement(client, top10) {
         const message = await salon.messages.fetch(messageMaitreId);
 
         const buffer = await renderRankings(top10);
-        const attachment = new AttachmentBuilder(buffer, { name: 'classement.gif' });
+        const attachment = new AttachmentBuilder(buffer, { name: 'classement.png' });
 
         await message.edit({
             content: null, 

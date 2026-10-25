@@ -98,6 +98,7 @@ function encode(frames,delays,{once=false}={}){
  gif.finish();return Buffer.from(gif.bytes());
 }
 async function renderBubble(message,stage,seed=Date.now(),images=[]){
+ stage=1; // Emergency: all chat bubbles are still PNGs, including evolved poms.
  const {frame,tail,inverted}=await load(),list=words(message),probe=createCanvas(10,10).getContext('2d'),pictures=await emojiPictures(list);
  const attached=await joined(images);
  if(stage<=1){
@@ -208,6 +209,7 @@ async function onVacuum(pom){
 const stageSprite=async(character,stage)=>{const pom=await pomSprite(character,stage);return stage==='aspi'||stage==='funebre'?onVacuum(pom):pom;};
 // from: 0 = the character itself, 1, 2, 'aspi' = the pom's stage; to: the next stage (2, 3, 'aspi' or 'funebre')
 async function renderEvolution(character,from,to,seed=Date.now()){
+ return null; // Emergency: preserve the text/game outcome without generating GIF frames.
  const before=from===0?await characterSprite(character):await stageSprite(character,from);
  const old=before?fitted(before,from===0?190:220,from===0):evolutionFrame(null);
  // from the character: the pom comes out smaller than the human (about two thirds of its height)
@@ -245,6 +247,7 @@ function sheetFrame({sheet,tex},direction,frame){
 // blood tiles (x, y, size on the 256 texture): splashes, drops, a big burst
 const SPLASH=[[0,32,32],[32,32,32]],DROPS=[[0,192,32],[32,192,32],[64,192,32],[96,192,32],[64,224,32],[96,224,32]],BURST=[[128,192,64],[192,192,64]];
 async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
+ return null; // Emergency: preserve the text/game outcome without generating GIF frames.
  const rng=seeded(seed),blood=await loadImage(fs.readFileSync(BLOOD));
  const sheet=victimStage?null:await sheetOf(victim),running=victimStage?null:await runSheetOf(victim);
  const victimPom=victimStage?await pomSprite(victim,victimStage):null;

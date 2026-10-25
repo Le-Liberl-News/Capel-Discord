@@ -42,6 +42,7 @@ function drawOrb(x,cx,cy,r,t){
 }
 // sprite: 'aspi' or 'funebre'; victimSprite: 0 for a healthy character (its walk sheet), else its pom picture's key
 async function renderWizardBite(character,sprite,victim,victimSprite=0,outcome='shrink',seed=Date.now()){
+ return null; // Emergency: preserve the text/game outcome without generating GIF frames.
  const rng=seeded(seed),seat=await vacuum();
  const sheet=victimSprite?null:await sheetOf(victim),victimPom=victimSprite?await pomSprite(victim,victimSprite):null;
  if(!sheet&&!victimPom)return null;

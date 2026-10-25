@@ -55,6 +55,7 @@ function bloodFx(rng,blood){
 const lerp=(a,b,t)=>a+(b-a)*t;
 // defenders: three {character}; attackers: three {character, stage}, each one facing the defender of the same rank
 async function renderSiege(defenders,attackers,outcome,seed=Date.now()){
+ return null; // Emergency: preserve the text/game outcome without generating GIF frames.
  const rng=seeded(seed),blood=await loadImage(fs.readFileSync(BLOOD)),fx=bloodFx(rng,blood);
  const actors=await Promise.all(defenders.map(d=>actor(d.character)));
  if(actors.some(a=>!a.walk&&!a.guard))return null;

@@ -28,7 +28,7 @@ function createArenaBoard({client,lobby,duels,ranking,assigned,store,resolveChar
    let message;if(saved.message)try{message=await channel.messages.fetch(saved.message);}catch(e){if(e.code!==10008)throw e;}
    if(message&&imageSignature===lastImage){await message.edit({components});lastSignature=signature;return;}
    const image=await render(visual);
-   const payload={content:'',embeds:[],attachments:[],files:[{attachment:image,name:'arena.gif'}],components,allowedMentions:{parse:[]}};
+   const payload={content:'',embeds:[],attachments:[],files:[{attachment:image,name:'arena.png'}],components,allowedMentions:{parse:[]}};
    if(message)await message.edit(payload);else{message=await channel.send(payload);saved.message=message.id;store.save(saved);}lastSignature=signature;lastImage=imageSignature;
   }finally{busy=false;}
  }
