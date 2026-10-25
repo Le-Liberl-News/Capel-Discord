@@ -3,7 +3,8 @@
 // textures and geometry uploaded, draws), the shader programs and lights in the scene second by second, and named
 // spans (the walls' damage rebuilt…). A diagnostic: bounded, and the WebGL calls are given back after DURATION.
 const DURATION=60000,LONG=250;
-const TIMED={compile:['compileShader','linkProgram','getProgramParameter','getShaderParameter'],texture:['texImage2D','texSubImage2D','compressedTexImage2D','texStorage2D','generateMipmap'],buffer:['bufferData','bufferSubData'],draw:['drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced']};
+// the driver finishes a shader when it is first needed: its uniforms' and attributes' lookups wait for it
+const TIMED={compile:['compileShader','linkProgram','getProgramParameter','getShaderParameter','getActiveUniform','getActiveAttrib','getUniformLocation','getAttribLocation'],texture:['texImage2D','texSubImage2D','compressedTexImage2D','texStorage2D','generateMipmap'],buffer:['bufferData','bufferSubData'],draw:['drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced']};
 export function createStartupProfile({renderer,scene,onFirstDraw=()=>{}}){
  const gl=renderer.getContext(),t0=performance.now(),frames=[],samples=[],spans=[];let frame=null,drawn=false,done=false,lastSample=0;
  const fresh=()=>({start:performance.now(),compile:0,texture:0,buffer:0,draw:0,programs:0});

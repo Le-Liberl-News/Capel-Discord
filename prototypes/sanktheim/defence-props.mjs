@@ -2,7 +2,7 @@ import spotlightTime from './spotlight-time.cjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 // Native SC models; the beam is a light volume, not part of the source mesh.
-export function createDefenceProps({T,scene,asset,getState,getOwn,sounds,nativeEffectSprite,getImpact}){
+export function createDefenceProps({T,scene,asset,getState,getOwn,sounds,nativeEffectSprite,getImpact,lightReserve=null}){
  const templates=new Map(),mines=new Map(),blankets=new Map(),lamps=[],bursts=new Map(),seen=new Set();let disposed=false;
  const loader=new GLTFLoader();
  const ready=Promise.all(['t41spt03','t31orb00','t23bed01'].map(async name=>{
@@ -18,7 +18,7 @@ export function createDefenceProps({T,scene,asset,getState,getOwn,sounds,nativeE
    const origin=new T.Vector3(-22.75,9.72,z),end=new T.Vector3(-38,.15,z*.35),dir=end.clone().sub(origin),length=dir.length(),volume=new T.Group();
    // Layered, open cones give a soft edge and a brighter core without white solids.
    for(const [radius,opacity]of [[4,.022],[3.3,.026],[2.5,.025]]){const cone=new T.Mesh(new T.ConeGeometry(radius,length,32,1,true),new T.MeshBasicMaterial({color:0xffe8b0,transparent:true,opacity,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending}));cone.position.copy(origin).addScaledVector(dir,.5);cone.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),dir.clone().normalize());volume.add(cone);}
-   const target=new T.Object3D();target.position.copy(end);scene.add(target);const light=new T.SpotLight(0xffe7b5,0,48,Math.atan(6/length),.55,2);light.position.copy(origin);light.target=target;scene.add(light,volume);const lens=new T.Mesh(new T.CircleGeometry(.12,16),new T.MeshBasicMaterial({color:0xfff0c9,side:T.DoubleSide}));lens.position.copy(origin);lens.lookAt(end);scene.add(lens);lamps.push({lamp,volume,light,target,lens});
+   const target=new T.Object3D();target.position.copy(end);scene.add(target);const light=new T.SpotLight(0xffe7b5,0,48,Math.atan(6/length),.55,2);light.position.copy(origin);light.target=target;lightReserve?.take('spot');scene.add(light,volume);const lens=new T.Mesh(new T.CircleGeometry(.12,16),new T.MeshBasicMaterial({color:0xfff0c9,side:T.DoubleSide}));lens.position.copy(origin);lens.lookAt(end);scene.add(lens);lamps.push({lamp,volume,light,target,lens});
   }
  })).catch(console.error);
  function update({time,dayNight,avatars}){
