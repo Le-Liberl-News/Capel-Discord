@@ -30,7 +30,13 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  app.get('/api/siege/status',(req,res)=>{res.set('Cache-Control','no-store');
   // the wave under way and the next one: the deployment waits for a quiet moment (.github/workflows/deploy.yml)
   const view=ready?siege.snapshot():null,wave=view?.wave?{number:view.wave.number,ends:view.wave.ends}:null;
-  res.json({ready,wave,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
+  const r=v=>Math.round(v*10)/10,st=siege._state,field=ready?{   // what the garrison is doing right now, to see from outside why a wall is falling
+    guards:st.soldiers.map(g=>({name:g.name,role:g.role,hp:Math.round(g.hp),x:r(g.x),y:r(g.y),z:r(g.z),moving:!!g.moving,transit:!!g.transit,sleeping:!!g.sleeping,bump:!!g.pomBump,bound:g.pomBoundUntil>st.at,lastShot:g.attackPose?st.at-g.attackPose.at:null})),
+    poms:st.enemies.filter(e=>e.hp>0).map(e=>({name:e.pomCharacter??e.character,skirmish:!!e.skirmish,hp:Math.round(e.hp),x:r(e.x),y:r(e.y),z:r(e.z),target:e.target??null,craft:e.pomCraft?.phase??null})),
+    walls:st.walls.map(w=>({id:w.id,percent:Math.round(w.hp/w.maxHP*1000)/10})),
+    turrets:st.turrets.filter(t=>t.hp>0).map(t=>({type:t.type,x:r(t.x),y:r(t.y),z:r(t.z),lastShot:t.nextAttack?st.at-t.nextAttack:null})),
+    online:Object.values(st.players).filter(p=>p.online).length}:null;
+  res.json({ready,wave,field,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
  app.use('/api/siege',async(req,res)=>{
   try{
    const user=identity(req);await access.assertMember(user.userId);
