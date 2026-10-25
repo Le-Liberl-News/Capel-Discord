@@ -25,6 +25,8 @@ jobs:
     - name: Validate startup sources
       run: |
         node --check index.js
+        node --test tests/runtime-diagnostics.test.cjs
+        python3 -m unittest discover -s tools/diagnostics -p "test_*.py"
         node -e 'JSON.parse(require("node:fs").readFileSync("rpg/data/aventure.json","utf8"));'
 
     - name: Install activity test dependencies
@@ -113,6 +115,13 @@ jobs:
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
           cd /home/twnkek290001/LN-Bot
+          # Independent, bounded /proc recorder survives LN-Bot restarts and Discord/SQL outages.
+          if pm2 describe LN-Watch >/dev/null 2>&1; then
+            pm2 restart LN-Watch
+          else
+            pm2 start tools/diagnostics/watch.py --name LN-Watch --interpreter python3 --max-memory-restart 64M --restart-delay 5000
+          fi
+          pm2 save
           npm install --omit=dev --no-audit --no-fund
           # Browser capture is validated on the CI runner, not on the shared
           # production host: running a second Chromium there can starve the bot.

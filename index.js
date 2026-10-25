@@ -1,3 +1,4 @@
+require('./utils/runtimeDiagnostics').install();
 require('dotenv').config();
 const { Client, GatewayIntentBits, Partials, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, WebhookClient, ContextMenuCommandBuilder, ApplicationCommandType, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { google } = require('googleapis');
@@ -190,6 +191,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+app.use(require('./utils/runtimeDiagnostics').middleware);
 app.use('/api/craft-capture', express.json({limit:'11mb'}));
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
