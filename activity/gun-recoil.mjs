@@ -12,14 +12,14 @@ export function releasedShots(event,spec,now){
 export function createGunRecoil(specFor,random=Math.random){
  let current=null,seen=new Set();
  return (event,character,now,active)=>{
-  const kick={yaw:0,pitch:0};if(character==='Don'&&event?.kind!=='basic')return kick;
-  if(!active||!event||!['Carna','Josette','Don'].includes(character)||!['basic','craft'].includes(event.kind))return kick;
+  const kick={yaw:0,pitch:0};if(['Don','SiegeGuard'].includes(character)&&event?.kind!=='basic')return kick;
+  if(!active||!event||!['Carna','Josette','Don','SiegeGuard'].includes(character)||!['basic','craft'].includes(event.kind))return kick;
   if(current!==event.id){current=event.id;seen=new Set();}
   for(const shot of releasedShots(event,specFor(character,event.kind),now)){
    if(seen.has(shot.index))continue;seen.add(shot.index);
    if(shot.age>150)continue;
-   kick.pitch-=character==='Don'?.3:character==='Carna'?(event.kind==='basic'?.008:.005):.065;
-   kick.yaw+=(random()*2-1)*(character==='Don'?.08:character==='Carna'?(event.kind==='basic'?.006:.004):.025);
+   kick.pitch-=character==='SiegeGuard'?.035:character==='Don'?.3:character==='Carna'?(event.kind==='basic'?.008:.005):.065;
+   kick.yaw+=(random()*2-1)*(character==='SiegeGuard'?.012:character==='Don'?.08:character==='Carna'?(event.kind==='basic'?.006:.004):.025);
   }
   return kick;
  };

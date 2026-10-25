@@ -59,7 +59,7 @@ export async function createCombatFeedback(THREE,scene,assets,container,sounds=n
     }
 
     if(event.kind==='craft'&&!event.cancelled&&Object.hasOwn(daybreakCrafts.CRAFTS,event.character)){const spec=daybreakCrafts.CRAFTS[event.character],elapsed=now-event.localStart;for(const [name,at,gain]of (spec.coinShot?[['block',spec.throwAt,.25],['josette-shot',spec.fireAt,.75]]:spec.zeroth?[['block',1900,.35],['dash',spec.moveStart,.55],['hit2',spec.hitAt,.8],['hit4',spec.hitTimes[1],.8]]:spec.hitTimes.map((at,i)=>['hit'+(i%4+1),at,i===spec.hitTimes.length-1?.65:.35]))){const key='daybreak-sound:'+name+':'+at,age=elapsed-at;if(age>=0&&!done.has(key)){done.add(key);if(age<180)eventSounds?.play(name,{gain});}}}
-    const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':event.character==='Josette'&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
+    const sound=event.character==='Carna'&&['basic','craft'].includes(event.kind)?'carna-shot':['Josette','SiegeGuard'].includes(event.character)&&event.kind==='basic'?'josette-shot':event.character==='Scherazard'&&['basic','craft'].includes(event.kind)?'schera-whip':null;
     if(sound&&!event.cancelled&&!event.reflectedProjectile){
      for(const shot of releasedShots(event,spec,now)){
       const key='sound:'+shot.index;if(done.has(key))continue;done.add(key);
