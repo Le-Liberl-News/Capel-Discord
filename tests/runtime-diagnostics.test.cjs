@@ -16,6 +16,7 @@ test('timers and child processes acquire code origins without manual task names'
  const raw=fs.readFileSync(path.join(directory,file),'utf8'),report=JSON.parse(raw);
  assert.ok(report.memory.rss>0);assert.ok(report.recent.some(t=>t.kind==='setTimeout'&&t.source.some(s=>s.includes('diagnostics-child.cjs'))));
  assert.ok(report.children.some(c=>c.pid&&c.source.some(s=>s.includes('diagnostics-child.cjs'))));
+ assert.ok(report.recent.some(t=>t.kind==='media'&&t.source.some(s=>s.includes('diagnostics-child.cjs'))));
  assert.ok(!raw.includes('sensitive-argument-must-not-be-recorded'));
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 });

@@ -12,5 +12,6 @@ setTimeout(async()=>{
  const child=spawnSync(process.execPath,['-e','void 0','sensitive-argument-must-not-be-recorded']);
  if(child.status!==0)throw Error('child failed');
  await new Promise(resolve=>setTimeout(resolve,15));
+ await require('../../utils/mediaRender').render(async()=>{await new Promise(resolve=>setTimeout(resolve,5));return {attachment:Buffer.alloc(1)};});
  monitor.flush(true);
 },5);

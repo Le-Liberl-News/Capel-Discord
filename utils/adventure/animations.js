@@ -1,69 +1,56 @@
-// Pictures an action of the adventure can send with its reply ("animation" in rpg/data/aventure.json), drawn from
-// what the player said. "cartes": the office's card table seen from above; the cards typed ("distribuer 20-13-1-100")
-// are dealt one by one by the player, at the bottom: first to the left, then around the table the way of a clock's
-// hands, the dealer's own card last. The faces are the real tarot cards (tarot/, the 100 is the Excuse); each exists
-// once, so a number typed again leaves its seat empty.
-const path=require('node:path'),fs=require('node:fs');
+// Sequential card dealing, one indexed frame buffer throughout the animation.
+// Original tarot faces and seating rules; no array of full-resolution canvases.
+const fs=require('node:fs'),path=require('node:path');
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
-// Emergency memory safeguard: render one final PNG, never accumulate animation frames.
-const W=480,H=410,CX=W/2,CY=H/2;
-// where the cards land, in the order they are dealt: left, opposite, right, the dealer's own
-const SEATS=[{x:CX-170,y:CY},{x:CX,y:CY-128},{x:CX+170,y:CY},{x:CX,y:CY+118}];
-const CW=53,CH=101;   // a card, the pictures' proportions (76 x 145)
-const DECK={x:CX,y:CY+70};
-
-
-// the green cloth only: the other players' places are the riddle, so none is drawn; the dealer at the bottom
-function table(x){
- x.fillStyle='#2f5d3a';x.fillRect(0,0,W,H);
- x.strokeStyle='#3f7a4d';x.lineWidth=3;x.strokeRect(14,14,W-28,H-28);
- x.fillStyle='#f4ecd8';x.textAlign='center';x.textBaseline='alphabetic';x.font='bold 16px sans-serif';x.fillText('vous',CX,H-12);
+const {GIFEncoder,quantize,applyPalette,nearestColorIndex}=require('gifenc');
+const {render}=require('../mediaRender');
+const W=360,H=308,CW=40,CH=76,MAX_CARDS=8,FLIGHT=6,FRAME_MS=80;
+const CX=W/2,CY=H/2,DECK={x:CX,y:CY+52},SEATS=[{x:CX-127,y:CY},{x:CX,y:CY-96},{x:CX+127,y:CY},{x:CX,y:CY+89}];
+const GREEN=[47,93,58],BORDER=[63,122,77],SHADOW=[31,61,38],WHITE=[244,236,216];
+let pictures=null,lastStats=null;
+function valuesOf(words){return String((words||[]).join('-')).split('-').filter(n=>/^\d+$/.test(n)&&((+n>=1&&+n<=21)||+n===100)).map(Number).slice(0,MAX_CARDS);}
+async function faces(){if(!pictures)pictures=Promise.all([...Array.from({length:21},(_,i)=>i+1),100].map(async n=>[n,await loadImage(fs.readFileSync(path.join(__dirname,'tarot',n===100?'excuse.jpg':n+'.jpg')))])).then(rows=>new Map(rows)).catch(e=>{pictures=null;throw e;});return pictures;}
+function side(x,image){x.save();x.beginPath();x.roundRect(0,0,CW,CH,3);x.clip();if(image)x.drawImage(image,0,0,CW,CH);else{x.fillStyle='#7a2430';x.fillRect(0,0,CW,CH);x.strokeStyle='#e8c37a';x.lineWidth=1;x.strokeRect(4,4,CW-8,CH-8);}x.restore();}
+function assets(images,values){
+ const unique=[...new Set(values)],atlas=createCanvas(CW*3,CH*3+8),a=atlas.getContext('2d'),tiles=[null,...unique];
+ for(let i=0;i<tiles.length;i++){a.save();a.translate(i%3*CW,Math.floor(i/3)*CH);side(a,images.get(tiles[i]));a.restore();}
+ // Include the table colours in the palette even when all cards are dark.
+ [GREEN,BORDER,SHADOW,WHITE].forEach((rgb,i)=>{a.fillStyle=`rgb(${rgb.join(',')})`;a.fillRect(i*atlas.width/4,CH*3,atlas.width/4,8);});
+ const rgba=a.getImageData(0,0,atlas.width,atlas.height).data,palette=quantize(rgba,255),indexed=applyPalette(rgba,palette),sprites=new Map();
+ for(let i=0;i<tiles.length;i++){const pixels=new Uint8Array(CW*CH),mask=new Uint8Array(CW*CH),ox=i%3*CW,oy=Math.floor(i/3)*CH;for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const from=(oy+y)*atlas.width+ox+x,to=y*CW+x;pixels[to]=indexed[from];mask[to]=rgba[from*4+3]>=128?1:0;}sprites.set(tiles[i],{pixels,mask});}
+ const canvas=createCanvas(W,H),c=canvas.getContext('2d');c.fillStyle='#2f5d3a';c.fillRect(0,0,W,H);c.strokeStyle='#3f7a4d';c.lineWidth=2;c.strokeRect(10,10,W-20,H-20);c.fillStyle='#f4ecd8';c.textAlign='center';c.font='bold 12px sans-serif';c.fillText('vous',CX,H-9);
+ const base=applyPalette(c.getImageData(0,0,W,H).data,palette);
+ const shadow=nearestColorIndex(palette,SHADOW);while(palette.length<256)palette.push([0,0,0]);return {base,palette,sprites,shadow};
 }
-let faces=null;
-async function loadFaces(){
- faces??=Promise.all([...Array.from({length:21},(_,i)=>i+1),100].map(async n=>[n,await loadImage(fs.readFileSync(path.join(__dirname,'tarot',n===100?'excuse.jpg':n+'.jpg')))])).then(list=>new Map(list));
- return faces;
+// Inverse affine sampling draws a small indexed card directly into the reusable frame.
+function stamp(frame,sprite,cx,cy,angle=0,sx=1,sy=1,colour=null,mirror=false){
+ sx=Math.max(.035,Math.abs(sx));const cos=Math.cos(angle),sin=Math.sin(angle),hw=CW*sx/2,hh=CH*sy/2,rx=Math.abs(cos)*hw+Math.abs(sin)*hh,ry=Math.abs(sin)*hw+Math.abs(cos)*hh;
+ const left=Math.max(0,Math.floor(cx-rx)),right=Math.min(W-1,Math.ceil(cx+rx)),top=Math.max(0,Math.floor(cy-ry)),bottom=Math.min(H-1,Math.ceil(cy+ry));
+ for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++){const dx=x+.5-cx,dy=y+.5-cy;let u=Math.floor((cos*dx+sin*dy)/sx+CW/2),v=Math.floor((-sin*dx+cos*dy)/sy+CH/2);if(u<0||u>=CW||v<0||v>=CH)continue;if(mirror)u=CW-1-u;const p=v*CW+u;if(sprite.mask[p])frame[y*W+x]=colour??sprite.pixels[p];}
 }
-// a card's two sides, framed, as pictures
-let back=null;
-// the face: the picture alone, its corners rounded as the card's (the pictures' own corners show their white
-// background); the back: drawn, framed
-function side(picture){
- const c=createCanvas(CW,CH),x=c.getContext('2d');
- x.beginPath();x.roundRect(0,0,CW,CH,4);x.clip();
- if(picture){x.drawImage(picture,0,0,CW,CH);return c;}
- x.fillStyle='#7a2430';x.fillRect(0,0,CW,CH);x.strokeStyle='#e8c37a';x.lineWidth=1.5;x.strokeRect(6,6,CW-12,CH-12);
- x.strokeStyle='#3a2a1a';x.lineWidth=1.5;x.beginPath();x.roundRect(.75,.75,CW-1.5,CH-1.5,4);x.stroke();
- return c;
+async function renderCards(values,budget){
+ const images=await faces();budget.check();const {base,palette,sprites,shadow}=assets(images,values),frame=new Uint8Array(W*H),previous=new Uint8Array(W*H),delta=new Uint8Array(W*H),gif=GIFEncoder({initialCapacity:65536}),given=new Set(),landed=[];
+ const deal=values.map(n=>given.has(n)?null:(given.add(n),n));let count=0;
+ function card(value,x,y,angle=0,flip=1,lift=1){const sprite=sprites.get(value);stamp(frame,sprite,x+2,y+2,angle,flip*lift,lift,shadow);stamp(frame,sprite,x,y,angle,flip*lift,lift);}
+ async function add(moving,delay){
+  budget.check(gif.bytesView().length);frame.set(base);if(landed.length<given.size)card(null,DECK.x,DECK.y);
+  for(const p of landed)card(p.value,p.x,p.y,p.angle);
+  if(moving)card(moving.face,moving.x,moving.y,moving.angle,moving.flip,moving.lift);
+  for(let i=0;i<frame.length;i++)delta[i]=count&&frame[i]===previous[i]?255:frame[i];previous.set(frame);
+  gif.writeFrame(delta,W,H,{...(count===0?{palette,repeat:-1}:{transparent:true,transparentIndex:255}),delay,dispose:1});count++;
+  // Yield between frames: Discord/HTTP and the diagnostic heartbeat remain responsive.
+  await new Promise(setImmediate);
+ }
+ await add(null,400);
+ for(let i=0;i<deal.length;i++){
+  const value=deal[i],last=i===deal.length-1;
+  if(value==null){await add(null,last?2200:220);continue;}
+  const seat=SEATS[i%4],to={x:seat.x+(i>=4?14:0),y:seat.y+(i>=4?8:0)},angle=(i%2?-1:1)*.12;
+  for(let f=1;f<=FLIGHT;f++){const t=f/FLIGHT,e=t*t*(3-2*t),flip=Math.cos(Math.PI*e);await add({face:flip>=0?null:value,x:DECK.x+(to.x-DECK.x)*e,y:DECK.y+(to.y-DECK.y)*e-Math.sin(Math.PI*t)*16,angle:angle*e,flip:Math.abs(flip),lift:1+Math.sin(Math.PI*t)*.18},FRAME_MS);}
+  landed.push({...to,value,angle});await add(null,last?2200:220);
+ }
+ gif.finish();budget.check(gif.bytesView().length);lastStats={...budget.stats(),frames:count,width:W,height:H,frameBuffers:1,frameBytes:frame.byteLength,indexedWorkingBytes:frame.byteLength+previous.byteLength+delta.byteLength+base.byteLength,bytes:gif.bytesView().length};
+ return {attachment:Buffer.from(gif.bytesView()),name:'distribution.gif'};
 }
-const sides=new Map();
-const faceOf=picture=>{if(!sides.has(picture))sides.set(picture,side(picture));return sides.get(picture);};
-// a card lying on the cloth: face (its picture) or its back
-function card(x,cx,cy,face,angle){
- x.save();x.translate(cx,cy);x.rotate(angle);
- x.fillStyle='rgba(0,0,0,.35)';x.fillRect(-CW/2+2,-CH/2+2,CW,CH);
- x.drawImage(face?faceOf(face):(back??=side(null)),-CW/2,-CH/2,CW,CH);
- x.restore();
-}
-async function renderCards(words){
- // only the cards of the deck (1 to 21, and the 100); anything else is left out, as if it had not been typed
- const values=String(words.join('-')).split('-').filter(value=>/^\d+$/.test(value)&&((+value>=1&&+value<=21)||+value===100)).map(Number).slice(0,8);
- if(!values.length)return null;
- const pictures=await loadFaces(),given=new Set();
- // a card already dealt cannot be dealt again: its seat stays empty
- const deal=values.map(value=>given.has(value)?null:(given.add(value),value));
- const canvas=createCanvas(W,H),x=canvas.getContext('2d');table(x);
- deal.forEach((value,i)=>{
-  if(value==null)return;
-  const seat=SEATS[i%SEATS.length],angle=(i%2?-1:1)*.12;
-  card(x,seat.x+(i>=SEATS.length?18:0),seat.y+(i>=SEATS.length?10:0),pictures.get(value),angle);
- });
- return {attachment:canvas.toBuffer('image/png'),name:'distribution.png'};
-}
-const ANIMATIONS={cartes:renderCards};
-async function renderAnimation(name,words){
- const draw=ANIMATIONS[name];
- if(!draw)throw new Error('animation inconnue : '+name);
- return draw(words||[]);
-}
-module.exports={renderAnimation,ANIMATIONS:Object.keys(ANIMATIONS)};
+async function renderAnimation(name,words){if(name!=='cartes')throw Error('animation inconnue : '+name);const values=valuesOf(words);if(!values.length)return null;return render(budget=>renderCards(values,budget));}
+module.exports={renderAnimation,ANIMATIONS:['cartes'],valuesOf,renderStats:()=>lastStats};
