@@ -22,7 +22,7 @@ function chunks(text){
  }
  if(rest)out.push(rest);return out;
 }
-function createAdventureDiscord({client,data,store,channelId,closingChannelId,files=FILES,log=console.error}){
+function createAdventureDiscord({client,data,store,channelId,closingChannelId,files=FILES,log=console.error,render=renderAnimation}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];
@@ -31,7 +31,7 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,fi
  const save=()=>{version++;store.save(state);for(const listener of listeners)listener();};
  // the animations drawn since the platform last got them, by their SHA-1: the editor and the spectators show them
  // Bound RAM even when the platform cannot acknowledge media for a long time.
- const pendingMedia=require('../mediaRender').createMediaCache();
+ const pendingMedia=require('../mediaRender').createMediaCache({sizeOf:item=>item.data.length});
  const LOG_SIZE=120;
  // one line of a player's game: a command, the bot's reply, a hint
  function note(id,kind,text,media=[]){
@@ -56,10 +56,10 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,fi
   // an action's animation (the cards dealt…), drawn from what the player said; the text goes without it if it fails
   if(result.animation){
    try{
-    const animation=await renderAnimation(result.animation.name,result.animation.words);
+    const animation=await render(result.animation.name,result.animation.words);
     if(animation){
      const sha=crypto.createHash('sha1').update(animation.attachment).digest('hex');
-     attached.push(animation);media.push({type:'animation',sha});pendingMedia.set(sha,animation.attachment);
+     attached.push(animation);media.push({type:'animation',sha});pendingMedia.set(sha,{data:animation.attachment,type:animation.name.endsWith('.png')?'image/png':'image/gif'});
     }
    }catch(e){log('Aventure, animation :',result.animation.name,e.message);}
   }
@@ -156,7 +156,7 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,fi
   note(id,'hint',text);save();
  }
  // the animations the platform does not have yet, and their delivery
- const media=()=>[...pendingMedia].map(([sha,data])=>({sha,type:'image/gif',data:data.toString('base64')}));
+ const media=()=>[...pendingMedia].map(([sha,item])=>({sha,type:item.type,data:item.data.toString('base64')}));
  const mediaSent=shas=>{for(const sha of shas)pendingMedia.delete(sha);};
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
  return {handle,message,state,snapshot,hint,media,mediaSent,subscribe,version:()=>version};

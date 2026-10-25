@@ -149,7 +149,8 @@ test('an action marked "alone" answers the verb alone; another one without noun 
 });
 test('card dealing streams a bounded low-resolution GIF',async()=>{
  const {renderAnimation,renderStats}=require('../utils/adventure/animations'),{gifInfo}=require('../utils/activityRoleplay');
- const gif=await renderAnimation('cartes',['20-13-1-100']);
+ const {createRenderGate,createBudget}=require('../utils/mediaRender'),gate=createRenderGate({budget:()=>createBudget({maxDuration:60000})});
+ const gif=await renderAnimation('cartes',['20-13-1-100'],{schedule:(task,options)=>gate.run(task,options)});
  assert.ok(gif,'render should fit its memory/time budget');assert.equal(gif.name,'distribution.gif');
  assert.deepEqual(gifInfo(gif.attachment,{maxFrames:64}),{width:360,height:308,frames:29});
  assert.equal(renderStats().frameBuffers,1);assert.equal(renderStats().indexedWorkingBytes,360*308*4);
@@ -202,4 +203,21 @@ test('the sync sends a game as soon as it moves',async()=>{
  version=2;listener();listener();
  await new Promise(r=>setTimeout(r,60));sync.stop();
  assert.equal(calls.length,1);assert.deepEqual(calls[0].players,[]);
+});
+test('memory pressure produces the complete final card table as PNG',async()=>{
+ const {renderAnimation}=require('../utils/adventure/animations'),{createRenderGate,createBudget}=require('../utils/mediaRender'),{loadImage,createCanvas}=require('@napi-rs/canvas');
+ const gate=createRenderGate({budget:()=>createBudget({available:()=>0}),canFallback:()=>true,onSkip:()=>{}});
+ const image=await renderAnimation('cartes',['1-2-3-4'],{schedule:(task,options)=>gate.run(task,options)});
+ assert.equal(image.name,'distribution.png');assert.equal(image.attachment.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ const decoded=await loadImage(image.attachment);assert.equal(decoded.width,360);assert.equal(decoded.height,308);
+ const canvas=createCanvas(360,308),ctx=canvas.getContext('2d');ctx.drawImage(decoded,0,0);
+ for(const [x,y]of [[53,154],[180,58],[307,154],[180,243]])assert.notDeepEqual([...ctx.getImageData(x,y,1,1).data],[47,93,58,255]);
+});
+test('PNG fallback attachments keep the correct MIME type in platform sync',async()=>{
+ const {sent,client,user}=fakeDiscord(),{renderStill}=require('../utils/adventure/animations');
+ const tiny={start:1,rooms:[{id:1,description:'Bureau.'}],actions:[{place:[1],verb:'distribuer',noun:[],text:'Rien.',animation:'cartes'}],final:{room:2,players:1}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c',render:(_,words)=>renderStill(words)});
+ await adv.handle(button(user('123456'),true).i);adv.message(dm(user('123456'),'distribuer 1-2-3-4'));
+ for(let i=0;i<200&&!adv.snapshot()[0].log.at(-1)?.media?.length;i++)await tick();
+ assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.png');assert.equal(adv.media()[0].type,'image/png');
 });
