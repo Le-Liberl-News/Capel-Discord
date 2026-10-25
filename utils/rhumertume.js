@@ -153,6 +153,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    // an evolution that cannot be announced must not hold the day's cases back
    await evolutions().catch(error=>log('rhumertume: evolution: '+error.message));
    await pendingCases().catch(error=>log('rhumertume: annonce reprise: '+error.message));
+   await replayMissed().catch(error=>log('rhumertume: rediffusion: '+error.message));
    const {date,minutes}=parisParts(now());
    if(date>LAST_DAY)return;
    const due=scheduledMinutes(date,minutes).filter(m=>m<=minutes).length;
@@ -167,6 +168,19 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    }
    await siege(date,minutes);
   }finally{busy=false;}
+ }
+ // The GIFs missed while the bot drew none (25 October 2026, between the memory scare and the return of the GIFs
+ // written while drawn): that day's ambush and its victims' first symptoms are shown again, once (state.replayed),
+ // from what was kept of the ambush. Done once; it can go after it has run.
+ const REPLAYS=['2026-10-25'];
+ async function replayMissed(){
+  for(const date of REPLAYS){
+   const s=state.sieges[date];if(!s||(state.replayed??[]).includes(date))continue;
+   state.replayed=[...(state.replayed??[]),date];save();   // never twice, even if Discord fails halfway
+   await announceWith(`Rediffusion de l'embuscade : ${list(s.attackers.map(c=>nameOf(c)))} encerclent ${list(s.defenders)}, acculé·es dos à dos !`,
+    ()=>(renderSiege??require('./pomSiege').renderSiege)(s.defenders.map(character=>({character})),s.attackers.map(character=>({character,stage:spriteOf(character)})),s.outcome,Math.floor(random()*2**31)).then(r=>r&&{attachment:r.attachment,name:r.name}));
+   for(const character of s.fallen??[])await announceWith('Rediffusion : '+symptoms(character),()=>pictures().renderEvolution(character,0,1));
+  }
  }
  // The daily ambush has its own persisted random Paris time, from 10:00 to 23:00.
  // Three infected characters of any stage can take part; craftless unassigned victims are preferred.

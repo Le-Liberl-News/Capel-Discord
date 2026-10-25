@@ -199,3 +199,11 @@ test('a pom shown at the second stage before this version keeps that form and ev
  await r.tick();now+=10*3600000;await r.tick();
  assert.equal(r.nameOf('Tita'),'Pompomtita');assert.equal(r.level('Tita'),2);assert.ok(!said.some(s=>/se transforme/.test(s.text)));
 });
+test("the ambush whose GIFs were missed on 25 October is shown again once, with its victims' symptoms",async()=>{
+ const now=()=>at('2026-10-25T15:00:00Z'),said=[],store=memory({drawn:{'2026-10-25':['fixture-1','fixture-2']},infected:{Kloe:at('2026-10-24T10:00:00Z'),Tita:at('2026-10-24T10:00:00Z'),Nial:at('2026-10-24T10:00:00Z')},sieges:{'2026-10-25':{attackers:['Kloe','Tita','Nial'],defenders:['Joshua','Agate','Aina'],outcome:'devour',fallen:['Joshua','Agate','Aina']}}});
+ const r=createRhumertume({dailyCases:2,store,now,random:()=>.5,charactersOfTheDay:async()=>[],characterNames:names,render,renderSiege:async()=>({attachment:Buffer.from('GIF'),name:'siege.gif',outcome:'devour'}),announce:async(text,files=[])=>said.push({text,files:files.map(f=>f.name)})});
+ await r.tick();await r.tick();
+ const replays=said.filter(m=>m.text.startsWith('Rediffusion'));
+ assert.equal(replays.length,4);assert.match(replays[0].text,/encerclent Joshua, Agate et Aina/);assert.deepEqual(replays[0].files,['siege.gif']);
+ assert.deepEqual(replays.slice(1).map(m=>m.files[0]),['evolution Joshua 0->1','evolution Agate 0->1','evolution Aina 0->1']);
+});
