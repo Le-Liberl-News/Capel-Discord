@@ -44,7 +44,7 @@ Sur la page, déplier l'incident OOM, puis les relevés avant l'arrêt : RAM du 
 
 ## Développement et pérennité
 
-Les hooks sont génériques. Ne pas contourner `child_process`, `worker_threads`, les timers Node et les événements Discord avec des renderers natifs opaques sans ajouter de preuve diagnostique adaptée. Ne jamais réactiver les GIF dans ce travail de diagnostic.
+Les hooks sont génériques. Ne pas contourner `child_process`, `worker_threads`, les timers Node et les événements Discord avec des renderers natifs opaques sans ajouter de preuve diagnostique adaptée. Les autres GIF restent désactivés. Sur demande de l’utilisateur, seule la distribution des cartes est réactivée via `utils/mediaRender.js` : tampon indexé réutilisé, une génération active et une en attente, sortie limitée à 1 Mio, marge mémoire du cgroup de 96 Mio et hausse RSS limitée à 32 Mio. Un budget dépassé laisse passer le texte sans image. Le suivi automatique des tâches inclut cette file sans label de fonction à maintenir. Les médias non acquittés par la plateforme sont bornés à 4 Mio / 24 fichiers.
 
 Tests :
 
@@ -54,3 +54,5 @@ python3 -m unittest discover -s tools/diagnostics -p 'test_*.py'
 ```
 
 Le site vérifie séparément l'authentification, la lecture sans DB et la révocation de clé avec `python3 tests/test_diagnostics_http.py`.
+
+La commande `node tools/check-adventure-media.cjs` mesure quatre distributions complètes dans un processus de test séparé et enregistre le pic RSS dans `.runtime/adventure-media-memory.json`. Elle est également exécutée en CI. À lancer hors du processus du bot ; les autres animations de pomification restent désactivées.

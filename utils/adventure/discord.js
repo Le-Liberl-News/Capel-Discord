@@ -30,7 +30,8 @@ function createAdventureDiscord({client,data,store,channelId,closingChannelId,fi
  const listeners=new Set();   // told of every change (the platform's sync sends it at once)
  const save=()=>{version++;store.save(state);for(const listener of listeners)listener();};
  // the animations drawn since the platform last got them, by their SHA-1: the editor and the spectators show them
- const pendingMedia=new Map();
+ // Bound RAM even when the platform cannot acknowledge media for a long time.
+ const pendingMedia=require('../mediaRender').createMediaCache();
  const LOG_SIZE=120;
  // one line of a player's game: a command, the bot's reply, a hint
  function note(id,kind,text,media=[]){

@@ -36,6 +36,8 @@ jobs:
       run: |
         npm run activity:test
         node --test tests/rhumertume.test.cjs tests/rhumertume-policy.test.cjs
+        node --test tests/media-render.test.cjs tests/adventure.test.cjs tests/still-media.test.cjs
+        node tools/check-adventure-media.cjs
         node --test prototypes/sanktheim/*.test.cjs prototypes/sanktheim/*.test.mjs
         node --test tests/activity-service.test.js tests/activity-world.test.js tests/activity-duel.test.js tests/activity-access.test.js
 
