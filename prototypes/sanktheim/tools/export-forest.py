@@ -133,4 +133,4 @@ OUT.mkdir(exist_ok=True)
 (OUT/'trees.gltf').write_text(json.dumps(forest,separators=(',',':')),encoding='utf-8')
 (ROOT/'prototypes/sanktheim/forest.json').write_text(json.dumps(trees,separators=(',',':')),encoding='utf-8')
 print(f'{len(trees)} trees; {sum(t["wood"] for t in trees)} wood; {unassigned} unassigned high foliage triangles; {len(data)} tree bytes')
-assert len(trees)>=103 and sum(t['wood'] for t in trees[:103])==1000 
+assert len(trees)>=103 and sum(t['wood'] for t in trees[:103])==1000
