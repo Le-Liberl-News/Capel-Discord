@@ -47,7 +47,7 @@ async function renderReplay(event){
   c.drawImage(atlas,0,f*H,W,36,0,0,W,36);c.drawImage(atlas,0,f*H+244,W,36,0,244,W,36);
   if(event.still)return {attachment:canvas.toBuffer('image/png'),name:event.wall+'-'+event.healthPercent+'.png'};
   // written as it is drawn, each frame with its own palette (utils/pomRendering.js' way): no frame is kept
-  const frame=c.getImageData(0,0,W,H).data,palette=quantize(frame,256);
+  const frame=canvas.data(),palette=quantize(frame,256);   // opaque: premultiplied or not, the same pixels (see pomRendering.js' stream)
   gif.writeFrame(applyPalette(frame,palette),W,H,{palette,delay:f===count-1?650:90,...(f===0?{repeat:-1}:{})});
   await new Promise(setImmediate);
  }
