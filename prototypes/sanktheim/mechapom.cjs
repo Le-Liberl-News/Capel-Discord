@@ -92,6 +92,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
  function takeOff(){const f=state.mechapom;if(f?.grounded){f.grounded=false;f.since=state.at;f.missiles=[];}}
  return {update,onSpawn,takeOff};
 }
-// enemies with a life of their own, out of the poms' common AI: the tank, the fortress, the wild pomgarous (wildlife.cjs)
-const giant=e=>!!(e?.siegeTank||e?.mechapom||e?.wild);
+// enemies with a life of their own, out of the poms' common AI: the tank, the fortress, the pom knight (knight.cjs),
+// the wild pomgarous (wildlife.cjs)
+const giant=e=>!!(e?.siegeTank||e?.mechapom||e?.knight||e?.wild);
 module.exports={createMechapom,giant,along,ROUTE,MAX_HP,SIZE,DECK_Y,APPEAR_AFTER,ARRIVAL_DATE};
