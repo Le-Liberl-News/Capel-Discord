@@ -1,7 +1,8 @@
 // The adventure followed from the platform (plateforme/aventure.php « Parties », and the spectators' page
 // /aventure/?p=…): the bot sends a game as soon as it moves (gathered over a moment), with the animations drawn since,
 // and asks every few seconds for the hints written there, which it sends in DM. Hints it could not deliver are
-// reported on the next sync. Uses Capel's API token (PLATFORM_TOKEN), an account with the editor.
+// reported on the next sync; the platform answers with the spectators' links of the games sent. Uses Capel's API
+// token (PLATFORM_TOKEN), an account with the editor.
 const PLATFORM_URL=(process.env.PLATFORM_URL||'https://leliberlnews.fr').replace(/\/+$/,'');
 function startAdventureSync({adventure,token=process.env.PLATFORM_TOKEN,every=3000,gather=300,fetch=globalThis.fetch,log=console.error}){
  let sentVersion=-1,failed=[],busy=false,again=false,warned=false,soon=null;
@@ -20,6 +21,7 @@ function startAdventureSync({adventure,token=process.env.PLATFORM_TOKEN,every=30
    if(!response.ok)throw new Error(data.error||`HTTP ${response.status}`);
    sentVersion=version;failed=[];warned=false;
    if(media.length)adventure.mediaSent?.(media.map(item=>item.sha));
+   adventure.shared?.(data.shares);   // the spectators' links of the games just sent
    for(const hint of data.hints||[]){
     try{await adventure.hint(hint.user,hint.text);}
     catch(e){failed.push({id:hint.id,error:String(e.code??e.message??e).slice(0,200)});}

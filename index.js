@@ -233,8 +233,9 @@ const testCharacters=require("./utils/activityTestCharacters").createTestCharact
 const capelModel=require("./activity/assets/sky/capel.json");
 // until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
 const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
-// Halloween text adventure: invitation in the adventure channel, played in DMs (admins and 744964573249011712 for now)
-const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',closingChannelId:process.env.ROLEPLAY_ID});
+// Halloween text adventure: invitation (and closing words) in channelId, played in DMs; every game started or won is
+// told in test-discord (notifyChannelId), which stays when the invitation moves to another channel
+const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',notifyChannelId:'889835278494203915'});
 client.on('messageCreate',message=>{adventure.message(message);});
 // the games followed and the hints sent from the platform's editor
 require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});
