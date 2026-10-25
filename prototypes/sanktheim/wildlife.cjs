@@ -17,7 +17,7 @@ function createWildlife({state,hash,emit,hurt,defenders,garouHP,multiplier=1}){
  function update(dt){
   const t=state.at,targets=defenders().filter(a=>a.hp>0&&!a.transit&&a.type!=='barricade'&&!a.id?.startsWith('turret-'));
   for(const g of state.wild.garous){
-   const e=g;if(g.dead||g.hp<=0)continue;   // its death is handled where the blow lands (registerDamage, kill)
+   const e=g;if(g.dead||g.hp<=0||g.vehicleLaunch)continue;   // its death is handled where the blow lands (registerDamage, kill); a cannon's ram throwing it moves it meanwhile
    const near=targets.filter(a=>Math.hypot(a.x-e.x,a.z-e.z)<AGGRO&&Math.hypot(a.x-g.home.x,a.z-g.home.z)<LEASH&&Math.abs(a.y-e.y)<3).sort((a,b)=>Math.hypot(a.x-e.x,a.z-e.z)-Math.hypot(b.x-e.x,b.z-e.z))[0];
    let goal,speed;
    if(near){goal=near;speed=SPEED;}
