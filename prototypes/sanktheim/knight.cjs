@@ -56,7 +56,7 @@ function createKnight({state,hash,emit,geometry,damageWall,hurt,kill,speech,wall
  function update(dt,pop){
   for(const p of Object.values(state.players))if(p.knightFling&&(!state.wave||p.hp<=0||!p.online))p.knightFling=null;else if(p.knightFling)flown(p);
   const wave=state.wave;if(!wave)return;
-  if(bossOf(wave)==='knight'&&!wave.knightSpawned&&state.at>=wave.started+SPAWN_AFTER&&pop.length){wave.knightSpawned=true;spawn(wave,pop);}
+  if(bossOf(wave,state)==='knight'&&!wave.knightSpawned&&state.at>=wave.started+SPAWN_AFTER&&pop.length){wave.knightSpawned=true;spawn(wave,pop);}
   for(const e of state.enemies.filter(e=>e.knight&&e.hp>0)){
    e.y=ground(e.x,e.z,e.y);e.moving=false;
    if(strike(e)||state.at<e.pauseUntil||smash(e))continue;

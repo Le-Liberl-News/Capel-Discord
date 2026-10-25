@@ -6,8 +6,9 @@ const tankShared=require('./tank-shared.cjs'),grip=require('./tank-grip.cjs');
 const INTERVAL=5000,HP=15000,SPAWN_AFTER=45000,SPAWN_SPREAD=15000;
 const ROCKET_EVERY=7000,ROCKET_REACH=70,ROCKET_SPEED=12,ROCKET_TURN=2.6,ROCKET_LOCK=4,ROCKET_LIFE=7000,ROCKET_HIT=1.3,ROCKET_DAMAGE=150;
 const GRIP_REACH=5.5,GRIP_EVERY=5000,SLAM_DAMAGE=220;
-// the wave's boss: the knight every third wave, the tank the others
-const bossOf=wave=>wave.boss??=(wave.number%3===0?'knight':'tank');
+// the wave's boss: the knight every third wave, the tank the others. The knight is still being made: only where the
+// state asks for it (state.knightTrial, set by hand in the local preview), the tank everywhere else
+const bossOf=(wave,state)=>wave.boss??=(state?.knightTrial===true&&wave.number%3===0?'knight':'tank');
 function createTank({state,hash,emit,geometry,damageWall,hurt,kill,speech,wallX}){
  const players=()=>Object.values(state.players).filter(p=>p.online&&p.hp>0&&!p.pomControlled);
  const defenders=()=>[...players(),...state.soldiers.filter(s=>s.hp>0&&!s.transit)];
@@ -53,7 +54,7 @@ function createTank({state,hash,emit,geometry,damageWall,hurt,kill,speech,wallX}
  function update(dt,pop){const wave=state.wave;
   for(const p of Object.values(state.players))if(p.tankGrip&&(!wave||p.hp<=0||!p.online))p.tankGrip=null;else if(p.tankGrip)held(p);
   if(!wave)return;
-  if(bossOf(wave)==='tank'){wave.tankAt??=wave.started+SPAWN_AFTER+hash(wave.id+'tank-time')%SPAWN_SPREAD;if(!wave.tankSpawned&&state.at>=wave.tankAt&&pop.length){wave.tankSpawned=true;spawn(wave,pop);}}
+  if(bossOf(wave,state)==='tank'){wave.tankAt??=wave.started+SPAWN_AFTER+hash(wave.id+'tank-time')%SPAWN_SPREAD;if(!wave.tankSpawned&&state.at>=wave.tankAt&&pop.length){wave.tankSpawned=true;spawn(wave,pop);}}
   for(const reaction of wave.tankReactions??[])if(!reaction.done&&state.at>=reaction.at){reaction.done=true;speech([reaction.line]);}
   for(const e of state.enemies.filter(e=>e.siegeTank&&e.hp>0)){if(state.at>=e.expiresAt){e.hp=0;kill(e);continue;}e.maxHP=Math.max(e.maxHP,HP);e.rockets??=[];
    const goal=tankShared.STOP_X,dx=goal-e.x;e.moving=Math.abs(dx)>.05;if(e.moving){const next={x:tankShared.advanceX(e.x,dt),y:e.y,z:e.z},g=geometry(),hit=g?.sweep({x:e.x,y:e.y+.8,z:e.z},{x:next.x,y:next.y+.8,z:next.z},.8);if(!hit)e.x=next.x;else e.moving=false;const floor=g?.floor(e.x,e.z,e.y+.8);if(floor!=null)e.y=floor;}

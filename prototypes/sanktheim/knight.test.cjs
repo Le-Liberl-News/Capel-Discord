@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {createKnight,HP,PATH_TIME,GATE_SHARE,GATE_TIME}=require('./knight.cjs'),{along}=require('./mechapom.cjs'),fling=require('./knight-fling.cjs');
 function fixture({number=3,progress=0}={}){
  const gate={id:'gate',name:'Porte renforcée',hp:2500000,maxHP:2500000,z:0,width:4};
- const state={at:0,wave:{id:'wave-test',number,started:0,ends:600000},enemies:[],shells:[],counts:{total:0},soldiers:[{id:'soldier-1',hp:3000,maxHP:3000,x:0,y:0,z:0}],players:{},walls:[gate],barricades:[],turrets:[],mines:[],mechapom:{grounded:true,progress,x:along(progress).x,z:along(progress).z}},events=[],killed=[];
+ const state={knightTrial:true,at:0,wave:{id:'wave-test',number,started:0,ends:600000},enemies:[],shells:[],counts:{total:0},soldiers:[{id:'soldier-1',hp:3000,maxHP:3000,x:0,y:0,z:0}],players:{},walls:[gate],barricades:[],turrets:[],mines:[],mechapom:{grounded:true,progress,x:along(progress).x,z:along(progress).z}},events=[],killed=[];
  const knight=createKnight({state,hash:()=>0,emit:(type,text,data)=>events.push({type,text,...data}),geometry:()=>null,damageWall:(w,d)=>{w.hp-=d;},hurt:(a,d)=>{a.hp-=d;},kill:a=>killed.push(a.id),speech:()=>{},wallX:()=>-33.5});
  return {state,knight,events,killed,gate,run(until,dt=.25){while(state.at<until){state.at+=dt*1000;knight.update(dt,[{character:'Estelle'}]);}},get e(){return state.enemies.find(e=>e.knight);}};
 }
@@ -31,3 +31,5 @@ test('a defender in its way loses half their health and is flung far, spinning; 
  const from=p.knightFling.from;f.run(f.state.at+fling.FLIGHT/2);assert.ok(p.y>from.y+3);
  f.run(f.state.at+fling.FLIGHT);assert.equal(p.knightFling,null);assert.ok(Math.hypot(p.x-from.x,p.z-from.z)>fling.DISTANCE-1);assert.equal(p.hp,600);
 });
+
+test('outside the preview that asks for it, the knight stays away: the tank leads every wave',()=>{const f=fixture();delete f.state.knightTrial;f.run(60000);assert.equal(f.e,undefined);});
