@@ -8,3 +8,13 @@ test('cannon hits enemies along its forward aim and cannot fire through a blocki
 test('undefined floors block driving instead of converting void into ground',()=>{const f=fixture({geometry:{floor:()=>null,sweep:()=>null}});f.board();for(let i=0;i<20;i++){f.drive();f.step();}assert.equal(f.state.vehicles[0].x,PARKS[0].x);});
 test('exiting from a world-scaled combat scope writes world coordinates exactly once',()=>{const f=fixture();f.board();const v=f.state.vehicles[0],scale=2/3;f.p.x*=scale;f.p.y*=scale;f.p.z*=scale;assert.ok(f.control.action(f.p.id,{kind:'exit',vehicle:v.id},scale).ok);assert.ok(Math.abs(f.p.x/scale-v.x)<3.2);assert.ok(Math.abs(f.p.z/scale-v.z)<3.2);assert.equal(f.p.vehicleControl,null);});
 test("the cannon hits the forest's wild pomgarous as well",()=>{const f=fixture();f.board();const v=f.state.vehicles[0],g={id:'pom-wild-0',wild:true,hp:300,x:v.x-20,y:.04,z:v.z};f.state.wild={garous:[g]};f.drive({forward:0,fire:true});f.step();assert.equal(g.hp,288);assert.equal(f.damage[0].target,g);});
+test("the pilot's client drives: a pose it could reach is taken as is, the server does not drive it meanwhile",()=>{const f=fixture();f.board();const v=f.state.vehicles[0],start={x:v.x,z:v.z};
+ f.control.input(f.p.id,{forward:1,side:0,yaw:0,pitch:0,pose:{seq:1,x:start.x-1.5,y:.04,z:start.z,yaw:Math.PI/2,speed:12,steer:0}});
+ assert.equal(v.x,start.x-1.5);assert.equal(v.poseSeq,1);assert.equal(v.rejectedSeq,undefined);
+ f.step();assert.equal(v.x,start.x-1.5);   // a fresh pose: no stepping of its own
+ f.control.input(f.p.id,{forward:1,side:0,yaw:0,pitch:0,pose:{seq:1,x:start.x-9,y:.04,z:start.z,yaw:Math.PI/2,speed:12}});assert.equal(v.x,start.x-1.5);   // an old number: ignored
+});
+test('a pose the cannon could not reach is refused and told back',()=>{const f=fixture({geometry:{floor:()=>.04,sweep:(a,b)=>b.z-a.z>1?{point:b,normal:{x:0,y:0,z:-1},distance:1}:null}});f.board();const v=f.state.vehicles[0],start={x:v.x,z:v.z};
+ f.control.input(f.p.id,{forward:1,side:0,yaw:0,pitch:0,pose:{seq:1,x:start.x-60,y:.04,z:start.z,yaw:0,speed:18}});assert.equal(v.x,start.x);assert.equal(v.rejectedSeq,1);   // too far for the time
+ f.control.input(f.p.id,{forward:1,side:0,yaw:0,pitch:0,pose:{seq:2,x:start.x,y:.04,z:start.z+2,yaw:0,speed:5}});assert.equal(v.z,start.z);assert.equal(v.rejectedSeq,2);   // through a wall
+});
