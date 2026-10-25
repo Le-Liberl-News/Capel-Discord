@@ -53,7 +53,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
 
 test('anyone may enter through the button, and the game goes on in DMs',async()=>{
  const {sent,client,user}=fakeDiscord(),saved=[];
- const adv=createAdventureDiscord({client,data,store:{load:()=>null,save:s=>saved.push(JSON.stringify(s))},channelId:'c',closingChannelId:'rp',files:require('node:path').join(__dirname,'fixtures-aventure')});
+ const adv=createAdventureDiscord({client,data,store:{load:()=>null,save:s=>saved.push(JSON.stringify(s))},channelId:'c',files:require('node:path').join(__dirname,'fixtures-aventure')});
  assert.equal(adv.message(dm(user('1'),'nord')),false);   // a DM before the button is not read
  const player=button(user('744964573249011712'));await adv.handle(player.i);assert.match(player.r.reply.content,/message privé/);
  assert.ok(sent.dm.some(([,m])=>/gigantesque porte/.test(m.content)));
@@ -62,15 +62,15 @@ test('anyone may enter through the button, and the game goes on in DMs',async()=
  assert.equal(adv.message(dm(user('2'),'nord')),true);await tick();await tick();
  assert.equal(adv.state.players['2'].room,'2');assert.ok(saved.length);
 });
-test('enough players in the final room win, and the roleplay channel hears the end once',async()=>{
+test('enough players in the final room win, and the invitation channel hears the end once',async()=>{
  const {sent,client,user}=fakeDiscord();
  const small={...data,final:{...data.final,players:2,victory:'Victoire !',closing:'Le fort est tombé.'}};
- const adv=createAdventureDiscord({client,data:small,store:{load:()=>null,save:()=>{}},channelId:'c',closingChannelId:'rp'});
+ const adv=createAdventureDiscord({client,data:small,store:{load:()=>null,save:()=>{}},channelId:'c'});
  for(const id of ['a','b']){await adv.handle(button(user(id),true).i);Object.assign(adv.state.players[id],{room:'16',triggers:['trone_ouvert']});}
  adv.message(dm(user('a'),'est'));await tick();await tick();await tick();
- assert.deepEqual(adv.state.reached,['a']);assert.equal(adv.state.done,false);assert.equal(sent.channels.rp,undefined);
+ assert.deepEqual(adv.state.reached,['a']);assert.equal(adv.state.done,false);assert.equal(sent.channels.c,undefined);
  adv.message(dm(user('b'),'est'));for(let i=0;i<6;i++)await tick();
- assert.equal(adv.state.done,true);assert.equal(sent.channels.rp.length,1);
+ assert.equal(adv.state.done,true);assert.equal(sent.channels.c.length,1);
  assert.equal(sent.dm.filter(([,m])=>m.content===small.final.victory).length,2);
 });
 test('a room with a picture sends it on entering, other replies are only text',async()=>{
@@ -87,7 +87,7 @@ test('a room with a picture sends it on entering, other replies are only text',a
 test('« /reset » in the DMs starts a player over, even after the end; strangers are not heard',async()=>{
  const {sent,client,user}=fakeDiscord();
  const tiny={start:1,intro:'Début.',rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Sortie.',exits:{sud:1}}],final:{room:2,players:1,victory:'Gagné !',closing:'Fin.'}};
- const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c',closingChannelId:'rp'});
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c'});
  assert.equal(adv.message(dm(user('x'),'/reset')),false);
  await adv.handle(button(user('a'),true).i);
  adv.message(dm(user('a'),'nord'));for(let i=0;i<6;i++)await tick();
@@ -96,7 +96,7 @@ test('« /reset » in the DMs starts a player over, even after the end; stranger
  assert.equal(adv.state.players.a.room,'1');assert.deepEqual(adv.state.reached,[]);
  assert.ok(sent.dm.some(([,m])=>/recommence depuis le début/.test(m.content)&&/Début\./.test(m.content)));
  adv.message(dm(user('a'),'nord'));for(let i=0;i<6;i++)await tick();
- assert.equal(adv.state.players.a.room,'2');assert.equal(sent.channels.rp.length,1);
+ assert.equal(adv.state.players.a.room,'2');assert.equal(sent.channels.c.length,1);
  assert.equal(sent.dm.filter(([,m])=>m.content==='Gagné !').length,1);
 });
 test('each exchange is kept for the platform, and a hint written there is sent in DM',async()=>{
@@ -172,15 +172,40 @@ test('a deal is four distinct cards; 0, banjo and excuse are all the Excuse',asy
 test('in the final room, players wait for the others; one arriving after the end still wins',async()=>{
  const {sent,client,user}=fakeDiscord();
  const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:2,victory:'Victoire !',closing:'Fin.'}};
- const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c',closingChannelId:'rp'});
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c'});
  for(const id of ['a','b','c'])await adv.handle(button(user(id),true).i);
  const go=async id=>{adv.message(dm(user(id),'nord'));for(let i=0;i<30;i++)await tick();};
  await go('a');
  assert.ok(sent.dm.some(([id,m])=>id==='a'&&/Il faut être 2.*vous êtes 1/.test(m.content)));
  await go('b');
- assert.equal(sent.dm.filter(([,m])=>m.content==='Victoire !').length,2);assert.equal(sent.channels.rp.length,1);
+ assert.equal(sent.dm.filter(([,m])=>m.content==='Victoire !').length,2);assert.equal(sent.channels.c.length,1);
  await go('c');
- assert.ok(sent.dm.some(([id,m])=>id==='c'&&m.content==='Victoire !'));assert.equal(sent.channels.rp.length,1);
+ assert.ok(sent.dm.some(([id,m])=>id==='c'&&m.content==='Victoire !'));assert.equal(sent.channels.c.length,1);
+});
+test('the closing words go where the invitation was posted, even once the invitation channel has changed; a list is several messages',async()=>{
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:1,victory:['Victoire !','Et gloire.'],closing:['Première partie.','x'.repeat(2500)]}};
+ let saved=null;const store={load:()=>saved&&JSON.parse(saved),save:s=>{saved=JSON.stringify(s);}};
+ const first=createAdventureDiscord({client,data:tiny,store,channelId:'old'});
+ await first.handle({isChatInputCommand:()=>true,commandName:'aventure',memberPermissions:{has:()=>true},reply:async()=>{}});
+ const adv=createAdventureDiscord({client,data:tiny,store,channelId:'new'});   // the bot restarted with another channel
+ await adv.handle(button(user('a')).i);adv.message(dm(user('a'),'nord'));for(let i=0;i<30;i++)await tick();
+ assert.equal(sent.channels.new,undefined);
+ assert.deepEqual(sent.channels.old.slice(1).map(m=>m.content.length),['Première partie.'.length,1900,600]);   // after the invitation
+ assert.deepEqual(sent.dm.filter(([,m])=>/Victoire|gloire/.test(m.content)).map(([,m])=>m.content),['Victoire !','Et gloire.']);
+});
+test('the notices channel hears of every game started (with its link on the website) and won',async()=>{
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:1,victory:'Victoire !'}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c',notifyChannelId:'notes',shareWait:50});
+ const b=button({...user('123456'),globalName:'Estelle'});await adv.handle(b.i);
+ assert.equal(sent.channels.notes,undefined);   // it waits for the platform's link
+ adv.shared({'123456':'abc'});for(let i=0;i<5;i++)await tick();
+ assert.equal(sent.channels.notes[0].content,'**Estelle** commence une partie de l’aventure.\nÀ suivre ici : <https://leliberlnews.fr/aventure/?p=abc>');
+ adv.message(dm(user('123456'),'nord'));for(let i=0;i<30;i++)await tick();
+ assert.match(sent.channels.notes[1].content,/^\*\*Estelle\*\* a terminé l’aventure !\nÀ suivre ici/);
+ await adv.handle(button(user('999999')).i);await new Promise(r=>setTimeout(r,80));
+ assert.equal(sent.channels.notes[2].content,'**999999** commence une partie de l’aventure.');   // no link given in time: the notice alone
 });
 test('an animation sent is kept in the log and handed once to the platform',async()=>{
  const {sent,client,user}=fakeDiscord();
@@ -220,4 +245,33 @@ test('PNG fallback attachments keep the correct MIME type in platform sync',asyn
  await adv.handle(button(user('123456'),true).i);adv.message(dm(user('123456'),'distribuer 1-2-3-4'));
  for(let i=0;i<200&&!adv.snapshot()[0].log.at(-1)?.media?.length;i++)await tick();
  assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.png');assert.equal(adv.media()[0].type,'image/png');
+});
+test('every command typed is counted, beyond the exchanges the log keeps, with each distinct one and its uses',async()=>{
+ const {client,user}=fakeDiscord();
+ const adv=createAdventureDiscord({client,data,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ await adv.handle(button(user('a')).i);
+ for(let i=0;i<70;i++)adv.message(dm(user('a'),i%2?'Écouter le vent…':'  inventaire '));
+ for(let i=0;i<400;i++)await tick();
+ const game=adv.snapshot()[0];
+ assert.ok(game.log.filter(line=>line.kind==='command').length<70);   // the log only keeps the last exchanges
+ assert.equal(game.typed.count,70);assert.deepEqual(game.typed.commands,{'inventaire':35,'écouter le vent':35});
+});
+test('a game begun before the count was kept starts from its log, marked partial',()=>{
+ const {client}=fakeDiscord();
+ const saved={players:{a:{room:'1'}},reached:[],done:false,logs:{a:[{kind:'command',text:'Nord'},{kind:'reply',text:'…'},{kind:'command',text:'nord'}]}};
+ const adv=createAdventureDiscord({client,data,store:{load:()=>saved,save:()=>{}},channelId:'c'});
+ assert.deepEqual(adv.snapshot()[0].typed,{count:2,commands:{nord:2},partial:true});
+});
+test('a long text is cut at a paragraph, else a sentence, never in the middle of one when it can be helped; each message is one whole line of the log',async()=>{
+ const paragraph='Une phrase assez longue pour remplir le message. '.repeat(30).trim();   // about 1470 characters
+ const parts=chunks(paragraph+'\n\n'+paragraph+'\n\n'+paragraph);
+ assert.equal(parts.length,3);assert.ok(parts.every(p=>p===paragraph));
+ const long='Une phrase assez longue pour remplir le message. '.repeat(60).trim();   // one paragraph, no line break
+ assert.ok(chunks(long).every(p=>p.endsWith('message.')));
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:1,victory:paragraph+'\n\n'+paragraph+' Fin.'}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ await adv.handle(button(user('a')).i);adv.message(dm(user('a'),'nord'));for(let i=0;i<30;i++)await tick();
+ const told=adv.snapshot()[0].log.filter(line=>line.kind==='reply').slice(-2).map(line=>line.text);
+ assert.deepEqual(told,[paragraph,paragraph+' Fin.']);
 });

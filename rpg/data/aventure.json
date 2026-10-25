@@ -497,16 +497,16 @@
       "observer",
       "décrire",
       "regarde",
-      "lire"
+      "lire",
+      "inspecter",
+      "consulter",
+      "consulte"
     ],
     "allumer": [
       "activer"
     ],
     "eteindre": [
       "eteinds"
-    ],
-    "consulter": [
-      "consulte"
     ],
     "passer": [
       "entrer"
@@ -530,6 +530,9 @@
     "pousser": [
       "deplacer",
       "tirer"
+    ],
+    "creuser": [
+      "gratter"
     ]
   },
   "nouns": {
@@ -657,8 +660,9 @@
       "compagnon"
     ],
     "1-100-20-13": [
-      "100-20-13-1",
-      "13-1-100-20"
+      "1-0-20-13",
+      "1-excuse-20-13",
+      "1-banjo-20-13"
     ],
     "yeux": [
       "paupiere",
@@ -689,10 +693,94 @@
       "20-13-1-excuse",
       "20-13-1-banjo"
     ],
-    "1-100-20-13": [
-      "1-0-20-13",
-      "1-excuse-20-13",
-      "1-banjo-20-13"
+    "0-20-13-1": [
+      "100-20-13-1",
+      "excuse-20-13-1",
+      "banjo-20-13-1",
+      "0-20-1-13",
+      "100-20-1-13",
+      "excuse-20-1-13",
+      "banjo-20-1-13",
+      "0-1-13-20",
+      "100-1-13-20",
+      "excuse-1-13-20",
+      "banjo-1-13-20",
+      "0-1-20-13",
+      "100-1-20-13",
+      "excuse-1-20-13",
+      "banjo-1-20-13",
+      "0-13-1-20",
+      "100-13-1-20",
+      "excuse-13-1-20",
+      "banjo-13-1-20",
+      "0-13-20-1",
+      "100-13-20-1",
+      "excuse-13-20-1",
+      "banjo-13-20-1",
+      "20-0-13-1",
+      "20-100-13-1",
+      "20-excuse-13-1",
+      "20-banjo-13-1",
+      "20-0-1-13",
+      "20-100-1-13",
+      "20-excuse-1-13",
+      "20-banjo-1-13",
+      "20-1-13-0",
+      "20-1-13-100",
+      "20-1-13-excuse",
+      "20-1-13-banjo",
+      "20-1-0-13",
+      "20-1-100-13",
+      "20-1-excuse-13",
+      "20-1-banjo-13",
+      "20-13-0-1",
+      "20-13-100-1",
+      "20-13-excuse-1",
+      "20-13-banjo-1",
+      "1-0-13-20",
+      "1-100-13-20",
+      "1-excuse-13-20",
+      "1-banjo-13-20",
+      "1-20-13-0",
+      "1-20-13-100",
+      "1-20-13-excuse",
+      "1-20-13-banjo",
+      "1-20-0-13",
+      "1-20-100-13",
+      "1-20-excuse-13",
+      "1-20-banjo-13",
+      "1-13-20-0",
+      "1-13-20-100",
+      "1-13-20-excuse",
+      "1-13-20-banjo",
+      "1-13-0-20",
+      "1-13-100-20",
+      "1-13-excuse-20",
+      "1-13-banjo-20",
+      "13-0-1-20",
+      "13-100-1-20",
+      "13-excuse-1-20",
+      "13-banjo-1-20",
+      "13-0-20-1",
+      "13-100-20-1",
+      "13-excuse-20-1",
+      "13-banjo-20-1",
+      "13-20-1-0",
+      "13-20-1-100",
+      "13-20-1-excuse",
+      "13-20-1-banjo",
+      "13-20-0-1",
+      "13-20-100-1",
+      "13-20-excuse-1",
+      "13-20-banjo-1",
+      "13-1-20-0",
+      "13-1-20-100",
+      "13-1-20-excuse",
+      "13-1-20-banjo",
+      "13-1-0-20",
+      "13-1-100-20",
+      "13-1-excuse-20",
+      "13-1-banjo-20"
     ]
   },
   "actions": [
@@ -1106,6 +1194,23 @@
       "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considérés comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nDeux portes sont ouvertes : une vers l'ouest et une vers le nord. Une troisième porte à l'est est fermée par un cadenas.",
       "effect": [
         "cadenas_vu"
+      ],
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [],
+      "text": "Une grande étagère est adossée au mur sud et des porte-manteaux sont disposés aux quatre coins de la pièce. Le papier-peint sur les murs semble dater d'une époque lointaine où les motifs rouges et oranges étaient considérés comme une preuve de bon goût. Un tapis d'un vert terni couvre quant à lui le centre de la salle.\nTrois portes sont ouvertes : une vers l'ouest, une vers le nord et une vers l'est.",
+      "effect": [
+        "cadenas_vu"
+      ],
+      "must": [
+        "bibliotheque_ouverte"
       ]
     },
     {
@@ -1717,7 +1822,7 @@
         75,
         76
       ],
-      "verb": "consulter",
+      "verb": "regarder",
       "noun": [
         "musique"
       ],
@@ -1733,7 +1838,7 @@
         75,
         76
       ],
-      "verb": "consulter",
+      "verb": "regarder",
       "noun": [
         "littérature"
       ],
@@ -1749,7 +1854,7 @@
         75,
         76
       ],
-      "verb": "consulter",
+      "verb": "regarder",
       "noun": [
         "arts"
       ],
@@ -1765,7 +1870,7 @@
         75,
         76
       ],
-      "verb": "consulter",
+      "verb": "regarder",
       "noun": [
         "sciences"
       ],
@@ -1781,7 +1886,7 @@
         75,
         76
       ],
-      "verb": "consulter",
+      "verb": "regarder",
       "noun": [
         "mythologie"
       ],
@@ -1797,7 +1902,7 @@
         75,
         76
       ],
-      "verb": "consulter",
+      "verb": "regarder",
       "noun": [
         "enfant"
       ],
@@ -2329,7 +2434,7 @@
       "effect": [
         "vinyle_pose"
       ],
-      "text": "Vous posez le disque sur le gramophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine."
+      "text": "Vous posez le disque sur le gramophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine.\nÉtrange... il doit bien émettre quelque chose, pourtant."
     },
     {
       "place": [
@@ -2594,7 +2699,7 @@
       "mustnot": [
         "rideaux_ouverts"
       ],
-      "text": "Les rideaux sont fermés, mais un vent léger les soulève légèrement par instant."
+      "text": "Les rideaux sont fermés, mais un petit vent les soulève légèrement par instant."
     },
     {
       "place": [
@@ -3334,7 +3439,7 @@
       "noun": [
         "vinyle"
       ],
-      "text": "Vous posez le disque sur le gramophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine.",
+      "text": "Vous posez le disque sur le gramophone. Il se met à tourner mais vous n'entendez aucune musique se jouer. Vous ressentez seulement de légers acouphènes à intervalles réguliers. Pendant ce temps, le disque continue de tourner inlassablement sur la platine.\nÉtrange... il doit bien émettre quelque chose, pourtant.",
       "use": [
         "vinyle_2"
       ],
@@ -3589,6 +3694,23 @@
       ],
       "verb": "reflechir",
       "noun": [],
+      "text": "Un disque vinyle, tiens tiens. Qu'allez-vous pouvoir en faire ?",
+      "mustnot": [
+        "vinyle_1_pose"
+      ],
+      "tool": [
+        "vinyle_1"
+      ],
+      "must": [
+        "couloir_ouvert"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
       "text": "Étrange, poser le vinyle sur le gramophone n'a eu aucun effet.\nPeut-être que ce n'est pas le bon disque... ? Ou alors peut-être que la place de ce disque n'est pas sur ce gramophone... ?",
       "mustnot": [
         "cle_tombee"
@@ -3598,6 +3720,21 @@
       ],
       "must": [
         "vinyle_1_pose"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "text": "Étrange, poser le vinyle sur le gramophone n'a eu aucun effet.\nPeut-être que ce n'est pas le bon disque... ? Ou alors peut-être que la place de ce disque n'est pas sur ce gramophone... ?",
+      "tool": [
+        "vinyle_1"
+      ],
+      "must": [
+        "vinyle_1_pose",
+        "couloir_ouvert"
       ]
     },
     {
@@ -3982,12 +4119,22 @@
       "noun": [
         "poshul"
       ],
-      "text": "L'humain amaigri par la faim vous regarde, le regard suppliant.",
+      "text": "L'humain, amaigri par la faim, vous montre timidement un bouton de l'autre côté des barreaux.",
       "mustnot": [
         "cage_ouverte"
       ],
       "must": [
         "rideaux_ouverts"
+      ]
+    },
+    {
+      "place": [
+        16
+      ],
+      "verb": "parler",
+      "text": "L'humain se bouche les oreilles et recule dans sa cage, apeuré.",
+      "noun": [
+        "poshul"
       ]
     }
   ]
