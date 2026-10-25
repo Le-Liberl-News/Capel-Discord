@@ -3,6 +3,7 @@ const root=path.resolve(__dirname,'assets/highlights');
 const wallIds=new Set(['west-wall','west-tower','gate','east-tower','east-wall']);
 const thresholds=[95,85,75,65,55,45,35,25,15,5,0];
 async function renderHighlightDirect(event){
+ if(event.type==='wave-start')return require('./wave-intro.cjs').renderWaveIntro(event);
  if(event.type==='fortress-report')return require('./fortress-report.cjs').renderFortressReport(event.summary);
  if(event.still&&event.type==='threshold'&&wallIds.has(event.wall)&&thresholds.includes(event.healthPercent)){
   if(event.replay?.hit&&fs.existsSync(path.join(root,event.wall+'-'+event.healthPercent+'.json')))return require('./highlight-replay.cjs').renderReplay(event);

@@ -1,3 +1,4 @@
+import cinematic from './mechapom-cinematic.cjs';
 import {createPomFortress,TEXTURES} from './pom-fortress-model.mjs';
 import {loadNativeProp} from './native-prop.mjs';
 // The Mechapom fortress in the battle (mechapom.cjs): the model where the server puts it, coming down from the sky
@@ -59,7 +60,7 @@ export function createMechapomView({T,scene,asset,scale,getState,getOwn,sounds,r
   if(landing){
    // low on the road beside where it lands, watching it fall; once down, round it and up
    const turn=age<LANDING?0:(age-LANDING)*.3;
-   film.position.set(spot.x+Math.cos(side+turn)*r,spot.y+4+ease(turn/1.2)*14,spot.z+Math.sin(side+turn)*r);film.lookAt(centre);   // rising over the deck, to its crew
+   const shot=cinematic.arrivalPose(m,age,scale);film.position.set(shot.camera.x,shot.camera.y,shot.camera.z);film.lookAt(shot.aim.x,shot.aim.y,shot.aim.z);   // rising over the deck, to its crew
   }else{
    // from where the player looked, to it in two seconds; then watching it rise
    const goal=new T.Vector3(spot.x+Math.cos(side)*r*.8,spot.y+6,spot.z+Math.sin(side)*r*.8),k=ease(age/TRAVELLING);

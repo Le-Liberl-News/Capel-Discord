@@ -18,3 +18,5 @@ test('a looping panel is a GIF, or its still picture when the budget declines it
  const {createCanvas}=require('@napi-rs/canvas'),{encodeLoop}=require('../utils/loopingGif'),base=createCanvas(8,8);
  assert.equal(extension(await encodeLoop(base,{frames:3,delay:100,draw(c,f){c.fillStyle='#f00';c.fillRect(f,0,1,1);}})),'gif');
 });
+
+test('streaming animation awaits each asynchronous frame before encoding it',async()=>{const {createCanvas}=require('@napi-rs/canvas'),{encodeLoop}=require('../utils/loopingGif'),seen=[],base=createCanvas(8,8);await encodeLoop(base,{frames:3,delay:100,async draw(c,f){await new Promise(setImmediate);seen.push(f);c.fillStyle='#f00';c.fillRect(f,0,1,1);}});assert.deepEqual(seen,[0,1,2]);});
