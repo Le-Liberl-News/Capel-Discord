@@ -3,7 +3,7 @@
 // come back after each wave. Each one killed gives its killer a piece of pomgarou meat. The soldiers get hungry over
 // a day; under STARVING they starve, losing health, and die a day later unless a defender feeds them (dialogue.cjs).
 const FOREST={x:-185,z:-66},DENS=[[-181,-60],[-190,-58],[-178,-70],[-192,-70],[-185,-77],[-196,-64]];
-const HP_FACTOR=2,AGGRO=22,LEASH=48,REACH=2.8,SPEED=6.5,WANDER=1,ATTACK_EVERY=2000,CLAW=48;
+const HP_FACTOR=1,AGGRO=22,LEASH=48,REACH=2.8,SPEED=6.5,WANDER=1,ATTACK_EVERY=2000,CLAW=48;
 const DAY=24*3600000,STARVING=15,MEAL=50;
 const WILD_NAME='sauvage';   // its sprite (chat/pom/sauvage-garou.png) and its name, « Pom-garou sauvage »
 
@@ -14,6 +14,8 @@ function createWildlife({state,hash,emit,hurt,defenders,garouHP,multiplier=1,geo
  if(!state.wild?.garous?.[0]?.wild)state.wild={garous:DENS.map(fresh)};   // (an earlier draft kept only a record)
  for(const g of state.wild.garous){g.hitHeight=require('./pom-variants.cjs').height('garou')*2;g.hitRadius=.8;const hp=garouHP*HP_FACTOR;if(g.maxHP!==hp){g.hp=g.hp/g.maxHP*hp;g.maxHP=hp;}}
  for(const s of state.soldiers){s.hunger??=100;s.hungerAt??=state.at;}
+ // One-time relief for the existing garrison; later starvation still follows the normal rules.
+ if(state.guardHungerReliefVersion!==1){for(const s of state.soldiers)if(hunger(state,s)<=0){s.hunger=50;s.hungerAt=state.at;s.starvingSince=null;}state.guardHungerReliefVersion=1;}
  const living=()=>state.wild.garous.filter(g=>!g.dead&&g.hp>0);
  function update(dt){
   const t=state.at,targets=defenders().filter(a=>a.hp>0&&!a.transit&&a.type!=='barricade'&&!a.id?.startsWith('turret-'));

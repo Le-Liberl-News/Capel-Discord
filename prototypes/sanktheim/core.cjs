@@ -136,7 +136,7 @@ ${mvp?'MVP : '+mvp.character+' ('+mvp.kills+' poms vaincus, '+Math.round(mvp.dam
    const candidates=opponents.filter(e=>e.hp>0&&(!e.cling||e.cling.target!==s.id)&&Math.abs(e.y-s.y)<16&&Math.abs(e.z-s.wingZ)<band(e)&&(!ground||e.x>-FIELD_LEASH)).sort((a,b)=>atWall(b)-atWall(a)||distance(s,a)-distance(s,b));
    const first=candidates[0],enemy=first&&(reach(first)?first:!atWall(first)&&candidates.find(reach))||null;   // a pom at the wall is never left for an easier one
    s.moving=false;
-   if(enemy){const dx=enemy.x-s.x,dz=enemy.z-s.z,d=Math.hypot(dx,dz)||1;s.heading={dx:dx/d,dz:dz/d};if(guardAttacks.ai(s,enemy)){s.nextAttack=t+500;continue;}if(t>=s.nextAttack){s.attackPose={at:t,duration:450,target:enemy.id};hurt(enemy,6);if(enemy.cling){const host=actors().find(a=>a.id===enemy.cling.target);enemy.cling=null;if(host)host.slowUntil=0;}enemy.target=s.id;enemy.aggroUntil=t+12000;s.nextAttack=t+900;emit('attack','',{from:s.id,to:enemy.id,ranged:true,origin:{x:s.x,y:s.y,z:s.z},aim:{x:enemy.x,y:enemy.y,z:enemy.z}});}continue;}
+   if(enemy){const dx=enemy.x-s.x,dz=enemy.z-s.z,d=Math.hypot(dx,dz)||1;s.heading={dx:dx/d,dz:dz/d};if(guardAttacks.ai(s,enemy)){s.nextAttack=t+500;continue;}if(t>=s.nextAttack){s.attackPose={at:t,duration:225,target:enemy.id};hurt(enemy,6);if(enemy.cling){const host=actors().find(a=>a.id===enemy.cling.target);enemy.cling=null;if(host)host.slowUntil=0;}enemy.target=s.id;enemy.aggroUntil=t+12000;s.nextAttack=t+450;emit('attack','',{from:s.id,to:enemy.id,ranged:true,origin:{x:s.x,y:s.y,z:s.z},aim:{x:enemy.x,y:enemy.y,z:enemy.z}});}continue;}
    if(ground&&first&&(field||atWall(first))){walkTo(s,first,dt);continue;}
    if(ground&&!first)walkTo(s,sentry?(s.watchPosition??{x:-39,z:s.wingZ}):{x:-39,z:s.wingZ},dt);
   }
