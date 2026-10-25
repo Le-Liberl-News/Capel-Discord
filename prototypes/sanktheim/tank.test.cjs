@@ -40,7 +40,7 @@ test('a real tank missile removes exactly 0.125 percent at impact and a destroye
 
 test('tank missiles travel straight at high speed, without the catapult arc',()=>{const {straight}=require('./catapult.cjs'),p=straight({x:0,y:2.8,z:0},{x:30,y:3,z:10});assert.ok(p.at(-1).t<300);for(let i=0;i<p.length;i++)assert.ok(Math.abs(p[i].y-(2.8+.2*i/48))<1e-8);});
 
-test('every third wave belongs to the pom knight: no tank then',()=>{const f=fixture();f.state.wave.number=3;f.step(ARRIVAL);f.step(ARRIVAL+60000);assert.equal(f.state.enemies.length,0);});
+test('every third wave belongs to the pom knight where it is tried: no tank then',()=>{const f=fixture();f.state.wave.number=3;f.state.knightTrial=true;f.step(ARRIVAL);f.step(ARRIVAL+60000);assert.equal(f.state.enemies.length,0);});
 test('a homing rocket follows its target until it is close, then flies straight to where it stood: a sidestep then dodges it',()=>{
  const run=running=>{const f=fixture();f.step(ARRIVAL);const e=f.state.enemies[0];e.nextAttack=e.nextGrip=Infinity;for(const c of e.crew)c.nextShot=Infinity;
   const p=f.state.players.a={id:'a',online:true,hp:1200,maxHP:1200,x:e.x+30,y:0,z:e.z+8};let t=ARRIVAL;e.nextRocket=t;
