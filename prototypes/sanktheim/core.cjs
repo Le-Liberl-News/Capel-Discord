@@ -125,7 +125,7 @@ ${mvp?'MVP : '+mvp.character+' ('+mvp.kills+' poms vaincus, '+Math.round(mvp.dam
  const atWall=e=>e.x>-42&&Math.abs(e.z)<28;
  function walkTo(s,goal,dt){const dx=goal.x-s.x,dz=goal.z-s.z,d=Math.hypot(dx,dz);if(d<.3)return false;const step=Math.min(d,GUARD_SPEED*dt*(s.slowUntil>state.at?CONFIG.slow:1)),before={x:s.x,y:s.y,z:s.z};
   if(movementGeometry)require('./pom-navigation.cjs').moveAround(s,goal,step,movementGeometry,.35);else{s.x+=dx/d*step;s.z+=dz/d*step;}
-  if(s.x>-37||s.x<-FIELD_LEASH||Math.abs(s.z)>34){Object.assign(s,before);return false;}
+  if(s.x>-37&&s.x>before.x||s.x<-FIELD_LEASH&&s.x<before.x||Math.abs(s.z)>34&&Math.abs(s.z)>Math.abs(before.z)){Object.assign(s,before);return false;}   // a guard knocked against the wall can still step away from it
   const moved=Math.hypot(s.x-before.x,s.z-before.z)>1e-4;if(moved){s.heading={dx:dx/d,dz:dz/d};s.moving=true;}return moved;}
  function fightSoldiers(dt,watchOnly=false){const t=state.at;if(state.stoppedAt)return;const opponents=[...state.enemies,...Object.values(state.players).filter(p=>p.online&&p.pomControlled)];
   for(const s of state.soldiers){if(s.hp<=0||s.pomBoundUntil>t||s.pomBump||s.sleeping||s.transit||watchOnly&&s.role!=='sentry')continue;s.wingZ??=s.role==='field'?(s.z<-5?-14:s.z>5?14:0):s.restPosition.z;
