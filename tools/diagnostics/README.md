@@ -22,7 +22,7 @@ pm2 status
 cat /home/twnkek290001/LN-Bot/.runtime/diagnostics/access.key
 ```
 
-Ouvrir `https://leliberlnews.fr/diagnostic/`, puis saisir cette clé dans le formulaire. Ne pas la coller dans le chat ni dans une URL. La page n'utilise pas MySQL et n'offre aucune commande d'arrêt/redémarrage. Le bot peut être arrêté sans perdre l'accès aux relevés. Si l'hébergement/PHP tombe complètement, la page aussi sera indisponible jusqu'à son retour.
+Accès normal : Gestion des comptes → « Ouvrir le diagnostic du bot ». Le compte administrateur autorise cet appareil pendant 90 jours, sans clé à saisir. Le diagnostic reste ensuite accessible directement. La clé SSH ci-dessus sert seulement au secours (formulaire replié) ; ne pas la coller dans le chat ni dans une URL. La page n'utilise pas MySQL et n'offre aucune commande d'arrêt/redémarrage. Le bot peut être arrêté sans perdre l'accès aux relevés. Si l'hébergement/PHP tombe complètement, la page aussi sera indisponible jusqu'à son retour.
 
 Le site PHP doit pouvoir lire ce dossier privé sous le même compte Unix. Par défaut il lit `/home/twnkek290001/LN-Bot/.runtime/diagnostics`. Si le chemin diffère dans le jail PHP, régler `LN_DIAGNOSTICS_DIR` dans la configuration PHP vers le chemin accessible équivalent, sans copier la clé ou les relevés dans un dossier public. Une restriction `open_basedir` nécessite d'autoriser ce chemin côté hébergeur.
 
