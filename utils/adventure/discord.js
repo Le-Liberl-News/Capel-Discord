@@ -27,10 +27,22 @@ function chunks(text){
 // a text of the data: one string, or a list of them sent one after the other (each cut if still too long)
 const messages=value=>[].concat(value??[]).filter(Boolean).flatMap(text=>chunks(text));
 const PLATFORM_URL=(process.env.PLATFORM_URL||'https://leliberlnews.fr').replace(/\/+$/,'');
+// a command as the « Commandes » table groups it: lower case, single spaces, no end punctuation, straight apostrophes
+const normalize=text=>String(text).normalize('NFC').toLowerCase().replace(/[’‘`]/g,"'").replace(/\s+/g,' ').trim().replace(/^[.!?…,;:]+|[.!?…,;:]+$/gu,'').trim();
+const DISTINCT=2000;   // distinct commands kept per player, the rest only counted
+function count(typed,text){
+ const command=normalize(text);typed.count++;if(!command)return;
+ if(typed.commands[command]!=null||Object.keys(typed.commands).length<DISTINCT)typed.commands[command]=(typed.commands[command]??0)+1;
+}
 function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderAnimation,shareWait=30000}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];state.shares??={};
+ // every command each player typed, counted in full (the log keeps only the last exchanges): their number and each
+ // distinct command (normalized) with its uses, for the platform's « Commandes ». Games begun before this was kept
+ // start from what their log still had (partial: the number is a minimum).
+ state.typed??={};
+ for(const id of Object.keys(state.players))if(!state.typed[id]){const typed=state.typed[id]={count:0,commands:{},partial:true};for(const line of state.logs[id]??[])if(line.kind==='command')count(typed,line.text);}
  let version=0;   // bumped on every change, so the platform only gets the games when they moved
  const listeners=new Set();   // told of every change (the platform's sync sends it at once)
  const save=()=>{version++;store.save(state);for(const listener of listeners)listener();};
@@ -158,7 +170,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   const id=msg.author.id;
   state.names[id]=msg.author.globalName||msg.author.username||state.names[id]||id;
   const next=(queues.get(id)||Promise.resolve()).then(async()=>{
-   note(id,'command',msg.content.trim());
+   note(id,'command',msg.content.trim());count(state.typed[id]??={count:0,commands:{}},msg.content);
    // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
    if(msg.content.trim().toLowerCase()==='/reset'){
     const player=game.fresh(),start=game.start(player);
@@ -177,7 +189,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   return true;
  }
  // the games for the platform: every player's state and last exchanges
- const snapshot=()=>Object.entries(state.players).map(([id,player])=>({id,name:state.names[id]||id,state:player,log:state.logs[id]||[]}));
+ const snapshot=()=>Object.entries(state.players).map(([id,player])=>({id,name:state.names[id]||id,state:player,log:state.logs[id]||[],typed:state.typed[id]??{count:0,commands:{}}}));
  // a hint written on the platform, sent in DM
  async function hint(id,text){
   if(!state.players[id])throw new Error('joueur inconnu');
@@ -191,4 +203,4 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
  return {handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,version:()=>version};
 }
-module.exports={createAdventureDiscord,chunks,messages,BUTTON};
+module.exports={createAdventureDiscord,chunks,messages,normalize,BUTTON};

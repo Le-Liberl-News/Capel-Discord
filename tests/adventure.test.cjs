@@ -246,3 +246,19 @@ test('PNG fallback attachments keep the correct MIME type in platform sync',asyn
  for(let i=0;i<200&&!adv.snapshot()[0].log.at(-1)?.media?.length;i++)await tick();
  assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.png');assert.equal(adv.media()[0].type,'image/png');
 });
+test('every command typed is counted, beyond the exchanges the log keeps, with each distinct one and its uses',async()=>{
+ const {client,user}=fakeDiscord();
+ const adv=createAdventureDiscord({client,data,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ await adv.handle(button(user('a')).i);
+ for(let i=0;i<70;i++)adv.message(dm(user('a'),i%2?'Écouter le vent…':'  inventaire '));
+ for(let i=0;i<400;i++)await tick();
+ const game=adv.snapshot()[0];
+ assert.ok(game.log.filter(line=>line.kind==='command').length<70);   // the log only keeps the last exchanges
+ assert.equal(game.typed.count,70);assert.deepEqual(game.typed.commands,{'inventaire':35,'écouter le vent':35});
+});
+test('a game begun before the count was kept starts from its log, marked partial',()=>{
+ const {client}=fakeDiscord();
+ const saved={players:{a:{room:'1'}},reached:[],done:false,logs:{a:[{kind:'command',text:'Nord'},{kind:'reply',text:'…'},{kind:'command',text:'nord'}]}};
+ const adv=createAdventureDiscord({client,data,store:{load:()=>saved,save:()=>{}},channelId:'c'});
+ assert.deepEqual(adv.snapshot()[0].typed,{count:2,commands:{nord:2},partial:true});
+});
