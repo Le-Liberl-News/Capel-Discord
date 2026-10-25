@@ -17,7 +17,7 @@ async function renderReplay(event){
  }
  const hit=event.replay.hit,impact=transform(hit.position),effect=await loadImage(path.join(assets,'effects',hit.kind==='shell'?'sc-msc0640-frames.png':'third-sc001_12-frames.png'));
  const defs=require('../../activity/assets/sky/effects/hero-frames.json'),effectInfo=defs[hit.kind==='shell'?'sc/msc0640._ef':'third/sc001_12._ef'];
- const canvas=createCanvas(W,H),c=canvas.getContext('2d'),layer=createCanvas(W,H),lc=layer.getContext('2d'),frames=[];
+ const canvas=createCanvas(W,H),c=canvas.getContext('2d'),layer=createCanvas(W,H),lc=layer.getContext('2d'),gif=GIFEncoder();
  c.imageSmoothingEnabled=lc.imageSmoothingEnabled=false;
  function overlay(draw,z,depthOffset){lc.clearRect(0,0,W,H);draw(lc);const source=lc.getImageData(0,0,W,H).data,base=c.getImageData(0,0,W,H),dest=base.data;for(let y=36;y<244;y++)for(let x=0;x<W;x++){const i=y*W+x,k=i*4,alpha=source[k+3]/255;if(!alpha||z>depth.readUInt16LE(depthOffset+i*2)/256+.18)continue;for(let n=0;n<3;n++)dest[k+n]=Math.round(source[k+n]*alpha+dest[k+n]*(1-alpha));dest[k+3]=255;}c.putImageData(base,0,0);}
 
@@ -36,10 +36,12 @@ async function renderReplay(event){
   // Keep the two captions readable, even for a character standing on the rampart.
   c.drawImage(atlas,0,f*H,W,36,0,0,W,36);c.drawImage(atlas,0,f*H+244,W,36,0,244,W,36);
   if(event.still)return {attachment:canvas.toBuffer('image/png'),name:event.wall+'-'+event.healthPercent+'.png'};
-  frames.push(c.getImageData(0,0,W,H).data);
+  // written as it is drawn, each frame with its own palette (utils/pomRendering.js' way): no frame is kept
+  const frame=c.getImageData(0,0,W,H).data,palette=quantize(frame,256);
+  gif.writeFrame(applyPalette(frame,palette),W,H,{palette,delay:f===count-1?650:90,...(f===0?{repeat:-1}:{})});
+  await new Promise(setImmediate);
  }
- const sample=[];for(const frame of frames)for(let i=0;i<frame.length;i+=64)sample.push(...frame.subarray(i,i+4));const palette=quantize(Uint8Array.from(sample),256),gif=GIFEncoder();
- for(const [i,frame]of frames.entries())gif.writeFrame(applyPalette(frame,palette),W,H,{palette:i?undefined:palette,delay:i===frames.length-1?650:90,repeat:-1});gif.finish();
+ gif.finish();
  return {attachment:Buffer.from(gif.bytes()),name:event.wall+'-'+event.healthPercent+'.gif'};
 }
 module.exports={renderReplay,project};

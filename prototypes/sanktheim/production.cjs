@@ -17,10 +17,13 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const arena=createArenaBridge({siege,geometry,worldScale:world.SCALE,surfaceJumps:true,onSay,resolveCharacter,isInfected:c=>rhumertume.isInfected(c),now:()=>siege._state.at});
  // Production media stays on the browser-free still renderer.
  const sceneMediaEnabled=false;
+ // a blow that takes a wall past a threshold: its replay animated (highlight-replay.cjs, the prepared view of that wall
+ // at that threshold), through the shared media gate (utils/mediaRender.js); its still picture when declined
+ const thresholdReplay=event=>event.type==='threshold'&&event.replay?.hit?require('../../utils/mediaRender').render(()=>require('./highlights.cjs').renderHighlight(event),{fallback:()=>require('./highlights.cjs').renderHighlight({...event,still:true}),limits:{maxGrowth:192*1048576,maxDuration:20000,maxBytes:4*1048576,minHeadroom:256*1048576}}):null;
  const history=sceneMediaEnabled?require('./scene-history.cjs').createSceneHistory({siege,arena,now}):null;
  const warmSpectator=sceneMediaEnabled?require('./spectator-warmup.cjs').createSpectatorWarmup({siege,render:event=>require('./highlights.cjs').renderHighlight(event),log:console.error}):()=>{};
  const recordScene=()=>{if(history)warmSpectator(history.record());};
- const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{if(!history)return require('./highlights.cjs').renderHighlight({...event,still:true});const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
+ const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{if(!history)return (await thresholdReplay(event))??require('./highlights.cjs').renderHighlight({...event,still:true});const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
  const entries=store('entries');const pending=new Map(entries.load()??[]);const saveEntries=()=>entries.save([...pending]);let ready=false;
  const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
  const isOwner=id=>String(id)===String(ownerId);
