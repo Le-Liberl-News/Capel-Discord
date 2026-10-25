@@ -21,3 +21,13 @@ test('a declined budget or rejected job releases the next rendering slot',async(
 test('undelivered animation buffers cannot grow without bound during a platform outage',()=>{
  const cache=createMediaCache({maxBytes:10,maxItems:2});cache.set('a',Buffer.alloc(4));cache.set('b',Buffer.alloc(4));cache.set('c',Buffer.alloc(4));assert.deepEqual([...cache].map(([k])=>k),['b','c']);assert.equal(cache.stats().bytes,8);cache.set('c',Buffer.alloc(7));assert.deepEqual([...cache].map(([k])=>k),['c']);cache.set('huge',Buffer.alloc(11));assert.deepEqual(cache.stats(),{bytes:7,items:1});cache.delete('c');assert.equal(cache.stats().bytes,0);
 });
+test('a budget overrun returns the final still image while holding the render slot',async()=>{
+ const gate=createRenderGate({budget:()=>createBudget({available:()=>0}),canFallback:()=>true,onSkip:()=>{}});let busy=false;
+ const png={attachment:Buffer.from('tiny-png'),name:'distribution.png'};
+ const result=await gate.run(()=>assert.fail('must skip GIF'),{fallback:async()=>{busy=gate.status().active;return png;}});
+ assert.equal(result,png);assert.equal(busy,true);assert.equal(gate.status().active,false);
+});
+test('critical headroom skips even the still image and preserves the text-only fallback',async()=>{
+ const gate=createRenderGate({budget:()=>createBudget({available:()=>0}),canFallback:()=>false,onSkip:()=>{}});
+ assert.equal(await gate.run(()=>assert.fail('GIF'),{fallback:()=>assert.fail('PNG')}),null);
+});
