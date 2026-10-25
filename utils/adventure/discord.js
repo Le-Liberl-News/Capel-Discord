@@ -15,12 +15,17 @@ const {createAdventure}=require('./engine');
 const {renderAnimation}=require('./animations');
 const FILES=path.join(__dirname,'../../rpg/data/aventure');
 const BUTTON='aventure:jouer',LIMIT=1900;
-// Discord refuses messages over 2000 characters: cut between paragraphs, then lines, then words
+// Discord refuses messages over 2000 characters: cut at the last paragraph's end, else a line's, else a sentence's,
+// a word only when none comes in the second half of the message (the latest of them all was nearly always a space,
+// which cut sentences in two)
 function chunks(text){
- const out=[];let rest=String(text);
+ const out=[];let rest=String(text).trim();
+ const sentence=text=>Math.max(...['. ','! ','? ','… ','.\n','!\n','?\n','…\n'].map(end=>{const i=text.lastIndexOf(end,LIMIT-1);return i<0?-1:i+end.length-1;}));
  while(rest.length>LIMIT){
-  const cut=Math.max(rest.lastIndexOf('\n\n',LIMIT),rest.lastIndexOf('\n',LIMIT),rest.lastIndexOf(' ',LIMIT));
-  const at=cut>0?cut:LIMIT;out.push(rest.slice(0,at));rest=rest.slice(at).trimStart();
+  let at=-1;
+  for(const find of [r=>r.lastIndexOf('\n\n',LIMIT),r=>r.lastIndexOf('\n',LIMIT),sentence,r=>r.lastIndexOf(' ',LIMIT)]){at=find(rest);if(at>=LIMIT/2)break;}
+  if(at<=0)at=LIMIT;
+  out.push(rest.slice(0,at).trimEnd());rest=rest.slice(at).trimStart();
  }
  if(rest)out.push(rest);return out;
 }
@@ -49,12 +54,12 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // the animations drawn since the platform last got them, by their SHA-1: the editor and the spectators show them
  // Bound RAM even when the platform cannot acknowledge media for a long time.
  const pendingMedia=require('../mediaRender').createMediaCache({sizeOf:item=>item.data.length});
- const LOG_SIZE=120;
+ const LOG_SIZE=120,LOG_TEXT=20000;   // a reply is kept whole (a long one was cut at 4000 characters)
  // one line of a player's game: a command, the bot's reply, a hint
  function note(id,kind,text,media=[]){
   if(!text&&!media.length)return;
   const lines=state.logs[id]??=[];
-  lines.push({at:Date.now(),kind,text:String(text||'').slice(0,4000),room:state.players[id]?.room,...(media.length?{media}:{})});
+  lines.push({at:Date.now(),kind,text:String(text||'').slice(0,LOG_TEXT),room:state.players[id]?.room,...(media.length?{media}:{})});
   if(lines.length>LOG_SIZE)lines.splice(0,lines.length-LOG_SIZE);
  }
  const replyText=result=>result.replies.filter(Boolean).join('\n\n');
@@ -86,7 +91,8 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  }
  const tell=async(id,content,what)=>{
   const parts=messages(content);if(!parts.length)return;
-  try{const user=await client.users.fetch(id);for(const part of parts)await user.send({content:part,allowedMentions:{parse:[]}});note(id,'reply',parts.join('\n\n'));}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
+  // each message sent is one line of the log, as the player saw it
+  try{const user=await client.users.fetch(id);for(const part of parts){await user.send({content:part,allowedMentions:{parse:[]}});note(id,'reply',part);}}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
  };
  // the notices channel: a game started (with its link on the website, once the platform has given it) or won
  const waiters=new Map();

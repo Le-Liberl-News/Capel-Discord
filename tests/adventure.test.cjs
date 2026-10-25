@@ -262,3 +262,16 @@ test('a game begun before the count was kept starts from its log, marked partial
  const adv=createAdventureDiscord({client,data,store:{load:()=>saved,save:()=>{}},channelId:'c'});
  assert.deepEqual(adv.snapshot()[0].typed,{count:2,commands:{nord:2},partial:true});
 });
+test('a long text is cut at a paragraph, else a sentence, never in the middle of one when it can be helped; each message is one whole line of the log',async()=>{
+ const paragraph='Une phrase assez longue pour remplir le message. '.repeat(30).trim();   // about 1470 characters
+ const parts=chunks(paragraph+'\n\n'+paragraph+'\n\n'+paragraph);
+ assert.equal(parts.length,3);assert.ok(parts.every(p=>p===paragraph));
+ const long='Une phrase assez longue pour remplir le message. '.repeat(60).trim();   // one paragraph, no line break
+ assert.ok(chunks(long).every(p=>p.endsWith('message.')));
+ const {sent,client,user}=fakeDiscord();
+ const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:1,victory:paragraph+'\n\n'+paragraph+' Fin.'}};
+ const adv=createAdventureDiscord({client,data:tiny,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ await adv.handle(button(user('a')).i);adv.message(dm(user('a'),'nord'));for(let i=0;i<30;i++)await tick();
+ const told=adv.snapshot()[0].log.filter(line=>line.kind==='reply').slice(-2).map(line=>line.text);
+ assert.deepEqual(told,[paragraph,paragraph+' Fin.']);
+});
