@@ -38,4 +38,4 @@ function createPomMobility({state,geometry,hurt,emit,clear,multiplier}){
  }
  return {begin,update,barrier,catchPom};
 }
-module.exports={createPomMobility,flightPoint,catchPoint};
+module.exports={createPomMobility,flightPoint,catchPoint,captureCameraPose:require('./wall-capture.cjs').captureCameraPose};
