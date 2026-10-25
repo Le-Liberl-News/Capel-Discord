@@ -53,7 +53,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
    if(route==='/navigation')return res.json(arena.navigation(req.query.layer==='roof'));
    if(route==='/state')return res.json(world.snapshot(siege.snapshot()));
    if(route==='/music')return res.json(require('./music.json'));
-   if(route==='/timings'){const b=req.body??{},player=siege._state.players[user.id];joinTimings.unshift({at:new Date(now()).toISOString(),character:player?.character??null,marks:Array.isArray(b.marks)?b.marks.slice(0,40):[],files:b.files,kb:b.kb,slowest:Array.isArray(b.slowest)?b.slowest.slice(0,15):[]});joinTimings.length=Math.min(joinTimings.length,10);return res.json({ok:true});}
+   if(route==='/timings'){const b=req.body??{},player=siege._state.players[user.id];joinTimings.unshift({at:new Date(now()).toISOString(),character:player?.character??null,marks:Array.isArray(b.marks)?b.marks.slice(0,40):[],files:b.files,kb:b.kb,slowest:Array.isArray(b.slowest)?b.slowest.slice(0,15):[],startup:b.startup&&JSON.stringify(b.startup).length<16000?b.startup:null});joinTimings.length=Math.min(joinTimings.length,10);return res.json({ok:true});}
    if(route==='/entered'){pending.delete(user.userId);saveEntries();return res.json({ok:true});}
    if(route==='/arena'){siege.advance(now());return res.json({...await arena.update(user,req.body??{}),siege:world.snapshot(siege.snapshot())});}
    if(route==='/admin-stop'){
