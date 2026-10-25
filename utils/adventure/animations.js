@@ -46,9 +46,16 @@ function card(x,cx,cy,face,angle){
  x.restore();
 }
 async function renderCards(words){
- // only the cards of the deck (1 to 21, and the 100); anything else is left out, as if it had not been typed
- const values=String(words.join('-')).split('-').filter(value=>/^\d+$/.test(value)&&((+value>=1&&+value<=21)||+value===100)).map(Number).slice(0,8);
- if(!values.length)return null;
+ // only the cards of the deck (0 to 21, 100, banjo and excuse); anything else is left out, as if it had not been typed
+const EXCUSE=new Set([0,100,'excuse','banjo']);
+const isNum=v=>/^\d+$/.test(v);
+const values=[...new Set(
+ String(words.join('-')).toLowerCase().split('-')
+  .filter(v=>isNum(v)?(+v<=21||+v===100):v==='excuse'||v==='banjo')
+  .map(v=>isNum(v)?Number(v):v)
+  .map(v=>EXCUSE.has(v)?'excuse':v)
+)].slice(0,8);
+ if(values.length != 4)return null;
  const pictures=await loadFaces(),given=new Set();
  // a card already dealt cannot be dealt again: its seat stays empty
  const deal=values.map(value=>given.has(value)?null:(given.add(value),value));
