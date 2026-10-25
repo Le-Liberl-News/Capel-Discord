@@ -54,8 +54,8 @@ function bloodFx(rng,blood){
 }
 const lerp=(a,b,t)=>a+(b-a)*t;
 // defenders: three {character}; attackers: three {character, stage}, each one facing the defender of the same rank
-// six characters, three of them from their whole sheets: it starts (and goes on) only with 256 MB free
-const renderSiege=gated(siege,{maxGrowth:192*MIB,maxDuration:20000,maxBytes:4*MIB,minHeadroom:256*MIB});
+// six characters, three of them from their whole sheets (some 25 MB), about 4 s and 2 MB of GIF
+const renderSiege=gated(siege,{maxGrowth:96*MIB,maxDuration:20000,maxBytes:4*MIB});
 async function siege(budget,defenders,attackers,outcome,seed=Date.now()){
  const rng=seeded(seed),blood=await loadImage(fs.readFileSync(BLOOD)),fx=bloodFx(rng,blood);
  const actors=await Promise.all(defenders.map(d=>actor(d.character)));

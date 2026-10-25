@@ -82,10 +82,10 @@ function seeded(seed){let s=seed>>>0||1;return()=>((s=Math.imul(s^s>>>15,1|s)+0x
 // A GIF pixel is either opaque or transparent: the nearly transparent ones are dropped, the half transparent edges
 // (the frame's shadow, the glows) are blended onto Discord's dark grey.
 const [BR,BGG,BB]=[0x31,0x33,0x38];
-function flatten(data){
+function flatten(data,premultiplied=false){
  for(let i=0;i<data.length;i+=4){const a=data[i+3];if(a===255)continue;
   if(a<96){data[i]=data[i+1]=data[i+2]=data[i+3]=0;continue;}
-  const k=a/255;data[i]=Math.round(data[i]*k+BR*(1-k));data[i+1]=Math.round(data[i+1]*k+BGG*(1-k));data[i+2]=Math.round(data[i+2]*k+BB*(1-k));data[i+3]=255;}
+  const k=a/255,m=premultiplied?1:k;data[i]=Math.round(data[i]*m+BR*(1-k));data[i+1]=Math.round(data[i+1]*m+BGG*(1-k));data[i+2]=Math.round(data[i+2]*m+BB*(1-k));data[i+3]=255;}
  return data;
 }
 // A GIF written while it is drawn (the memory-saving way of the adventure's cards, utils/adventure/animations.js): each
@@ -98,7 +98,9 @@ function stream({once=false,budget=null}={}){
  return {
   add(c,delay){
    budget?.check(gif.bytesView().length);if(pending)write();
-   const {width:w,height:h}=c,data=flatten(c.getContext('2d').getImageData(0,0,w,h).data);
+   // the canvas' own pixels (premultiplied RGBA), not getImageData: its native copies, one a frame, were freed so late
+   // that a GIF's worth of them piled up (+120 MB for 150 frames)
+   const {width:w,height:h}=c,data=flatten(c.data(),true);
    const palette=quantize(data,255,{format:'rgba4444',oneBitAlpha:true}),index=applyPalette(data,palette,'rgba4444');
    let transparentIndex=palette.findIndex(p=>p[3]===0);if(transparentIndex<0)transparentIndex=0;
    pending={index,palette,transparentIndex,w,h,delay};
