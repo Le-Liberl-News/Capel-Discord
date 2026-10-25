@@ -3,7 +3,7 @@ function step(v,c,dt){
  c={forward:0,side:0,...c};
  v.speed=clamp(v.speed+(c.forward*10-v.speed*(c.brake?12:c.forward?.45:2))*dt,-7,18);
  v.steer=(v.steer??0)+(c.side-(v.steer??0))*(1-Math.exp(-dt*7));
- v.yaw-=v.steer*1.35*Math.min(1,Math.abs(v.speed)/3)*Math.sign(v.speed||1)*dt;
+ v.yaw-=v.steer*1.35*Math.min(1,Math.abs(v.speed)/3)*dt;
  return {x:v.x-Math.sin(v.yaw)*v.speed*dt,y:v.y,z:v.z-Math.cos(v.yaw)*v.speed*dt};
 }
 function advance(v,c,dt,validate){for(let left=dt;left>1e-6;){const h=Math.min(left,1/60);left-=h;const q=step(v,c,h),accepted=validate?validate(v,q):q;if(accepted)Object.assign(v,accepted);else v.speed*=.1;}return v;}

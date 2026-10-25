@@ -4,3 +4,5 @@ test('held throttle keeps moving during a five second packet gap',()=>{const p=d
 test('snapshot correction preserves visible pose without a teleport',()=>{const p=drive.createPrediction();p.receive(initial());let shown;for(let i=0;i<120;i++)shown=p.sample({forward:1,side:0},1/60);p.receive({...initial(),z:-4,speed:12});const next=p.sample({forward:1,side:0},0);assert.ok(Math.abs(next.z-shown.z)<1e-9);});
 test('steering responds before another network snapshot',()=>{const p=drive.createPrediction();p.receive({...initial(),speed:15});let next;for(let i=0;i<30;i++)next=p.sample({forward:1,side:1},1/60);assert.ok(next.yaw<-.3);assert.ok(next.x>0);});
 test('collision prevents prediction crossing an obstacle',()=>{const v=initial();drive.advance(v,{forward:1,side:0},5,(from,q)=>q.z< -2?null:q);assert.ok(v.z>=-2);});
+
+test('reverse keeps the same steering direction as forward',()=>{const forward={x:0,y:0,z:0,yaw:0,speed:5,steer:1},reverse={...forward,speed:-5};require('./vehicle-drive.cjs').step(forward,{side:1,forward:1},.1);require('./vehicle-drive.cjs').step(reverse,{side:1,forward:-1},.1);assert.equal(Math.sign(forward.yaw),Math.sign(reverse.yaw));});

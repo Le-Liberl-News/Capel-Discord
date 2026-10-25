@@ -1,0 +1,6 @@
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function eligible(p){return p&&p.online&&p.hp>0&&!p.pomControlled&&!p.vehicleControl&&!p.lynxControl&&!p.climb&&!p.jump&&!p.chopping&&!p.turretControl;}
+function nearest(state,p){if(!eligible(p))return null;return state.walls.filter(w=>w.hp>0&&w.hp<w.maxHP).map(w=>({w,d:Math.hypot(p.x-clamp(p.x,-35,-17),p.y-clamp(p.y,0,12),p.z-clamp(p.z,w.z-w.width/2,w.z+w.width/2))})).filter(v=>v.d<2.5).sort((a,b)=>a.d-b.d)[0]?.w??null;}
+function hold(state,id,pressed){const p=state.players[id];if(!p)return;p.repairHeldAt=pressed?state.at:null;}
+function update(state,dt){for(const p of Object.values(state.players)){p.repairing=null;if(p.repairHeldAt==null||state.at-p.repairHeldAt>1000)continue;const w=nearest(state,p),f=state.forestry;if(!w||!f||f.stone<=0)continue;const seconds=Math.min(dt,f.stone,(w.maxHP-w.hp)/w.maxHP*6000);if(seconds<=0)continue;w.hp=Math.min(w.maxHP,w.hp+w.maxHP*seconds/6000);f.stone=Math.max(0,f.stone-seconds);f.revision++;w.stage=w.hp/w.maxHP<=.25?3:w.hp/w.maxHP<=.5?2:w.hp/w.maxHP<=.75?1:0;w.damageStep=[95,85,75,65,55,45,35,25,15,5,0].filter(n=>w.hp/w.maxHP*100<=n+1e-9).length;p.repairing=w.id;}}
+module.exports={nearest,hold,update};

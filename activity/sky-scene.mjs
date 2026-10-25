@@ -1249,16 +1249,12 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
         label.dataset.hp !== String(a.hp) ||
         label.dataset.name !== a.displayName
       ) {
-        label.replaceChildren();
-        label.append(document.createTextNode(a.displayName));
+        if(label.dataset.name!==a.displayName){label.replaceChildren(document.createTextNode(a.displayName));}
         if (!a.npc) {
-          const bar = document.createElement("div"),
-            fill = document.createElement("i");
-          bar.className = "sky-hp";
-          fill.style.width = 100*a.hp/(a.maxHp??playerHealth.PLAYER_MAX_HP) + "%";
-          if(a.enemy)fill.style.background="#e76552";
-          bar.append(fill);
-          label.append(bar);
+          let bar=label.querySelector('.sky-hp'),fill=bar?.firstElementChild;
+          if(!bar){bar=document.createElement('div');fill=document.createElement('i');bar.className='sky-hp';fill.style.width=100*a.hp/(a.maxHp??playerHealth.PLAYER_MAX_HP)+'%';bar.append(fill);label.append(bar);fill.getBoundingClientRect();fill.style.transition='width 400ms linear';}
+          fill.style.width=Math.max(0,100*a.hp/(a.maxHp??playerHealth.PLAYER_MAX_HP))+'%';
+          if(a.enemy)fill.style.background='#e76552';
         }
         label.dataset.hp = String(a.hp);
         label.dataset.name = a.displayName;

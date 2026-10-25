@@ -8,7 +8,7 @@ function moveAround(e,goal,distance,geometry,radius=.4){
  if(e.navDetour&&Math.hypot(e.navDetour.x-goal.x,e.navDetour.z-goal.z)>3)e.navDetour=null;
  if(!e.navDetour&&blocked(point(0,Math.min(Math.max(distance,.85),length))))e.navDetour={x:goal.x,z:goal.z,distance:length};
  if(e.navDetour&&length<e.navDetour.distance-.6&&!blocked(point(0,Math.min(3,length))))e.navDetour=null;
- const angles=e.navDetour?[sign*Math.PI/3,sign*Math.PI/6,sign*Math.PI/2,sign*2*Math.PI/3,0,-sign*Math.PI/3,-sign*Math.PI/2]:[0,sign*Math.PI/6,sign*Math.PI/3,sign*Math.PI/2,sign*2*Math.PI/3,-sign*Math.PI/3,-sign*Math.PI/2];
+ const angles=e.navDetour?[sign*Math.PI/3,sign*Math.PI/6,sign*Math.PI/2,sign*2*Math.PI/3,0,-sign*Math.PI/3,-sign*Math.PI/2,sign*5*Math.PI/6,Math.PI]:[0,sign*Math.PI/6,sign*Math.PI/3,sign*Math.PI/2,sign*2*Math.PI/3,-sign*Math.PI/3,-sign*Math.PI/2,sign*5*Math.PI/6,Math.PI];
  for(const angle of angles){
   const next=point(angle,Math.min(distance,length)),look=point(angle,Math.min(Math.max(distance,.85),length));if(blocked(next)||blocked(look))continue;
   e.x=next.x;e.z=next.z;e.y=next.y;if(angle)e.detourSide=Math.sign(angle);return true;
