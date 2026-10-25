@@ -386,7 +386,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     if((spec.groundTarget||spec.targetRequired)&&!confirmed&&!(spec.chargeStun&&pickCombatTarget(event,spec))){craftTarget=kind;combatControls.targeting(kind);marker.visible=true;return true;}
     if(spec.targetRequired){target=lockedTarget??pickCombatTarget(event,spec);if(!target)return false;}
     if(spec.optionalTarget)target=pickCombatTarget(event,spec);
-    let ray=null;if(spec.fps||spec.special==='donCannon'&&kind==='craft'){const origin={x:me.position.x,y:me.position.y+1.45,z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
+    let ray=null;if(spec.fps||spec.special==='donCannon'&&kind==='craft'){const origin={x:me.position.x,y:me.position.y+(pomFlyer()?.75:1.45),z:me.position.z},direction=new THREE.Vector3();camera.getWorldDirection(direction);ray={origin,direction:{x:direction.x,y:direction.y,z:direction.z}};}
     const photoHeading=me.heading??{dx:0,dz:-1};
     const aim=lineAhead?lineAhead:spec.kaleido?combatMoves.forwardAim(me.position,me.heading,1.3):spec.special==='photo'?{x:me.position.x+photoHeading.dx*14,y:me.position.y,z:me.position.z+photoHeading.dz*14}:ray?{x:ray.origin.x+ray.direction.x*spec.range,y:ray.origin.y+ray.direction.y*spec.range,z:ray.origin.z+ray.direction.z*spec.range}:kind==='basic'?combatMoves.forwardAim(me.position,me.heading,spec.range):target?{...avatars.get(target).position}:spec.effect||spec.selfTarget?{...me.position}:spec.special==='flameSlash'?craftGroundAim(event,spec):aimForAttack(event,spec.groundTarget);if(!aim)return false;
     craftTarget=false;combatControls.targeting(null);

@@ -1,5 +1,5 @@
 const TREES=[...require('./forest.json'),...require('./expansion.cjs').extraTrees,...require('./expansion.cjs').quarry];
-const CUT_TIME=15000,REGROW_TIME=6*3600000;
+const CUT_TIME=8000,REGROW_TIME=6*3600000;
 const COSTS={auto:300,manual:300,barricade:30,mine:20};
 const REACH=2.4;
 function growth(tree,at){return tree.cutAt==null?4:Math.min(4,Math.floor(Math.max(0,at-tree.cutAt)/(REGROW_TIME/4)));}

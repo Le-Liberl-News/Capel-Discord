@@ -42,7 +42,7 @@ for i,group in enumerate(groups):
  trees.append({'id':f'tree-{i+1:03}','x':-(lo[0]+hi[0])/2,'y':lo[1],'z':(lo[2]+hi[2])/2,'height':hi[1]-lo[1],
   'radius':max(hi[0]-lo[0],hi[2]-lo[2])*.32,'wood':1000//len(groups)+(i<1000%len(groups))})
  for mi,pi,j,_ in group:assigned[(mi,pi,j)]=i
-parts=[collections.defaultdict(list) for _ in trees];unassigned=0
+parts=[collections.defaultdict(list) for _ in trees];unassigned=0;claimed=set();loose=[]
 terrain=copy.deepcopy(g);terrain_bytes=bytearray(buffers[0])
 def append_indices(ids):
  while len(terrain_bytes)%4:terrain_bytes.append(0)
@@ -60,14 +60,56 @@ for mi,m in enumerate(g['meshes']):
      nearest=min(range(len(trees)),key=lambda t:(trees[t]['x']+c[0])**2+(trees[t]['z']-c[2])**2)
      if (trees[nearest]['x']+c[0])**2+(trees[nearest]['z']-c[2])**2<25:owner=nearest
      else:unassigned+=1
-   if owner is None:keep.extend(tri)
+   if owner is None:
+    keep.extend(tri)
+    if tex=='t06o0005.png':loose.append((mi,pi,j,tri))
    else:
+    claimed.add((mi,pi,j))
     dst=parts[owner][p['material']]
     for k in tri:
      attrs={name:read(a)[k] for name,a in p['attributes'].items()};pos=attrs['POSITION'];tree=trees[owner];attrs['POSITION']=(-pos[0]-tree['x'],pos[1]-tree['y'],pos[2]-tree['z'])
      if 'NORMAL' in attrs:n=attrs['NORMAL'];attrs['NORMAL']=(-n[0],n[1],n[2])
      dst.append(attrs)
   target=terrain['meshes'][mi]['primitives'][pi];target['indices']=append_indices(keep) if keep else None
+# The original map also contains pale leaf-only trees/bushes, with no bark mesh.
+# They used to stay baked into the terrain: group them and make them harvestable too.
+loose_parent=list(range(len(loose)));connected={}
+def loose_find(i):
+ while loose_parent[i]!=i:loose_parent[i]=loose_parent[loose_parent[i]];i=loose_parent[i]
+ return i
+for i,(mi,pi,j,tri) in enumerate(loose):
+ points=read(g['meshes'][mi]['primitives'][pi]['attributes']['POSITION'])
+ for k in tri:
+  key=tuple(round(v,4) for v in points[k])
+  if key in connected:loose_parent[loose_find(i)]=loose_find(connected[key])
+  else:connected[key]=i
+foliage_groups=collections.defaultdict(list)
+for i,t in enumerate(loose):foliage_groups[loose_find(i)].append(t)
+extra_count=0
+for group in sorted(foliage_groups.values(),key=lambda rows:min((r[0],r[1],r[2]) for r in rows)):
+ points=[v for mi,pi,j,tri in group for v in [read(g['meshes'][mi]['primitives'][pi]['attributes']['POSITION'])[k] for k in tri]]
+ lo=[min(p[k] for p in points) for k in range(3)];hi=[max(p[k] for p in points) for k in range(3)]
+ if hi[1]<3 and hi[1]-lo[1]<1.6:continue
+ x=(lo[0]+hi[0])/2;z=(lo[2]+hi[2])/2
+ nearest=min(range(103),key=lambda t:(trees[t]['x']+x)**2+(trees[t]['z']-z)**2)
+ if lo[1]>2 and (trees[nearest]['x']+x)**2+(trees[nearest]['z']-z)**2<100:owner=nearest
+ else:
+  owner=len(trees);extra_count+=1;base=min(lo[1],trees[nearest]['y'])
+  trees.append({'id':f'foliage-tree-{extra_count:03}','x':-x,'y':base,'z':z,'height':hi[1]-base,'radius':min(.5,max(.22,max(hi[0]-lo[0],hi[2]-lo[2])*.08)),'wood':5})
+  parts.append(collections.defaultdict(list))
+ for mi,pi,j,tri in group:
+  claimed.add((mi,pi,j));primitive=g['meshes'][mi]['primitives'][pi];dst=parts[owner][primitive['material']];tree=trees[owner]
+  for k in tri:
+   attrs={name:read(a)[k] for name,a in primitive['attributes'].items()};pos=attrs['POSITION'];attrs['POSITION']=(-pos[0]-tree['x'],pos[1]-tree['y'],pos[2]-tree['z'])
+   if 'NORMAL' in attrs:n=attrs['NORMAL'];attrs['NORMAL']=(-n[0],n[1],n[2])
+   dst.append(attrs)
+for mi,m in enumerate(g['meshes']):
+ for pi,p in enumerate(m['primitives']):
+  if texture(p) not in ['r01o0804.png','t06o0005.png']:continue
+  ids=indices(p);keep=[v for j in range(0,len(ids),3) if (mi,pi,j) not in claimed for v in ids[j:j+3]]
+  terrain['meshes'][mi]['primitives'][pi]['indices']=append_indices(keep) if keep else None
+print('Additional harvestable foliage trees:',extra_count)
+
 for m in terrain['meshes']:m['primitives']=[p for p in m['primitives'] if p.get('indices') is not None]
 terrain['buffers']=[{'byteLength':len(terrain_bytes),'uri':'data:application/octet-stream;base64,'+base64.b64encode(terrain_bytes).decode()}]
 for image in terrain['images']:image['uri']='../map/'+Path(image['uri']).name
@@ -91,4 +133,4 @@ OUT.mkdir(exist_ok=True)
 (OUT/'trees.gltf').write_text(json.dumps(forest,separators=(',',':')),encoding='utf-8')
 (ROOT/'prototypes/sanktheim/forest.json').write_text(json.dumps(trees,separators=(',',':')),encoding='utf-8')
 print(f'{len(trees)} trees; {sum(t["wood"] for t in trees)} wood; {unassigned} unassigned high foliage triangles; {len(data)} tree bytes')
-assert len(trees)==103 and sum(t['wood'] for t in trees)==1000 
+assert len(trees)>=103 and sum(t['wood'] for t in trees[:103])==1000 

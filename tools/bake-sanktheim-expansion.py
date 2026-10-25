@@ -6,12 +6,14 @@ import math
 from pathlib import Path
 import struct
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = 'activity/assets/sky/sanktheim/forest/terrain.gltf'
 # Original forest extraction, before the approach extension.
 BASE = 'f34db07533e0f1349b1b9bc07fb9f55bc2e58c89'
-data = json.loads(subprocess.check_output(['git', 'show', f'{BASE}:{TARGET}'], cwd=ROOT))
+subprocess.check_call([sys.executable,str(ROOT/'prototypes/sanktheim/tools/export-forest.py')],cwd=ROOT)
+data=json.loads((ROOT/TARGET).read_text(encoding='utf-8'))
 buffer = bytearray(base64.b64decode(data['buffers'][0]['uri'].split(',')[1]))
 
 def accessor(values, n):
@@ -202,7 +204,13 @@ for number,(start,end,side) in enumerate([(-125,-180,-1),(-185,-222,1),(-270,-32
 # Native edge polygons are intentionally irregular. Back the narrow uncovered
 # slivers with turf instead of exposing the scene background between copies.
 backing=material('r01o0304.png')
-mesh('Native turf seam backing',[-364,-.12,-114,-364,-.12,114,-83.9,-.12,-114,-83.9,-.12,-114,-364,-.12,114,-83.9,-.12,114],[0,0,0,28.5,35,0,35,0,0,28.5,35,28.5],backing)
+support=[];support_uv=[]
+for x in range(-100,-82,2):
+ for z in range(-114,114,2):
+  for wx,wz in [(x,z),(x,z+2),(x+2,z),(x+2,z),(x,z+2),(x+2,z+2)]:
+   support.extend([wx,ground_y(wx,verge_height(wz-road_z(wx)))-.012,wz]);support_uv.extend([(wx+364)/8,(wz+114)/8])
+mesh('Continuous native terrain seam support',support,support_uv,backing)
+mesh('Continuous flat field support',[-364,.028,-114,-364,.028,114,-100,.028,-114,-100,.028,-114,-364,.028,114,-100,.028,114],[0,0,0,28.5,33,0,33,0,0,28.5,33,28.5],backing)
 stone=material('r41o0605.png',(.88,.88,.88))
 p=[];uv=[]
 for x,z in [(-232,37),(-232,55),(-208,37),(-208,37),(-232,55),(-208,55)]:
