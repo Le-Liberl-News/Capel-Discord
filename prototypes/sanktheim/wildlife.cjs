@@ -18,7 +18,7 @@ function createWildlife({state,hash,emit,hurt,defenders,garouHP,multiplier=1,geo
  function update(dt){
   const t=state.at,targets=defenders().filter(a=>a.hp>0&&!a.transit&&a.type!=='barricade'&&!a.id?.startsWith('turret-'));
   for(const g of state.wild.garous){
-   const e=g;if(g.dead||g.hp<=0)continue;if((g.stunUntil??0)>t){g.moving=false;continue;}   // its death is handled where the blow lands (registerDamage, kill)
+   const e=g;if(g.dead||g.hp<=0||g.vehicleLaunch)continue;if((g.stunUntil??0)>t){g.moving=false;continue;}   // its death is handled where the blow lands (registerDamage, kill)
    let near=targets.find(a=>a.id===g.target&&Math.hypot(a.x-g.home.x,a.z-g.home.z)<LEASH&&Math.abs(a.y-e.y)<6);near??=targets.filter(a=>Math.hypot(a.x-e.x,a.z-e.z)<AGGRO&&Math.hypot(a.x-g.home.x,a.z-g.home.z)<LEASH&&Math.abs(a.y-e.y)<3).sort((a,b)=>Math.hypot(a.x-e.x,a.z-e.z)-Math.hypot(b.x-e.x,b.z-e.z))[0];
    let goal,speed;
    if(near){g.target=near.id;goal=near;speed=SPEED;}

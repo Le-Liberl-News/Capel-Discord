@@ -5,7 +5,7 @@
 const path=require('node:path'),fs=require('node:fs');
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
 const {parts}=require('./pomRendering');
-const {SKY,seeded,bounds,encode,pomSprite,sheetOf,sheetFrame}=parts;
+const {SKY,seeded,bounds,stream,gated,scratch,pomSprite,sheetOf,sheetFrame}=parts;
 const VACUUM=path.join(SKY,'chat/vacuum.png');
 const W=520,H=380,GROUND=362,VS=2,SOUTH_WEST=7;
 let vacuumPicture;
@@ -41,8 +41,8 @@ function drawOrb(x,cx,cy,r,t){
  x.strokeStyle='rgba(255,240,255,.9)';x.lineWidth=2;for(let k=0;k<4;k++){const a=t*1.7+k*Math.PI/2;x.beginPath();x.moveTo(cx+Math.cos(a)*r*.4,cy+Math.sin(a)*r*.4);x.lineTo(cx+Math.cos(a)*r*1.3,cy+Math.sin(a)*r*1.3);x.stroke();}
 }
 // sprite: 'aspi' or 'funebre'; victimSprite: 0 for a healthy character (its walk sheet), else its pom picture's key
-async function renderWizardBite(character,sprite,victim,victimSprite=0,outcome='shrink',seed=Date.now()){
- return null; // Emergency: preserve the text/game outcome without generating GIF frames.
+const renderWizardBite=gated(wizardBite);
+async function wizardBite(budget,character,sprite,victim,victimSprite=0,outcome='shrink',seed=Date.now()){
  const rng=seeded(seed),seat=await vacuum();
  const sheet=victimSprite?null:await sheetOf(victim),victimPom=victimSprite?await pomSprite(victim,victimSprite):null;
  if(!sheet&&!victimPom)return null;
@@ -50,11 +50,11 @@ async function renderWizardBite(character,sprite,victim,victimSprite=0,outcome='
  const vh=sheet?sheet.sheet.frameHeight*VS:120,vw=sheet?sheet.sheet.frameWidth*VS:120*(victimPom.width/victimPom.height);
  const ph=Math.round(vh*.5),pw=Math.round(ph*(px1-px0)/(py1-py0)),VX=320;
  const victimFrame=sheet?sheetFrame(sheet,SOUTH_WEST,0):victimPom;
- const sparks=[],frames=[],delays=[];
+ const sparks=[],out=stream({once:true,budget}),canvas=scratch(),whitened=scratch();
  // the victim, whitened by `white` (0..1), scaled from its feet, faded by alpha
  function drawVictim(x,{white=0,scale=1,alpha=1,shake=0}){
   if(alpha<=0)return;
-  const w=vw*scale,h=vh*scale,c=createCanvas(Math.ceil(vw),Math.ceil(vh)),cx=c.getContext('2d');cx.imageSmoothingEnabled=!sheet;
+  const w=vw*scale,h=vh*scale,c=whitened(vw,vh),cx=c.getContext('2d');cx.imageSmoothingEnabled=!sheet;
   cx.drawImage(victimFrame,0,0,vw,vh);
   if(white>0){cx.globalCompositeOperation='source-atop';cx.fillStyle=`rgba(255,255,255,${white})`;cx.fillRect(0,0,vw,vh);}
   x.save();x.globalAlpha=alpha;x.imageSmoothingEnabled=false;x.drawImage(c,Math.round(VX-w/2+(shake?(rng()*2-1)*shake:0)),GROUND-h,w,h);x.restore();
@@ -66,15 +66,15 @@ async function renderWizardBite(character,sprite,victim,victimSprite=0,outcome='
   x.imageSmoothingEnabled=true;x.drawImage(pom,px0,py0,px1-px0,py1-py0,-w/2,-h-4*scale,w,h);x.restore();
  }
  function frame(state,ms=55){
-  const c=createCanvas(W,H),x=c.getContext('2d');
+  const c=canvas(W,H),x=c.getContext('2d');
   const behind=state.rider&&state.rider.behind;
   if(behind)drawRider(x,state.rider);
   if(state.victim)drawVictim(x,state.victim);
   if(state.rider&&!behind)drawRider(x,state.rider);
-  if(state.orb)drawOrb(x,state.orb[0],state.orb[1],state.orb[2],frames.length);
+  if(state.orb)drawOrb(x,state.orb[0],state.orb[1],state.orb[2],out.frames);
   if(state.ring){const [rx,ry,rr,ra]=state.ring;x.strokeStyle=`rgba(230,190,255,${ra})`;x.lineWidth=5;x.beginPath();x.ellipse(rx,ry,rr,rr*.6,0,0,Math.PI*2);x.stroke();}
   for(const s of sparks){x.fillStyle=`rgba(${s.c},${Math.max(0,s.life)})`;x.fillRect(s.x-s.r/2,s.y-s.r/2,s.r,s.r);}
-  frames.push(c);delays.push(ms);
+  out.add(c,ms);
   for(const s of sparks){s.x+=s.vx;s.y+=s.vy;s.vy+=s.g;s.life-=.05;}
   for(let i=sparks.length-1;i>=0;i--)if(sparks[i].life<=0)sparks.splice(i,1);
  }
@@ -105,7 +105,6 @@ async function renderWizardBite(character,sprite,victim,victimSprite=0,outcome='
   for(let i=0;i<8;i++)frame({victim:{white:1-(i+1)/8,scale:.35}},70);
   for(let i=0;i<6;i++)frame({victim:{scale:.35,shake:i%2?1:0}},90);
  }
- delays[delays.length-1]=1600;
- return {attachment:encode(frames,delays,{once:true}),name:'sort.gif',outcome,duration:delays.reduce((a,b)=>a+b,0)};
+ const attachment=out.finish(1600);return {attachment,name:'sort.gif',outcome,duration:out.duration};
 }
 module.exports={renderWizardBite,drawVacuum,vacuum};

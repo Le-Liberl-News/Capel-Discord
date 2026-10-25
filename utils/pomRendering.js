@@ -4,6 +4,7 @@
 const path=require('node:path'),fs=require('node:fs');
 const {createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas');
 const {GIFEncoder,quantize,applyPalette}=require('gifenc');
+const {render}=require('./mediaRender');
 const SKY=path.join(__dirname,'../activity/assets/sky');
 const POM_BASE='https://leliberlnews.fr/activite/assets/sky/chat/pom';
 const W=560,LEFT=34,LINE=31,EVOLUTION=256;
@@ -87,16 +88,34 @@ function flatten(data){
   const k=a/255;data[i]=Math.round(data[i]*k+BR*(1-k));data[i+1]=Math.round(data[i+1]*k+BGG*(1-k));data[i+2]=Math.round(data[i+2]*k+BB*(1-k));data[i+3]=255;}
  return data;
 }
-function encode(frames,delays,{once=false}={}){
- const gif=GIFEncoder();
- frames.forEach((c,i)=>{
-  const {width:w,height:h}=c,data=flatten(c.getContext('2d').getImageData(0,0,w,h).data);
-  const palette=quantize(data,255,{format:'rgba4444',oneBitAlpha:true}),index=applyPalette(data,palette,'rgba4444');
-  let transparentIndex=palette.findIndex(p=>p[3]===0);if(transparentIndex<0)transparentIndex=0;
-  gif.writeFrame(index,w,h,{palette,delay:Array.isArray(delays)?delays[i]:delays,transparent:true,transparentIndex,dispose:2,...(i===0?{repeat:once?-1:0}:{})});
- });
- gif.finish();return Buffer.from(gif.bytes());
+// A GIF written while it is drawn (the memory-saving way of the adventure's cards, utils/adventure/animations.js): each
+// frame is quantized as soon as it is given, so the renderer can draw the next one on the same canvas, and written
+// when the next one comes; budget (utils/mediaRender.js) is checked at every frame. finish(last): the last frame's
+// delay, set only then.
+function stream({once=false,budget=null}={}){
+ const gif=GIFEncoder();let written=0,duration=0,pending=null;
+ function write(){const f=pending;gif.writeFrame(f.index,f.w,f.h,{palette:f.palette,delay:f.delay,transparent:true,transparentIndex:f.transparentIndex,dispose:2,...(written===0?{repeat:once?-1:0}:{})});written++;duration+=f.delay;pending=null;}
+ return {
+  add(c,delay){
+   budget?.check(gif.bytesView().length);if(pending)write();
+   const {width:w,height:h}=c,data=flatten(c.getContext('2d').getImageData(0,0,w,h).data);
+   const palette=quantize(data,255,{format:'rgba4444',oneBitAlpha:true}),index=applyPalette(data,palette,'rgba4444');
+   let transparentIndex=palette.findIndex(p=>p[3]===0);if(transparentIndex<0)transparentIndex=0;
+   pending={index,palette,transparentIndex,w,h,delay};
+  },
+  finish(last){if(pending){if(last!=null)pending.delay=last;write();}gif.finish();return Buffer.from(gif.bytes());},
+  get frames(){return written+(pending?1:0);},get duration(){return duration;}
+ };
 }
+// one canvas drawn again for each frame (cleared, its drawing state reset), instead of a new one every frame: native
+// canvases are freed late, and a GIF's worth of them is what made the RAM climb
+function scratch(){let c=null;return (w,h)=>{w=Math.ceil(w);h=Math.ceil(h);if(!c||c.width!==w||c.height!==h)c=createCanvas(w,h);const x=c.getContext('2d');x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.globalCompositeOperation='source-over';x.imageSmoothingEnabled=true;x.clearRect(0,0,w,h);return c;};}
+function encode(frames,delays,options){const out=stream(options);frames.forEach((c,i)=>out.add(c,Array.isArray(delays)?delays[i]:delays));return out.finish();}
+// a GIF drawn through the shared media gate: one render at a time, within its memory and time budget (limits:
+// createBudget's, mediaRender.js); null when declined. The announcements' GIFs are bigger than the cards': their
+// characters' sheets alone take tens of MB, so the machine's free memory is what guards them, checked at every frame.
+const MIB=1048576,ANNOUNCEMENT={maxGrowth:96*MIB,maxDuration:15000,maxBytes:2*MIB};
+const gated=(draw,limits=ANNOUNCEMENT)=>(...args)=>render(budget=>draw(budget,...args),{limits});
 async function renderBubble(message,stage,seed=Date.now(),images=[]){
  stage=1; // Emergency: all chat bubbles are still PNGs, including evolved poms.
  const {frame,tail,inverted}=await load(),list=words(message),probe=createCanvas(10,10).getContext('2d'),pictures=await emojiPictures(list);
@@ -208,13 +227,13 @@ async function onVacuum(pom){
 }
 const stageSprite=async(character,stage)=>{const pom=await pomSprite(character,stage);return stage==='aspi'||stage==='funebre'?onVacuum(pom):pom;};
 // from: 0 = the character itself, 1, 2, 'aspi' = the pom's stage; to: the next stage (2, 3, 'aspi' or 'funebre')
-async function renderEvolution(character,from,to,seed=Date.now()){
- return null; // Emergency: preserve the text/game outcome without generating GIF frames.
+const renderEvolution=gated(evolution);
+async function evolution(budget,character,from,to,seed=Date.now()){
  const before=from===0?await characterSprite(character):await stageSprite(character,from);
  const old=before?fitted(before,from===0?190:220,from===0):evolutionFrame(null);
  // from the character: the pom comes out smaller than the human (about two thirds of its height)
  const young=fitted(await stageSprite(character,to),from===0?Math.round((bounds(old)[3]-bounds(old)[1])*.68):220,false);
- const rng=seeded(seed),frames=[],delays=[],add=(c,ms)=>{const small=createCanvas(Math.round(c.width/2),Math.round(c.height/2)),x=small.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(c,0,0,small.width,small.height);frames.push(small);delays.push(ms);};
+ const rng=seeded(seed),out=stream({once:true,budget}),half=scratch(),add=(c,ms)=>{const small=half(c.width/2,c.height/2),x=small.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(c,0,0,small.width,small.height);out.add(small,ms);};
  add(evolutionFrame(old),900);
  for(let i=1;i<=6;i++)add(evolutionFrame(tinted(old,i/6),{glow:6+i}),70);                       // whitening
  const whiteOld=tinted(old,1),whiteNew=tinted(young,1);
@@ -223,7 +242,7 @@ async function renderEvolution(character,from,to,seed=Date.now()){
  for(let i=1;i<=8;i++){const t=i/8,sp=Array.from({length:10},()=>[20+rng()*216,20+rng()*206,2+rng()*4,1-t]);
   add(evolutionFrame(tinted(young,1-t),{glow:14*(1-t)+2,sparkles:sp}),80);}                       // colours come back
  add(evolutionFrame(young),2500);
- return {attachment:encode(frames,delays,{once:true}),name:'evolution.gif'};
+ return {attachment:out.finish(),name:'evolution.gif'};
 }
 // the bite (rage): the pom runs in from the left, leaps on its victim — blood —, crawls over the body while the victim
 // shakes, stops to bite (more blood), then the victim runs off to the right with the pom still hanging on.
@@ -240,14 +259,14 @@ async function sheetOf(character){
  return sheet?.texture?{sheet,tex:await loadImage(fs.readFileSync(path.join(SKY,sheet.texture)))}:null;
 }
 // one frame of the sheet: columns are the 8 directions, rows the run frames
-function sheetFrame({sheet,tex},direction,frame){
- const c=createCanvas(sheet.frameWidth,sheet.frameHeight);
+function sheetFrame(s,direction,frame){
+ const {sheet,tex}=s,c=(s.frame??=scratch())(sheet.frameWidth,sheet.frameHeight);   // one canvas per sheet, drawn again
  c.getContext('2d').drawImage(tex,direction*sheet.frameWidth,frame*sheet.frameHeight,sheet.frameWidth,sheet.frameHeight,0,0,sheet.frameWidth,sheet.frameHeight);return c;
 }
 // blood tiles (x, y, size on the 256 texture): splashes, drops, a big burst
 const SPLASH=[[0,32,32],[32,32,32]],DROPS=[[0,192,32],[32,192,32],[64,192,32],[96,192,32],[64,224,32],[96,224,32]],BURST=[[128,192,64],[192,192,64]];
-async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
- return null; // Emergency: preserve the text/game outcome without generating GIF frames.
+const renderBite=gated(bite);
+async function bite(budget,character,stage,victim,victimStage=0,seed=Date.now()){
  const rng=seeded(seed),blood=await loadImage(fs.readFileSync(BLOOD));
  const sheet=victimStage?null:await sheetOf(victim),running=victimStage?null:await runSheetOf(victim);
  const victimPom=victimStage?await pomSprite(victim,victimStage):null;
@@ -256,14 +275,15 @@ async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
  // the victim twice as big as its sprite (pixel art), the pom about a third of its height
  const VS=2,vh=sheet?sheet.sheet.frameHeight*VS:120,vw=sheet?sheet.sheet.frameWidth*VS:120*(victimPom.width/victimPom.height);
  const ph=Math.round(vh*.36),pw=Math.round(ph*(px1-px0)/(py1-py0));
- const frames=[],delays=[],particles=[];
+ const out=stream({once:true,budget}),particles=[];
  let flash=0;
  const spray=(x,y,n,force=1)=>{for(let i=0;i<n;i++){const a=-Math.PI*(.1+.8*rng()),v=(2+rng()*5)*force;
   particles.push({x,y,vx:Math.cos(a)*v*(rng()<.5?-1:1),vy:Math.sin(a)*v,tile:rng()<.7?SPLASH[Math.floor(rng()*2)]:DROPS[1+Math.floor(rng()*2)],size:8+rng()*12,spin:rng()*6.3,life:1});}};
  const bursts=[];
  const burst=(x,y,big)=>bursts.push({x,y,t:0,tile:big?BURST[Math.floor(rng()*2)]:SPLASH[Math.floor(rng()*2)],size:big?130:60});
+ const canvas=scratch();
  function draw({vx,vframe,vdir,shake=0,pom:pp,squash=1,bob=0,lean=0,run=false}){
-  const c=createCanvas(BITE_W,BITE_H),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+  const c=canvas(BITE_W,BITE_H),x=c.getContext('2d');x.imageSmoothingEnabled=false;
   if(vx!=null){
    const dx=shake?Math.round((rng()*2-1)*shake):0;
    if(run){const {sheet:r}=running;x.drawImage(sheetFrame(running,vdir,vframe),Math.round(vx+dx-r.anchor[0]*VS),GROUND-r.anchor[1]*VS,r.frameWidth*VS,r.frameHeight*VS);}
@@ -284,7 +304,7 @@ async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
   for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);
   flash=Math.max(0,flash-.25);
  }
- const add=(state,ms=60)=>{frames.push(draw(state));delays.push(ms);step();};
+ const add=(state,ms=60)=>{out.add(draw(state),ms);step();};
  const VX=360,chest=[VX-4,GROUND-vh*.42],idle={vx:VX,vframe:0,vdir:sheet?SOUTH_WEST:0};
  const hop=(t,height)=>Math.abs(Math.sin(t*Math.PI))*height;
  // 1. face to face
@@ -318,8 +338,8 @@ async function renderBite(character,stage,victim,victimStage=0,seed=Date.now()){
  }
  // 8. the last drops fall
  for(let i=0;i<8;i++)add({},60);
- return {attachment:encode(frames,delays,{once:true}),name:'morsure.gif'};
+ return {attachment:out.finish(),name:'morsure.gif'};
 }
 module.exports={renderBubble,renderEvolution,renderBite,avatarURL,slug,words,
  // shared with the siege (utils/pomSiege.js)
- parts:{SKY,BLOOD,SPLASH,DROPS,BURST,seeded,bounds,encode,pomSprite,sheetOf,runSheetOf,sheetFrame}};
+ parts:{SKY,BLOOD,SPLASH,DROPS,BURST,seeded,bounds,encode,stream,gated,scratch,MIB,pomSprite,sheetOf,runSheetOf,sheetFrame}};

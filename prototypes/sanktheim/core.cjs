@@ -118,11 +118,27 @@ ${mvp?'MVP : '+mvp.character+' ('+mvp.kills+' poms vaincus, '+Math.round(mvp.dam
  }
  fightSoldiers(dt,!state.wave);
  }
- // the ground guards keep to the gate's approaches: no chasing a pom back to the forest
- const FIELD_LEASH=60;
- function fightSoldiers(dt,watchOnly=false){const t=state.at;if(state.stoppedAt)return;for(const s of state.soldiers){if(s.hp<=0||s.pomBoundUntil>t||s.pomBump||s.sleeping||s.transit||watchOnly&&s.role!=='sentry')continue;s.wingZ??=s.role==='field'?(s.z<-5?-14:s.z>5?14:0):s.restPosition.z;const sentry=s.role==='sentry',field=s.role==='field',atWall=e=>e.x>-42&&Math.abs(e.z)<28,band=e=>sentry?26:atWall(e)?(field?16:9):field?7:5,enemy=[...state.enemies,...Object.values(state.players).filter(p=>p.online&&p.pomControlled)].filter(e=>e.hp>0&&(!e.cling||e.cling.target!==s.id)&&Math.abs(e.y-s.y)<16&&Math.abs(e.z-s.wingZ)<band(e)&&(!field||e.x>-FIELD_LEASH)&&(!sentry||!movementGeometry?.sweep({x:s.x,y:s.y+1,z:s.z},{x:e.x,y:e.y+.6,z:e.z},.05))).sort((a,b)=>atWall(b)-atWall(a)||distance(s,a)-distance(s,b))[0];s.moving=false;if(enemy){const dx=enemy.x-s.x,dz=enemy.z-s.z,d=Math.hypot(dx,dz)||1,range=field?12:23;s.heading={dx:dx/d,dz:dz/d};if(field&&d>range){const step=Math.min(d-range+.1,2*dt*(s.slowUntil>t?CONFIG.slow:1)),nx=clamp(s.x+dx/d*step,-FIELD_LEASH,-38),nz=clamp(s.z+dz/d*step,Math.max(-26,s.wingZ-16),Math.min(26,s.wingZ+16)),blocked=state.soldiers.some(g=>g!==s&&g.hp>0&&Math.abs(g.y-s.y)<2&&Math.hypot(g.x-nx,g.z-nz)<1.5);if(!blocked){s.x=nx;s.z=nz;s.moving=true;}}else if(d<=range&&t>=s.nextAttack){s.attackPose={at:t,duration:800,target:enemy.id};hurt(enemy,field?18:12);if(enemy.cling){const host=actors().find(a=>a.id===enemy.cling.target);enemy.cling=null;if(host)host.slowUntil=0;}enemy.target=s.id;enemy.aggroUntil=t+12000;s.nextAttack=t+(field?2400:3000);emit('attack','',{from:s.id,to:enemy.id,ranged:true,origin:{x:s.x,y:s.y,z:s.z},aim:{x:enemy.x,y:enemy.y,z:enemy.z}});}}else if(field){const post={x:-39,z:s.wingZ},dx=post.x-s.x,dz=post.z-s.z,d=Math.hypot(dx,dz);if(d>.5){const step=Math.min(d,2*dt);s.x+=dx/d*step;s.z+=dz/d*step;s.heading={dx:dx/d,dz:dz/d};s.moving=true;}}}
-
-
+ // The guards on the ground (deployed in a wave, or on watch at the gate between waves) shoot a pom they can see and reach;
+ // one they cannot (too far, or hidden by a corner of the wall) they walk to, around obstacles, and they come back to
+ // their post once it is dealt with. They keep to the gate's approaches: no chasing a pom back to the forest. The poms
+ // hitting the wall come first. The guards up on the ramparts shoot from where they stand.
+ const FIELD_LEASH=60,GUARD_SPEED=2.5;
+ const atWall=e=>e.x>-42&&Math.abs(e.z)<28;
+ function walkTo(s,goal,dt){const dx=goal.x-s.x,dz=goal.z-s.z,d=Math.hypot(dx,dz);if(d<.3)return false;const step=Math.min(d,GUARD_SPEED*dt*(s.slowUntil>state.at?CONFIG.slow:1)),before={x:s.x,y:s.y,z:s.z};
+  if(movementGeometry)require('./pom-navigation.cjs').moveAround(s,goal,step,movementGeometry,.35);else{s.x+=dx/d*step;s.z+=dz/d*step;}
+  if(s.x>-37&&s.x>before.x||s.x<-FIELD_LEASH&&s.x<before.x||Math.abs(s.z)>34&&Math.abs(s.z)>Math.abs(before.z)){Object.assign(s,before);return false;}   // a guard knocked against the wall can still step away from it
+  const moved=Math.hypot(s.x-before.x,s.z-before.z)>1e-4;if(moved){s.heading={dx:dx/d,dz:dz/d};s.moving=true;}return moved;}
+ function fightSoldiers(dt,watchOnly=false){const t=state.at;if(state.stoppedAt)return;const opponents=[...state.enemies,...Object.values(state.players).filter(p=>p.online&&p.pomControlled)];
+  for(const s of state.soldiers){if(s.hp<=0||s.pomBoundUntil>t||s.pomBump||s.sleeping||s.transit||watchOnly&&s.role!=='sentry')continue;s.wingZ??=s.role==='field'?(s.z<-5?-14:s.z>5?14:0):s.restPosition.z;
+   const sentry=s.role==='sentry',field=s.role==='field',ground=sentry||field,range=field?12:23,band=e=>atWall(e)?(field?16:sentry?30:9):sentry?26:field?7:5;
+   const sees=e=>!ground||!movementGeometry?.sweep({x:s.x,y:s.y+1,z:s.z},{x:e.x,y:e.y+.6,z:e.z},.05),reach=e=>Math.hypot(e.x-s.x,e.z-s.z)<=range&&sees(e);
+   const candidates=opponents.filter(e=>e.hp>0&&(!e.cling||e.cling.target!==s.id)&&Math.abs(e.y-s.y)<16&&Math.abs(e.z-s.wingZ)<band(e)&&(!ground||e.x>-FIELD_LEASH)).sort((a,b)=>atWall(b)-atWall(a)||distance(s,a)-distance(s,b));
+   const first=candidates[0],enemy=first&&(reach(first)?first:!atWall(first)&&candidates.find(reach))||null;   // a pom at the wall is never left for an easier one
+   s.moving=false;
+   if(enemy){const dx=enemy.x-s.x,dz=enemy.z-s.z,d=Math.hypot(dx,dz)||1;s.heading={dx:dx/d,dz:dz/d};if(t>=s.nextAttack){s.attackPose={at:t,duration:800,target:enemy.id};hurt(enemy,field?18:12);if(enemy.cling){const host=actors().find(a=>a.id===enemy.cling.target);enemy.cling=null;if(host)host.slowUntil=0;}enemy.target=s.id;enemy.aggroUntil=t+12000;s.nextAttack=t+(field?2400:3000);emit('attack','',{from:s.id,to:enemy.id,ranged:true,origin:{x:s.x,y:s.y,z:s.z},aim:{x:enemy.x,y:enemy.y,z:enemy.z}});}continue;}
+   if(ground&&first&&(field||atWall(first))){walkTo(s,first,dt);continue;}
+   if(ground&&!first)walkTo(s,sentry?(s.watchPosition??{x:-39,z:s.wingZ}):{x:-39,z:s.wingZ},dt);
+  }
  }
 
  function expireCorpses(){if(!state.wave&&state.corpsesExpireAt&&state.at>=state.corpsesExpireAt){state.corpses=[];state.corpsesExpireAt=null;dirty=true;}}

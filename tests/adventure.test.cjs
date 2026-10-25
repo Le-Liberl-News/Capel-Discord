@@ -155,18 +155,18 @@ test('card dealing streams a bounded low-resolution GIF',async()=>{
  assert.deepEqual(gifInfo(gif.attachment,{maxFrames:64}),{width:360,height:308,frames:29});
  assert.equal(renderStats().frameBuffers,1);assert.equal(renderStats().indexedWorkingBytes,360*308*4);
  assert.equal(await renderAnimation('cartes',[]),null);
- const clean=await renderAnimation('cartes',['20-13-1-100']),noisy=await renderAnimation('cartes',['20-abc-13-0-1-22-100']);
+ const clean=await renderAnimation('cartes',['20-13-1-100']),noisy=await renderAnimation('cartes',['20-abc-13-1-22-100']);
  assert.ok(noisy.attachment.equals(clean.attachment));
  assert.equal(await renderAnimation('cartes',['abc','0','42']),null);
  await assert.rejects(renderAnimation('rien',[]),/inconnue/);
 });
 
-test('duplicate cards leave seats empty and an entire deck still deals at most eight cards',async()=>{
- const {renderAnimation}=require('../utils/adventure/animations'),{gifInfo}=require('../utils/activityRoleplay');
- const all=await renderAnimation('cartes',['1-2-7-3']),twice=await renderAnimation('cartes',['1-1-7-1']);
- assert.ok(gifInfo(twice.attachment,{maxFrames:64}).frames<gifInfo(all.attachment,{maxFrames:64}).frames);
- const eight=await renderAnimation('cartes',['1-2-3-4-5-6-7-8']),deck=await renderAnimation('cartes',[Array.from({length:21},(_,i)=>i+1).join('-')]);
- assert.ok(eight.attachment.equals(deck.attachment));assert.equal(gifInfo(deck.attachment,{maxFrames:64}).frames,57);
+test('a deal is four distinct cards; 0, banjo and excuse are all the Excuse',async()=>{
+ const {renderAnimation}=require('../utils/adventure/animations');
+ assert.equal(await renderAnimation('cartes',['1-1-7-1']),null);   // a card typed again is dealt once: three cards
+ assert.equal(await renderAnimation('cartes',['1-2-3-4-5']),null);
+ const excuse=await renderAnimation('cartes',['1-2-3-100']);
+ for(const alias of ['0','banjo','Excuse'])assert.ok((await renderAnimation('cartes',['1-2-3-'+alias])).attachment.equals(excuse.attachment));
 });
 
 test('in the final room, players wait for the others; one arriving after the end still wins',async()=>{

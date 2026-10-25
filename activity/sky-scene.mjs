@@ -1158,6 +1158,9 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
       if(falling)avatar.mesh.position.y+=fall.hop+(avatar.geometryInfo?.centerY??avatar.info.height/2)*(1-Math.cos(fall.angle));
       if(avatar.character==="Sieg"&&!avatar.dead&&!avatar.perched)avatar.mesh.quaternion.copy(camera.quaternion);
       else if(avatar.character==="Sieg")avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),0);
+      // seen through a venue's own perspective camera (a cannon's sight…), each sprite turns its face to that eye; a
+      // single yaw shared by all would show the ones off to the side slantwise
+      else if(venueView?.renderCamera?.isPerspectiveCamera){const eye=venueView.renderCamera.getWorldPosition(new THREE.Vector3());avatar.mesh.rotation.set(0,Math.atan2(eye.x-avatar.mesh.position.x,eye.z-avatar.mesh.position.z),avatar.mesh.rotation.z);}
       else avatar.mesh.rotation.set(0,Math.atan2(camera.matrixWorld.elements[8],camera.matrixWorld.elements[10]),avatar.mesh.rotation.z);
       const captive=!avatar.dead&&!down&&!falling&&renneCombat?.kaleidoCaptive(id);
       if(captive){

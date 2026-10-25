@@ -8,7 +8,10 @@ const W=360,H=308,CW=40,CH=76,MAX_CARDS=8,FLIGHT=6,FRAME_MS=80;
 const CX=W/2,CY=H/2,DECK={x:CX,y:CY+52},SEATS=[{x:CX-127,y:CY},{x:CX,y:CY-96},{x:CX+127,y:CY},{x:CX,y:CY+89}];
 const GREEN=[47,93,58],BORDER=[63,122,77],SHADOW=[31,61,38],WHITE=[244,236,216];
 let pictures=null,lastStats=null;
-function valuesOf(words){return String((words||[]).join('-')).split('-').filter(n=>/^\d+$/.test(n)&&((+n>=1&&+n<=21)||+n===100)).map(Number).slice(0,MAX_CARDS);}
+// only the cards of the deck (0 to 21, 100, « banjo » and « excuse »: 0, banjo and excuse are the Excuse, the 100);
+// anything else is left out, as if it had not been typed, and a card typed again is dealt once
+const EXCUSE=new Set([0,100,'excuse','banjo']);
+function valuesOf(words){const isNum=v=>/^\d+$/.test(v);return [...new Set(String((words||[]).join('-')).toLowerCase().split('-').filter(v=>isNum(v)?(+v<=21||+v===100):v==='excuse'||v==='banjo').map(v=>isNum(v)?Number(v):v).map(v=>EXCUSE.has(v)?100:v))].slice(0,MAX_CARDS);}
 async function faces(){if(!pictures)pictures=Promise.all([...Array.from({length:21},(_,i)=>i+1),100].map(async n=>[n,await loadImage(fs.readFileSync(path.join(__dirname,'tarot',n===100?'excuse.jpg':n+'.jpg')))])).then(rows=>new Map(rows)).catch(e=>{pictures=null;throw e;});return pictures;}
 function side(x,image){x.save();x.beginPath();x.roundRect(0,0,CW,CH,3);x.clip();if(image)x.drawImage(image,0,0,CW,CH);else{x.fillStyle='#7a2430';x.fillRect(0,0,CW,CH);x.strokeStyle='#e8c37a';x.lineWidth=1;x.strokeRect(4,4,CW-8,CH-8);}x.restore();}
 function assets(images,values){
@@ -52,11 +55,12 @@ async function renderCards(values,budget){
  gif.finish();budget.check(gif.bytesView().length);lastStats={...budget.stats(),frames:count,width:W,height:H,frameBuffers:1,frameBytes:frame.byteLength,indexedWorkingBytes:frame.byteLength+previous.byteLength+delta.byteLength+base.byteLength,bytes:gif.bytesView().length};
  return {attachment:Buffer.from(gif.bytesView()),name:'distribution.gif'};
 }
+// a deal is four cards, one per seat
 async function renderStill(values){
  const images=await faces(),canvas=createCanvas(W,H),c=canvas.getContext('2d');
  c.fillStyle='#2f5d3a';c.fillRect(0,0,W,H);c.strokeStyle='#3f7a4d';c.lineWidth=2;c.strokeRect(10,10,W-20,H-20);c.fillStyle='#f4ecd8';c.textAlign='center';c.font='bold 12px sans-serif';c.fillText('vous',CX,H-9);
  const given=new Set();for(let i=0;i<values.length;i++){const value=values[i];if(given.has(value))continue;given.add(value);const seat=SEATS[i%4];c.save();c.translate(seat.x+(i>=4?14:0)-CW/2,seat.y+(i>=4?8:0)-CH/2);c.translate(CW/2,CH/2);c.rotate((i%2?-1:1)*.12);c.translate(-CW/2,-CH/2);c.fillStyle='rgba(0,0,0,.35)';c.fillRect(2,2,CW,CH);side(c,images.get(value));c.restore();}
  return {attachment:canvas.toBuffer('image/png'),name:'distribution.png'};
 }
-async function renderAnimation(name,words,{schedule=render}={}){if(name!=='cartes')throw Error('animation inconnue : '+name);const values=valuesOf(words);if(!values.length)return null;return schedule(budget=>renderCards(values,budget),{fallback:()=>renderStill(values)});}
+async function renderAnimation(name,words,{schedule=render}={}){if(name!=='cartes')throw Error('animation inconnue : '+name);const values=valuesOf(words);if(values.length!==4)return null;return schedule(budget=>renderCards(values,budget),{fallback:()=>renderStill(values)});}
 module.exports={renderAnimation,ANIMATIONS:['cartes'],valuesOf,renderStats:()=>lastStats,renderStill:words=>renderStill(valuesOf(words))};
