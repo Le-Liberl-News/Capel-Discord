@@ -142,7 +142,7 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
     new URL("anterose.gltf", mapAssets).href,
   );
   venue?.mark?.("scene-model");
-  const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;const venueView=venue?.mount?.({THREE,scene,model,renderer});
+  const model = new THREE.Group();model.add(loaded.scene);model.userData.noXRay=true;const venueView=venue?.mount?.({THREE,scene,model,renderer,bloom:mapBloom,xray});
   if(map==="tower4")removeNativeBackdrop(model);
   const rooftopSky=venue?null:map==="tower4"?await createRooftopSky(THREE,scene,mapAssets,loading):isArena&&map!=='gehenna'?await createAxisSky(THREE,scene,mapAssets,loading):null;
   const towerLayout=inTower?await fetch(versionAsset(new URL("layout.json",mapAssets),version)).then(r=>r.json()):null;

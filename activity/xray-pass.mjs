@@ -13,7 +13,22 @@ export function createXRayPass(THREE){
     }
     for(const child of object.children)collect(child);
   }
-  return {render(renderer,scene,camera,{only=null}={}){
+  // the materials as they were
+  function restore(){
+    for(const [material,depthFunc,depthWrite,transparent,opacity,r,g,b] of touched){Object.assign(material,{depthFunc,depthWrite,transparent,opacity});if(material.color)material.color.setRGB(r,g,b);}
+    touched.length=0;seen.clear();
+  }
+  return {
+  // the see-through materials are other shaders (transparent, not opaque): compiled ahead, in parallel where the browser
+  // can, they no longer freeze the first frame where someone stands behind a wall. The materials are changed only while
+  // compileAsync makes their programs.
+  prepare(renderer,scene,camera){
+    for(const child of scene.children)collect(child);
+    if(!touched.length)return Promise.resolve();
+    let ready;try{ready=renderer.compileAsync(scene,camera);}finally{restore();}
+    return ready;
+  },
+  render(renderer,scene,camera,{only=null}={}){
     if(only)collect(only);else for(const child of scene.children)collect(child);
     if(!touched.length)return;
     // only the materials above are touched; the rest of the scene is hidden for this pass
@@ -22,8 +37,7 @@ export function createXRayPass(THREE){
     try{renderer.render(scene,camera);}
     finally{
       renderer.autoClear=autoClear;renderer.info.autoReset=autoReset;scene.background=background;for(const object of hidden)object.visible=true;
-      for(const [material,depthFunc,depthWrite,transparent,opacity,r,g,b] of touched){Object.assign(material,{depthFunc,depthWrite,transparent,opacity});if(material.color)material.color.setRGB(r,g,b);}
-      touched.length=0;seen.clear();
+      restore();
     }
   }};
 }

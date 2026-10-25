@@ -13,7 +13,11 @@
   "final": {
     "room": 18,
     "players": 3,
-    "victory": "Deux autres humains, pomifiés comme vous, sont désormais à vos côtés. La créature aux longs membres se balance toujours lentement au-dessus de vos têtes...\nIl est temps d'agir.\nUn pom brandit une fourchette et se lance à corps perdu en direction du monstre. Sans détourner les yeux du ciel, ce dernier s'appuie sur sa main droite pour se soulever en un instant dans les airs. Le pom, pris dans son élan, trébuche sur une flaque de substance visqueuse avant de rouler-bouler contre le trône. Vous vous retournez juste à temps pour voir que la créature tend la main vers vous. Pris de panique, vous sautez sur le côté. La main de la créature s'est posée délicatement sur le plancher. Son regard n'a toujours pas quitté les étoiles, et malgré sa taille imposante et ses mouvements rapides, elle ne provoque aucune secousse.\nL'autre pom vous fait un appel du regard. Vous comprenez instinctivement ce qu'il vous propose. Vous prenez position, le pom saute dans votre direction, couteau empoigné, et vous l'expulsez de toutes vos forces du côté du monstre. Une fois de plus, le monstre esquive lestement l'attaque, mais l'autre pom rebondit alors sur un mur pour le prendre de revers. Cette fois-ci, le monstre n'a pas le temps d'éviter l'attaque. Il recourbe alors son cou pour regarder son assaillant, la tête penchée derrière son dos.\nCet instant vous semble durer une éternité. Pendant ce temps, le pom qui avait chargé le premier s'est réfugié derrière le trône. Sur le dos du monstre, l'autre pom lâche finalement sa prise sur le couteau, celui-ci commence lentement à s'enfoncer dans la toison épaisse, avant de finir complètement absorbé.\nSoudain, la créature se contorsionne, et vous êtes doucement balayé. Avant même que vous ayez pu comprendre ce qui vous arrivait, vous finissez tous les trois enveloppés dans ce qui ressemble à des plantes grimpantes duveteuses. Sa main droite s'est refermée sur vous et vos deux congénères.\nVous sentez que les deux autres tremblent. C'est aussi votre cas. Que va-t-il faire maintenant ? Vous n'en savez rien. Ses yeux font des allers-retours entre vous, les étoiles et quelque chose dans son dos. Ses yeux sont devenus bleutés et sa tête ne se déplace plus que par saccades. Enfin, il finit par se retourner, lentement.\nMalgré ses longs doigts qui gênent votre champ de vision, vous la reconnaissez. La femme est debout, face à lui. Maintenant qu'elle n'est plus dans l'obscurité de la cave, vous voyez que le teint de sa peau est presque aussi sombre que celui de la créature, ses yeux presque aussi clairs que les siens. Alors même que le monstre fait plusieurs fois sa taille, c'est elle qui semble le toiser de haut.\nLe monstre ouvre la bouche. Des acouphènes martyrisent vos tympans, et vous perdez connaissance l'espace d'un instant.\n\nLorsque vous revenez à vous, vous êtes à nouveau sur le tapis rouge. À quelques mètres devant vous, le monstre agite erratiquement les bras, tantôt vers la femme, tantôt dans la direction opposée. Son front est collé contre celui de cette femme qui le regarde droit dans les yeux, sans ciller. Hypnotisé au départ par ce spectacle, vous finissez par détourner le regard, attiré par une lueur sur votre gauche. Une étoile scintille là, à même le sol.\nVous vous précipitez, vous et vos deux congénères, pour vous rassembler autour d'elle.\n« Pom ! » « Pom ! » « Pom ! »\nSur le coup de ce cri à l'unisson, la lumière de l'étoile grossit jusqu'à vous aveugler. Vous fermez les yeux. Des sensations électriques traversent votre corps.\n« Anna... ! »\nUn cri rauque résonne avant de s'estomper, comme tout le reste.\n\nLes secondes passent. Les minutes passent ? Après avoir longtemps hésité, vous finissez par rouvrir les yeux. Vous êtes couché sur une route, enlacés dans les bras de deux autre personnes. Vous vous relevez, tous les trois un peu embarrassés par la situation.\nLe monstre, la femme et le manoir ne sont plus là. Quelques pas plus loin, vous voyez un pont menant à l'entrée d'une forteresse.\nVous souriez. Votre quête est terminée.",
+    "victory": [
+      "Deux autres humains, pomifiés comme vous, sont désormais à vos côtés. La créature aux longs membres se balance toujours lentement au-dessus de vos têtes...\nIl est temps d'agir.\nUn pom brandit une fourchette et se lance à corps perdu en direction du monstre. Sans détourner les yeux du ciel, ce dernier s'appuie sur sa main droite pour se soulever en un instant dans les airs. Le pom, pris dans son élan, trébuche sur une flaque de substance visqueuse avant de rouler-bouler contre le trône. Vous vous retournez juste à temps pour voir que la créature tend la main vers vous. Pris de panique, vous sautez sur le côté. La main de la créature s'est posée délicatement sur le plancher. Son regard n'a toujours pas quitté les étoiles, et malgré sa taille imposante et ses mouvements rapides, elle ne provoque aucune secousse.\nL'autre pom vous fait un appel du regard. Vous comprenez instinctivement ce qu'il vous propose. Vous prenez position, le pom saute dans votre direction, couteau empoigné, et vous l'expulsez de toutes vos forces du côté du monstre. Une fois de plus, le monstre esquive lestement l'attaque, mais l'autre pom rebondit alors sur un mur pour le prendre de revers. Cette fois-ci, le monstre n'a pas le temps d'éviter l'attaque. Il recourbe alors son cou pour regarder son assaillant, la tête penchée derrière son dos.\nCet instant vous semble durer une éternité. Pendant ce temps, le pom qui avait chargé le premier s'est réfugié derrière le trône. Sur le dos du monstre, l'autre pom lâche finalement sa prise sur le couteau, celui-ci commence lentement à s'enfoncer dans la toison épaisse, avant de finir complètement absorbé.\nSoudain, la créature se contorsionne, et vous êtes doucement balayé. Avant même que vous ayez pu comprendre ce qui vous arrivait, vous finissez tous les trois enveloppés dans ce qui ressemble à des plantes grimpantes duveteuses. Sa main droite s'est refermée sur vous et vos deux congénères.",
+      "Vous sentez que les deux autres tremblent. C'est aussi votre cas. Que va-t-il faire maintenant ? Vous n'en savez rien. Ses yeux font des allers-retours entre vous, les étoiles et quelque chose dans son dos. Ses yeux sont devenus bleutés et sa tête ne se déplace plus que par saccades. Enfin, il finit par se retourner, lentement.\nMalgré ses longs doigts qui gênent votre champ de vision, vous la reconnaissez. La femme est debout, face à lui. Maintenant qu'elle n'est plus dans l'obscurité de la cave, vous voyez que le teint de sa peau est presque aussi sombre que celui de la créature, ses yeux presque aussi clairs que les siens. Alors même que le monstre fait plusieurs fois sa taille, c'est elle qui semble le toiser de haut.\nLe monstre ouvre la bouche. Des acouphènes martyrisent vos tympans, et vous perdez connaissance l'espace d'un instant.\n\nLorsque vous revenez à vous, vous êtes à nouveau sur le tapis rouge. À quelques mètres devant vous, le monstre agite erratiquement les bras, tantôt vers la femme, tantôt dans la direction opposée. Son front est collé contre celui de cette femme qui le regarde droit dans les yeux, sans ciller. Hypnotisé au départ par ce spectacle, vous finissez par détourner le regard, attiré par une lueur sur votre gauche. Une étoile scintille là, à même le sol.\nVous vous précipitez, vous et vos deux congénères, pour vous rassembler autour d'elle.\n« Pom ! » « Pom ! » « Pom ! »",
+      "Sur le coup de ce cri à l'unisson, la lumière de l'étoile grossit jusqu'à vous aveugler. Vous fermez les yeux. Des sensations électriques traversent votre corps.\n« Anna... ! »\nUn cri rauque résonne avant de s'estomper, comme tout le reste.\n\nLes secondes passent. Les minutes passent ? Après avoir longtemps hésité, vous finissez par rouvrir les yeux. Vous êtes couché sur une route, enlacés dans les bras de deux autre personnes. Vous vous relevez, tous les trois un peu embarrassés par la situation.\nLe monstre, la femme et le manoir ne sont plus là. Quelques pas plus loin, vous voyez un pont menant à l'entrée d'une forteresse.\nVous souriez. Votre quête est terminée."
+    ],
     "closing": "Trois poms courageux ont affronté leurs peurs et prouvé leur valeur en mettant la main sur la source du maléfice qui transformait les gens en poms, et l'ont brisé ! Le manoir s'est estompé et la forteresse Leiston est revenue à sa place. Félicitations à nos trois héros !\nMerci à ceux qui se sont prêtés à ces petits jeux d'Halloween ! C'est terminé pour de bon, promis. On espère que ça vous a plu :)"
   },
   "rooms": [
@@ -500,7 +504,8 @@
       "lire",
       "inspecter",
       "consulter",
-      "consulte"
+      "consulte",
+      "fouiller"
     ],
     "allumer": [
       "activer"
@@ -533,6 +538,14 @@
     ],
     "creuser": [
       "gratter"
+    ],
+    "monter": [
+      "escalader",
+      "grimper"
+    ],
+    "sauter": [
+      "bondir",
+      "sautiller"
     ]
   },
   "nouns": {
@@ -599,7 +612,9 @@
       "rayons"
     ],
     "arts": [
-      "loisirs"
+      "loisirs",
+      "art",
+      "loisir"
     ],
     "couvert": [
       "couverts"
@@ -683,10 +698,13 @@
     ],
     "papier-peint": [
       "mur",
-      "murs"
+      "murs",
+      "motif",
+      "motifs"
     ],
     "poshul": [
-      "humain"
+      "humain",
+      "specimen"
     ],
     "20-13-1-100": [
       "20-13-1-0",
@@ -781,6 +799,32 @@
       "13-1-100-20",
       "13-1-excuse-20",
       "13-1-banjo-20"
+    ],
+    "cuillere": [
+      "cuilleres"
+    ],
+    "couteau": [
+      "couteaux"
+    ],
+    "fourchette": [
+      "fourchettes"
+    ],
+    "machine": [
+      "fontaine"
+    ],
+    "fissure": [
+      "fente"
+    ],
+    "danse": [
+      "jardinage",
+      "decoration",
+      "peinture"
+    ],
+    "album": [
+      "albums",
+      "bd",
+      "bande-dessinée",
+      "bande-dessinées"
     ]
   },
   "actions": [
@@ -1038,6 +1082,22 @@
       "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)",
       "effect": [
         "cadenas_vu"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "mustnot": [
+        "bibliotheque_ouverte"
+      ],
+      "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)",
+      "effect": [
+        "cadenas_vu"
+      ],
+      "noun": [
+        "cadenas"
       ]
     },
     {
@@ -1776,7 +1836,7 @@
       "noun": [
         "herbe"
       ],
-      "text": "La végétation a repris ses droits dans cette cour. Personne n'a dû entretenir cette cour depuis des lustres."
+      "text": "La végétation a repris ses droits dans cette cour. Personne n'a dû l'entretenir depuis des lustres."
     },
     {
       "place": [
@@ -1797,6 +1857,22 @@
         "escalier"
       ],
       "text": "Un escalier s'enfonce dans les profondeurs au nord-est de la cour. Vous pouvez apercevoir une porte ouverte tout en bas des marches."
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Les grandes fenêtres sont toutes deux orientées vers la cour intérieur. Vous y voyez la grande statue de tout à l'heure à travers la végétation.",
+      "noun": [
+        "fenetre"
+      ]
     },
     {
       "place": [
@@ -3410,7 +3486,24 @@
         "1-100-20-13"
       ],
       "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet.\nPourtant, vous êtes certain d'avoir la solution sur le bout de la langue.",
-      "animation": "cartes"
+      "animation": "cartes",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "distribuer",
+      "text": "Vous vous asseyez sur le siège rouge et tentez de distribuer les cartes autour du tapis de jeu, mais ça ne semble avoir aucun effet.\nPourtant, vous sentez que vous êtes sur la bonne piste.",
+      "animation": "cartes",
+      "noun": [
+        "0-20-13-1"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -4135,6 +4228,104 @@
       "text": "L'humain se bouche les oreilles et recule dans sa cage, apeuré.",
       "noun": [
         "poshul"
+      ]
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "ramper",
+      "noun": [],
+      "text": "Vous êtes petit, mais pas à ce point."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "monter",
+      "noun": [],
+      "text": "Même en montant sur la porte, vous ne parvenez pas à l'ouvrir."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "sauter",
+      "noun": [],
+      "text": "Vous sautillez sur place. Quelle énergie !"
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "manger",
+      "noun": [],
+      "text": "Vous n'avez pas vraiment faim."
+    },
+    {
+      "place": [
+        11
+      ],
+      "verb": "regarder",
+      "noun": [
+        "fissure"
+      ],
+      "text": "La fissure est assez large pour faire passer la lumière, mais rien d'autre."
+    },
+    {
+      "place": [
+        6
+      ],
+      "verb": "couper",
+      "noun": [],
+      "text": "Vous avez envie de donner un coup de jeune à cette cour ? C'est tout à fait louable.\nMais ce n'est pas comme ça que vous allez progresser dans votre aventure."
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "noun": [
+        "danse"
+      ],
+      "text": "Il y a plusieurs ouvrages dans cette catégorie, mais rien de particulièrement intéressant."
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Ces livres sont certainement très divertissants, mais après les avoir feuilletés, vous voyez bien qu'ils ne vous seront d'aucune utilité.",
+      "noun": [
+        "album"
+      ]
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Il y a plusieurs ouvrages dans cette catégorie, mais rien de particulièrement intéressant.\nCependant, vous remarquez qu'il y a un espace vide dans la rangée.",
+      "noun": [
+        "cuisine"
       ]
     }
   ]
