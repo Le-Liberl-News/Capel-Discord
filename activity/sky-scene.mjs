@@ -958,7 +958,10 @@ export async function createSkyScene(canvas, map = "anterose", {localTraining=fa
   }
   function renderFrame(time) {
     if (disposed) return;
-    if (!venue?.recording && time - lastTime < 33) {
+    // about 30 frames a second: every other vsync at 60 Hz, every fourth at 120, every fifth at 144. The margin under
+    // 33 ms matters: two 60 Hz vsyncs are 33.3 ms apart, give or take a few tenths, and a strict 33 skipped one now and
+    // then, a 50 ms frame among 33 ms ones, seen as small jerks of the sprite against the following camera
+    if (!venue?.recording && time - lastTime < 29) {
       if(!venue?.recording)requestAnimationFrame(render);
       return;
     }
