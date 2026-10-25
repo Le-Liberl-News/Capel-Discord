@@ -7,7 +7,8 @@ const DURATION=60000,LONG=250;
 const TIMED={compile:['compileShader','linkProgram','getProgramParameter','getShaderParameter','getActiveUniform','getActiveAttrib','getUniformLocation','getAttribLocation'],texture:['texImage2D','texSubImage2D','compressedTexImage2D','texStorage2D','generateMipmap'],buffer:['bufferData','bufferSubData'],draw:['drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced']};
 export function createStartupProfile({renderer,scene,onFirstDraw=()=>{}}){
  const gl=renderer.getContext(),t0=performance.now(),frames=[],samples=[],spans=[];let frame=null,drawn=false,done=false,lastSample=0;
- const fresh=()=>({start:performance.now(),compile:0,texture:0,buffer:0,draw:0,programs:0});
+ // programs: how many there were when the frame began, to name the ones it made (their material's kind)
+ const fresh=()=>({start:performance.now(),compile:0,texture:0,buffer:0,draw:0,programs:0,known:renderer.info.programs?.length??0});
  const wrapped=[];
  for(const [kind,names]of Object.entries(TIMED))for(const name of names){
   const original=gl[name];if(typeof original!=='function')continue;wrapped.push(name);
@@ -16,7 +17,7 @@ export function createStartupProfile({renderer,scene,onFirstDraw=()=>{}}){
  const lights=()=>{let n=0;scene.traverse(o=>{if(o.isLight&&o.visible)n++;});return n;};
  function tick(){
   const now=performance.now();
-  if(frame){const ms=now-frame.start;if(ms>LONG&&frames.length<40)frames.push({at:Math.round(frame.start-t0),ms:Math.round(ms),compile:Math.round(frame.compile),programsLinked:frame.programs,texture:Math.round(frame.texture),buffer:Math.round(frame.buffer),draw:Math.round(frame.draw)});}
+  if(frame){const ms=now-frame.start;if(ms>LONG&&frames.length<40)frames.push({at:Math.round(frame.start-t0),ms:Math.round(ms),compile:Math.round(frame.compile),programsLinked:frame.programs,texture:Math.round(frame.texture),buffer:Math.round(frame.buffer),draw:Math.round(frame.draw),made:(renderer.info.programs??[]).slice(frame.known).slice(0,16).map(p=>p.name)});}
   if(now-lastSample>=1000&&samples.length<70){lastSample=now;samples.push({at:Math.round(now-t0),programs:renderer.info.programs?.length??0,lights:lights(),calls:renderer.info.render.calls,textures:renderer.info.memory.textures,geometries:renderer.info.memory.geometries});}
   if(now-t0>=DURATION){stop();return;}
   frame=fresh();requestAnimationFrame(tick);
