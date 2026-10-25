@@ -1,8 +1,8 @@
-const MAX_MINES=10,FLIGHT=1600;
+const MAX_MINES=75,FLIGHT=1600;
 function createMines({state,geometry,hurt,emit,land=(_,e)=>hurt(e,Math.max(e.hp,1))}){
  state.mines??=[];
  function install(owner,q){
-  if(state.mines.filter(m=>!m.spent).length>=MAX_MINES)return {error:'Dix mines maximum sur la carte.'};
+  if(state.mines.filter(m=>!m.spent).length>=MAX_MINES)return {error:MAX_MINES+' mines maximum sur la carte.'};
   if(!q||![q.x,q.y,q.z].every(Number.isFinite)||q.x<-360||q.x>20||Math.abs(q.z)>110)return {error:'Emplacement invalide.'};
   const floor=geometry()?.floor(q.x,q.z,q.y+.3);
   if(floor==null||Math.abs(q.y-floor)>.4)return {error:'Placez la mine sur une surface praticable.'};
