@@ -15,7 +15,7 @@ test('they leave whoever is far from their den alone, and the server idles when 
 test('a wild pomgarou killed gives its hunter a piece of meat; it comes back after the wave',()=>{const f=fixture();f.go(500);const e=f.s._state.wild.garous[0];e.hp=0;f.s.registerDamage({actor:'player-h',target:e,amount:50,lethal:true});f.go(500);
  const alive=()=>f.s.snapshot().wild.length;assert.equal(f.p.meat,1);assert.equal(alive(),5);
  f.s.testWave();f.go(1000);assert.equal(alive(),5);   // not before the wave's end
- f.go(11*60000);assert.equal(f.s._state.wave,null);f.go(500);assert.equal(alive(),6);});
+ f.go(11*60000);assert.equal(f.s._state.wave,null);f.go(500);assert.equal(alive(),6);assert.ok(f.s._state.wild.garous.every(g=>g.hitHeight===2.7&&g.hitRadius===.8));});
 
 test('soldiers get hungry over a day, starve under 15 % and die of it a day later',()=>{
  // the wildlife alone: no skirmish to hurt the soldier meanwhile

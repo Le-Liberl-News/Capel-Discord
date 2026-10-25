@@ -9,10 +9,10 @@ const WILD_NAME='sauvage';   // its sprite (chat/pom/sauvage-garou.png) and its 
 
 function createWildlife({state,hash,emit,hurt,defenders,garouHP,multiplier=1,geometry=()=>null}){
  // the pomgarous themselves, kept apart from the siege's enemies (the combat and the clients see them: living())
- const fresh=([x,z],i)=>({id:'pom-wild-'+i,wild:true,character:WILD_NAME,pomCharacter:WILD_NAME,stage:3,kind:'garou',flying:false,hp:garouHP*HP_FACTOR,maxHP:garouHP*HP_FACTOR,
+ const fresh=([x,z],i)=>({id:'pom-wild-'+i,wild:true,character:WILD_NAME,pomCharacter:WILD_NAME,stage:3,kind:'garou',flying:false,hitHeight:require('./pom-variants.cjs').height('garou')*2,hitRadius:.8,hp:garouHP*HP_FACTOR,maxHP:garouHP*HP_FACTOR,
   home:{x,z},x,y:.04,z,nextAttack:0,deadAt:null,dead:false,heading:{dx:1,dz:0}});
  if(!state.wild?.garous?.[0]?.wild)state.wild={garous:DENS.map(fresh)};   // (an earlier draft kept only a record)
- for(const g of state.wild.garous){const hp=garouHP*HP_FACTOR;if(g.maxHP!==hp){g.hp=g.hp/g.maxHP*hp;g.maxHP=hp;}}
+ for(const g of state.wild.garous){g.hitHeight=require('./pom-variants.cjs').height('garou')*2;g.hitRadius=.8;const hp=garouHP*HP_FACTOR;if(g.maxHP!==hp){g.hp=g.hp/g.maxHP*hp;g.maxHP=hp;}}
  for(const s of state.soldiers){s.hunger??=100;s.hungerAt??=state.at;}
  const living=()=>state.wild.garous.filter(g=>!g.dead&&g.hp>0);
  function update(dt){
