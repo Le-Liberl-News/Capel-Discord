@@ -53,7 +53,7 @@ const values=[...new Set(
  String(words.join('-')).toLowerCase().split('-')
   .filter(v=>isNum(v)?(+v<=21||+v===100):v==='excuse'||v==='banjo')
   .map(v=>isNum(v)?Number(v):v)
-  .map(v=>EXCUSE.has(v)?'excuse':v)
+  .map(v=>EXCUSE.has(v)?100:v)
 )].slice(0,8);
  if(values.length != 4)return null;
  const pictures=await loadFaces(),given=new Set();
