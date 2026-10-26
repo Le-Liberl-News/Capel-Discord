@@ -13,6 +13,7 @@ function startAdventureSync({adventure,token=process.env.PLATFORM_TOKEN,every=30
   try{
    const version=adventure.version(),body={failed},media=adventure.media?.()||[];
    if(version!==sentVersion)body.players=adventure.snapshot();
+   const archives=adventure.archiveBatch?.()??[];if(archives.length)body.archives=archives.map(({end,...item})=>item);
    if(media.length)body.media=media;
    const response=await fetch(`${PLATFORM_URL}/plateforme/api/aventure.php`,{method:'POST',
     headers:{Accept:'application/json','Content-Type':'application/json',Authorization:`Bearer ${token}`,'X-Platform-Token':token},
@@ -20,6 +21,7 @@ function startAdventureSync({adventure,token=process.env.PLATFORM_TOKEN,every=30
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||`HTTP ${response.status}`);
    sentVersion=version;failed=[];warned=false;
+   adventure.archiveAck?.(archives,data.archived??[]);adventure.forget?.(data.deleted??[]);
    if(media.length)adventure.mediaSent?.(media.map(item=>item.sha));
    adventure.shared?.(data.shares);   // the spectators' links of the games just sent
    for(const hint of data.hints||[]){

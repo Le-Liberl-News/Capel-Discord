@@ -80,9 +80,20 @@ du format, à remplacer par le JSON des énigmes.
 
 ## Suivi du plan sur la plateforme
 
-Le fil Discord garde ses 120 lignes recentes et leurs medias. Les commandes et reponses par salle sont archivees
-separement dans `typed.history`, transmis et sauvegarde par la synchronisation existante. Cette archive ne contient
-pas de medias ; elle est bornee a 4 000 lignes et 512 Kio par joueur, avec reponses abregees a 8 000 caracteres.
-Une purge ou la reprise d une ancienne partie marque l archive incomplete. La plateforme ne doit jamais deduire
-qu une salle vide n a pas ete jouee. `/reset` ouvre une archive vide pour la nouvelle tentative.
-Les echanges deja purges avant cette archive ne peuvent pas etre reconstruits depuis les compteurs globaux.
+En production, chaque nouvelle ligne est inscrite dans le journal disque prive `.runtime/adventure-outbox`.
+La synchronisation en lit au plus 256 Kio a la fois (huit parties maximum) ; le serveur dedoublonne les lignes
+par leur identifiant puis acquitte le lot. Seules les donnees acquittees sont effacees du journal local.
+Le bot conserve ses 120 lignes recentes en memoire, mais toutes les lignes restent en base jusqu a suppression
+explicite de la partie. Les reponses tres longues sont decoupees sans perte, medias stockes separement.
+Un `/reset` ouvre une nouvelle partie ; les precedentes restent consultables. Les echanges deja purges par les
+anciennes versions ne sont pas reconstruits. L ancien historique compact sert seulement a leur migration.
+
+La plateforme lit les echanges par pages de 100 lignes, y compris pour une salle du plan. Elle affiche le volume
+des donnees, l allocation MySQL (tables et index, qui ne retrecissent pas necessairement apres une suppression)
+et la taille de chaque partie. La suppression exige les droits editeur et un jeton CSRF ; une marque de
+suppression empeche un ancien lot de recrer la partie et le bot retire son etat actif a la synchronisation.
+Les anciennes parties du meme joueur restent intactes. Les medias references restent disponibles tant que
+la partie existe. Les marques de suppression ne contiennent que les identifiants, pas les conversations.
+
+Tests : `node --test tests/adventure.test.cjs tests/adventure-archive.test.cjs` ; dans Website,
+`node --test tests/adventure-history.cjs` et `php tests/adventure-archive-mysql.php` (base de test MySQL isolee).

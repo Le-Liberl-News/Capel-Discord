@@ -235,7 +235,7 @@ const capelModel=require("./activity/assets/sky/capel.json");
 const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
 // Halloween text adventure: invitation (and closing words) in channelId, played in DMs; every game started or won is
 // told in test-discord (notifyChannelId), which stays when the invitation moves to another channel
-const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',notifyChannelId:'889835278494203915'});
+const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,archive:require('./utils/adventure/lineArchive').createLineArchive(path.join(__dirname,'.runtime/adventure-outbox')),data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',notifyChannelId:'889835278494203915'});
 client.on('messageCreate',message=>{adventure.message(message);});
 // the games followed and the hints sent from the platform's editor
 require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});

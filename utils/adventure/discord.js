@@ -40,7 +40,7 @@ function count(typed,text){
  const command=normalize(text);typed.count++;if(!command)return;
  if(typed.commands[command]!=null||Object.keys(typed.commands).length<DISTINCT)typed.commands[command]=(typed.commands[command]??0)+1;
 }
-function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderAnimation,shareWait=30000}){
+function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderAnimation,shareWait=30000,archive=null}){
  const game=createAdventure(data);
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];state.shares??={};
@@ -50,19 +50,24 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  state.typed??={};
  for(const id of Object.keys(state.players))if(!state.typed[id]){const typed=state.typed[id]={count:0,commands:{},partial:true};for(const line of state.logs[id]??[])if(line.kind==='command')count(typed,line.text);}
  for(const id of Object.keys(state.players))state.typed[id].history??=roomHistory.create(state.logs[id]??[],true);
+ state.archiveRuns??={};
+ function ensureArchive(id){if(!archive)return null;if(!state.archiveRuns[id]){const typed=state.typed[id]??{},history=typed.history;const run=state.archiveRuns[id]={run:archive.newRun(),partial:!!state.players[id]&&(history?.partial??true)};const lines=[...(history?.lines??[]),...(state.logs[id]??[])],seen=new Set();archive.meta(run.run,{user:id,name:state.names[id]??id,state:state.players[id]??{},typed:{count:typed.count??0,commands:typed.commands??{}},partial:run.partial});for(const line of lines){const key=JSON.stringify([line.at,line.kind,line.room,line.text]);if(!seen.has(key)){seen.add(key);archive.append(run.run,line);}}delete typed.history;}return state.archiveRuns[id];}
+ if(archive){for(const id of Object.keys(state.players)){ensureArchive(id);delete state.typed[id].history;}store.save(state);}
  let version=0;   // bumped on every change, so the platform only gets the games when they moved
  const listeners=new Set();   // told of every change (the platform's sync sends it at once)
- const save=()=>{version++;store.save(state);for(const listener of listeners)listener();};
+ const save=()=>{if(archive)for(const id of Object.keys(state.players)){const run=ensureArchive(id);archive.meta(run.run,{user:id,name:state.names[id]??id,state:state.players[id],typed:state.typed[id],partial:run.partial});}version++;store.save(state);for(const listener of listeners)listener();};
  // the animations drawn since the platform last got them, by their SHA-1: the editor and the spectators show them
  // Bound RAM even when the platform cannot acknowledge media for a long time.
  const pendingMedia=require('../mediaRender').createMediaCache({sizeOf:item=>item.data.length});
+ const commandRooms=new Map();
  const LOG_SIZE=120,LOG_TEXT=20000;   // a reply is kept whole (a long one was cut at 4000 characters)
  // one line of a player's game: a command, the bot's reply, a hint
  function note(id,kind,text,media=[],room=state.players[id]?.room){
   if(!text&&!media.length)return;
+  if(archive)ensureArchive(id);if(kind==='command')commandRooms.set(id,room);
   const lines=state.logs[id]??=[];
-  const line={at:Date.now(),kind,text:String(text||'').slice(0,LOG_TEXT),room,...(media.length?{media}:{})};lines.push(line);
-  const typed=state.typed[id]??={count:0,commands:{}};typed.history??=roomHistory.create([],false);roomHistory.append(typed.history,line);
+  const line={at:Date.now(),kind,text:String(text||'').slice(0,LOG_TEXT),room,...(commandRooms.has(id)?{sourceRoom:commandRooms.get(id)}:{}),...(media.length?{media}:{})};lines.push(line);
+  const typed=state.typed[id]??={count:0,commands:{}};if(archive){const run=ensureArchive(id);archive.append(run.run,{...line,text:String(text||'')});}else{typed.history??=roomHistory.create([],false);roomHistory.append(typed.history,line);}
   if(lines.length>LOG_SIZE)lines.splice(0,lines.length-LOG_SIZE);
  }
  const replyText=result=>result.replies.filter(Boolean).join('\n\n');
@@ -71,6 +76,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // a reply to a player: its texts, then the room's picture when they enter or look at it and the action's animation;
  // kept in the player's log with what was attached (`id`)
  async function send(channel,result,player,id){
+  const sendingRun=id&&archive?ensureArchive(id).run:null;
   const parts=chunks(result.replies.filter(Boolean).join('\n\n'));
   const attached=[],media=[];
   const image=(result.moved||result.look)&&game.room(player.room)?.image;
@@ -82,20 +88,22 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   if(result.animation){
    try{
     const animation=await render(result.animation.name,result.animation.words);
+    if(id&&archive&&state.archiveRuns[id]?.run!==sendingRun)return;
     if(animation){
      const sha=crypto.createHash('sha1').update(animation.attachment).digest('hex');
      attached.push(animation);media.push({type:'animation',sha});pendingMedia.set(sha,{data:animation.attachment,type:animation.name.endsWith('.png')?'image/png':'image/gif'});
     }
    }catch(e){log('Aventure, animation :',result.animation.name,e.message);}
   }
+  if(id&&archive&&state.archiveRuns[id]?.run!==sendingRun)return;
   if(id){note(id,'reply',replyText(result),media,player.room);save();}
   for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&attached.length?{files:attached}:{}),allowedMentions:{parse:[]}});
   if(!parts.length&&attached.length)await channel.send({files:attached});
  }
  const tell=async(id,content,what)=>{
-  const parts=messages(content);if(!parts.length)return;
+  const parts=messages(content);if(!parts.length)return;const expectedRun=state.archiveRuns[id]?.run;
   // each message sent is one line of the log, as the player saw it
-  try{const user=await client.users.fetch(id);for(const part of parts){await user.send({content:part,allowedMentions:{parse:[]}});note(id,'reply',part);}}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
+  try{const user=await client.users.fetch(id);for(const part of parts){await user.send({content:part,allowedMentions:{parse:[]}});if(archive&&state.archiveRuns[id]?.run!==expectedRun)return;note(id,'reply',part);}}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
  };
  // the notices channel: a game started (with its link on the website, once the platform has given it) or won
  const waiters=new Map();
@@ -176,13 +184,15 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // a DM from a player: one command, played after the previous one is answered
  function message(msg){
   if(msg.author.bot||msg.guild||!state.players[msg.author.id]||!msg.content.trim())return false;
-  const id=msg.author.id;
+  const id=msg.author.id,requestedRun=state.archiveRuns[id]?.run;
   state.names[id]=msg.author.globalName||msg.author.username||state.names[id]||id;
   const next=(queues.get(id)||Promise.resolve()).then(async()=>{
+   if(!state.players[id]||archive&&state.archiveRuns[id]?.run!==requestedRun)return;
    note(id,'command',msg.content.trim());count(state.typed[id]??={count:0,commands:{}},msg.content);
    // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
    if(msg.content.trim().toLowerCase()==='/reset'){
-    state.typed[id].history=roomHistory.create([],false);
+    if(archive){state.archiveRuns[id]={run:archive.newRun(),partial:false};archive.meta(state.archiveRuns[id].run,{user:id,name:state.names[id]??id,state:{},typed:{},partial:false});}else state.typed[id].history=roomHistory.create([],false);
+    commandRooms.delete(id);
     const player=game.fresh(),start=game.start(player);
     const restart={...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]};
     state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);
@@ -193,24 +203,27 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    if(state.done&&state.reached.includes(id)){const over=data.messages?.over||'Votre aventure est terminée.';note(id,'reply',over);save();await msg.channel.send({content:over});return;}
    const result=game.handle(player,msg.content);
    await send(msg.channel,result,player,id);
-   if(result.final)await reach(id);
+   if(result.final&&(!archive||state.archiveRuns[id]?.run===requestedRun))await reach(id);
   }).catch(e=>log('Aventure :',e));
   queues.set(id,next);
   return true;
  }
  // the games for the platform: every player's state and last exchanges
- const snapshot=()=>Object.entries(state.players).map(([id,player])=>({id,name:state.names[id]||id,state:player,log:state.logs[id]||[],typed:state.typed[id]??{count:0,commands:{}}}));
+ const snapshot=()=>Object.entries(state.players).map(([id,player])=>({id,...(archive?{archive:ensureArchive(id)}:{}),name:state.names[id]||id,state:player,log:archive?[]:(state.logs[id]||[]),typed:state.typed[id]??{count:0,commands:{}}}));
  // a hint written on the platform, sent in DM
  async function hint(id,text){
   if(!state.players[id])throw new Error('joueur inconnu');
+  const expectedRun=state.archiveRuns[id]?.run;
   const user=await client.users.fetch(id);
   await user.send({content:(data.messages?.hint||'💡 **Indice** : ')+text,allowedMentions:{parse:[]}});
+  if(!state.players[id]||archive&&state.archiveRuns[id]?.run!==expectedRun)return;
   note(id,'hint',text);save();
  }
  // the animations the platform does not have yet, and their delivery
  const media=()=>[...pendingMedia].map(([sha,item])=>({sha,type:item.type,data:item.data.toString('base64')}));
  const mediaSent=shas=>{for(const sha of shas)pendingMedia.delete(sha);};
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
- return {handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,version:()=>version};
+ function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns'])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
+ return {handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,messages,normalize,BUTTON};

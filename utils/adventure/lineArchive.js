@@ -1,0 +1,12 @@
+// Durable outbound journal. Only a small batch is read into RAM; acknowledged batches are removed from disk.
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+function createLineArchive(directory){fs.mkdirSync(directory,{recursive:true,mode:0o700});const file=(run,suffix)=>{if(!/^[a-f0-9]{32}$/.test(run))throw Error('Invalid adventure run');return path.join(directory,run+suffix);};
+ function atomic(target,value){fs.writeFileSync(target+'.next',value,{mode:0o600});fs.renameSync(target+'.next',target);}
+ function meta(run,value){atomic(file(run,'.meta.json'),JSON.stringify(value));}
+ function append(run,line){const text=String(line.text??'');for(let start=0;start<Math.max(1,text.length);){let end=Math.min(text.length,start+16000);if(end<text.length&&text.charCodeAt(end-1)>=0xd800&&text.charCodeAt(end-1)<=0xdbff)end--;const part={...line,text:text.slice(start,end),...(start?{continuation:true}:{})};fs.appendFileSync(file(run,'.jsonl'),JSON.stringify({key:crypto.randomBytes(16).toString('hex'),line:part})+'\n',{mode:0o600});if(!text.length)break;start=end;}}
+ function batch(){const out=[];let remaining=256*1024;for(const name of fs.readdirSync(directory).filter(n=>n.endsWith('.jsonl'))){if(out.length>=8||remaining<90000)break;const run=name.slice(0,-6);if(!fs.existsSync(file(run,'.meta.json')))continue;const p=file(run,'.jsonl'),offset=fs.existsSync(file(run,'.ack'))?Number(fs.readFileSync(file(run,'.ack'),'utf8')):0,fd=fs.openSync(p,'r'),buffer=Buffer.alloc(remaining);let n;try{n=fs.readSync(fd,buffer,0,buffer.length,offset);}finally{fs.closeSync(fd);}const end=buffer.subarray(0,n).lastIndexOf(10);if(end<0)continue;const lines=buffer.subarray(0,end).toString('utf8').split('\n').filter(Boolean).map(JSON.parse),metadata=JSON.parse(fs.readFileSync(file(run,'.meta.json'),'utf8'));out.push({...metadata,run,lines,end:offset+end+1});remaining-=end+1;}return out;}
+ function ack(items,runs){for(const item of items)if(runs.includes(item.run)){const p=file(item.run,'.jsonl');if(!fs.existsSync(p))continue;if(fs.statSync(p).size===item.end){for(const ext of ['.jsonl','.ack','.meta.json'])fs.rmSync(file(item.run,ext),{force:true});}else atomic(file(item.run,'.ack'),String(item.end));}}
+ function remove(run){for(const ext of ['.jsonl','.ack','.meta.json'])fs.rmSync(file(run,ext),{force:true});}
+ return {meta,append,batch,ack,remove,newRun:()=>crypto.randomBytes(16).toString('hex')};
+}
+module.exports={createLineArchive};
