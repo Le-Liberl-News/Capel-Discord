@@ -53,13 +53,13 @@ function roadPom(i,t,c){const start=SHOTS[2]-.3+i*.38+rand(i+200)*.3,speed=6+ran
 // client aims them at the nearest defender: an unseen one, there)
 const BURN=.6;
 function aim(s){const x=fortressX(s),a=Math.sin(s*1.1)*.75+Math.sin(s*2.9)*.2,d=13+Math.sin(s*1.7)*5;return {x:x+Math.cos(a)*d,z:road(x)+Math.sin(a)*d};}
-// shot 4, below the vacuums: the foot poms on the road, hopping, the Pompoms rolling (the sprite turned about its
-// middle: the camera's right is +x there), the Pomdeters bounding
-const FOOT=[[1,0],[2,1],[3,2],[1,3],[2,4],[3,5],[2,6],[1,7],[3,8]],ROLL=.55;
-function footPom(i,t,c){const [stage,k]=FOOT[i],id='pom-finale-foot-'+i,start=SHOTS[3]-.6+k*.36+rand(i+300)*.2,speed=stage===2?8.5:stage===3?5.5:6.5,x0=-97-rand(i+310)*2,z=.4+(rand(i+320)-.5)*2.6;
+// shot 4, below the vacuums: the foot poms on the road, hopping, the Pompoms rolling (their own craft, the fiery
+// ball, at full power), the Pomdeters bounding
+const FOOT=[[1,0],[2,1],[3,2],[1,3],[2,4],[3,5],[2,6],[1,7],[3,8]];
+function footPom(i,t,c,ms){const [stage,k]=FOOT[i],id='pom-finale-foot-'+i,start=SHOTS[3]-.6+k*.36+rand(i+300)*.2,speed=stage===2?8.5:stage===3?5.5:6.5,x0=-97-rand(i+310)*2,z=.4+(rand(i+320)-.5)*2.6;
  if(t<start)return pom(id,c,stage-1,under(x0,z),{stage});if(t>=SHOTS[4])return pom(id,c,stage-1,away(i+120),{stage});
  const run=(t-start)*speed,x=x0+run;
- if(stage===2){const spin=-run/ROLL;return pom(id,c,1,{x:x+Math.sin(spin)*ROLL,y:ROLL-Math.cos(spin)*ROLL,z,spin},{stage});}
+ if(stage===2)return pom(id,c,1,{x,y:0,z},{stage,pomCraft:{type:'ball',phase:'roll',power:1,direction:{x:1,z:0},at:ms(start)}});
  const hop=stage===3?Math.abs(Math.sin((t-start)*2.6+i))*1.5:Math.abs(Math.sin((t-start)*4+i))*.8;return pom(id,c,stage-1,{x,y:hop,z},{stage});}
 function aspiPom(i,t,c){const start=SHOTS[3]+.2+i*.7,x=-100+(t-start)*22;if(t<start)return pom('pom-finale-aspi-'+i,c,i,under(-100,0),{kind:'daspi',flying:true});if(t>=SHOTS[4])return pom('pom-finale-aspi-'+i,c,i,away(i+90),{kind:'daspi',flying:true});return pom('pom-finale-aspi-'+i,c,i,{x,y:3.2+i%2*1.4+Math.sin(t*5+i)*.2,z:-1.5+i%3*1.6},{kind:'daspi',flying:true});}
 // the cast: the officer and a soldier on the gate's wall, two guards fleeing, the guard with the grenade, the fighters
@@ -114,7 +114,7 @@ function frame(base,t,pose=null,{transient=true}={}){
   for(let i=0;i<44;i++)state.enemies.push(streamPom(i,t,ch(i+5)));
   for(let i=0;i<14;i++)state.enemies.push(roadPom(i,t,ch(i+3)));
   for(let i=0;i<4;i++)state.enemies.push(aspiPom(i,t,ch(i+9)));
-  for(let i=0;i<FOOT.length;i++)state.enemies.push(footPom(i,t,ch(i+13)));
+  for(let i=0;i<FOOT.length;i++)state.enemies.push(footPom(i,t,ch(i+13),ms));
  }
  // the trees in its way
  for(const [id,s,angle] of TREES){const tree=state.forestry?.trees?.find(x=>x.id===id);if(tree&&t>=s)Object.assign(tree,{cutAt:ms(s),fallAngle:angle,stage:0});}
