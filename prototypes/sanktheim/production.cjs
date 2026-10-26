@@ -42,7 +42,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
     walls:st.walls.map(w=>({id:w.id,percent:Math.round(w.hp/w.maxHP*1000)/10})),
     turrets:st.turrets.filter(t=>t.hp>0).map(t=>({type:t.type,x:r(t.x),y:r(t.y),z:r(t.z),lastShot:t.nextAttack?st.at-t.nextAttack:null})),
     online:Object.values(st.players).filter(p=>p.online).length}:null;
-  res.json({ready,wave,field,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
+  res.json({ready,wave,field,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,finale:siege._state.finale??null,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
  // the finale's moments, for its cinematic: the list, or one by its place (?i=)
  app.get('/api/siege/finale',(req,res)=>{res.set('Cache-Control','no-store');const i=req.query.i===undefined?-1:Number(req.query.i);const moment=finale.read(i);if(!moment)return res.status(404).json({error:'Moment inconnu.'});res.json(moment);});
  app.use('/api/siege',async(req,res)=>{
@@ -53,7 +53,7 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
    const route=req.path;
    const readonly=['/session','/catalogue','/navigation','/state','/music'];
    if(req.method!=='POST'&&!readonly.includes(route))return res.status(405).json({error:'Méthode refusée.'});
-   if(route==='/session'){const player=await arena.join(user);siege._state.players[user.id].discordChannel=lobby.identity(bearer(req)).channel;return res.json({player,owner:isOwner(user.userId),notice:'Votre personnage du jour · Défense de Sanktheim'});}
+   if(route==='/session'){if(siege._state.stoppedAt)return res.json({closed:true,notice:'Le siège de Sanktheim est terminé.'});const player=await arena.join(user);siege._state.players[user.id].discordChannel=lobby.identity(bearer(req)).channel;return res.json({player,owner:isOwner(user.userId),notice:'Votre personnage du jour · Défense de Sanktheim'});}
    if(route==='/catalogue')return res.json(createCatalogue(cohort)());
    if(route==='/navigation')return res.json(arena.navigation(req.query.layer==='roof'));
    if(route==='/state')return res.json(world.snapshot(siege.snapshot()));

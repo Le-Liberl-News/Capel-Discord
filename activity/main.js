@@ -1,4 +1,4 @@
-import {openSiege} from './siege-mode.mjs';
+import {openSiege,openFinale,siegeClosed,finaleFlag} from './siege-mode.mjs';
 import {createActivityChat} from './chat-ui.mjs';
 import {introDurationFor} from './duel-intro.mjs';
 import axisResidents from './assets/sky/axis/residents.json';
@@ -41,7 +41,7 @@ const etat = {
   messageCursor: 0,
 };
 let siegeMode=false,siegeOpening=null;
-function enterSiege(){if(siegeOpening)return siegeOpening;siegeOpening=(async()=>{loading.show("sanktheim","Sanktheim");const marks=[["siege-asked",Math.round(performance.now())]];const result=await fetchJson(apiUrl("siege/session"),{headers:{Authorization:"Bearer "+etat.token}});marks.push(["siege-allowed",Math.round(performance.now())]);if(!result.player)throw Error("Siège indisponible.");siegeMode=true;clearTimeout(trainingTimer);training=null;trainingBusy=false;scene?.dispose();music?.dispose();home.show(false);await openSiege({token:etat.token,apiUrl,marks,session:result,progress:share=>loading.step(share),loaded:()=>loading.hide()});})();siegeOpening.catch(()=>{loading.hide();if(!siegeMode)siegeOpening=null;});return siegeOpening;}
+function enterSiege(){if(siegeOpening)return siegeOpening;siegeOpening=(async()=>{loading.show("sanktheim","Sanktheim");const marks=[["siege-asked",Math.round(performance.now())]];const result=await fetchJson(apiUrl("siege/session"),{headers:{Authorization:"Bearer "+etat.token}});marks.push(["siege-allowed",Math.round(performance.now())]);if(result.closed){loading.hide();siegeMode=true;scene?.dispose();music?.dispose();home.show(false);siegeClosed();return;}if(!result.player)throw Error("Siège indisponible.");siegeMode=true;clearTimeout(trainingTimer);training=null;trainingBusy=false;scene?.dispose();music?.dispose();home.show(false);await openSiege({token:etat.token,apiUrl,marks,session:result,progress:share=>loading.step(share),loaded:()=>loading.hide()});})();siegeOpening.catch(()=>{loading.hide();if(!siegeMode)siegeOpening=null;});return siegeOpening;}
 
 let scene, music, lastDuelIntro=null, training=null, trainingBusy=false, trainingTimer, trainingReturn=null, trainingStep=null, lastTrainingRequest=null;
 const terminal=createTerminalUI({
@@ -402,6 +402,7 @@ async function start() {
   etape("Connexion…");
   if (apercuLocal) { etat.map = new URLSearchParams(location.search).get("map") ?? "anterose"; scene = await createSkyScene(toile, etat.map); }
   await entrer();
+  if(finaleFlag.get()){startedUp();home.show(false);scene?.dispose();music?.dispose();await openFinale(route=>fetchJson(apiUrl(route),{headers:{Authorization:"Bearer "+etat.token}}));return;}
   if(etat.siegeEntry){etape("Entrée à Sanktheim…");startedUp();await enterSiege();return;}
   if ((etat.map ?? "anterose") !== "anterose") { home.show(false); loading.show(etat.map, mapTitle(etat.map)); }
   scene ??= await createSkyScene(toile, etat.map ?? "anterose");
