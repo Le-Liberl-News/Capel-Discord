@@ -79,51 +79,28 @@ jobs:
         set -euo pipefail
         sudo apt-get install -y sshpass
 
-        # The host's name may also resolve to a private address the runner cannot reach (rsync once timed out on
-        # 172.16.x): every connection goes to its first public IPv4, its key still recorded under the name.
-        VPS_ADDR=$(getent ahostsv4 "$VPS_HOST" | awk '{print $1}' | grep -vE '^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' | head -1 || true)
-        VPS_ADDR=${VPS_ADDR:-$VPS_HOST}
-        SSH_CONTROL_PATH="$RUNNER_TEMP/capel-ssh-%C"
-        SSH_TARGET="$VPS_USER@$VPS_ADDR"
-        sshpass -p "$VPS_PASS" ssh \
-          -o StrictHostKeyChecking=no \
-          -o HostKeyAlias="$VPS_HOST" \
-          -o ServerAliveInterval=30 \
-          -o ServerAliveCountMax=10 \
-          -o ControlMaster=yes \
-          -o ControlPersist=600 \
-          -o ControlPath="$SSH_CONTROL_PATH" \
-          -p "$VPS_PORT" -Nf "$SSH_TARGET"
-        cleanup_ssh() {
-          ssh -o ControlPath="$SSH_CONTROL_PATH" -p "$VPS_PORT" \
-            -O exit "$SSH_TARGET" >/dev/null 2>&1 || true
-        }
-        trap cleanup_ssh EXIT
-        
-        echo "🚀 Début du transfert des fichiers..."
-        sshpass -d 3 rsync -avz \
-          --exclude='.git/' \
-          --exclude='.github/' \
-          --exclude='.env' \
-          --exclude='credentials.json' \
-          --exclude='node_modules/' \
-          --exclude='uploads/' \
-          --exclude='activity/assets/sky/liberl/' \
-          -e "ssh -o StrictHostKeyChecking=yes -o HostKeyAlias=$VPS_HOST -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
-          ./ "$SSH_TARGET:$TARGET_DIR/" 3<<<"$VPS_PASS"
-        
-        echo "🔄 Redémarrage du bot avec le moteur Orbal..."
-        sshpass -d 3 ssh \
-          -o StrictHostKeyChecking=yes \
-          -o HostKeyAlias="$VPS_HOST" \
-          -o ControlMaster=no \
-          -o ControlPath="$SSH_CONTROL_PATH" \
-          -p "$VPS_PORT" "$SSH_TARGET" 3<<<"$VPS_PASS" << 'EOF'
+        # One connection only: since 26 October the host lets a runner's first SSH connection through but times
+        # out the next ones (the shared master, then rsync, failed three deploys in a row). The host fetches this
+        # very commit from GitHub itself (the repository is public), lays it over the bot's folder as rsync did
+        # (nothing outside the repository is touched: .env, credentials.json, uploads, node_modules), then
+        # restarts the bot. A connection refused or timed out is tried again, a minute later, three times.
+        echo "🚀 Déploiement de $GITHUB_SHA..."
+        for attempt in 1 2 3; do
+          status=0
+          sshpass -d 3 ssh \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=10 \
+            -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" "bash -s -- '$GITHUB_REPOSITORY' '$GITHUB_SHA' '$TARGET_DIR'" 3<<<"$VPS_PASS" << 'EOF' || status=$?
           set -euo pipefail
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-          cd /home/twnkek290001/LN-Bot
+          mkdir -p "$3" && cd "$3"
+          echo "📦 Récupération du code..."
+          { curl -fsSL --retry 3 "https://codeload.github.com/$1/tar.gz/$2" 2>/dev/null || wget -qO- "https://codeload.github.com/$1/tar.gz/$2"; } | tar xz --strip-components=1 \
+            --exclude='*/.github' --exclude='*/activity/assets/sky/liberl'
           # Independent, bounded /proc recorder survives LN-Bot restarts and Discord/SQL outages.
           if pm2 describe LN-Watch >/dev/null 2>&1; then
             pm2 restart LN-Watch
@@ -136,6 +113,7 @@ jobs:
           # production host: running a second Chromium there can starve the bot.
           node tools/prune-retired-files.cjs
           node tools/sync-application-commands.cjs
+          echo "🔄 Redémarrage du bot avec le moteur Orbal..."
           if pm2 describe LN-Bot >/dev/null 2>&1; then
             pm2 reload LN-Bot --update-env
           else
@@ -145,5 +123,11 @@ jobs:
           node -e 'const {execFileSync}=require("node:child_process");const apps=JSON.parse(execFileSync("pm2",["jlist"],{encoding:"utf8"}));if(!apps.some(p=>p.name==="LN-Bot"&&p.pm2_env.status==="online"))process.exit(1);'
           node -e '(async()=>{let stable=0;for(let i=0;i<60;i++){try{const r=await fetch("http://127.0.0.1:3000/api/siege/status",{signal:AbortSignal.timeout(3000)}),s=await r.json();if(r.ok&&s.ready===true&&Math.abs(Date.now()-s.serverTime)<10000){if(++stable>=3){console.log("Bot HTTP and persistent siege are healthy.");return;}}else stable=0;}catch{stable=0;}await new Promise(r=>setTimeout(r,2000));}throw Error("Bot failed to become healthy after restart");})().catch(e=>{console.error(e.message);process.exit(1);});'
         EOF
-        
+          # 255: ssh itself failed (no connection); any other failure is the deployment's own
+          if [ "$status" -eq 0 ]; then break; fi
+          if [ "$status" -ne 255 ] || [ "$attempt" -eq 3 ]; then exit "$status"; fi
+          echo "Connexion SSH impossible (tentative $attempt), nouvel essai dans une minute..."
+          sleep 60
+        done
+
         echo "✅ Déploiement terminé avec succès !"
