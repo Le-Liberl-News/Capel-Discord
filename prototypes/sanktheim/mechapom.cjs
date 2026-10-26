@@ -23,7 +23,10 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
  state.mechapomArmedAt??=state.at;
  // when it reaches the gate (kept in the state: a test, or an administrator, can bring it forward)
  const arrival=()=>state.mechapomArrival??=civil(ARRIVAL_DATE,ARRIVAL_HOUR);
- const progress=f=>Math.max(0,Math.min(1,(state.at-f.appearedAt)/Math.max(1,arrival()-f.appearedAt)));
+ // how far along its route: steadily from where it appeared, or, once retimed, steadily from where it stood then
+ const progress=f=>{const a=state.mechapomAnchor;if(a)return Math.max(0,Math.min(1,a.k+(1-a.k)*(state.at-a.at)/Math.max(1,arrival()-a.at)));return Math.max(0,Math.min(1,(state.at-f.appearedAt)/Math.max(1,arrival()-f.appearedAt)));};
+ // a new arrival time, without a jump: it goes on from where it stands, at the pace that brings it there in time
+ function retime(at){const f=state.mechapom;state.mechapomAnchor=f?{at:state.at,k:progress(f)}:null;state.mechapomArrival=at;}
  // the terrain under it (its route is the road: the floor just above it, never a treetop)
  const ground=(x,z)=>{const y=geometry()?.floor?.(x,z,6);return Number.isFinite(y)&&y>-6&&y<6?y:0;};
  function appear(){
@@ -77,7 +80,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
   }
   // at the walls: it tears them down
   if(k>=1){
-   if(!f.arrived){f.arrived=true;emit('mechapom-assault','La forteresse Mechapom atteint les remparts et les écrase sous ses pattes !',{position:{x:f.x,y:f.y,z:f.z}});}
+   if(!f.arrived){f.arrived=true;f.arrivedAt=t;emit('mechapom-assault','La forteresse Mechapom atteint les remparts et les écrase sous ses pattes !',{position:{x:f.x,y:f.y,z:f.z}});}
    for(const wall of state.walls)if(wall.hp>0)damageWall(wall,wall.maxHP*ASSAULT_RATE*dt,{from:f.id,position:{x:f.x+9,y:6,z:wall.z},kind:'mechapom'});
   }
  }
@@ -90,7 +93,7 @@ function createMechapom({state,hash,emit,geometry,damageWall,hurt,speech,civil,d
  }
  // the wave is over: it takes off
  function takeOff(){const f=state.mechapom;if(f?.grounded){f.grounded=false;f.since=state.at;f.missiles=[];}}
- return {update,onSpawn,takeOff};
+ return {update,onSpawn,takeOff,retime};
 }
 // enemies with a life of their own, out of the poms' common AI: the tank, the fortress, the pom knight (knight.cjs),
 // the wild pomgarous (wildlife.cjs)
