@@ -56,3 +56,12 @@ python3 -m unittest discover -s tools/diagnostics -p 'test_*.py'
 Le site vérifie séparément l'authentification, la lecture sans DB et la révocation de clé avec `python3 tests/test_diagnostics_http.py`.
 
 La commande `node tools/check-adventure-media.cjs` mesure quatre distributions complètes dans un processus de test séparé et enregistre le pic RSS dans `.runtime/adventure-media-memory.json`. Elle est également exécutée en CI. À lancer hors du processus du bot ; les autres animations de pomification restent désactivées.
+
+## Sanktheim media memory regression
+
+`node tools/check-sanktheim-media.cjs` measures a wall screenshot with eight guards and two defenders in a
+separate process. It rejects a peak increase above 128 MiB or retained increase above 96 MiB. This is a regression
+threshold, not a guarantee against a global OOM. Production also checks system headroom before rendering.
+Character sheets are decoded once per render, invisible actors are skipped, and the media worker is terminated
+after its final queued job so that decoded textures do not remain in the bot. All production siege stills and
+overviews use the shared media gate. A memory refusal preserves the announcement text.

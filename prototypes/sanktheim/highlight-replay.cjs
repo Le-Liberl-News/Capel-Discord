@@ -4,16 +4,20 @@ const catalogue=require('../../activity/assets/sky/characters.json'),variants=re
 const W=448,H=280,S=2/3;
 function project(p,m){return {x:(m[0]*p.x+m[4]*p.y+m[8]*p.z+m[12]+1)*W/2,y:(1-m[1]*p.x-m[5]*p.y-m[9]*p.z-m[13])*H/2,z:-(m[2]*p.x+m[6]*p.y+m[10]*p.z+m[14])};}
 async function renderReplay(event){
+ const budget=event.limits?require('../../utils/mediaRender').createBudget(event.limits):null;budget?.check();
  const {createCanvas,loadImage}=require('@napi-rs/canvas'),{GIFEncoder,quantize,applyPalette}=require('gifenc');
  const stem=path.join(root,event.wall+'-'+event.healthPercent),meta=JSON.parse(fs.readFileSync(stem+'.json')),depth=zlib.gunzipSync(fs.readFileSync(stem+'.depth')),atlas=await loadImage(stem+'.webp');
  const transform=p=>{const q=project(p,meta.matrix);q.z=-(meta.view[2]*p.x+meta.view[6]*p.y+meta.view[10]*p.z+meta.view[14]);return q;};
- const actors=[];
+ const actors=[],sheets=new Map();
+ async function sheet(file){if(!sheets.has(file)){budget?.check();sheets.set(file,await loadImage(file));budget?.check();}return sheets.get(file);}
  for(const a of event.replay.actors){
   let info,file;
   if(a.pom){const v=variants.variant(a);file=path.join(assets,'chat/pom',a.character.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/^schera$/,'scherazard')+'-'+v+'.png');info={height:variants.height(v),frameWidth:256,frameHeight:256,columns:1,rows:1,directions:1,idle:[0],run:[0]};}
   else if(a.soldier){file=path.join(__dirname,'assets/guards/0.png');info={height:5.12,centerY:1.04,frameWidth:256,frameHeight:256,columns:8,rows:8,directions:8,idle:[0,1,2,3,4,5,6,7],run:[0,1,2,3,4,5,6,7]};}
   else {info=catalogue[a.character];if(!info)continue;file=path.join(assets,info.texture);}
-  try{actors.push({a,info,sheet:await loadImage(file),screen:transform(a)});}catch(error){if(error.code!=='ENOENT'&&!/No such file|Failed to read/.test(error.message))throw error;}
+  const screen=transform(a),height=info.height/S*meta.pixelsPerUnit,width=height*info.frameWidth/info.frameHeight,center=(info.centerY??info.height/2)/S*meta.pixelsPerUnit;
+  if(screen.x+width/2<0||screen.x-width/2>W||screen.y-center+height/2<36||screen.y-center-height/2>244)continue;
+  try{actors.push({a,info,sheet:await sheet(file),screen});}catch(error){if(error.code!=='ENOENT'&&!/No such file|Failed to read/.test(error.message))throw error;}
  }
  const hit=event.replay.hit,impact=transform(hit.position),effect=await loadImage(path.join(assets,'effects',hit.kind==='shell'?'sc-msc0640-frames.png':'third-sc001_12-frames.png'));
  const defs=require('../../activity/assets/sky/effects/hero-frames.json'),effectInfo=defs[hit.kind==='shell'?'sc/msc0640._ef':'third/sc001_12._ef'];
@@ -32,7 +36,7 @@ async function renderReplay(event){
 
  const count=atlas.height/H;
  for(let f=event.still?Math.min(8,count-1):0;f<count;f++){
-  c.drawImage(atlas,0,f*H,W,H,0,0,W,H);const offset=f<3?0:W*H*2;
+  budget?.check(gif.bytesView().length);c.drawImage(atlas,0,f*H,W,H,0,0,W,H);const offset=f<3?0:W*H*2;
   for(const {a,info,sheet,screen}of [...actors].sort((a,b)=>b.screen.z-a.screen.z)){
    const direction=(info.directions??8)===1?0:((Math.round((Math.atan2(a.heading?.dx??1,a.heading?.dz??0)-Math.atan2(meta.view[0],meta.view[8]))/(Math.PI/4))+8)%8);
    const poses=a.moving?info.run:info.idle,pose=poses[Math.floor(f*.72)%poses.length],frame=pose*(info.directions??8)+direction;

@@ -13,3 +13,5 @@ test('small impacts do not tear distant facade triangles and the real battle con
  const event={type:'threshold',wall:'gate',healthPercent:95,replay:{actors:[{id:'player-1',character:'Julia',x:-39,y:0,z:-1}],hit:{from:'pom-1',kind:'melee',position:{x:-33.52,y:1.4,z:0}}}};
  let ticks=0;const timer=setInterval(()=>ticks++,5);try{const r=await renderHighlight(event);assert.equal(r.attachment.toString('ascii',0,6),'GIF89a');assert.ok(ticks>2);assert.notDeepEqual(r.attachment,fs.readFileSync(path.join(__dirname,'assets/highlights/gate-95.gif')));}finally{clearInterval(timer);}
 });
+
+test('a worker reports a memory-budget rejection without poisoning subsequent renders',async()=>{const event={type:'threshold',wall:'gate',healthPercent:95,replay:{actors:[],hit:{kind:'melee',position:{x:-33,y:1,z:0}}}};await assert.rejects(renderHighlight({...event,limits:{minHeadroom:0,maxGrowth:-1}}),{code:'MEDIA_BUDGET'});const next=await renderHighlight({...event,still:true});assert.equal(next.attachment.subarray(1,4).toString(),'PNG');});
