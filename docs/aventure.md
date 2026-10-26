@@ -77,3 +77,12 @@ chaque joueur.
 Première version tirée du plan et de `descriptions.txt` : les sorties sont déduites du plan, l'escalier, la cave,
 les cellules et la tour sont reliés au mieux, et l'énigme de la clé (bureau → porte de la cour) n'est qu'un exemple
 du format, à remplacer par le JSON des énigmes.
+
+## Suivi du plan sur la plateforme
+
+Le fil Discord garde ses 120 lignes recentes et leurs medias. Les commandes et reponses par salle sont archivees
+separement dans `typed.history`, transmis et sauvegarde par la synchronisation existante. Cette archive ne contient
+pas de medias ; elle est bornee a 4 000 lignes et 512 Kio par joueur, avec reponses abregees a 8 000 caracteres.
+Une purge ou la reprise d une ancienne partie marque l archive incomplete. La plateforme ne doit jamais deduire
+qu une salle vide n a pas ete jouee. `/reset` ouvre une archive vide pour la nouvelle tentative.
+Les echanges deja purges avant cette archive ne peuvent pas etre reconstruits depuis les compteurs globaux.

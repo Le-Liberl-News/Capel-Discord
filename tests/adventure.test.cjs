@@ -260,7 +260,7 @@ test('a game begun before the count was kept starts from its log, marked partial
  const {client}=fakeDiscord();
  const saved={players:{a:{room:'1'}},reached:[],done:false,logs:{a:[{kind:'command',text:'Nord'},{kind:'reply',text:'…'},{kind:'command',text:'nord'}]}};
  const adv=createAdventureDiscord({client,data,store:{load:()=>saved,save:()=>{}},channelId:'c'});
- assert.deepEqual(adv.snapshot()[0].typed,{count:2,commands:{nord:2},partial:true});
+ const typed=adv.snapshot()[0].typed;assert.equal(typed.count,2);assert.deepEqual(typed.commands,{nord:2});assert.equal(typed.partial,true);assert.equal(typed.history.partial,true);
 });
 test('a long text is cut at a paragraph, else a sentence, never in the middle of one when it can be helped; each message is one whole line of the log',async()=>{
  const paragraph='Une phrase assez longue pour remplir le message. '.repeat(30).trim();   // about 1470 characters
@@ -275,3 +275,6 @@ test('a long text is cut at a paragraph, else a sentence, never in the middle of
  const told=adv.snapshot()[0].log.filter(line=>line.kind==='reply').slice(-2).map(line=>line.text);
  assert.deepEqual(told,[paragraph,paragraph+' Fin.']);
 });
+
+test('room actions survive beyond the recent feed and survive restarting the bot',async()=>{const {client,user}=fakeDiscord();let saved;const store={load:()=>saved,save:s=>{saved=structuredClone(s);}},adv=createAdventureDiscord({client,data,store,channelId:'c'});await adv.handle(button(user('history')).i);adv.message(dm(user('history'),'regarder la porte'));adv.message(dm(user('history'),'nord'));for(let i=0;i<80;i++)adv.message(dm(user('history'),'inventaire'));for(let i=0;i<600;i++)await tick();const game=adv.snapshot()[0];assert.ok(!game.log.some(l=>l.text==='regarder la porte'));const lines=game.typed.history.lines;assert.equal(game.typed.history.partial,false);const command=lines.findIndex(l=>l.kind==='command'&&l.text==='regarder la porte');assert.equal(lines[command].room,'1');assert.match(lines[command+1].text,/chati/);const north=lines.findIndex(l=>l.kind==='command'&&l.text==='nord');assert.equal(lines[north].room,'1');assert.equal(lines[north+1].room,'2');const restored=createAdventureDiscord({client,data,store,channelId:'c'});assert.deepEqual(restored.snapshot()[0].typed.history,game.typed.history);});
+test('room history has a bounded memory budget and never embeds animation payloads',()=>{const h=require('../utils/adventure/roomHistory'),history=h.create();for(let i=0;i<5000;i++){h.append(history,{kind:'command',room:'1',text:'ouvrir '+i,media:[{data:'secret'}]});h.append(history,{kind:'reply',room:'1',text:'x'.repeat(20000)});}assert.ok(history.lines.length<=h.MAX_LINES);assert.ok(history.bytes<=h.MAX_BYTES);assert.equal(history.partial,true);assert.equal(history.lines[0].kind,'command');assert.ok(!JSON.stringify(history).includes('secret'));});

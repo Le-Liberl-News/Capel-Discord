@@ -12,6 +12,7 @@
 const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('discord.js');
 const path=require('node:path'),fs=require('node:fs'),crypto=require('node:crypto');
 const {createAdventure}=require('./engine');
+const roomHistory=require('./roomHistory');
 const {renderAnimation}=require('./animations');
 const FILES=path.join(__dirname,'../../rpg/data/aventure');
 const BUTTON='aventure:jouer',LIMIT=1900;
@@ -48,6 +49,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // start from what their log still had (partial: the number is a minimum).
  state.typed??={};
  for(const id of Object.keys(state.players))if(!state.typed[id]){const typed=state.typed[id]={count:0,commands:{},partial:true};for(const line of state.logs[id]??[])if(line.kind==='command')count(typed,line.text);}
+ for(const id of Object.keys(state.players))state.typed[id].history??=roomHistory.create(state.logs[id]??[],true);
  let version=0;   // bumped on every change, so the platform only gets the games when they moved
  const listeners=new Set();   // told of every change (the platform's sync sends it at once)
  const save=()=>{version++;store.save(state);for(const listener of listeners)listener();};
@@ -56,10 +58,11 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  const pendingMedia=require('../mediaRender').createMediaCache({sizeOf:item=>item.data.length});
  const LOG_SIZE=120,LOG_TEXT=20000;   // a reply is kept whole (a long one was cut at 4000 characters)
  // one line of a player's game: a command, the bot's reply, a hint
- function note(id,kind,text,media=[]){
+ function note(id,kind,text,media=[],room=state.players[id]?.room){
   if(!text&&!media.length)return;
   const lines=state.logs[id]??=[];
-  lines.push({at:Date.now(),kind,text:String(text||'').slice(0,LOG_TEXT),room:state.players[id]?.room,...(media.length?{media}:{})});
+  const line={at:Date.now(),kind,text:String(text||'').slice(0,LOG_TEXT),room,...(media.length?{media}:{})};lines.push(line);
+  const typed=state.typed[id]??={count:0,commands:{}};typed.history??=roomHistory.create([],false);roomHistory.append(typed.history,line);
   if(lines.length>LOG_SIZE)lines.splice(0,lines.length-LOG_SIZE);
  }
  const replyText=result=>result.replies.filter(Boolean).join('\n\n');
@@ -85,7 +88,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
     }
    }catch(e){log('Aventure, animation :',result.animation.name,e.message);}
   }
-  if(id){note(id,'reply',replyText(result),media);save();}
+  if(id){note(id,'reply',replyText(result),media,player.room);save();}
   for(let i=0;i<parts.length;i++)await channel.send({content:parts[i],...(i===parts.length-1&&attached.length?{files:attached}:{}),allowedMentions:{parse:[]}});
   if(!parts.length&&attached.length)await channel.send({files:attached});
  }
@@ -179,6 +182,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    note(id,'command',msg.content.trim());count(state.typed[id]??={count:0,commands:{}},msg.content);
    // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
    if(msg.content.trim().toLowerCase()==='/reset'){
+    state.typed[id].history=roomHistory.create([],false);
     const player=game.fresh(),start=game.start(player);
     const restart={...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]};
     state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);
