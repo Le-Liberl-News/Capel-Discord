@@ -79,10 +79,15 @@ jobs:
         set -euo pipefail
         sudo apt-get install -y sshpass
 
+        # The host's name may also resolve to a private address the runner cannot reach (rsync once timed out on
+        # 172.16.x): every connection goes to its first public IPv4, its key still recorded under the name.
+        VPS_ADDR=$(getent ahostsv4 "$VPS_HOST" | awk '{print $1}' | grep -vE '^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' | head -1 || true)
+        VPS_ADDR=${VPS_ADDR:-$VPS_HOST}
         SSH_CONTROL_PATH="$RUNNER_TEMP/capel-ssh-%C"
-        SSH_TARGET="$VPS_USER@$VPS_HOST"
+        SSH_TARGET="$VPS_USER@$VPS_ADDR"
         sshpass -p "$VPS_PASS" ssh \
           -o StrictHostKeyChecking=no \
+          -o HostKeyAlias="$VPS_HOST" \
           -o ServerAliveInterval=30 \
           -o ServerAliveCountMax=10 \
           -o ControlMaster=yes \
@@ -104,15 +109,16 @@ jobs:
           --exclude='node_modules/' \
           --exclude='uploads/' \
           --exclude='activity/assets/sky/liberl/' \
-          -e "ssh -o StrictHostKeyChecking=yes -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
+          -e "ssh -o StrictHostKeyChecking=yes -o HostKeyAlias=$VPS_HOST -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
           ./ "$SSH_TARGET:$TARGET_DIR/" 3<<<"$VPS_PASS"
         
         echo "🔄 Redémarrage du bot avec le moteur Orbal..."
         sshpass -d 3 ssh \
           -o StrictHostKeyChecking=yes \
+          -o HostKeyAlias="$VPS_HOST" \
           -o ControlMaster=no \
           -o ControlPath="$SSH_CONTROL_PATH" \
-          -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 3<<<"$VPS_PASS" << 'EOF'
+          -p "$VPS_PORT" "$SSH_TARGET" 3<<<"$VPS_PASS" << 'EOF'
           set -euo pipefail
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
