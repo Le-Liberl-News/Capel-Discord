@@ -19,7 +19,7 @@ const {SCALE}=require('./world-space.cjs'),{ROUTE}=require('./mechapom.cjs'),{fl
 const SHOTS=[0,8,14.5,20,23.5,32,37.5,42,48.5,52.5,62],DURATION=SHOTS.at(-1);
 const GATE_X=-33.5,WALL_Y=11.75,BODY={x:-37.5,y:0,z:.8},OFFICER={x:-30.7,y:WALL_Y,z:-.4};
 const LINES=[
- {who:'officer',at:32.4,text:'Balancez tout ce que vous avez ! On va quand même pas perdre contre ces minus !'},
+ {who:'officer',at:32.4,text:'Balancez tout ce que vous avez ! On va quand même pas perdre contre ces nabots !'},
  {who:'soldier',at:37.7,text:'Chef, on a plus rien ! C’est fini !'},
  {who:'mvp',at:42.6,text:'J’ai… *halète*… tout donné… Il va falloir s’en remettre à Aidios.'}];
 const FALL=47.6;   // the MVP falls
@@ -49,6 +49,18 @@ function streamPom(i,t,c){
 // shot 3: the horde on the road
 function roadPom(i,t,c){const start=SHOTS[2]-.3+i*.38+rand(i+200)*.3,speed=6+rand(i+210)*2.5,x0=-98-rand(i+220)*3;if(t<start)return pom('pom-finale-road-'+i,c,i,under(x0,.4));if(t>=SHOTS[3])return pom('pom-finale-road-'+i,c,i,away(i+60));const x=x0+(t-start)*speed;return pom('pom-finale-road-'+i,c,i,{x,y:Math.abs(Math.sin((t-start)*3.6+i))*.9,z:.4+(rand(i+230)-.5)*4});}   // the paved road runs straight here (z 0), off the route's line
 // shot 4: poms on their vacuums, flying past
+// the fortress's aim: a point sweeping a cone before it, which its headlights follow and its flamethrowers burn (the
+// client aims them at the nearest defender: an unseen one, there)
+const BURN=.6;
+function aim(s){const x=fortressX(s),a=Math.sin(s*1.1)*.75+Math.sin(s*2.9)*.2,d=13+Math.sin(s*1.7)*5;return {x:x+Math.cos(a)*d,z:road(x)+Math.sin(a)*d};}
+// shot 4, below the vacuums: the foot poms on the road, hopping, the Pompoms rolling (the sprite turned about its
+// middle: the camera's right is +x there), the Pomdeters bounding
+const FOOT=[[1,0],[2,1],[3,2],[1,3],[2,4],[3,5],[2,6],[1,7],[3,8]],ROLL=.55;
+function footPom(i,t,c){const [stage,k]=FOOT[i],id='pom-finale-foot-'+i,start=SHOTS[3]-.6+k*.36+rand(i+300)*.2,speed=stage===2?8.5:stage===3?5.5:6.5,x0=-97-rand(i+310)*2,z=.4+(rand(i+320)-.5)*2.6;
+ if(t<start)return pom(id,c,stage-1,under(x0,z),{stage});if(t>=SHOTS[4])return pom(id,c,stage-1,away(i+120),{stage});
+ const run=(t-start)*speed,x=x0+run;
+ if(stage===2){const spin=-run/ROLL;return pom(id,c,1,{x:x+Math.sin(spin)*ROLL,y:ROLL-Math.cos(spin)*ROLL,z,spin},{stage});}
+ const hop=stage===3?Math.abs(Math.sin((t-start)*2.6+i))*1.5:Math.abs(Math.sin((t-start)*4+i))*.8;return pom(id,c,stage-1,{x,y:hop,z},{stage});}
 function aspiPom(i,t,c){const start=SHOTS[3]+.2+i*.7,x=-100+(t-start)*22;if(t<start)return pom('pom-finale-aspi-'+i,c,i,under(-100,0),{kind:'daspi',flying:true});if(t>=SHOTS[4])return pom('pom-finale-aspi-'+i,c,i,away(i+90),{kind:'daspi',flying:true});return pom('pom-finale-aspi-'+i,c,i,{x,y:3.2+i%2*1.4+Math.sin(t*5+i)*.2,z:-1.5+i%3*1.6},{kind:'daspi',flying:true});}
 // the cast: the officer and a soldier on the gate's wall, two guards fleeing, the guard with the grenade, the fighters
 // of the melee, the MVP and the other defenders of the wave
@@ -102,6 +114,7 @@ function frame(base,t,pose=null,{transient=true}={}){
   for(let i=0;i<44;i++)state.enemies.push(streamPom(i,t,ch(i+5)));
   for(let i=0;i<14;i++)state.enemies.push(roadPom(i,t,ch(i+3)));
   for(let i=0;i<4;i++)state.enemies.push(aspiPom(i,t,ch(i+9)));
+  for(let i=0;i<FOOT.length;i++)state.enemies.push(footPom(i,t,ch(i+13)));
  }
  // the trees in its way
  for(const [id,s,angle] of TREES){const tree=state.forestry?.trees?.find(x=>x.id===id);if(tree&&t>=s)Object.assign(tree,{cutAt:ms(s),fallAngle:angle,stage:0});}
@@ -111,7 +124,9 @@ function frame(base,t,pose=null,{transient=true}={}){
  const place=(id,p,face,list=state.soldiers)=>{const g=list.find(x=>x.id===id);if(g)Object.assign(g,{y:0,...p,...exact,hp:Math.max(1,g.hp),transit:null,climb:null,sleeping:false,moving:!!p.moving,heading:face});};
  for(const [i,g] of state.soldiers.entries())Object.assign(g,{x:-14-i*1.5,y:0,z:14+i,transit:null,climb:null,...exact});
  // the flames turn to the nearest defender: a decoy under the fortress keeps them off the people in the shots
- state.soldiers.push({...state.soldiers[0],id:'soldier-finale-decoy',name:'',x:fx,y:-40,z:fz,hp:1});
+ state.soldiers.push({...state.soldiers[0],id:'soldier-finale-decoy',name:'',...aim(t),y:-2.5,hp:1,hidden:true,...exact});
+ // where its flames fell, these last seconds, burn on (not near the body, in the last shots)
+ if(t<SHOTS[9])for(let k=0;k<12;k++){const s=Math.floor(t/BURN)*BURN-k*BURN;if(s>0)state.fires.push({id:'finale-burn-'+Math.round(s*10),...aim(s),y:-.55,radius:1.5,at:ms(s)});}
  if(cast.officer)place(cast.officer.id,OFFICER,{dx:-1,dz:0});   // in the gap of a crenel
  if(cast.soldier)place(cast.soldier.id,{x:-29.4,y:WALL_Y,z:-4.4},{dx:-.4,dz:.9});
  // shot 2: the two guards fleeing (already running when it starts), a missile after them
