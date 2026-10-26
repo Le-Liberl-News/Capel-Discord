@@ -13,6 +13,7 @@ $routes = [
     'siege/arena' => '/api/siege/arena',
     'siege/admin-stop' => '/api/siege/admin-stop',
     'siege/timings' => '/api/siege/timings',
+    'siege/finale' => '/api/siege/finale',
 
     'state' => '/api/state',
     'profile' => '/api/profile',
@@ -42,6 +43,7 @@ if ($authorization === '' && function_exists('getallheaders')) {
 $corps = file_get_contents('php://input');
 // Training configuration is a distinct authenticated GET on the terminal route.
 $query = ($route === 'terminal' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && ($_GET['training'] ?? '') === '1') ? '?training=1' : '';
+if ($route === 'siege/finale' && isset($_GET['i'])) $query = '?i=' . intval($_GET['i']);
 if ($route === 'siege/navigation') $query = '?layer=' . (($_GET['layer'] ?? '') === 'roof' ? 'roof' : 'ground');
 $requete = curl_init('http://127.0.0.1:3000' . $routes[$route] . $query);
 curl_setopt_array($requete, [

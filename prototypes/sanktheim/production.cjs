@@ -22,7 +22,8 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
  const thresholdReplay=event=>event.type==='threshold'&&event.replay?.hit?require('../../utils/mediaRender').render(()=>require('./highlights.cjs').renderHighlight(event),{fallback:()=>require('./highlights.cjs').renderHighlight({...event,still:true}),limits:{maxGrowth:96*1048576,maxDuration:20000,maxBytes:4*1048576}}):null;
  const history=sceneMediaEnabled?require('./scene-history.cjs').createSceneHistory({siege,arena,now}):null;
  const warmSpectator=sceneMediaEnabled?require('./spectator-warmup.cjs').createSpectatorWarmup({siege,render:event=>require('./highlights.cjs').renderHighlight(event),log:console.error}):()=>{};
- const recordScene=()=>{if(history)warmSpectator(history.record());};
+ const finale=require('./finale-archive.cjs').createFinaleArchive({siege,dir:path.join(runtime,'finale')});
+ const recordScene=()=>{if(history)warmSpectator(history.record());finale.record();};
  const announce=require('./discord.cjs').createAnnouncements({client,channelId,siege,store:store('deliveries'),baseUrl,assignedCharacters,infectedCharacters:()=>rhumertume.infected(),renderHighlight:async event=>{if(event.type==='wave-start')return require('./wave-intro.cjs').renderWaveIntro(event);if(!history)return (await thresholdReplay(event))??require('./highlights.cjs').renderHighlight({...event,still:true});const clip=await history.clip(event);return clip?require('./highlights.cjs').renderHighlight({type:'scene-replay',clip}):null;}});
  const entries=store('entries');const pending=new Map(entries.load()??[]);const saveEntries=()=>entries.save([...pending]);let ready=false;
  const wantsEntry=id=>{const until=pending.get(id)??0;if(until>now())return true;if(pending.delete(id))saveEntries();return false;};
@@ -40,6 +41,8 @@ function createProductionSiege({app,client,lobby,access,bearer,rhumertume,resolv
     turrets:st.turrets.filter(t=>t.hp>0).map(t=>({type:t.type,x:r(t.x),y:r(t.y),z:r(t.z),lastShot:t.nextAttack?st.at-t.nextAttack:null})),
     online:Object.values(st.players).filter(p=>p.online).length}:null;
   res.json({ready,wave,field,nextWave:view?.nextWave??null,started:siege._state.started,stopped:!!siege._state.stoppedAt,serverTime:siege._state.at,version:'sanktheim-2',pendingAnnouncements:siege.outbox().length,joinTimings});});
+ // the finale's moments, for its cinematic: the list, or one by its place (?i=)
+ app.get('/api/siege/finale',(req,res)=>{res.set('Cache-Control','no-store');const i=req.query.i===undefined?-1:Number(req.query.i);const moment=finale.read(i);if(!moment)return res.status(404).json({error:'Moment inconnu.'});res.json(moment);});
  app.use('/api/siege',async(req,res)=>{
   try{
    const user=identity(req);await access.assertMember(user.userId);
