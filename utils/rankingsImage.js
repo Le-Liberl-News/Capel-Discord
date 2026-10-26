@@ -1,9 +1,9 @@
 const path=require('node:path');
 const {createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas');
 const {encodeLoop}=require('./loopingGif');
-// Cinzel: the font of the activity's place titles
-GlobalFonts.registerFromPath(path.join(__dirname,'../activity/assets/sky/fonts/Cinzel.ttf'),'RankCinzel');
-const AXIS=path.join(__dirname,'../activity/assets/sky/axis');
+// Cinzel (the font of the retired activity's place titles) and the Axis Pillar's textures, kept in resources/rankings
+GlobalFonts.registerFromPath(path.join(__dirname,'../resources/rankings/Cinzel.ttf'),'RankCinzel');
+const AXIS=path.join(__dirname,'../resources/rankings');
 const W=1024,TOP=200,ROW=56,DELAY=80,GOLD='#f3c45a',EMBER='#ff8a2a';
 const FONT=(size,weight='')=>`${weight} ${size}px RankCinzel`.trim();
 
@@ -35,8 +35,8 @@ function drawBoard(c,rows,avatars,height,{circle,frieze}){
  const title=c.createLinearGradient(0,92,0,138);title.addColorStop(0,'#fff1c4');title.addColorStop(.55,GOLD);title.addColorStop(1,'#b8701e');
  c.shadowColor=EMBER;c.shadowBlur=18;c.fillStyle=title;c.font=FONT(50,'bold');c.fillText('CLASSEMENT',W/2,114);c.shadowBlur=0;
  rule(166,.8);
- const col={bar:24,rank:50,change:70,avatar:122,name:152,klass:392,pb:610,trads:798,arena:944};
- c.fillStyle='#d9b26a';c.font=FONT(16,'bold');c.fillText('RG',col.rank,186);c.textAlign='left';c.fillText('BRACER',col.name,186);c.fillText('CLASSE',col.klass,186);c.textAlign='center';c.fillText('PB',col.pb,186);c.fillText('TRADS',col.trads,186);c.fillText('VICT. ARÈNE',col.arena,186);
+ const col={bar:24,rank:50,change:70,avatar:122,name:152,klass:392,pb:640,trads:880};
+ c.fillStyle='#d9b26a';c.font=FONT(16,'bold');c.fillText('RG',col.rank,186);c.textAlign='left';c.fillText('BRACER',col.name,186);c.fillText('CLASSE',col.klass,186);c.textAlign='center';c.fillText('PB',col.pb,186);c.fillText('TRADS',col.trads,186);
  const medals=['#ffd66b','#dfe6ee','#e0965a'];
  // a number, then in small green what the previous day added
  const withGain=(value,gain,x,y,size,colour)=>{const extra=gain?` (+${thousands(gain)})`:'';c.font=FONT(size,'bold');const w=c.measureText(value).width;c.font=FONT(Math.round(size*.68),'bold');const g=extra?c.measureText(extra).width:0;
@@ -65,7 +65,6 @@ function drawBoard(c,rows,avatars,height,{circle,frieze}){
   const progress=row.seuilSuivant==='MAX'?1:Math.max(0,Math.min(1,(row.pb-(row.seuil??0))/((row.seuilSuivant-(row.seuil??0))||1)));
   c.fillStyle='rgba(0,0,0,.55)';c.fillRect(col.pb-85,mid+12,170,5);c.fillStyle=colour;c.shadowColor=colour;c.shadowBlur=6;c.fillRect(col.pb-85,mid+12,170*progress,5);c.shadowBlur=0;
   withGain(String(row.trads??0),row.tradsGain,col.trads,mid+1,24,'#fff3dc');
-  withGain(String(row.arenaWins??0),row.arenaGain,col.arena,mid+1,24,'#fff3dc');
  });
  if(!rows.length){c.font=FONT(24);c.fillStyle='#d9b26a';c.fillText('Aucun bracer classé.',W/2,TOP+40);}
  rule(TOP+Math.max(rows.length,1)*ROW+6,.6);
@@ -78,7 +77,7 @@ function drawFrame(c,f,rows){
  c.globalCompositeOperation='lighter';c.fillStyle=g;c.fillRect(Math.max(14,x-90),TOP+4,Math.min(W-14,x+90)-Math.max(14,x-90),ROW-8);
 }
 // rows: {pseudo, avatar (an image, a buffer or null), pb, seuil, seuilSuivant (a number or 'MAX'), nomRang, trads, couleurHex,
-// pbGain and tradsGain (what the day before brought), placeChange (places won, negative when lost), arenaWins and arenaGain}
+// pbGain and tradsGain (what the day before brought), placeChange (places won, negative when lost)}
 async function renderRankings(rows){
  const parts=await loadPieces(),height=TOP+Math.max(rows.length,1)*ROW+70;
  const avatars=await Promise.all(rows.map(r=>r.avatar?(Buffer.isBuffer(r.avatar)||typeof r.avatar==='string'?loadImage(r.avatar).catch(()=>null):r.avatar):null));

@@ -148,7 +148,7 @@ test('an action marked "alone" answers the verb alone; another one without noun 
  assert.equal(game.handle(s,'regarder la porte').replies[0],'Une porte.');
 });
 test('card dealing streams a bounded low-resolution GIF',async()=>{
- const {renderAnimation,renderStats}=require('../utils/adventure/animations'),{gifInfo}=require('../utils/activityRoleplay');
+ const {renderAnimation,renderStats}=require('../utils/adventure/animations'),{gifInfo}=require('../utils/gifInfo');
  const {createRenderGate,createBudget}=require('../utils/mediaRender'),gate=createRenderGate({budget:()=>createBudget({maxDuration:60000})});
  const gif=await renderAnimation('cartes',['20-13-1-100'],{schedule:(task,options)=>gate.run(task,options)});
  assert.ok(gif,'render should fit its memory/time budget');assert.equal(gif.name,'distribution.gif');

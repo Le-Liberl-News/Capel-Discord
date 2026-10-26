@@ -1,2 +1,0 @@
-function createSpectatorWarmup({siege,render,log=()=>{}}){let prepared=null;return frame=>{const s=siege._state,key=s.wave?.id??s.outbox.find(e=>e.type==='warning')?.wave;if(!key||key===prepared||s.stoppedAt)return;prepared=key;const clip={start:s.at,end:s.at,event:{type:'spectator-warmup',at:s.at,position:{x:-30,y:0,z:0}},frames:[frame]};Promise.resolve().then(()=>render({type:'scene-replay',clip})).catch(e=>log('Préchauffage spectateur Sanktheim : '+e.message));};}
-module.exports={createSpectatorWarmup};

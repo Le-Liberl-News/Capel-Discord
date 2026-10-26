@@ -1,4 +1,0 @@
-import * as THREE from 'three';
-// Room walls and foundations belong to the same object but are not placement surfaces.
-export function placementSurfaces(objects,roots){const meshes=[];for(const o of objects){if(!o.visible||!['floor','room'].includes(o.role))continue;const root=roots.get(o.id);if(!root?.visible)continue;root.traverseVisible(mesh=>{if(mesh.isMesh&&(o.role!=='room'||mesh.userData.roomRole==='floor'))meshes.push(mesh);});}return meshes;}
-export function placementPoint(ray,objects,roots){const meshes=placementSurfaces(objects,roots),hit=ray.intersectObjects(meshes,false).find(h=>Math.abs(h.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(h.object.matrixWorld)).y)>.5);if(hit)return hit.point.clone();return meshes.length?null:ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),0),new THREE.Vector3());}

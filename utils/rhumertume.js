@@ -52,7 +52,7 @@ function moods(text){
  return [rage-calm,madness-calm];
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
-function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],dailyCases=CASES_PER_DAY,hasCraft=character=>!!require('../activity/native-combat.cjs').combatSpec(character,'craft'),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
+function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],dailyCases=CASES_PER_DAY,hasCraft=character=>require('../resources/pom/crafted.json').includes(character),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
  const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},pending:{},...(store.load()??{})};
  state.playerCases??={};state.siegeSchedule??={};state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
  const save=()=>store.save(state);

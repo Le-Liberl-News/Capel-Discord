@@ -50,7 +50,7 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
         return cmdAnonyme.monIdentite(interaction);
     }
 
-    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal', 'generer-map', 'naviguer', 'attaque', 'action'];
+    const commandesRestreintes = ['read', 'write', 'open', 'test1', 'runtrad', 'closetrad', 'init-rank', 'testmodal'];
     if (commandesRestreintes.includes(commandName)) {
         const hasPermission = member.roles.cache.some(role => ROLES_AUTORISES.includes(role.id));
         if (!hasPermission) {
@@ -185,25 +185,4 @@ module.exports = async function handleSlashCommands(interaction, sheets) {
     });
 }
 
-    if (commandName === 'generer-map') {
-        const cmdGenMap = require('../commands/generer_layout.js');
-        return cmdGenMap.execute(interaction);
-    }
-    if (commandName === 'naviguer') {
-        const cmdNavigate = require('../commands/naviguer_map.js');
-        const traj = options.getString('trajectoire');
-        return cmdNavigate.execute(interaction, traj);
-    }
-    if (commandName === 'attaque') {
-        const cmdAttack = require('../commands/attaque.js');
-        const cible = options.getString('cible');
-        const desc = options.getString('description');
-        return cmdAttack.execute(interaction, cible, desc);
-    }
-    if (commandName === 'action') {
-        const cmdAction = require('../commands/action.js');
-        const cible = options.getString('cible');
-        const desc = options.getString('description');
-        return cmdAction.execute(interaction, cible, desc);
-    }
 };

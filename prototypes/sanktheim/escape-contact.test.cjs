@@ -1,2 +1,0 @@
-const test=require('node:test'),assert=require('node:assert/strict');
-test('an overlapping side contact behind the feet does not prevent moving away',()=>{const {move}=require('../../activity/surface-walk.cjs'),geometry={floor:()=>0,sweep(a,b){return {distance:0,point:{...a},surfacePoint:{x:a.x-.1,y:a.y,z:a.z},normal:{x:-1,y:0,z:0}};}};const q=move(geometry,{x:0,y:0,z:0},{x:.1,y:0,z:0});assert.ok(q.x>.09);});

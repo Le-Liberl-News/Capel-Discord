@@ -1,4 +1,0 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';
-import {showDamageNumber} from '../activity/damage-effects.mjs';
-test('Sanktheim only shows our outgoing damage, including multiple AOE targets',()=>{assert.equal(showDamageNumber('me','enemy',{actor:'me'},true),true);assert.equal(showDamageNumber('me','enemy-2',{actor:'me'},true),true);assert.equal(showDamageNumber('me','me',{actor:'enemy'},true),false);assert.equal(showDamageNumber('me','enemy',{actor:'ally'},true),false);assert.equal(showDamageNumber('me','enemy',{},true),false);assert.equal(showDamageNumber('me','me',{actor:'me'},true),false);});
-test('the regular arena keeps showing all damage when the map filter is disabled',()=>{assert.equal(showDamageNumber('me','me',{actor:'enemy'}),true);assert.equal(showDamageNumber('me','enemy',{actor:'ally'}),true);});

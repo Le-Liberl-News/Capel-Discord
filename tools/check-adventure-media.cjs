@@ -1,7 +1,7 @@
 // Standalone smoke test; run outside the live bot to measure a fresh process.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 (async()=>{
- const api=require('../utils/adventure/animations'),{gifInfo}=require('../utils/activityRoleplay');
+ const api=require('../utils/adventure/animations'),{gifInfo}=require('../utils/gifInfo');
  const samples=[],words=['20-13-1-100'];   // a deal: four cards
  for(let i=0;i<4;i++){
   const before=process.memoryUsage().rss,result=await api.renderAnimation('cartes',words);

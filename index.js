@@ -16,8 +16,6 @@ const handleButtons = require('./handlers/buttons.js');
 const handleModals = require('./handlers/modals.js');
 const handleSlashCommands = require('./handlers/slashCommands.js')
 
-const { relancerAudioApresCrash } = require('./rpg/audioManager.js');
-
 const cleanup = require('./utils/cleanup.js');
 const { ajouterXP } = require('./utils/xpManager');
 const { miseAJourQuotidienne } = require('./utils/rankings.js')
@@ -25,7 +23,7 @@ const { createDebugReportIngress } = require('./utils/debugReportIngress.js');
 const { legacyHttpReport, publishDebugReport } = require('./utils/debugReportService.js');
 const { createPatchReleaseService } = require('./utils/patchReleaseService.js');
 const { createTesterPresenceService } = require('./utils/testerPresenceService.js');
-const { state, saveState } = require('./rpg/gameState.js');
+const { state, saveState } = require('./rpg/joueurs.js');
 const { defendreLeLiberl } = require('./rpg/defenseLiberl.js');
 const KEY_FILE = './credentials.json';
 const TABLE_ID = '1U3A84MvYYfhdDkJ8Oc8nxFJKlyeS0-Xk_7fl_SLBGYo';
@@ -106,7 +104,6 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
 client.once('clientReady', async () => {
     console.log(`Connecté en tant que ${client.user.tag}`);
-    relancerAudioApresCrash(client, state);
     try {
         await debugReportIngress.scanPendingMessages();
     } catch (error) {
@@ -130,11 +127,6 @@ client.once('clientReady', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (await require('./utils/activityEntry').handleActivityEntry(interaction)) return;
-    if (await sanktheim.handle(interaction)) return;
-    if (await arenaBoard.handle(interaction)) return;
-    if (await activiteDuels.handle(interaction)) return;
-    if (await activitePropHunt.handle(interaction)) return;
     if (await rhumertume.handle(interaction)) return;
     if (await adventure.handle(interaction)) return;
     if (interaction.isButton()) {
@@ -192,7 +184,6 @@ const path = require('path');
 
 const app = express();
 app.use(require('./utils/runtimeDiagnostics').middleware);
-app.use('/api/craft-capture', express.json({limit:'11mb'}));
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
 const upload = multer({ dest: 'uploads/' });
@@ -221,216 +212,18 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
     }
 });
 
-// ---------------------------------------------------------------------------
-// Activité Discord : carte isométrique (voir le dossier `activity/`).
-// L'app Capel porte à la fois le bot et l'activité : mêmes identifiants OAuth.
-// ---------------------------------------------------------------------------
-const ACTIVITE_ID = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '';
-const ACTIVITE_SECRET = process.env.DISCORD_CLIENT_SECRET || process.env.CLIENT_SECRET || '';
-const { createActivityLobby } = require('./utils/activityLobby.js');
-const huntGame = require('./utils/activityPropHuntGame').createPropHuntGame({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-prophunt.json'))});
-const testCharacters=require("./utils/activityTestCharacters").createTestCharacters({characters:Object.fromEntries(Object.entries({...require("./activity/assets/sky/characters.json"),Anton:{}}).filter(([name])=>name!==require('./activity/cs2-test-characters.cjs').COMPANION)),permanent:require('./activity/cs2-test-characters.cjs').TEST_CHARACTERS});
-const capelModel=require("./activity/assets/sky/capel.json");
 // until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
-const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
+const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
 // Halloween text adventure: invitation (and closing words) in channelId, played in DMs; every game started or won is
 // told in test-discord (notifyChannelId), which stays when the invitation moves to another channel
-const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,archive:require('./utils/adventure/lineArchive').createLineArchive(path.join(__dirname,'.runtime/adventure-outbox')),data:require('./rpg/data/aventure.json'),store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',notifyChannelId:'889835278494203915'});
+const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,archive:require('./utils/adventure/lineArchive').createLineArchive(path.join(__dirname,'.runtime/adventure-outbox')),data:require('./rpg/data/aventure.json'),store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',notifyChannelId:'889835278494203915'});
 client.on('messageCreate',message=>{adventure.message(message);});
 // the games followed and the hints sent from the platform's editor
 require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
-const activityRoleplaySender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ACTIVITY_ROLEPLAY_ID || "1499373178483507210",webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL});
-const sanktheimRoleplaySender=require('./utils/activityRoleplayDiscord').createRoleplayDiscordSender({client,WebhookClient,channelId:process.env.ROLEPLAY_ID,webhookUrl:process.env.WEBHOOK_ROLEPLAY_URL,baseUrl:process.env.BASE_URL,avatarFor:character=>{if(!process.env.BASE_URL)return undefined;const stats=require('./rpg/data/persos.json')[character]??require('./rpg/data/persos.json').default;const ko=state.players[character]&&state.players[character].hpActuel<=stats.hpMax/5?'_ko':'';return process.env.BASE_URL?.replace(/\/$/,'')+'/pp/'+encodeURIComponent(character+ko)+'.webp';}});
-const activityArenaSender=require("./utils/activityRoleplayDiscord").createRoleplayDiscordSender({client,WebhookClient,channelId:"1558125759682576475",baseUrl:process.env.BASE_URL});
-const activityRoleplay=require('./utils/activityRoleplay').createActivityRoleplay({
-  send:async payload=>payload.map==="sanktheim"?sanktheimRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{})}):payload.map==="arena"?activityArenaSender({...payload,threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}):activityRoleplaySender({...payload,...(rhumertume.roleplay(payload.character,payload.text)??{}),threadId:payload.match?await activiteDuels.publicationThread(payload.match,client):undefined}),
-  onError:error=>console.error('Activity roleplay publication failed:',error.code??'unavailable'),
-});
-const activityTavern=require("./utils/activityTavern").createActivityTavern({state,stats:require("./rpg/data/persos.json"),save:saveState,announce:activityRoleplaySender});
-const activiteService = createActivityLobby({
-    getArenaStreak:user=>arenaRanking.rows().find(row=>row.user===user)?.streak??0,
-    huntGame,
-    tower:[1,2,3,4].map(floor=>{
-      const root=path.join(__dirname,'activity/assets/sky/tower'+floor),grid=require(path.join(root,'navigation.json')),layout=require(path.join(root,'layout.json'));
-      return {grid,layout,enemySpawns:layout.enemySpawns??layout.rooms.slice(1,-1).filter(p=>Math.hypot(p.x-grid.spawn.x,p.z-grid.spawn.z)>8).slice(0,4).map((p,i)=>({...p,ranged:i%2===1})),
-        geometry:require('./utils/activityGeometry').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(root,'anterose.gltf'),'utf8')))};
-    }),
-    onDuelEnd:async event=>{arenaRanking.record(event);await arenaBoard.refresh();activityRoleplay.finish(event);await activiteDuels.publishResult(event,client);},
-    onDrink:event=>activityTavern.drink(event),
-    onSay:require("./utils/activitySpeech").createActivitySpeech({relay:activityRoleplay,players:()=>state.players,matchFor:actor=>activiteService.matchFor(actor)}),
-    onCraft:event=>activityRoleplay.craft({...event,match:activiteService.matchFor(event.actor)}),
-    airship:null,
-    rolent: {
-      grid: require('./activity/assets/sky/rolent/navigation.json'),
-      residents: require('./activity/assets/sky/rolent/residents.json'),
-      geometry: require('./utils/activityGeometry').createActivityGeometry(JSON.parse(require('fs').readFileSync(path.join(__dirname,'activity/assets/sky/rolent/anterose.gltf'),'utf8'))),
-    },
-    worldStores: {
-      liberl: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-liberl.json")),
-      hangar: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-hangar.json")),
-      ...Object.fromEntries([1,2,3,4].map(floor=>["tower"+floor,require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-tower"+floor+"-v2.json"))])),
-      rolent: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-rolent.json")),
-      anterose: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-anterose.json")),
-      arena: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-arena.json")),
-      gehenna: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-gehenna.json")),
-      axis: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-world-axis.json")),
-    },
-    store: require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-duels.json")),
-    arena: {
-      combatEnabled: true,
-      spectatorGrid: require("./activity/assets/sky/arena/spectator-navigation.json"),
-      introDuration:require("./activity/assets/sky/arena/intro.json").duration,
-      spawns: [{x:-1,y:0,z:3.25},{x:-1,y:0,z:-16.25}],
-      grid: require('./activity/assets/sky/arena/navigation.json'),
-      residents: require('./activity/assets/sky/arena/residents.json'),
-      geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/arena/anterose.gltf'), 'utf8'))),
-    },
-    gehenna: {
-      combatEnabled:true,
-      grid:require('./activity/assets/sky/gehenna/navigation.json'),
-      spectatorGrid:require('./activity/assets/sky/gehenna/spectator-navigation.json'),
-      spawns:[{x:0,y:0,z:-12},{x:0,y:0,z:12}],introDuration:16300,
-      residents:require('./activity/assets/sky/gehenna/residents.json'),
-      geometry:require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(fs.readFileSync(path.join(__dirname,'activity/assets/sky/gehenna/anterose.gltf'),'utf8'))),
-    },
-    // second duel venue, drawn one time in two: the top of the Axis Pillar, where Loewe is fought in SC
-    axis: {
-      combatEnabled: true,
-      spectatorGrid: require("./activity/assets/sky/axis/spectator-navigation.json"),
-      introDuration:require("./activity/assets/sky/axis/intro.json").duration,
-      spawns: [{x:0,y:0,z:-9.5},{x:0,y:0,z:9.5}],
-      grid: require('./activity/assets/sky/axis/navigation.json'),
-      residents: require('./activity/assets/sky/axis/residents.json'),
-      geometry: require('./utils/activityGeometry.js').createActivityGeometry(JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'activity/assets/sky/axis/anterose.gltf'), 'utf8'))),
-    },
-    grid: require("./activity/terminal-world.cjs").terminalNavigation(require("./activity/assets/sky/navigation.json"),capelModel),
-    residents: {npcs:[],disablePoms:true},
-    geometry: null,
-    resolveCharacter: userId => testCharacters.resolve(userId,require('./commands/anonyme.js').getPseudoAnonyme)
-});
-const activiteDuels = require('./utils/activityDuels.js').createActivityDuels({store:require("./utils/activityStateStore").createActivityStateStore(path.join(__dirname,".runtime/activity-invitations.json")),lobby:activiteService, resolveCharacter:require('./commands/anonyme.js').getPseudoAnonyme, resolveOpponent:require('./commands/anonyme.js').getIdFromPseudo, characterNames:require('./commands/anonyme.js').characterNames});
-const arenaRanking=require('./utils/activityArenaRanking').createArenaRanking({store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-arena-ranking.json')),credit:require('./utils/activityArenaRanking').createArenaCredit(db)});
-const arenaBoard=require('./utils/activityArenaBoard').createArenaBoard({client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,lobby:activiteService,duels:activiteDuels,ranking:arenaRanking,store:require('./utils/activityStateStore').createActivityStateStore(path.join(__dirname,'.runtime/activity-arena-board.json')),assigned:async()=>{const [rows]=await db.query('SELECT user_id,pseudo_index FROM pseudos_anonymes');return rows.map(r=>({user:r.user_id,name:require('./commands/anonyme').characterNames[r.pseudo_index]})).filter(r=>r.name);}});
-client.once('clientReady',()=>arenaBoard.refresh().catch(e=>console.error('Arena board:',e.message)));
 // catches up the ranking's nightly update when midnight was missed (the bot down, Discord or the database failing)
-client.once('clientReady',()=>{const rattraper=()=>arenaRanking.settle().catch(e=>console.error('Arène : versement des PB :',e)).then(()=>miseAJourQuotidienne(client));setTimeout(rattraper,60000);setInterval(rattraper,15*60000);});
-setInterval(()=>{if(client.isReady())arenaBoard.tick().catch(e=>console.error('Arena board:',e.message));},10000).unref();
-client.on('messageCreate',message=>{if(message.channelId==='1558125759682576475'&&message.type===18)setTimeout(()=>{if(activiteDuels.ownsThread(message.reference?.channelId??message.id))message.delete().catch(e=>console.error('Arena thread notice:',e.code));},1500).unref();});
-const activitePropHunt = require("./utils/activityPropHunt").createActivityPropHunt({client,lobby:activiteService,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme});
-client.once('clientReady',()=>activitePropHunt.retireEntries().catch(e=>console.error('Retrait accès Prop Hunt:',e.code??e.message)));
-const activiteTerminal = require("./utils/activityTerminal").createActivityTerminal({allowedCharacters:id=>activitySpoilerAccess.characters(id),trainingVenues:async()=>[],announceHunt:activitePropHunt.announce,huntStarted:activitePropHunt.started,testCharacters,lobby:activiteService,duels:activiteDuels,client,resolveCharacter:require("./commands/anonyme").getPseudoAnonyme,assignedCharacters:require("./commands/anonyme").getAssignedCharacterNames,terminal:require("./activity/assets/sky/capel.json")});
-const activiteBearer = req => String(req.headers.authorization || '').replace(/^Bearer /, '');
-
-app.post('/api/token', async (req, res) => {
-    try {
-        const corps = new URLSearchParams({
-            client_id: ACTIVITE_ID,
-            grant_type: 'authorization_code',
-            code: String(req.body?.code ?? '')
-        });
-        if (req.body?.code_verifier) {
-            corps.set('code_verifier', String(req.body.code_verifier));   // PKCE : pas de secret
-        } else if (ACTIVITE_SECRET) {
-            corps.set('client_secret', ACTIVITE_SECRET);
-        } else {
-            throw new Error('ni code_verifier (PKCE) ni client secret');
-        }
-        const reponse = await fetch('https://discord.com/api/oauth2/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: corps
-        });
-        if (!reponse.ok) throw new Error(`Discord a refusé l'échange (${reponse.status})`);
-        res.json(await reponse.json());
-    } catch (erreur) {
-        console.error("❌ Activité /api/token :", erreur.message);
-        res.status(500).json({ erreur: erreur.message });
-    }
-});
-
-const activityAccess=require('./utils/activityAccess').createActivityAccess({client});
-const activitySpoilerAccess=require('./utils/activitySpoilerAccess').createActivitySpoilerAccess({client});
-const sanktheim=require('./prototypes/sanktheim/production.cjs').createProductionSiege({app,client,lobby:activiteService,access:activityAccess,bearer:activiteBearer,rhumertume,resolveCharacter:require('./commands/anonyme').getPseudoAnonyme,assignedCharacters:require('./commands/anonyme').getAssignedCharacterNames,channelId:process.env.ROLEPLAY_ID,onSay:event=>activityRoleplay.speech(event),baseUrl:process.env.BASE_URL,ownerId:process.env.SANKTHEIM_OWNER_ID||'744964573249011712'});
-client.once('clientReady',()=>{void sanktheim.start().catch(e=>console.error('Activation Sanktheim:',e.message));});
-
-client.on('guildMemberRemove',member=>{if(member.guild.id===require('./utils/activityAccess').ACTIVITY_GUILD_ID)activityAccess.invalidate(member.id);});
-
-app.post('/api/profile', async (req, res) => {
-    try {
-        const response = await fetch('https://discord.com/api/users/@me', {headers: {Authorization: 'Bearer ' + activiteBearer(req)}});
-        if (!response.ok) return res.status([401,403].includes(response.status) ? 401 : response.status === 429 ? 429 : 502).json({erreur: [401,403].includes(response.status) ? 'Identification Discord requise.' : 'Connexion Discord temporairement indisponible.'});
-        const user = await response.json();
-        await activityAccess.assertMember(user.id,{force:true});
-        const channel = await client.channels.fetch(String(req.body?.channel || ''));
-        activityAccess.assertContext(channel,String(req.body?.guild || ''),user.id);
-        if (channel?.guild) {
-          if (channel.guild.id !== String(req.body?.guild || '')) return res.status(403).json({erreur:'Salon Discord invalide.'});
-          const member = await channel.guild.members.fetch(user.id);
-          if (!member || !channel.permissionsFor(member)?.has('ViewChannel')) return res.status(403).json({erreur:'Accès au salon refusé.'});
-        } else if (!channel?.isDMBased?.() || channel.recipient?.id !== user.id) {
-          return res.status(403).json({erreur:'Conversation privée invalide.'});
-        }
-        res.set('Cache-Control', 'no-store');
-        res.json({...await activiteService.join({id: user.id, channel: channel.id, fresh: req.body?.fresh === true}),siegeEntry:sanktheim.wantsEntry(user.id)});
-    } catch (error) {
-        if(error.status)return res.status(error.status).json({erreur:error.message});
-        const denied = [10003,10007,50001,50013].includes(error.code);
-        res.status(denied ? 403 : 502).json({erreur: denied ? 'Impossible de rejoindre ce salon Discord.' : 'Connexion Discord temporairement indisponible.'});
-    }
-});
-app.use(['/api/state','/api/terminal','/api/craft-capture'],async(req,res,next)=>{try{const {id}=activiteService.identity(activiteBearer(req));await activityAccess.assertMember(id);next();}catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Vérification du serveur temporairement indisponible.'});}});
-
-app.get('/api/state', async (req, res) => {
-    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, undefined, Number(req.query.after));res.json({...state,siegeEntry:sanktheim.wantsEntry(activiteService.identity(token).id),requests:activiteDuels.pending(activiteService.identity(token).id)}); }
-    catch(error){res.status(error.status || 500).json({erreur:error.message});}
-});
-app.post('/api/state', async (req, res) => {
-    try { res.set('Cache-Control', 'no-store');const token=activiteBearer(req);const state=await activiteService.state(token, req.body, req.body?.after);res.json({...state,siegeEntry:sanktheim.wantsEntry(activiteService.identity(token).id),requests:activiteDuels.pending(activiteService.identity(token).id)}); }
-    catch(error){res.status(error.status || 500).json({erreur:error.message});}
-});
-app.get('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');if(req.query.training==='1'){const {id}=activiteService.identity(activiteBearer(req)),allowedCharacters=await activitySpoilerAccess.characters(id);const registry=require('./utils/characters');res.json({allowedCharacters,allowedVenues:['arena','axis','gehenna',...(allowedCharacters.includes('Rean')?['thors']:[])],entrances:Object.fromEntries(registry.characterNames.map(name=>[name,require("./rpg/data/persos.json")[name].entree])),titles:Object.fromEntries(registry.characterNames.map(name=>[name,registry.characterTitle(name)]))});}else res.json(await activiteTerminal.menu(activiteBearer(req)));}catch(error){res.status(error.status||500).json({erreur:error.status?error.message:"Capel temporairement indisponible."});}});
-app.post('/api/terminal',async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await activiteTerminal.action(activiteBearer(req),req.body));}catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:"Action temporairement indisponible."});}});
-// the duel against a Discord member: the menu's picker lists the server's members, by their names on the server,
-// fetched once every ten minutes
-let soloMembers=null;
-async function guildMembers(){
- if(soloMembers&&Date.now()-soloMembers.at<600000)return soloMembers.list;
- const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),members=await guild.members.fetch();
- const list=[...members.values()].filter(m=>!m.user.bot).map(m=>({id:m.id,name:m.displayName,avatar:m.displayAvatarURL({size:64,extension:'png'})})).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
- soloMembers={at:Date.now(),list};return list;
-}
-const folded=text=>String(text??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
-// the duel against a Discord member: both pick among the characters that both players' game roles unlock, then the
-// first to pick sets the stage
-app.post('/api/solo/challenge',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
- const guild=await client.guilds.fetch(require('./utils/activityAccess').ACTIVITY_GUILD_ID),target=await guild.members.fetch(String(req.body?.id??'')).catch(()=>{throw Object.assign(Error('Joueur introuvable sur le serveur.'),{status:404});}),me=await guild.members.fetch(id);
- const [mine,theirs]=await Promise.all([activitySpoilerAccess.characters(id),activitySpoilerAccess.characters(target.id)]);
- const allowed=mine.filter(name=>theirs.includes(name)&&name in require('./activity/assets/sky/characters.json'));
- const duel=await activiteDuels.soloChallenge(id,target.id,{allowed,labels:[me.displayName,target.displayName]},client);
- res.json({id:duel,opponent:target.displayName});}
- catch(error){res.status(error.status||400).json({erreur:error.status||error.constructor.name==='DuelError'?error.message:'Défi impossible pour le moment.'});}});
-app.post('/api/solo/pick',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req));
- const {duel,character,venue,cancel}=req.body??{};if(cancel){activiteDuels.decline(String(duel),id);return res.json({selection:null});}
- res.json({selection:await activiteDuels.pick(String(duel),id,{character:character??undefined,venue:venue??undefined},client)});}
- catch(error){res.status(error.status||400).json({erreur:error.status?error.message:'Choix impossible pour le moment.'});}});
-// the picker: members whose name on the server contains the search (accents and case aside), the player excluded
-app.post('/api/solo/players',async(req,res)=>{try{res.set('Cache-Control','no-store');const {id}=activiteService.identity(activiteBearer(req)),wanted=folded(req.body?.q).trim();
- res.json({players:(await guildMembers()).filter(m=>m.id!==id&&(!wanted||folded(m.name).includes(wanted))).slice(0,60)});}
- catch(error){res.status(error.status||400).json({erreur:error.status?error.message:'Liste des joueurs indisponible pour le moment.'});}});
-app.post('/api/craft-capture',async(req,res)=>{
-  try{const {id}=activiteService.identity(activiteBearer(req));const replay=activiteService.duelCaptureFor(id,req.body?.id);if(replay)activityRoleplay.finish(replay);res.set('Cache-Control','no-store');res.json(await activityRoleplay.capture(id,req.body));}
-  catch(error){res.status(error.status||502).json({erreur:error.status?error.message:'Publication roleplay temporairement indisponible.'});}
-});
-// The activity's client (page, bundle, assets) is published on the website (activity/tools/publish-client.cjs);
-// Discord loads it from there, and the website's api.php relays the /api routes here.
-
-// Only messages whose author already has an avatar in this activity room are relayed.
-client.on('messageCreate', message => {
-    sanktheim.captureMessage(message);
-    activiteService.captureMessage({id: message.id, channel: message.channelId, author: message.author.id, text: message.cleanContent ?? message.content, direct: Boolean(message.channel.isDMBased?.()), bot: message.author.bot, webhook: Boolean(message.webhookId)});
-});
+client.once('clientReady',()=>{const rattraper=()=>miseAJourQuotidienne(client).catch(e=>console.error('Classement :',e));setTimeout(rattraper,60000);setInterval(rattraper,15*60000);});
 
 const cooldownsXP = new Map();
 
@@ -520,8 +313,7 @@ app.listen(3000, () => {
 
 
 cron.schedule('0 0 * * *', async () => {
-    try { await arenaRanking.settle(); } catch (error) { console.error("Arène : versement des PB :", error); }
-    // the ranking's picture of the day, once the arena's points are paid, and the board, missions or not
+    // the ranking's picture of the day, and the board, missions or not
     await miseAJourQuotidienne(client);
     // from October 31 on, everyone keeps the character they have (a mini-game will decide later)
     if (require('./utils/rhumertume').parisParts(Date.now()).date < '2026-10-31') await db.query('DELETE FROM pseudos_anonymes');

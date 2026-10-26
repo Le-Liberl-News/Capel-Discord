@@ -11,10 +11,3 @@ test("a missing command fails deployment verification",async()=>{
 });
 
  test("paused modes have no Discord slash command",()=>{ const names=require("../utils/applicationCommands").commands.map(c=>c.name);assert.ok(!names.includes("prophunt"));assert.ok(!names.includes("ctf")); });
-
-test("activity entry sends only a private launch button, and launches from a DM",async()=>{
- const {handleActivityEntry}=require("../utils/activityEntry");let dm,reply,flags,launched=false;
- await handleActivityEntry({isChatInputCommand:()=>true,commandName:"anterose",channel:{isDMBased:()=>false},deferReply:async x=>flags=x.flags,user:{send:async x=>{dm=x;return{channelId:"private"};}},editReply:async x=>reply=x});
- assert.equal(flags,64);assert.equal(dm.components[0].components[0].custom_id,"activity:enter-private");assert.match(reply.components[0].components[0].url,/@me\/private$/);
- await handleActivityEntry({isButton:()=>true,customId:"activity:enter-private",channel:{isDMBased:()=>true},launchActivity:async()=>launched=true});assert.equal(launched,true);
-});

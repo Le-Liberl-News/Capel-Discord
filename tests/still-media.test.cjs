@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 test('an announcement GIF is written while drawn: two frames held at most, the last delay set at the end',()=>{
- const {createCanvas}=require('@napi-rs/canvas'),{stream,scratch}=require('../utils/pomRendering').parts,{gifInfo}=require('../utils/activityRoleplay');
+ const {createCanvas}=require('@napi-rs/canvas'),{stream,scratch}=require('../utils/pomRendering').parts,{gifInfo}=require('../utils/gifInfo');
  const checks=[],out=stream({once:true,budget:{check:bytes=>checks.push(bytes)}}),canvas=scratch();
  for(let i=0;i<5;i++){const c=canvas(96,96),x=c.getContext('2d');x.fillStyle=`rgb(${i*50},0,0)`;x.fillRect(0,0,8+i,8);out.add(c,60);}
  assert.equal(out.frames,5);assert.equal(checks.length,5);   // the budget is asked at every frame

@@ -5,7 +5,8 @@ const path=require('node:path'),fs=require('node:fs');
 const {createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas');
 const {GIFEncoder,quantize,applyPalette}=require('gifenc');
 const {render}=require('./mediaRender');
-const SKY=path.join(__dirname,'../activity/assets/sky');
+// the pictures they are made of, kept from the retired activity's assets (same layout)
+const SKY=path.join(__dirname,'../resources/pom');
 const POM_BASE='https://leliberlnews.fr/activite/assets/sky/chat/pom';
 const W=560,LEFT=34,LINE=31,EVOLUTION=256;
 GlobalFonts.registerFromPath(path.join(SKY,'dialogue/AveriaSansLibre-Regular.ttf'),'AveriaSky');

@@ -1,8 +1,5 @@
 const {SlashCommandBuilder,ContextMenuCommandBuilder,ApplicationCommandType,PermissionFlagsBits}=require('discord.js');
 const commands = [
-    new SlashCommandBuilder().setName("anterose").setDescription("Ouvrir le monde partag\u00e9 en priv\u00e9"),
-    new SlashCommandBuilder().setName("duel").setDescription("Défier un personnage dans l’arène de Grancel").setDMPermission(false)
-        .addStringOption(o => o.setName("personnage").setDescription("Personnage de votre adversaire du jour").setRequired(true).setAutocomplete(true)),
     new SlashCommandBuilder().setName('pomifier').setDescription('Transmettre la rhumertume à un personnage').setDMPermission(false).setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addStringOption(o => o.setName('personnage').setDescription('Personnage à pomifier').setRequired(true).setAutocomplete(true)),
     new SlashCommandBuilder().setName('aventure').setDescription("Publier l'invitation à l'aventure d'Halloween").setDMPermission(false).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),

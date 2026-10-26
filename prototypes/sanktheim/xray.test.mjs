@@ -1,9 +1,0 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {createXRayPass,XRAY_OPACITY} from '../../activity/xray-pass.mjs';const require=createRequire(import.meta.url),T=require('three');
-test('Sanktheim xray redraws only the local player and restores every material',()=>{const scene=new T.Scene(),camera=new T.Camera(),make=()=>new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({transparent:true,opacity:1})),own=make(),enemy=make(),ladder=make(),torch=make();scene.add(own,enemy,ladder,torch);let calls=0;const renderer={autoClear:true,info:{autoReset:true},render(){calls++;assert.equal(own.visible,true);assert.equal(own.material.opacity,XRAY_OPACITY);for(const o of [enemy,ladder,torch]){assert.equal(o.visible,false);assert.equal(o.material.opacity,1);}}};createXRayPass(T).render(renderer,scene,camera,{only:own});assert.equal(calls,1);for(const o of [own,enemy,ladder,torch]){assert.equal(o.visible,true);assert.equal(o.material.opacity,1);}assert.equal(renderer.autoClear,true);});
-test('the x-ray pass compiles its see-through shaders ahead and gives the materials back at once',async()=>{
- const scene=new T.Scene(),camera=new T.Camera(),fighter=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({opacity:1})),wall=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial());wall.userData.noXRay=true;scene.add(fighter,wall);
- const seen=[],renderer={compileAsync(s,c){seen.push([fighter.material.transparent,fighter.material.opacity,wall.material.transparent]);return Promise.resolve('compiled');}};
- assert.equal(await createXRayPass(T).prepare(renderer,scene,camera),'compiled');
- assert.deepEqual(seen,[[true,XRAY_OPACITY,false]]);   // compiled as the pass draws it, the scenery left alone
- assert.equal(fighter.material.transparent,false);assert.equal(fighter.material.opacity,1);assert.equal(fighter.material.depthFunc,T.LessEqualDepth);
-});

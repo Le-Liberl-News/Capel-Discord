@@ -1,7 +1,0 @@
-const {defenseFactor}=require('../activity/combat-status.cjs');
-// All sources of damage share the same temporary shield, including Poms and traps.
-function applyDamage(player,amount,time,impact){
- const guardian=require('../activity/cs2-test-characters.cjs').livingGuardian(player);
- if(guardian&&amount>0){const dealt=applyDamage(guardian,amount,time,{...impact,point:{x:guardian.x,y:(guardian.y??0)+.7,z:guardian.z}});return {damage:0,absorbed:dealt.damage+dealt.absorbed,guardedBy:guardian.id};}
- let damage=Math.round(Math.max(0,amount)*defenseFactor(player,time)),absorbed=0;if(damage&&player.guard?.until>time){player.guard=null;if(player.catCarrier&&impact?.pom===true)player.catCarrier.active=false;return {damage:0,absorbed:damage};}if(player.shield?.until>time&&player.shield.hp>0){absorbed=Math.min(damage,player.shield.hp);player.shield.hp-=absorbed;damage-=absorbed;}if(player.shield&&(player.shield.until<=time||player.shield.hp<=0))player.shield=null;const lost=Math.min(player.hp,damage);player.hp=Math.max(0,player.hp-damage);if((lost||absorbed)&&impact?.pom===true&&player.catCarrier)player.catCarrier.active=false;if(lost){player.damageSequence=(player.damageSequence??0)+1;player.damageEvents=[...(player.damageEvents??[]),{sequence:player.damageSequence,amount:lost,at:time,...impact}].filter(e=>time-e.at<8000).slice(-32);}return {damage:lost,absorbed};}
-module.exports={applyDamage};

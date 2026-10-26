@@ -29,44 +29,13 @@ jobs:
         python3 -m unittest discover -s tools/diagnostics -p "test_*.py"
         node -e 'JSON.parse(require("node:fs").readFileSync("rpg/data/aventure.json","utf8"));'
 
-    - name: Install activity test dependencies
+    - name: Install test dependencies
       run: npm ci --ignore-scripts --no-audit --no-fund
 
-    - name: Test activity movement and sessions
+    - name: Test the bot
       run: |
-        npm run activity:test
-        node --test tests/rhumertume.test.cjs tests/rhumertume-policy.test.cjs
-        node --test tests/media-render.test.cjs tests/adventure.test.cjs tests/still-media.test.cjs
+        node --test tests/*.test.js tests/*.test.cjs
         node tools/check-adventure-media.cjs
-        node tools/check-sanktheim-media.cjs
-        node --test prototypes/sanktheim/*.test.cjs prototypes/sanktheim/*.test.mjs
-        node --test tests/activity-service.test.js tests/activity-world.test.js tests/activity-duel.test.js tests/activity-access.test.js
-
-    - name: Prepare private scene browser libraries
-      run: python3 tools/prepare-sanktheim-browser-libs.py
-
-    - name: Test full Sanktheim scene recording
-      run: node tools/check-sanktheim-scene.cjs
-
-    - name: Test native texture transparency
-      run: |
-        python -m pip install --quiet pillow
-        python tests/test_activity_textures.py
-
-    # a restart during a Sanktheim wave throws its players out: wait for the wave's end, and keep clear of the next
-    # one's start (the restart takes a minute or two); after 45 minutes the deployment goes ahead anyway
-    - name: ⏳ Wait for the end of a Sanktheim wave
-      run: |
-        node -e '
-        const MARGIN=4*60000,LIMIT=Date.now()+45*60000;
-        (async()=>{for(;;){
-         let s=null;try{const r=await fetch("https://leliberlnews.fr/activite/api.php?r=siege/status",{signal:AbortSignal.timeout(10000)});s=await r.json();}catch(e){console.log("Statut du siège illisible ("+e.message+") : déploiement.");return;}
-         const soon=s.nextWave&&s.nextWave-s.serverTime<MARGIN;
-         if(!s.wave&&!soon){console.log("Pas de vague en cours : déploiement.");return;}
-         if(Date.now()>LIMIT){console.log("Toujours une vague après 45 min : déploiement quand même.");return;}
-         console.log(s.wave?"Vague "+s.wave.number+" en cours, fin à "+new Date(s.wave.ends).toISOString():"Vague imminente à "+new Date(s.nextWave).toISOString()+" : attente.");
-         await new Promise(r=>setTimeout(r,30000));
-        }})();'
 
     - name: 🛠️ Deploy & Restart natively
       env:
@@ -103,7 +72,6 @@ jobs:
           --exclude='credentials.json' \
           --exclude='node_modules/' \
           --exclude='uploads/' \
-          --exclude='activity/assets/sky/liberl/' \
           -e "ssh -o StrictHostKeyChecking=yes -o ControlMaster=no -o ControlPath=$SSH_CONTROL_PATH -p $VPS_PORT" \
           ./ "$SSH_TARGET:$TARGET_DIR/" 3<<<"$VPS_PASS"
         

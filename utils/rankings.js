@@ -3,7 +3,7 @@ const { RANGS_BRACERS } = require('./xpManager.js');
 const { AttachmentBuilder } = require('discord.js');
 const { renderRankings } = require('./rankingsImage.js');
 const path = require('node:path');
-const historique = require('./activityStateStore.js').createActivityStateStore(path.join(__dirname, '../.runtime/rankings-history.json'));
+const historique = require('./stateStore.js').createStateStore(path.join(__dirname, '../.runtime/rankings-history.json'));
 
 const couleursDeBase = [
     '#e33464', '#e73326', '#e84329', '#e8532c', '#e9632f', 
@@ -47,15 +47,6 @@ async function actualiserClassement(client, top10) {
 
 // Each bracer's points, trads and place as the day starts (Paris, taken by the midnight cron), kept for a few days: the board shows what the
 // previous day brought (points of this morning minus points of yesterday morning, trads and places likewise).
-// Arena wins, all days together, come from the arena's own record.
-const arene = require('./activityStateStore.js').createActivityStateStore(path.join(__dirname, '../.runtime/activity-arena-ranking.json'));
-function victoiresArene(maintenant = new Date()) {
-    const totaux = new Map(), jours = arene.load()?.days ?? {};
-    for (const jour of Object.values(jours)) for (const [userId, ligne] of Object.entries(jour)) totaux.set(userId, (totaux.get(userId) ?? 0) + (ligne.wins ?? 0));
-    // the arena keeps each day apart: the previous day's wins are read straight from it
-    const veille = jours[jourParis(new Date(maintenant.getTime() - 86400000))] ?? {};
-    return { totaux, veille: userId => veille[userId]?.wins ?? 0 };
-}
 const jourParis = (date = new Date()) => date.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
 let photoEnCours = null;
 async function photographierJour(maintenant = new Date()) {
@@ -90,8 +81,6 @@ async function updateRanking(client) {
     let evolution = () => ({});
     // only midnight takes the day's picture: a refresh during the day must not stand in for the start of the day
     try { evolution = evolutionVeille(historique.load() ?? { jours: {} }); } catch (e) { console.error("Erreur historique classement :", e); }
-    let arenes = { totaux: new Map(), veille: () => 0 };
-    try { arenes = victoiresArene(); } catch (e) { console.error("Erreur victoires arène :", e); }
     const [rawTop10] = await db.query('SELECT user_id, xp, victoires AS trads FROM users_stats ORDER BY xp DESC, user_id LIMIT 10');
     let top10Formate = [];
 
@@ -125,8 +114,6 @@ async function updateRanking(client) {
             nomRang: rangActuel ? rangActuel.nom : "Inconnu",
             trads: ligne.trads || 0,
             couleurHex: couleurLigne,
-            arenaWins: arenes.totaux.get(String(ligne.user_id)) ?? 0,
-            arenaGain: arenes.veille(String(ligne.user_id)),
             ...evolution(String(ligne.user_id))
         });
     }

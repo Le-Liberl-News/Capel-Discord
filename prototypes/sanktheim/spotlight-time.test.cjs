@@ -1,2 +1,0 @@
-const test=require('node:test'),assert=require('node:assert/strict'),{strength}=require('./spotlight-time.cjs');
-test('searchlights follow visible night even before the legacy 20h flag',()=>{assert.equal(strength({night:false,local:{hour:19}},{daylight:0}),1);assert.equal(strength({night:true},{daylight:1}),0);assert.equal(strength({night:false,local:{hour:22}}),1);assert.equal(strength({local:{hour:12}}),0);assert.ok(strength({}, {daylight:.05})>0&&strength({}, {daylight:.05})<1);});

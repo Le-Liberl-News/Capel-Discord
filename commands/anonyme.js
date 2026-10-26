@@ -1,8 +1,7 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, WebhookClient, EmbedBuilder } = require('discord.js');
 const db = require('../utils/db.js');
-const { state, saveState } = require('../rpg/gameState.js');
+const { state, saveState } = require('../rpg/joueurs.js');
 const databasePersos = require('../rpg/data/persos.json');
-const { tenterRegenDiscussion } = require('../rpg/gestionFatigue.js');
 const { defendreLeLiberl } = require('../rpg/defenseLiberl.js');
 
 const {characterNames:PSEUDOS,characterCombos:COMBO}=require('../utils/characters');
@@ -108,9 +107,6 @@ async function execute(interaction) {
         const playerInstance = state.players[pseudo];
         const ko = (playerInstance.hpActuel > statsJoueur.hpMax / 5) ? "" : "_ko";
 
-        texte = require('../rpg/alcool').texteAlcoolise(texte, playerInstance);
-
-        const regenResult = tenterRegenDiscussion(playerInstance, statsJoueur, state);
         saveState();
     }
     try {

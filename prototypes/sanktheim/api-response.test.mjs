@@ -1,3 +1,0 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readSiegeResponse} from './api-response.mjs';
-test('an HTML outage page identifies the failed route without exposing its markup',async()=>{await assert.rejects(readSiegeResponse(new Response('<!DOCTYPE html><title>Unavailable</title>',{status:503}),'arena'),e=>e.retryable&&e.message.includes('arena, HTTP 503')&&!e.message.includes('DOCTYPE'));});
-test('normal API payloads and errors remain intact',async()=>{assert.deepEqual(await readSiegeResponse(new Response('{"ok":true}'),'state'),{ok:true});await assert.rejects(readSiegeResponse(new Response('{"error":"Siège arrêté"}',{status:400}),'arena'),/Siège arrêté/);});
