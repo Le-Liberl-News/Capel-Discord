@@ -41,7 +41,7 @@ function count(typed,text){
  if(typed.commands[command]!=null||Object.keys(typed.commands).length<DISTINCT)typed.commands[command]=(typed.commands[command]??0)+1;
 }
 function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderAnimation,shareWait=30000,archive=null}){
- const game=createAdventure(data);
+ const game=createAdventure(data),webInstance=crypto.randomBytes(8).toString('hex');
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];state.shares??={};
  // every command each player typed, counted in full (the log keeps only the last exchanges): their number and each
@@ -101,7 +101,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   if(!parts.length&&attached.length)await channel.send({files:attached});
  }
  const tell=async(id,content,what)=>{
-  const parts=messages(content);if(!parts.length)return;const expectedRun=state.archiveRuns[id]?.run;
+  const parts=messages(content);if(!parts.length)return;if(id.startsWith('web_')){for(const part of parts)note(id,'reply',part);save();return;}const expectedRun=state.archiveRuns[id]?.run;
   // each message sent is one line of the log, as the player saw it
   try{const user=await client.users.fetch(id);for(const part of parts){await user.send({content:part,allowedMentions:{parse:[]}});if(archive&&state.archiveRuns[id]?.run!==expectedRun)return;note(id,'reply',part);}}catch(e){log('Aventure, '+what+' :',id,e.code??e);}
  };
@@ -186,7 +186,11 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   if(msg.author.bot||msg.guild||!state.players[msg.author.id]||!msg.content.trim())return false;
   const id=msg.author.id,requestedRun=state.archiveRuns[id]?.run;
   state.names[id]=msg.author.globalName||msg.author.username||state.names[id]||id;
-  const next=(queues.get(id)||Promise.resolve()).then(async()=>{
+  const next=(queues.get(id)||Promise.resolve()).then(()=>processCommand(msg,id,requestedRun)).catch(e=>log('Aventure :',e));
+  queues.set(id,next);
+  return true;
+ }
+ async function processCommand(msg,id,requestedRun){
    if(!state.players[id]||archive&&state.archiveRuns[id]?.run!==requestedRun)return;
    note(id,'command',msg.content.trim());count(state.typed[id]??={count:0,commands:{}},msg.content);
    // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
@@ -204,9 +208,40 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    const result=game.handle(player,msg.content);
    await send(msg.channel,result,player,id);
    if(result.final&&(!archive||state.archiveRuns[id]?.run===requestedRun))await reach(id);
-  }).catch(e=>log('Aventure :',e));
-  queues.set(id,next);
-  return true;
+ }
+ // Browser transport: same player state, queue, archive, media budget and collective ending as DMs.
+ function webView(id){const player=state.players[id];return {instance:webInstance,started:!!player,name:state.names[id]||'Voyageur',revision:version,
+  room:player?{id:player.room,name:game.room(player.room)?.name||''}:null,
+  inventory:player?player.inventory.map(key=>({id:key,name:(data.objects||[]).find(o=>String(o.id)===key)?.name||key})):[],
+  ended:state.won.includes(id),lines:(state.logs[id]||[]).map(line=>({...line,key:crypto.createHash('sha1').update(JSON.stringify(line)).digest('hex')}))};}
+ async function web({id,name,action='state',text='',requestId=''}){
+  if(!/^(?:\d{17,20}|web_[a-f0-9]{24})$/.test(id))throw Object.assign(new Error('Identité invalide.'),{status:401});
+  if(action==='state')return webView(id);
+  if(!['start','command','restart'].includes(action))throw Object.assign(new Error('Action inconnue.'),{status:400});
+  if(!/^[a-zA-Z0-9-]{16,80}$/.test(requestId))throw Object.assign(new Error('Identifiant de commande requis.'),{status:400});
+  text=String(text).trim();if(action==='command'&&(!text||text.length>1000))throw Object.assign(new Error('Commande trop longue ou vide.'),{status:400});
+  const pending=(queues.get(id)||Promise.resolve()).then(async()=>{
+   state.webReceipts??={};const receipts=state.webReceipts[id]??=[];
+   if(receipts.includes(requestId))return webView(id);
+   if(action!=='start'&&!state.players[id])throw Object.assign(new Error('Commencez une partie avant de jouer.'),{status:409});
+   receipts.push(requestId);if(receipts.length>24)receipts.shift();
+   state.names[id]=String(name||state.names[id]||'Voyageur').slice(0,100);
+   const channel={send:async()=>{}};
+   if(action==='start'&&state.players[id]){save();return webView(id);}
+   if(action==='start'){
+    state.players[id]=game.fresh();
+    await send(channel,game.start(state.players[id]),state.players[id],id);void notify(id,'start');
+   }else{
+    if(!state.players[id])throw Object.assign(new Error('Commencez une partie avant de jouer.'),{status:409});
+    if(action==='restart')text='/reset';
+    // Reuse the DM command handler, including reset, animations, final-room coordination and counting.
+    await processCommand({content:text,channel},id,state.archiveRuns[id]?.run);
+   }
+   save();return webView(id);
+  });
+  queues.set(id,pending);
+  const result=pending.finally(()=>{if(queues.get(id)===pending)queues.delete(id);});
+  return result;
  }
  // the games for the platform: every player's state and last exchanges
  const snapshot=()=>Object.entries(state.players).map(([id,player])=>({id,...(archive?{archive:ensureArchive(id)}:{}),name:state.names[id]||id,state:player,log:archive?[]:(state.logs[id]||[]),typed:state.typed[id]??{count:0,commands:{}}}));
@@ -214,6 +249,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  async function hint(id,text){
   if(!state.players[id])throw new Error('joueur inconnu');
   const expectedRun=state.archiveRuns[id]?.run;
+  if(id.startsWith('web_')){note(id,'hint',text);save();return;}
   const user=await client.users.fetch(id);
   await user.send({content:(data.messages?.hint||'💡 **Indice** : ')+text,allowedMentions:{parse:[]}});
   if(!state.players[id]||archive&&state.archiveRuns[id]?.run!==expectedRun)return;
@@ -223,7 +259,15 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  const media=()=>[...pendingMedia].map(([sha,item])=>({sha,type:item.type,data:item.data.toString('base64')}));
  const mediaSent=shas=>{for(const sha of shas)pendingMedia.delete(sha);};
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
- function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns'])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
- return {handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
+ function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns','webReceipts'])if(state[key])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
+ function webMedia(id,{file,sha}){
+  if(file){const allowed=new Set(data.rooms.map(r=>r.image).filter(Boolean));if(!allowed.has(file))return null;
+   const resolved=path.resolve(files,file);if(!resolved.startsWith(path.resolve(files)+path.sep)||!fs.existsSync(resolved))return null;
+   const ext=path.extname(file).toLowerCase(),mime={'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif'}[ext];
+   if(!mime)return null;return {mime,data:fs.readFileSync(resolved).toString('base64')};}
+  if(!/^[a-f0-9]{40}$/.test(sha||'')||!state.logs[id]?.some(l=>l.media?.some(m=>m.sha===sha)))return null;
+  const item=pendingMedia.get(sha);return item?{mime:item.type,data:item.data.toString('base64')}:null;
+ }
+ return {web,webView,webMedia,handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,messages,normalize,BUTTON};

@@ -220,6 +220,8 @@ const adventure=require('./utils/adventure/discord').createAdventureDiscord({cli
 client.on('messageCreate',message=>{adventure.message(message);});
 // the games followed and the hints sent from the platform's editor
 require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});
+try { require('./utils/adventure/web').registerAdventureWeb({app,adventure}); }
+catch(error){console.error('Aventure navigateur indisponible:',error.code||error.message);app.post('/api/adventure/play',(req,res)=>res.status(503).json({error:'La passerelle de l’aventure est temporairement indisponible.'}));}
 client.rhumertume=rhumertume;
 setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 // catches up the ranking's nightly update when midnight was missed (the bot down, Discord or the database failing)
