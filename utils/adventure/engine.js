@@ -87,7 +87,8 @@ function createAdventure(data){
    if(!done)return {replies:[list.find(a=>a.fail)?.fail??messages.fail]};
    apply(state,done);
    // "animation": a picture made from what was said (utils/adventure/animations.js), sent with the reply
-   const animation=done.animation?{name:done.animation,words:said.slice(1)}:undefined;
+   // Synonyms select a rule, but must not reorder the cards drawn for the player.
+   const animation=done.animation?{name:done.animation,words:w.slice(1)}:undefined;
    if(done.move!=null)return {...enter(state,done.move,done.text),animation};
    return {replies:[done.text||messages.fail],animation};
   }
