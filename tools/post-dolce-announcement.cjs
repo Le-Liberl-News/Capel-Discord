@@ -8,8 +8,8 @@ const fs=require('node:fs'),path=require('node:path');require('dotenv').config({
  const url='https://leliberlnews.fr/aventure/dolce-traccia/',channel='915557045774716969';
  const page=await fetch(url,{signal:AbortSignal.timeout(20000)});if(!page.ok||!/<title>\s*Dolce Traccia\s*<\/title>/.test(await page.text()))throw Error('Public page unavailable');
  const token=process.env.DISCORD_TOKEN;if(!token)throw Error('Discord credential unavailable');
- const api=async(route,method='GET',body)=>{const r=await fetch('https://discord.com/api/v10/'+route,{method,headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(25000)});if(!r.ok)throw Error('Discord HTTP '+r.status);return r.json();};
- const recent=await api('channels/'+channel+'/messages?limit=50');
+ const api=async(route,method='GET',body)=>{const r=await fetch('https://discord.com/api/v10/'+route,{method,headers:{Authorization:'Bot '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(25000)});if(!r.ok){const error=await r.json().catch(()=>({}));throw Object.assign(Error('Discord '+method+' HTTP '+r.status+' code '+(error.code??'unknown')),{status:r.status});}return r.json();};
+ let recent=[];try{recent=await api('channels/'+channel+'/messages?limit=50');}catch(e){if(e.status!==403)throw e;console.log('History unavailable; trying the authorized message send.');}
  const matches=components=>(components||[]).some(c=>c.url===url||matches(c.components));
  let msg=recent.find(m=>m.author?.bot&&matches(m.components));
  if(!msg)msg=await api('channels/'+channel+'/messages','POST',{allowed_mentions:{parse:[]},components:[{type:1,components:[{type:2,style:5,label:'Une voix myst\u00e9rieuse vous appelle',url}]}]});
