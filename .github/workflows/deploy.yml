@@ -30,7 +30,9 @@ jobs:
         node -e 'JSON.parse(require("node:fs").readFileSync("rpg/data/aventure.json","utf8"));'
 
     - name: Install test dependencies
-      run: npm ci --ignore-scripts --no-audit --no-fund
+      run: |
+        npm ci --ignore-scripts --no-audit --no-fund
+        npm rebuild ffmpeg-static
 
     - name: Test the bot
       run: |
@@ -105,7 +107,7 @@ jobs:
           fi
           pm2 save
           node -e 'const {execFileSync}=require("node:child_process");const apps=JSON.parse(execFileSync("pm2",["jlist"],{encoding:"utf8"}));if(!apps.some(p=>p.name==="LN-Bot"&&p.pm2_env.status==="online"))process.exit(1);'
-          node -e '(async()=>{let stable=0;for(let i=0;i<60;i++){try{const r=await fetch("http://127.0.0.1:3000/api/siege/status",{signal:AbortSignal.timeout(3000)}),s=await r.json();if(r.ok&&s.ready===true&&Math.abs(Date.now()-s.serverTime)<10000){if(++stable>=3){console.log("Bot HTTP and persistent siege are healthy.");return;}}else stable=0;}catch{stable=0;}await new Promise(r=>setTimeout(r,2000));}throw Error("Bot failed to become healthy after restart");})().catch(e=>{console.error(e.message);process.exit(1);});'
+          node -e '(async()=>{let stable=0;for(let i=0;i<60;i++){try{const r=await fetch("http://127.0.0.1:3000/api/health",{signal:AbortSignal.timeout(3000)}),s=await r.json();if(r.ok&&s.ready===true&&Math.abs(Date.now()-s.serverTime)<10000){if(++stable>=3){console.log("Bot HTTP and Discord connection are healthy.");return;}}else stable=0;}catch{stable=0;}await new Promise(r=>setTimeout(r,2000));}throw Error("Bot failed to become healthy after restart");})().catch(e=>{console.error(e.message);process.exit(1);});'
         EOF
         
         echo "✅ Déploiement terminé avec succès !"

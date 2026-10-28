@@ -24,3 +24,8 @@ test('three daily draws plus bites and the ambush never exceed six natural infec
 
 test('an existing four-case schedule is reduced to three without undoing an infection',async()=>{const f=fixture({dailyCases:3,data:{drawn:{},schedule:{[DATE]:[600,630,660,720]}}});await f.make().tick();assert.equal(f.store.load().schedule[DATE].length,3);assert.equal(f.store.load().drawn[DATE].length,3);});
 test('an overdue ambush is recovered after 23 rather than silently dropped',async()=>{const f=fixture({clock:at('23:15:00'),data:{infected:{NPC1:at('09:00:00'),NPC2:at('09:00:00'),NPC3:at('09:00:00')},siegeSchedule:{[DATE]:1300}}});await f.make().tick();assert.equal(f.sieges.length,1);await f.make().tick();assert.equal(f.sieges.length,1);});
+
+ test('production ambushes never load the GIF renderer',async()=>{
+ const fs=require('node:fs');const source=fs.readFileSync(require.resolve('../utils/rhumertume'),'utf8');
+ assert.ok(!source.includes("require('./pomSiege')"));assert.ok(!source.includes('pictures().renderEvolution('));
+ });

@@ -1,0 +1,20 @@
+name: Publish Dolce Traccia announcement
+on: workflow_dispatch
+concurrency:
+  group: dolce-announcement-2026-10-28
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish once through the production bot
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          VPS_USER: ${{ secrets.VPS_USERNAME }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y sshpass
+          sshpass -e ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'cd /home/twnkek290001/LN-Bot; export NVM_DIR="$HOME/.nvm"; [ ! -s "$NVM_DIR/nvm.sh" ] || . "$NVM_DIR/nvm.sh"; node -' < tools/post-dolce-announcement.cjs

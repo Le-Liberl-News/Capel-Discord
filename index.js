@@ -183,6 +183,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+app.get('/api/health', (req,res) => res.status(client.isReady()?200:503).json({ready:client.isReady(),serverTime:Date.now()}));
 app.use(require('./utils/runtimeDiagnostics').middleware);
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));

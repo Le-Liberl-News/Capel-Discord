@@ -178,7 +178,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    const s=state.sieges[date];if(!s||(state.replayed??[]).includes(date))continue;
    state.replayed=[...(state.replayed??[]),date];save();   // never twice, even if Discord fails halfway
    await announceWith(`Rediffusion de l'embuscade : ${list(s.attackers.map(c=>nameOf(c)))} encerclent ${list(s.defenders)}, acculé·es dos à dos !`,
-    ()=>(renderSiege??require('./pomSiege').renderSiege)(s.defenders.map(character=>({character})),s.attackers.map(character=>({character,stage:spriteOf(character)})),s.outcome,Math.floor(random()*2**31)).then(r=>r&&{attachment:r.attachment,name:r.name}));
+    ()=>(renderSiege??(async()=>null))(s.defenders.map(character=>({character})),s.attackers.map(character=>({character,stage:spriteOf(character)})),s.outcome,Math.floor(random()*2**31)).then(r=>r&&{attachment:r.attachment,name:r.name}));
    for(const character of s.fallen??[])await announceWith('Rediffusion : '+symptoms(character),()=>null);
   }
  }
@@ -205,7 +205,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   if(defenders.length<3)return;
   const attackers=shuffled(poms).slice(0,3);
   let outcome=['repel','rescue','flee','devour'][Math.floor(random()*4)],result=null;
-  try{result=await (renderSiege??require('./pomSiege').renderSiege)(defenders.map(character=>({character})),attackers.map(character=>({character,stage:spriteOf(character)})),outcome,Math.floor(random()*2**31));}
+  try{result=await (renderSiege??(async()=>null))(defenders.map(character=>({character})),attackers.map(character=>({character,stage:spriteOf(character)})),outcome,Math.floor(random()*2**31));}
   catch(error){log('rhumertume: siege: '+error.message);}
   // without the picture, the draw alone decides who falls
   outcome=result?.outcome??outcome;
