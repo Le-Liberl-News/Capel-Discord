@@ -85,7 +85,7 @@
         "sud": {
           "to": 7,
           "fail": "Le passage qui mène à la bibliothèque s'est refermé.",
-          "must": [
+          "mustnot": [
             "couloir_ouvert",
             "vinyle_pose"
           ]
