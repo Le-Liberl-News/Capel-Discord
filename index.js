@@ -213,8 +213,8 @@ app.post('/debug-screen', upload.single('screenshot'), async (req, res) => {
     }
 });
 
-// until October 31: characters of the roleplay chat catch the rhumertume, see utils/rhumertume.js
-const rhumertume=require('./utils/rhumertume').createRhumertume({store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
+// Preserve existing pom identities, with all automatic RP events disabled.
+const rhumertume=require('./utils/rhumertume').createRhumertume({automaticEvents:false,store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/rhumertume.json')),charactersOfTheDay:()=>require('./commands/anonyme').getAssignedCharacterNames(),characterNames:require('./utils/characters').characterNames,announce:async(text,files=[])=>{const channel=await client.channels.fetch(process.env.ROLEPLAY_ID);await channel.send({content:text,files,allowedMentions:{parse:[]}});},log:console.log});
 // Halloween text adventure: invitation (and closing words) in channelId, played in DMs; every game started or won is
 // told in test-discord (notifyChannelId), which stays when the invitation moves to another channel
 const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,archive:require('./utils/adventure/lineArchive').createLineArchive(path.join(__dirname,'.runtime/adventure-outbox')),data:require('./rpg/data/aventure.json'),store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'889835278494203915',notifyChannelId:'889835278494203915'});
@@ -224,7 +224,6 @@ require('./utils/adventure/platformSync').startAdventureSync({adventure,log:cons
 try { require('./utils/adventure/web').registerAdventureWeb({app,adventure}); }
 catch(error){console.error('Aventure navigateur indisponible:',error.code||error.message);app.post('/api/adventure/play',(req,res)=>res.status(503).json({error:'La passerelle de l’aventure est temporairement indisponible.'}));}
 client.rhumertume=rhumertume;
-setInterval(()=>{if(client.isReady())rhumertume.tick().catch(e=>console.error('Rhumertume:',e.message));},30000).unref();
 // catches up the ranking's nightly update when midnight was missed (the bot down, Discord or the database failing)
 client.once('clientReady',()=>{const rattraper=()=>miseAJourQuotidienne(client).catch(e=>console.error('Classement :',e));setTimeout(rattraper,60000);setInterval(rattraper,15*60000);});
 
@@ -303,7 +302,6 @@ client.on('messageCreate', async message => {
         if (fichiersTelecharges.length > 0) payload.files = fichiersTelecharges;
         if (message.channelId === threadId) payload.threadId = threadId;
         await webhook.send( payload );
-        if (malade) rhumertume.after(pseudo).catch(e => console.error('Rhumertume :', e.message));
         await defendreLeLiberl({ channel: message.channel, pseudo, texte, state, saveState, databasePersos });
 
     } catch (e) { console.error("Erreur envoi anonymisé :", e); }

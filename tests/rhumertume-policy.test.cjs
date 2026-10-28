@@ -29,3 +29,12 @@ test('an overdue ambush is recovered after 23 rather than silently dropped',asyn
  const fs=require('node:fs');const source=fs.readFileSync(require.resolve('../utils/rhumertume'),'utf8');
  assert.ok(!source.includes("require('./pomSiege')"));assert.ok(!source.includes('pictures().renderEvolution('));
  });
+
+test('quiet production RP preserves pom identity without automatic events or catch-up',async()=>{
+ const data={infected:{NPC1:at('09:00:00'),NPC2:at('09:00:00'),NPC3:at('09:00:00')},pending:{NPC4:{cause:'pending',at:at('09:00:00')}},siegeSchedule:{[DATE]:600}};
+ const store={load:()=>structuredClone(data),save:()=>{}};const said=[];
+ const r=createRhumertume({automaticEvents:false,store,now:()=>at('20:00:00'),random:()=>0,charactersOfTheDay:async()=>[],characterNames:['NPC1','NPC2','NPC3','NPC4'],render,announce:async(...args)=>said.push(args)});
+ await r.tick();await r.message('NPC1','!?!');await r.after('NPC1');await r.tick();
+ assert.deepEqual(said,[]);assert.ok(r.isInfected('NPC1'));assert.ok(!r.isInfected('NPC4'));assert.ok(r.roleplay('NPC1','Bonjour').username.startsWith('Pom'));
+ const fs=require('node:fs'),index=fs.readFileSync(require.resolve('../index'),'utf8');assert.ok(index.includes('automaticEvents:false'));assert.ok(!index.includes('rhumertume.tick()'));assert.ok(!index.includes('rhumertume.after(pseudo)'));assert.ok(!fs.readFileSync(require.resolve('../commands/anonyme'),'utf8').includes('rhumertume.after(pseudo)'));
+});

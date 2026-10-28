@@ -52,7 +52,7 @@ function moods(text){
  return [rage-calm,madness-calm];
 }
 const symptoms=character=>`${character} semble développer des symptômes préoccupants.`;
-function createRhumertume({store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],dailyCases=CASES_PER_DAY,hasCraft=character=>require('../resources/pom/crafted.json').includes(character),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
+function createRhumertume({automaticEvents=true,store,now=()=>Date.now(),random=Math.random,charactersOfTheDay,characterNames=[],dailyCases=CASES_PER_DAY,hasCraft=character=>require('../resources/pom/crafted.json').includes(character),announce,render,renderSiege,renderWizard,wait=ms=>new Promise(r=>setTimeout(r,ms)),log=()=>{}}){
  const state={schedule:{},drawn:{},infected:{},patients:{},sieges:{},bites:{},pending:{},...(store.load()??{})};
  state.playerCases??={};state.siegeSchedule??={};state.patients??={};state.sieges??={};state.bites??={};state.pending??={};
  const save=()=>store.save(state);
@@ -148,6 +148,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
  }
  let busy=false,waiting=null;
  async function tick(){
+  if(!automaticEvents)return;
   if(busy)return;busy=true;
   try{
    // an evolution that cannot be announced must not hold the day's cases back
@@ -259,6 +260,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   if(outcome==='vanish'){await wait(3000);await catches(victim,'sort de '+character);}
  }
  async function after(character){
+  if(!automaticEvents)return;
   if(stage(character)==null)return;
   const p=patient(character),t=now();
   const today=parisParts(t).date;

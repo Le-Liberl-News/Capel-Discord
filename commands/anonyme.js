@@ -123,7 +123,6 @@ async function execute(interaction) {
         if (interaction.channelId !== roleplayId) payload.threadId = threadId;
         
         await webhook.send(payload);
-        if (malade) interaction.client.rhumertume.after(pseudo).catch(e => console.error('Rhumertume :', e.message));
         await interaction.reply({ content: "Message anonyme envoyé !", flags: ['Ephemeral'] });
         await defendreLeLiberl({ channel: interaction.channel, pseudo, texte, state, saveState, databasePersos });
 
