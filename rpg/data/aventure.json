@@ -82,7 +82,14 @@
           ],
           "fail": "Vous ne pouvez pas aller par là."
         },
-        "sud": 7
+        "sud": {
+          "to": 7,
+          "fail": "Le passage qui mène à la bibliothèque s'est refermé.",
+          "must": [
+            "couloir_ouvert",
+            "vinyle_pose"
+          ]
+        }
       },
       "description": "Vous êtes dans un bureau."
     },
@@ -162,7 +169,7 @@
           "fail": "Vous ne pouvez pas aller par là."
         }
       },
-      "description": "L'étagère est garnie de livres sur des sujets divers et variés : danse, musique, jardinage, cuisine, décoration, peinture, etc."
+      "description": "L'étagère est garnie de livres sur des sujets divers et variés : danse, jardinage, cuisine, décoration, peinture, etc."
     },
     {
       "id": 74,
@@ -324,7 +331,7 @@
       "id": 18,
       "name": "Salle du trône",
       "exits": {},
-      "description": "Vous entrez dans une salle... qui n'en est plus vraiment une. Elle n'a plus de plafond, et un vent glaçant s'infiltre au milieu des brèches béantes formées dans les murs à divers endroits. Vous posez les pieds sur un tapis rouge qui, quelque pas plus loin, après avoir monté quelques marches, se coupe net en une forme d'arc de cercle inversé. Vous relevez les yeux pour jauger le trône monumental qui vous fait face. La créature qui y siège ne vous regarde pas. Son cou, long comme celui d'un flammand, est courbé vers les hauteurs, tout comme ses yeux écarquillés. Ses membres filiformes rappellent davantage des plantes grimpantes que quoi que ce soit d'animal.\nLa créature se balance lentement de gauche à droite. Sa peau est sombre comme la nuit, mais on ne la distingue clairement qu'autour de ses yeux, brillants comme des étoiles.\nDe droite à gauche. Tout le reste de son corps est couvert d'une épaisse toison cuivrée rougeoyante, luisant comme si elle était trempée.\nDe gauche à droite. Dans sa paume gauche, elle sert quelque chose. Et ce quelque chose... c'est ce qui vous a attiré ici, vous en êtes certain. Vous tentez de le lui arracher de toutes vos forces, mais ça ne suffit pas.\nDe haut en bas... La créature vous accorde un regard intrigué, la tête penchée sur le côté, mais se désintéresse vite.\nDe bas en haut.\nVous aurez besoin de la force conjointe de vos congénères pour arracher à cette créature l'antidote que vous êtes venu chercher. Il ne peut en être autrement.\n\nFélicitations, vous êtes arrivé à bout de cette aventure ! Comme l'indiquait cette dernière description, il est nécessaire que plusieurs joueurs arrivent au même endroit que vous pour conclure cette histoire (3 joueurs au total, précisément). N'hésitez pas à leur recommander d'essayer ce jeu, s'il vous a plu !"
+      "description": "Vous entrez dans une salle... qui n'en est plus vraiment une. Elle n'a plus de plafond, et un vent glaçant s'infiltre au milieu des brèches béantes formées dans les murs à divers endroits. Vous posez les pieds sur un tapis rouge qui, quelque pas plus loin, après avoir monté quelques marches, se coupe net en une forme d'arc de cercle inversé. Vous relevez les yeux pour jauger le trône monumental qui vous fait face. La créature qui y siège ne vous regarde pas. Son cou, long comme celui d'un flamand, est courbé vers les hauteurs, ses yeux écarquillés. Ses membres filiformes rappellent davantage des plantes grimpantes que quoi que ce soit d'animal.\nLa créature se balance lentement de gauche à droite. Sa peau est sombre comme la nuit, mais on ne la distingue clairement qu'autour de ses yeux, brillants comme des étoiles.\nDe droite à gauche. Tout le reste de son corps est couvert d'une épaisse toison cuivrée rougeoyante, luisant comme si elle était trempée.\nDe gauche à droite. Dans sa paume gauche, elle sert quelque chose. Et ce quelque chose... c'est ce qui vous a attiré ici, vous en êtes certain. Vous tentez de le lui arracher de toutes vos forces, mais ça ne suffit pas.\nDe haut en bas... La créature vous accorde un regard intrigué, la tête penchée sur le côté, mais se désintéresse vite.\nDe bas en haut.\nVous aurez besoin de la force conjointe de vos congénères pour arracher à cette créature l'antidote que vous êtes venu chercher. Il ne peut en être autrement.\n\nFélicitations, vous êtes arrivé à bout de cette aventure ! Comme l'indiquait cette dernière description, il est nécessaire que plusieurs joueurs arrivent au même endroit que vous pour conclure cette histoire (3 joueurs au total, précisément). N'hésitez pas à leur recommander d'essayer ce jeu, s'il vous a plu !"
     },
     {
       "id": 20,
@@ -480,12 +487,12 @@
       "attraper",
       "saisir",
       "soulever",
-      "sortir",
       "retirer"
     ],
     "ouvrir": [
       "ouvre",
-      "deverrouiller"
+      "deverrouiller",
+      "crocheter"
     ],
     "ranger": [
       "poser",
@@ -505,7 +512,9 @@
       "inspecter",
       "consulter",
       "consulte",
-      "fouiller"
+      "fouiller",
+      "chercher",
+      "scruter"
     ],
     "allumer": [
       "activer"
@@ -527,7 +536,8 @@
       "defaire",
       "demonter",
       "demolir",
-      "detruire"
+      "detruire",
+      "taper"
     ],
     "dormir": [
       "coucher"
@@ -546,6 +556,12 @@
     "sauter": [
       "bondir",
       "sautiller"
+    ],
+    "bonjour": [
+      "coucou"
+    ],
+    "appuyer": [
+      "presser"
     ]
   },
   "nouns": {
@@ -642,7 +658,9 @@
     ],
     "carte": [
       "cartes",
-      "tarot"
+      "tarot",
+      "atout",
+      "atouts"
     ],
     "gramophone": [
       "platine"
@@ -825,9 +843,25 @@
       "bd",
       "bande-dessinée",
       "bande-dessinées"
+    ],
+    "sciences": [
+      "science"
+    ],
+    "trophee": [
+      "trophees"
     ]
   },
   "actions": [
+    {
+      "place": [
+        16
+      ],
+      "verb": "allumer",
+      "noun": [
+        "lampe"
+      ],
+      "text": "Votre lampe-torche est arrivé à court de batterie."
+    },
     {
       "place": [
         0
@@ -843,6 +877,16 @@
         "lampe_allumee"
       ],
       "text": "Votre lampe est désormais allumée."
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "eteindre",
+      "noun": [
+        "lampe"
+      ],
+      "text": "Il fait trop sombre ici. Vous ne verrez plus rien si vous l'éteignez."
     },
     {
       "place": [
@@ -989,6 +1033,16 @@
         2
       ],
       "verb": "regarder",
+      "text": "L'étagère est couverte de trophées en tous genres.",
+      "noun": [
+        "trophée"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
       "noun": [
         "porte-manteau"
       ],
@@ -1046,7 +1100,7 @@
       "noun": [
         "manteau"
       ],
-      "text": "Quel manteau souhaitez-vous regarder ?"
+      "text": "Des manteaux de couleurs différentes sont posés sur les porte-manteaux : rouge au nord-ouest, violet au nord-est, gris au sud-ouest, blanc au sud-est."
     },
     {
       "place": [
@@ -1159,7 +1213,7 @@
       "mustnot": [
         "cle_prise"
       ],
-      "text": "La machine est couverte de terre et de morceaux de poterie. La clé s'est logée dans un de ces creux."
+      "text": "La machine est couverte de terre et de morceaux de poterie. La clé s'est logée dans un de ses creux."
     },
     {
       "place": [
@@ -1345,6 +1399,16 @@
     },
     {
       "place": [
+        23
+      ],
+      "verb": "regarder",
+      "noun": [
+        "plafond"
+      ],
+      "text": "Vous remarquez une sorte de E discret tracé sur le plafond."
+    },
+    {
+      "place": [
         24
       ],
       "verb": "regarder",
@@ -1507,7 +1571,7 @@
     },
     {
       "place": [
-        3
+        0
       ],
       "verb": "prendre",
       "noun": [
@@ -1520,7 +1584,7 @@
     },
     {
       "place": [
-        3
+        0
       ],
       "verb": "prendre",
       "noun": [
@@ -1533,7 +1597,7 @@
     },
     {
       "place": [
-        3
+        0
       ],
       "verb": "prendre",
       "noun": [
@@ -1610,6 +1674,19 @@
         4
       ],
       "verb": "regarder",
+      "noun": [
+        "chaise"
+      ],
+      "text": "La chaise du donneur est dotée d'un dossier rouge vif.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "regarder",
       "noun": [],
       "must": [
         "escalier_decouvert"
@@ -1623,22 +1700,6 @@
       "verb": "regarder",
       "noun": [
         "tapis"
-      ],
-      "mustnot": [
-        "escalier_decouvert"
-      ],
-      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*",
-      "effect": [
-        "cartes_vues"
-      ]
-    },
-    {
-      "place": [
-        4
-      ],
-      "verb": "regarder",
-      "noun": [
-        "carte"
       ],
       "mustnot": [
         "escalier_decouvert"
@@ -1741,6 +1802,19 @@
         "lampe_obtenue"
       ],
       "text": "Vous trouvez à l'intérieur du tiroir une lampe. Vous la récupérez."
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "regarder",
+      "noun": [
+        "tiroir"
+      ],
+      "text": "Le tiroir ne contenait qu'une lampe-torche. Il est maintenant vide.",
+      "must": [
+        "lampe_obtenue"
+      ]
     },
     {
       "place": [
@@ -2072,6 +2146,30 @@
       "text": "Une femme se trouve de l'autre côté des grilles. Vous ne la voyez pas très bien à la lumière vacillante de votre lampe, mais elle est assise dans une posture tout à fait droite, le regard fixe... posé sur vous, depuis que vous êtes entré. Son visage ne transcrit aucune émotion. Des traces rouges parsèment son corps dénudé, révélé par ses vêtements déchirés. Le sol est recouvert de laine, celle-ci imbibée d'une matière visqueuse.",
       "effect": [
         "femme_trouvee"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "regarder",
+      "noun": [],
+      "text": "Les grilles sont éparpillées sur le sol. La femme a disparu.",
+      "must": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "text": "La femme n'est plus ici.",
+      "must": [
+        "escalier_decouvert"
       ]
     },
     {
@@ -2082,7 +2180,10 @@
       "noun": [
         "pom"
       ],
-      "text": "Vous remarquez que la femme tressaillit un instant. Ses yeux s'écarquillent, sa bouche se tord... puis elle revient à sa position initiale, immobile."
+      "text": "Vous remarquez que la femme tressaillit un instant. Ses yeux s'écarquillent, sa bouche se tord... puis elle revient à sa position initiale, immobile.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -2095,6 +2196,9 @@
       "text": "La femme fronce les sourcils et tourne lentement la tête vers le haut, sur sa gauche. Elle se met à se balancer lentement et ouvre la bouche :\n« Le rouge est la couleur du sang... Le violet est la couleur du vin... Le gris est une couleur de lin... Et le blanc est une couleur en devenir... Quand il enveloppe un objet, c'est comme si le blanc devenait... l'objet.\nEt surtout... ne vous fiez pas qu'à vos yeux... si vous avez des oreilles. »",
       "effect": [
         "monologue_entendu"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
       ]
     },
     {
@@ -2104,7 +2208,10 @@
       "verb": "parler",
       "noun": [],
       "text": "De quoi souhaitez-vous parler à cette femme ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)",
-      "alone": true
+      "alone": true,
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -2112,7 +2219,10 @@
       ],
       "verb": "parler",
       "noun": [],
-      "text": "La femme continue de vous regarder, impassible."
+      "text": "La femme continue de vous regarder, impassible.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -2122,7 +2232,20 @@
       "noun": [
         "femme"
       ],
-      "text": "De quoi souhaitez-vous parler à cette femme ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)"
+      "text": "De quoi souhaitez-vous parler à cette femme ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "bonjour",
+      "text": "Vous saluez la femme, mais aucun signe ne vous permet de savoir si elle vous a entendu.\nDe quoi souhaitez-vous lui parler ? (*pour aborder un sujet avec elle, utilisez une commande du type \"parler de sujet\"*)",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -2132,7 +2255,10 @@
       "noun": [
         "femme"
       ],
-      "text": "La femme reste dans l'immobilité la plus totale. On pourrait presque croire qu'elle ne vous a pas remarqué.\nPeut-être pourriez-vous essayer de lui parler ? (*pour parler d'un sujet avec cette femme, utilisez une commande du type \"parler de sujet\"*)"
+      "text": "La femme reste dans l'immobilité la plus totale. On pourrait presque croire qu'elle ne vous a pas remarqué.\nPeut-être pourriez-vous essayer de lui parler ? (*pour parler d'un sujet avec cette femme, utilisez une commande du type \"parler de sujet\"*)",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -2140,7 +2266,10 @@
       ],
       "verb": "casser",
       "noun": [],
-      "text": "La femme se tend soudain et vous interrompt : « ARRÊTEZ. »."
+      "text": "La femme se tend soudain et vous interrompt : « ARRÊTEZ. ».",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -2573,7 +2702,7 @@
       "mustnot": [
         "chambre_ouverte"
       ],
-      "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nLe couloir se poursuit vers le sud par la porte que vous avez déverrouillée."
+      "text": "Une porte à l'ouest est entrebaillée.\nUne autre porte, à l'est, ne semble pas fermée à clé mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nLe couloir se poursuit vers le sud par la porte que vous avez déverrouillée."
     },
     {
       "place": [
@@ -2599,19 +2728,7 @@
         "couloir_ouvert",
         "chambre_ouverte"
       ],
-      "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
-    },
-    {
-      "place": [
-        15
-      ],
-      "verb": "regarder",
-      "noun": [],
-      "mustnot": [
-        "couloir_ouvert",
-        "chambre_ouverte"
-      ],
-      "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
+      "text": "Une porte à l'ouest est entrebaillée.\nUne autre porte, à l'est, ne semble pas fermée à clé mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
     },
     {
       "place": [
@@ -2740,18 +2857,6 @@
         "porte"
       ],
       "text": "Laquelle souhaitez-vous ouvrir : la porte est ou la porte sud ?"
-    },
-    {
-      "place": [
-        15
-      ],
-      "verb": "regarder",
-      "noun": [],
-      "mustnot": [
-        "couloir_ouvert",
-        "chambre_ouverte"
-      ],
-      "text": "Une porte à l'ouest est entrebaillée.\nLa porte en face ne semble pas fermée à clé, mais sa poignée a été retirée, si bien qu'on ne peut plus l'ouvrir à la main. Un trou métallique carré se trouve à l'endroit où la poignée était jadis emboîtée.\nUne dernière porte au sud est fermée à clé."
     },
     {
       "place": [
@@ -3153,6 +3258,28 @@
     },
     {
       "place": [
+        16
+      ],
+      "verb": "appuyer",
+      "text": "Vous appuyez sur le bouton pour déverrouiller la cage. L'humain semble d'abord méfiant et n'ose pas sortir. Au bout d'une minute environ, il finit cependant par faire un pas, puis deux, puis s'enfuit à toutes jambes loin de vous avant de s'arrêter quelques instants. Sa respiration est lourde, il est déjà essoufflé. Alors, il se recroqueville pour ramasser quelque chose entre deux cuves et vous le lance. C'est une clé.\nAprès cela, l'humain se met à escalader précautionneusement les cuves dans un coin de la salle pour atteindre une brèche dans le plafond, vous jette un dernier regard, et s'enfuit pour de bon. Vous ramassez alors la clé.",
+      "mustnot": [
+        "cage_ouverte"
+      ],
+      "must": [
+        "rideaux_ouverts"
+      ],
+      "give": [
+        "cle"
+      ],
+      "effect": [
+        "cage_ouverte"
+      ],
+      "noun": [
+        "bouton"
+      ]
+    },
+    {
+      "place": [
         0
       ],
       "verb": "casser",
@@ -3167,7 +3294,10 @@
       "noun": [
         "potiron"
       ],
-      "text": "La femme se renfrogne légèrement l'espace d'un instant."
+      "text": "La femme se renfrogne légèrement l'espace d'un instant.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3177,7 +3307,10 @@
       "noun": [
         "laine"
       ],
-      "text": "La femme plisse les yeux et sa respiration s'accélère légèrement. Elle se frotte alors précautionneusement un bras, puis un autre, puis le thorax... Passé cet examen, elle retourne à sa position initiale, l'air rassurée."
+      "text": "La femme plisse les yeux et sa respiration s'accélère légèrement. Elle se frotte alors précautionneusement un bras, puis un autre, puis le thorax... Passé cet examen, elle retourne à sa position initiale, l'air rassurée.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3309,7 +3442,10 @@
       "noun": [
         "statue"
       ],
-      "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie."
+      "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3319,7 +3455,10 @@
       "noun": [
         "famille"
       ],
-      "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie."
+      "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3329,7 +3468,10 @@
       "noun": [
         "homme"
       ],
-      "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie."
+      "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3339,7 +3481,23 @@
       "noun": [
         "vous"
       ],
-      "text": "La femme vous regarde sans rien dire."
+      "text": "La femme vous regarde sans rien dire.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "text": "La femme semble esquisser un sourire l'espace d'un instant, mais vous n'en êtes pas certain.",
+      "mustnot": [
+        "escalier_decouvert"
+      ],
+      "noun": [
+        "musique"
+      ]
     },
     {
       "place": [
@@ -3349,7 +3507,10 @@
       "noun": [
         "cave"
       ],
-      "text": "La femme vous regarde sans rien dire."
+      "text": "La femme vous regarde sans rien dire.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3359,7 +3520,10 @@
       "noun": [
         "manoir"
       ],
-      "text": "La femme vous regarde sans rien dire."
+      "text": "La femme vous regarde sans rien dire.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3369,7 +3533,10 @@
       "noun": [
         "carte"
       ],
-      "text": "La femme marque une pause avant de hocher lentement la tête. Mais elle semble attendre autre chose."
+      "text": "La femme marque une pause avant de hocher lentement la tête. Mais elle semble attendre autre chose.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3379,7 +3546,10 @@
       "noun": [
         "cuisine"
       ],
-      "text": "La femme vous regarde sans rien dire, le regard vide."
+      "text": "La femme vous regarde sans rien dire, le regard vide.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3389,6 +3559,9 @@
       "text": "La femme vous regarde sans rien dire, l'air chagrinée.",
       "noun": [
         "enfant"
+      ],
+      "mustnot": [
+        "escalier_decouvert"
       ]
     },
     {
@@ -3399,7 +3572,10 @@
       "noun": [
         "manteau"
       ],
-      "text": "La femme hésite quelques instants, puis hoche la tête timidement."
+      "text": "La femme hésite quelques instants, puis hoche la tête timidement.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3414,7 +3590,10 @@
         9
       ],
       "verb": "donner",
-      "text": "La femme vous regarde bizarrement l'espace d'un instant."
+      "text": "La femme vous regarde bizarrement l'espace d'un instant.",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
     },
     {
       "place": [
@@ -3951,7 +4130,7 @@
         9
       ],
       "verb": "regarder",
-      "text": "Ces grilles n'ont pas été montés par un professionnel, semble-t-il. D'après ce que vous voyez, ils s'ont l'assemblage hâtif et maladroit de cages démontées pour l'occasion, reliés par quelques bouts de fil de fer et stabilisés par de lourdes pierres de tous les côtés.",
+      "text": "Ces grilles n'ont pas été montées par un professionnel, semble-t-il. D'après ce que vous voyez, ils s'ont l'assemblage hâtif et maladroit de cages démontées pour l'occasion, reliés par quelques bouts de fil de fer et stabilisés par de lourdes pierres de tous les côtés.",
       "noun": [
         "barreau"
       ],
@@ -3991,6 +4170,16 @@
         "fenetre"
       ],
       "text": "Les fenêtres sont toutes plus ou moins détruites. Il vaut mieux ne pas y toucher."
+    },
+    {
+      "place": [
+        12
+      ],
+      "verb": "regarder",
+      "noun": [
+        "fenetre"
+      ],
+      "text": "Les fenêtres sont toutes plus ou moins détruites."
     },
     {
       "place": [
@@ -4206,6 +4395,21 @@
     },
     {
       "place": [
+        5,
+        9
+      ],
+      "verb": "prendre",
+      "noun": [
+        "laine",
+        "fourchette"
+      ],
+      "text": "C'est de la laine, pas des spaghettis.",
+      "tool": [
+        "fourchette"
+      ]
+    },
+    {
+      "place": [
         16
       ],
       "verb": "regarder",
@@ -4327,6 +4531,40 @@
       "noun": [
         "cuisine"
       ]
+    },
+    {
+      "place": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28
+      ],
+      "verb": "tourner",
+      "noun": [],
+      "text": "Vous tentez de tournoyer, mais rien ne se passe."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "ecouter",
+      "noun": [],
+      "text": "Vous tendez l'oreille, mais n'entendez rien de spécial."
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "regarder",
+      "noun": [
+        "trou"
+      ],
+      "text": "Vous essayez de voir de l'autre côté de la porte par le trou mais vous ne voyez quasiment rien."
     }
   ]
 }
