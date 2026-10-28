@@ -37,14 +37,14 @@ test('a day picked up after 13:00 gets no draw, an earlier one only times still 
  now=at('2026-10-22T09:30:00Z');await r.tick();
  assert.ok(store.load().schedule['2026-10-22'].every(m=>m>=11*60+30));
 });
-test('PomX, then one evolution only, after about 3h30, into a final form; announced once like a Pokémon evolution',async()=>{
+test('PomX, then one evolution only, after about 3h30, into a final form; announced once without rendering an evolution GIF',async()=>{
  let now=at('2026-10-25T09:00:00Z');
  const {r,said}=setup({now:()=>now});   // random .5: the evolution at 3h30, the third final form (Pomdeter)
  await r.infect('Tita');said.length=0;
  assert.equal(r.nameOf('Tita'),'Pomtita');assert.equal(r.roleplay('Tita','Salut').avatarURL,'pom/Tita-1.png');
  now+=3.4*HOUR;await r.tick();assert.equal(said.length,0);assert.equal(r.level('Tita'),1);
  now+=.2*HOUR;await r.tick();await r.tick();
- assert.deepEqual(said,[{text:'Pomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:['evolution Tita 1->3']}]);
+ assert.deepEqual(said,[{text:'Pomtita se transforme en Pomdetertita. L’armée des pom-tirons se renforce ! (1 lieutenant pom-tirons)',files:[]}]);
  assert.equal(r.roleplay('Tita','Salut').username,'Pomdetertita');assert.equal(r.roleplay('Tita','x').avatarURL,'pom/Tita-3.png');
  now+=20*HOUR;await r.tick();assert.equal(said.length,1);assert.equal(r.level('Tita'),3);
 });
@@ -81,7 +81,7 @@ test('the bite: now and then a pom bites someone who spoke lately, who may catch
  await r.message('Tita','Bonjour.');await r.after('Tita');assert.equal(said.length,0);   // not this time
  roll=0;await r.message('Tita','Bonjour.');await r.after('Tita');
  assert.equal(said[0].text,'Pomtita rentre dans une rage incontrôlable.\nPris·e de rage, Pomtita mord Kloe !');assert.deepEqual(said[0].files,['morsure Tita 1 Kloe 0']);
- assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,['evolution Kloe 0->1']);
+ assert.match(said[1].text,/Kloe semble développer des symptômes/);assert.deepEqual(said[1].files,[]);
  assert.ok(r.isInfected('Kloe'));
  const bites=()=>said.filter(x=>/rage incontrôlable|enfourche son aspirateur/.test(x.text)).length;   // a wizard pom's bite is a spell
  await r.message('Joshua','Coucou.');await r.message('Tita','Pom.');await r.after('Tita');assert.equal(bites(),1);   // no second bite
@@ -166,13 +166,13 @@ test('a case cut short before its announcement is announced on the next tick, ne
  assert.equal(store.load().pending.Anelace,undefined);assert.match(store.load().patients.Anelace.cause,/tirage du jour/);
 });
 
-test('a garou final form persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>.9,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');r=make();now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.ok(calls.includes('garou'));assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,1);});
+test('a garou final form persists and uses the hair avatar',async()=>{let now=at('2026-10-20T08:00:00Z');const store=memory(),calls=[];const renderer={...render,renderEvolution:async(c,f,t)=>{calls.push(t);return {name:'evolution'};}};const make=()=>createRhumertume({store,now:()=>now,random:()=>.9,charactersOfTheDay:async()=>[],characterNames:names,render:renderer,announce:async()=>{}});let r=make();await r.infect('Tita');assert.equal(r.variant('Tita'),'pom');r=make();now+=20*HOUR;await r.tick();assert.equal(r.variant('Tita'),'garou');assert.deepEqual(calls,[]);assert.match(r.roleplay('Tita','Salut').avatarURL,/Tita-garou/);r=make();await r.tick();assert.equal(r.variant('Tita'),'garou');assert.equal(calls.filter(t=>t==='garou').length,0);});
 test("the wizard pom: Pom-d'aspi, with its own picture and evolution, for good",async()=>{
  let now=at('2026-10-26T09:00:00Z');const start=now;
  const {r,said}=setup({now:()=>now,random:()=>0});   // random 0: the wizard form, at the shortest time
  await r.infect('Tita');said.length=0;
  now=start+2*3600000;await r.tick();
- assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.deepEqual(said.at(-1).files,['evolution Tita 1->aspi']);
+ assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.deepEqual(said.at(-1).files,[]);
  assert.equal((await r.message('Tita','Bonjour.')).avatarURL,'pom/Tita-aspi.png');
  now=start+20*3600000;await r.tick();assert.equal(r.nameOf('Tita'),'Pom-d’aspitita');assert.equal(said.filter(s=>/se transforme/.test(s.text)).length,1);
 });
@@ -205,5 +205,5 @@ test("the ambush whose GIFs were missed on 25 October is shown again once, with 
  await r.tick();await r.tick();
  const replays=said.filter(m=>m.text.startsWith('Rediffusion'));
  assert.equal(replays.length,4);assert.match(replays[0].text,/encerclent Joshua, Agate et Aina/);assert.deepEqual(replays[0].files,['siege.gif']);
- assert.deepEqual(replays.slice(1).map(m=>m.files[0]),['evolution Joshua 0->1','evolution Agate 0->1','evolution Aina 0->1']);
+ assert.deepEqual(replays.slice(1).map(m=>m.files),[[],[],[]]);
 });

@@ -7,7 +7,7 @@ const {GIFEncoder,quantize,applyPalette}=require('gifenc');
 const {render}=require('./mediaRender');
 // the pictures they are made of, kept from the retired activity's assets (same layout)
 const SKY=path.join(__dirname,'../resources/pom');
-const POM_BASE='https://leliberlnews.fr/activite/assets/sky/chat/pom';
+const POM_BASE='https://leliberlnews.fr/assets/pom-portraits';
 const W=560,LEFT=34,LINE=31,EVOLUTION=256;
 GlobalFonts.registerFromPath(path.join(SKY,'dialogue/AveriaSansLibre-Regular.ttf'),'AveriaSky');
 const font=size=>`${size}px AveriaSky`;

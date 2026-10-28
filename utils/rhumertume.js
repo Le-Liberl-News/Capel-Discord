@@ -125,7 +125,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   }
   state.pending[character]={cause,at:now()};save();
   // a new case that cannot be announced is dropped (its draw is undone); a case being announced again stays pending
-  try{await announceWith(symptoms(character),()=>pictures().renderEvolution(character,0,1));}
+  try{await announceWith(symptoms(character),()=>null);}
   catch(error){if(!retry){delete state.pending[character];save();}throw error;}
   const spread=()=>(random()*2-1)*STAGE_SPREAD,second=STAGE_TIMES[0]+spread(),third=Math.max(second+HOUR,STAGE_TIMES[1]+spread());
   delete state.pending[character];
@@ -142,7 +142,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    const p=patient(character),lvl=level(character);
    if(lvl<=p.announced)continue;   // not yet, or announced already
    const army=Object.keys(state.infected).length;
-   await announceWith(`${nameOf(character,1)} se transforme en ${nameOf(character,lvl)}. L’armée des pom-tirons se renforce ! (${army} lieutenant${army>1?'s':''} pom-tirons)`,()=>pictures().renderEvolution(character,spriteOf(character,1),spriteOf(character,lvl)));
+   await announceWith(`${nameOf(character,1)} se transforme en ${nameOf(character,lvl)}. L’armée des pom-tirons se renforce ! (${army} lieutenant${army>1?'s':''} pom-tirons)`,()=>null);
    p.announced=lvl;save();
   }
  }
@@ -179,7 +179,7 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
    state.replayed=[...(state.replayed??[]),date];save();   // never twice, even if Discord fails halfway
    await announceWith(`Rediffusion de l'embuscade : ${list(s.attackers.map(c=>nameOf(c)))} encerclent ${list(s.defenders)}, acculé·es dos à dos !`,
     ()=>(renderSiege??require('./pomSiege').renderSiege)(s.defenders.map(character=>({character})),s.attackers.map(character=>({character,stage:spriteOf(character)})),s.outcome,Math.floor(random()*2**31)).then(r=>r&&{attachment:r.attachment,name:r.name}));
-   for(const character of s.fallen??[])await announceWith('Rediffusion : '+symptoms(character),()=>pictures().renderEvolution(character,0,1));
+   for(const character of s.fallen??[])await announceWith('Rediffusion : '+symptoms(character),()=>null);
   }
  }
  // The daily ambush has its own persisted random Paris time, from 10:00 to 23:00.
