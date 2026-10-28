@@ -10,12 +10,13 @@ test('anonymous browser saves, retries, commands and restart use the existing ga
  const other='web_'+'b'.repeat(24);await reloaded.web({id:other,action:'start',requestId:requestId()});await reloaded.web({id:other,action:'command',text:'nord',requestId:requestId()});assert.equal(reloaded.webView(id).ended,true);assert.ok(reloaded.webView(id).lines.some(l=>l.text==='Victoire !'));assert.equal(env.fetches,0);
  await reloaded.web({id,action:'restart',requestId:requestId()});assert.equal(reloaded.webView(id).room.id,'1');assert.equal(reloaded.webView(id).inventory.length,0);
 });
-test('signed gateway rejects forged identities and expired capabilities',async()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'adventure-web-test-')),secretFile=path.join(dir,'key');const env=setup(),app=express();app.use(express.json());registerAdventureWeb({app,adventure:env.create(),secretFile});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const url='http://127.0.0.1:'+server.address().port+'/api/adventure/play';
+test('signed gateway rejects forged identities and expired capabilities',async()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'adventure-web-test-')),secretFile=path.join(dir,'key');const env=setup(),app=express();app.use(express.json());registerAdventureWeb({app,adventure:env.create(),secretFile,teaserNotifications:{notify:async visitor=>({accepted:true,visitor})}});const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const url='http://127.0.0.1:'+server.address().port+'/api/adventure/play';
  const secret=fs.readFileSync(secretFile,'utf8');const auth=(expires,player=id)=>{const v=player+'.'+expires;return 'Adventure '+v+'.'+crypto.createHmac('sha256',secret).update(v).digest('hex');};
  try{const call=authorization=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:authorization},body:JSON.stringify({action:'state',id:'123456789012345678'})});
   assert.equal((await call('')).status,401);assert.equal((await call(auth(Math.floor(Date.now()/1000)-1))).status,401);
   let response=await call(auth(Math.floor(Date.now()/1000)+120));assert.equal(response.status,200);assert.equal((await response.json()).started,false);
   assert.equal((await call(auth(Math.floor(Date.now()/1000)+120).replace(id,'web_'+'c'.repeat(24)))).status,401);
+  response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:auth(Math.floor(Date.now()/1000)+120)},body:JSON.stringify({action:'countdown-reached',id:'forged',recipient:'forged'})});assert.equal(response.status,200);assert.deepEqual(await response.json(),{accepted:true,visitor:id});
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));fs.unlinkSync(secretFile);fs.rmdirSync(dir);}
 });
 
