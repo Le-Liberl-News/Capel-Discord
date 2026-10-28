@@ -18,3 +18,31 @@ test('signed gateway rejects forged identities and expired capabilities',async()
   assert.equal((await call(auth(Math.floor(Date.now()/1000)+120).replace(id,'web_'+'c'.repeat(24)))).status,401);
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));fs.unlinkSync(secretFile);fs.rmdirSync(dir);}
 });
+
+test('browser card dealing sends ordered metadata without any server render',async()=>{
+ const data={start:1,rooms:[{id:1,description:'Table.'}],actions:[{place:[1],verb:'distribuer',noun:[],text:'Cartes.',animation:'cartes'}]};let renders=0;
+ const a=createAdventureDiscord({client:{},data,store:{load:()=>null,save:()=>{}},channelId:null,render:async()=>{renders++;throw Error('No server animation');}});
+ await a.web({id,action:'start',requestId:requestId()});const view=await a.web({id,action:'command',text:'distribuer 20-13-1-100',requestId:requestId()});
+ assert.equal(renders,0);assert.deepEqual(view.lines.at(-1).media,[{type:'cards',values:[20,13,1,100]}]);assert.equal(view.progress.room,'1');
+});
+
+test('browser chosen name persists in saves and admin snapshots without being reset by the gateway',async()=>{
+ const env=setup(),a=env.create();await assert.rejects(a.web({id,action:'start',name:' ',requestId:requestId()}),/nom/);
+ await a.web({id,action:'start',name:'  Éléonore du Lac  ',requestId:requestId()});
+ assert.equal(a.webView(id).name,'Éléonore du Lac');assert.equal(a.snapshot()[0].name,'Éléonore du Lac');
+ await a.web({id,action:'command',name:'Voyageur',text:'regarder',requestId:requestId()});assert.equal(a.webView(id).name,'Éléonore du Lac');
+ const b=env.create();assert.equal(b.webView(id).name,'Éléonore du Lac');await b.web({id,action:'start',name:'Other',requestId:requestId()});assert.equal(b.webView(id).name,'Éléonore du Lac');
+});
+
+test('browser suggestions receive full command frequencies beyond the bounded recent feed',async()=>{
+ const env=setup(),a=env.create();await a.web({id,action:'start',requestId:requestId()});
+ for(let i=0;i<125;i++)await a.web({id,action:'command',text:i<123?'regarder':'réfléchir',requestId:requestId()});
+ const view=env.create().webView(id);assert.equal(view.commandUsage.regarder,123);assert.equal(view.commandUsage['réfléchir'],2);
+});
+
+test('admin hints for anonymous browser players enter the saved journal without attempting Discord DMs',async()=>{
+ const env=setup(),a=env.create();await a.web({id,name:'Browser player',action:'start',requestId:requestId()});
+ await a.hint(id,'Cherchez près de la porte.');const line=a.webView(id).lines.at(-1);
+ assert.equal(line.kind,'hint');assert.equal(line.text,'Cherchez près de la porte.');assert.ok(line.key);assert.equal(env.fetches,0);
+ assert.equal(env.create().webView(id).lines.at(-1).text,line.text);
+});

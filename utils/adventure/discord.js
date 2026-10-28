@@ -13,7 +13,8 @@ const {ActionRowBuilder,ButtonBuilder,ButtonStyle,PermissionFlagsBits}=require('
 const path=require('node:path'),fs=require('node:fs'),crypto=require('node:crypto');
 const {createAdventure}=require('./engine');
 const roomHistory=require('./roomHistory');
-const {renderAnimation}=require('./animations');
+const {renderStill,valuesOf}=require('./animations');
+const renderFinalFrame=async(name,words)=>{if(name!=='cartes')throw Error('animation inconnue : '+name);const values=valuesOf(words);return values.length===4?renderStill(words):null;};
 const FILES=path.join(__dirname,'../../rpg/data/aventure');
 const BUTTON='aventure:jouer',LIMIT=1900;
 // Discord refuses messages over 2000 characters: cut at the last paragraph's end, else a line's, else a sentence's,
@@ -40,7 +41,7 @@ function count(typed,text){
  const command=normalize(text);typed.count++;if(!command)return;
  if(typed.commands[command]!=null||Object.keys(typed.commands).length<DISTINCT)typed.commands[command]=(typed.commands[command]??0)+1;
 }
-function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderAnimation,shareWait=30000,archive=null}){
+function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderFinalFrame,shareWait=30000,archive=null}){
  const game=createAdventure(data),webInstance=crypto.randomBytes(8).toString('hex');
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];state.shares??={};
@@ -85,7 +86,9 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    else log('Aventure, image absente :',image);
   }
   // an action's animation (the cards dealt…), drawn from what the player said; the text goes without it if it fails
-  if(result.animation){
+  if(result.animation&&channel.browser){
+   const values=valuesOf(result.animation.words);if(result.animation.name==='cartes'&&values.length===4)media.push({type:'cards',values});
+  }else if(result.animation){
    try{
     const animation=await render(result.animation.name,result.animation.words);
     if(id&&archive&&state.archiveRuns[id]?.run!==sendingRun)return;
@@ -212,6 +215,8 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // Browser transport: same player state, queue, archive, media budget and collective ending as DMs.
  function webView(id){const player=state.players[id];return {instance:webInstance,started:!!player,name:state.names[id]||'Voyageur',revision:version,
   room:player?{id:player.room,name:game.room(player.room)?.name||''}:null,
+  progress:player?structuredClone(player):null,
+  commandUsage:{...(state.typed[id]?.commands||{})},
   inventory:player?player.inventory.map(key=>({id:key,name:(data.objects||[]).find(o=>String(o.id)===key)?.name||key})):[],
   ended:state.won.includes(id),lines:(state.logs[id]||[]).map(line=>({...line,key:crypto.createHash('sha1').update(JSON.stringify(line)).digest('hex')}))};}
  async function web({id,name,action='state',text='',requestId=''}){
@@ -224,9 +229,13 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    state.webReceipts??={};const receipts=state.webReceipts[id]??=[];
    if(receipts.includes(requestId))return webView(id);
    if(action!=='start'&&!state.players[id])throw Object.assign(new Error('Commencez une partie avant de jouer.'),{status:409});
+   if(action==='start'&&!state.players[id]){
+    const chosen=String(name??'Voyageur').normalize('NFC').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/gu,' ').trim();
+    if(!chosen||Array.from(chosen).length>60)throw Object.assign(Error('Choisissez un nom de 1 à 60 caractères.'),{status:400});
+    state.names[id]=chosen;
+   }else state.names[id]??='Voyageur';
    receipts.push(requestId);if(receipts.length>24)receipts.shift();
-   state.names[id]=String(name||state.names[id]||'Voyageur').slice(0,100);
-   const channel={send:async()=>{}};
+   const channel={browser:true,send:async()=>{}};
    if(action==='start'&&state.players[id]){save();return webView(id);}
    if(action==='start'){
     state.players[id]=game.fresh();

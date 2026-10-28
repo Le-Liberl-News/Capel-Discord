@@ -215,7 +215,7 @@ test('an animation sent is kept in the log and handed once to the platform',asyn
  adv.message(dm(user('123456'),'distribuer 1, 2, 3, 4'));for(let i=0;i<200&&!adv.snapshot()[0].log.at(-1)?.media?.length;i++)await tick();
  const reply=adv.snapshot()[0].log.at(-1);
  assert.equal(reply.media[0].type,'animation');assert.match(reply.media[0].sha,/^[0-9a-f]{40}$/);
- assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.gif');
+ assert.equal(sent.dm.at(-1)[1].files[0].name,'distribution.png');
  const media=adv.media();assert.equal(media.length,1);assert.equal(media[0].sha,reply.media[0].sha);
  adv.mediaSent([media[0].sha]);assert.equal(adv.media().length,0);
 });

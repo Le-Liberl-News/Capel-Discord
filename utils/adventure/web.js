@@ -18,7 +18,7 @@ function registerAdventureWeb({app,adventure,authenticate=null,secretFile=path.j
   const rate=rates.get(user.id)||{until:0,count:0};if(rate.until<Date.now()){rate.until=Date.now()+60000;rate.count=0;}rate.count++;rates.set(user.id,rate);
   if(rate.count>120)throw Object.assign(Error('Trop de requêtes. Patientez quelques instants.'),{status:429});
   if(action==='media'){const media=adventure.webMedia(user.id,{file:req.body.file,sha:req.body.sha});if(!media)return res.status(404).json({error:'Illustration indisponible.'});return res.json(media);}
-  const result=await adventure.web({...user,action,text:req.body?.text,requestId:req.body?.requestId});res.json(result);
+  const result=await adventure.web({...user,name:action==='start'?req.body?.name:undefined,action,text:req.body?.text,requestId:req.body?.requestId});res.json(result);
  }catch(e){res.status(e.status||503).json({error:e.status?e.message:'La partie est temporairement indisponible. Votre progression est conservée.'});}});
  return {identify};
 }
