@@ -316,8 +316,8 @@ app.listen(3000, () => {
 cron.schedule('0 0 * * *', async () => {
     // the ranking's picture of the day, and the board, missions or not
     await miseAJourQuotidienne(client);
-    // from October 31 on, everyone keeps the character they have (a mini-game will decide later)
-    if (require('./utils/rhumertume').parisParts(Date.now()).date < '2026-10-31') await db.query('DELETE FROM pseudos_anonymes');
+    // Daily character renewal stays active independently of the retired automatic RP events.
+    await db.query('DELETE FROM pseudos_anonymes');
     const discu_channel = await client.channels.fetch(SALON_VOTE_ID);
     const [voting_rows] = await db.query(`SELECT voting FROM mission_actuelle WHERE id = 1`);
     const voting = voting_rows[0]?.voting;
