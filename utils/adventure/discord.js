@@ -41,7 +41,7 @@ function count(typed,text){
  const command=normalize(text);typed.count++;if(!command)return;
  if(typed.commands[command]!=null||Object.keys(typed.commands).length<DISTINCT)typed.commands[command]=(typed.commands[command]??0)+1;
 }
-function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderFinalFrame,shareWait=30000,archive=null,onCollectiveVictory=async()=>{}}){
+function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderFinalFrame,shareWait=30000,archive=null,closingAttachment=null,onCollectiveVictory=async()=>{}}){
  const game=createAdventure(data),webInstance=crypto.randomBytes(8).toString('hex');
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];state.shares??={};
@@ -153,7 +153,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   // the closing words, where the invitation to play was posted
   const closing=messages(data.final.closing),where=channelId;
   if(closing.length&&where){
-   try{const channel=await client.channels.fetch(where);for(const part of closing)await channel.send({content:part,allowedMentions:{parse:[]}});}catch(e){log('Aventure, clôture :',e.code??e);}
+   try{const channel=await client.channels.fetch(where);for(let i=0;i<closing.length;i++)await channel.send({content:closing[i],...(closingAttachment&&i===closing.length-1?{files:[{attachment:closingAttachment,name:'depomification.gif'}]}:{}),allowedMentions:{parse:[]}});}catch(e){log('Aventure, clôture :',e.code??e);}
   }
  }
  async function publishInvitation(){

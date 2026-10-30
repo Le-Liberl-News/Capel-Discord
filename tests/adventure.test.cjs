@@ -189,9 +189,10 @@ test('closing words follow the configured public channel even when an old test i
  let saved=null;const store={load:()=>saved&&JSON.parse(saved),save:s=>{saved=JSON.stringify(s);}};
  const first=createAdventureDiscord({client,data:tiny,store,channelId:'old'});
  await first.handle({isChatInputCommand:()=>true,commandName:'aventure',memberPermissions:{has:()=>true},reply:async()=>{}});
- const adv=createAdventureDiscord({client,data:tiny,store,channelId:'new'});   // the bot restarted with another channel
+ const adv=createAdventureDiscord({client,data:tiny,store,channelId:'new',closingAttachment:require('node:path').join(__dirname,'../rpg/data/aventure/announcement/depomification.gif')});   // the bot restarted with another channel
  await adv.handle(button(user('a')).i);adv.message(dm(user('a'),'nord'));for(let i=0;i<30;i++)await tick();
  assert.equal(sent.channels.old.length,1);
+ assert.equal(sent.channels.new.filter(m=>m.files).length,1);assert.equal(sent.channels.new.at(-1).files[0].name,'depomification.gif');assert.ok(require('node:fs').existsSync(sent.channels.new.at(-1).files[0].attachment));
  assert.deepEqual(sent.channels.new.map(m=>m.content.length),['Première partie.'.length,1900,600]);   // after the invitation
  assert.deepEqual(sent.dm.filter(([,m])=>/Victoire|gloire/.test(m.content)).map(([,m])=>m.content),['Victoire !','Et gloire.']);
 });
