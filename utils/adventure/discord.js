@@ -150,18 +150,22 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   for(const id of state.reached)await win(id);
   save();
   // the closing words, where the invitation to play was posted
-  const closing=messages(data.final.closing),where=state.invitation?.channel??channelId;
+  const closing=messages(data.final.closing),where=channelId;
   if(closing.length&&where){
    try{const channel=await client.channels.fetch(where);for(const part of closing)await channel.send({content:part,allowedMentions:{parse:[]}});}catch(e){log('Aventure, clôture :',e.code??e);}
   }
  }
+ async function publishInvitation(){
+  if(state.invitation?.channel===channelId&&state.invitation.message)return state.invitation;
+  const channel=await client.channels.fetch(channelId);
+  const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(BUTTON).setLabel(data.post?.button||'Entrer').setStyle(ButtonStyle.Primary));
+  const posted=await channel.send({content:data.post?.text||'Une aventure vous attend.',components:[row],allowedMentions:{parse:[]},nonce:'dolce-opening-20261030',enforceNonce:true});
+  state.invitation={channel:channelId,message:posted?.id??null};save();return state.invitation;
+ }
  async function handle(interaction){
   if(interaction.isChatInputCommand?.()&&interaction.commandName==='aventure'){
    if(!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)){await interaction.reply({content:'Commande réservée aux administrateurs.',flags:64});return true;}
-   const channel=await client.channels.fetch(channelId);
-   const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(BUTTON).setLabel(data.post?.button||'Entrer').setStyle(ButtonStyle.Primary));
-   const posted=await channel.send({content:data.post?.text||'Une aventure vous attend.',components:[row],allowedMentions:{parse:[]}});
-   state.invitation={channel:channelId,message:posted?.id??null};save();
+   await publishInvitation();
    await interaction.reply({content:'Invitation publiée dans <#'+channelId+'>.',flags:64});
    return true;
   }
@@ -277,6 +281,6 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   if(!/^[a-f0-9]{40}$/.test(sha||'')||!state.logs[id]?.some(l=>l.media?.some(m=>m.sha===sha)))return null;
   const item=pendingMedia.get(sha);return item?{mime:item.type,data:item.data.toString('base64')}:null;
  }
- return {web,webView,webMedia,handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
+ return {publishInvitation,web,webView,webMedia,handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,messages,normalize,BUTTON};

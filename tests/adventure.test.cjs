@@ -182,7 +182,7 @@ test('in the final room, players wait for the others; one arriving after the end
  await go('c');
  assert.ok(sent.dm.some(([id,m])=>id==='c'&&m.content==='Victoire !'));assert.equal(sent.channels.c.length,1);
 });
-test('the closing words go where the invitation was posted, even once the invitation channel has changed; a list is several messages',async()=>{
+test('closing words follow the configured public channel even when an old test invitation exists; a list is several messages',async()=>{
  const {sent,client,user}=fakeDiscord();
  const tiny={start:1,rooms:[{id:1,description:'Entrée.',exits:{nord:2}},{id:2,description:'Trône.'}],final:{room:2,players:1,victory:['Victoire !','Et gloire.'],closing:['Première partie.','x'.repeat(2500)]}};
  let saved=null;const store={load:()=>saved&&JSON.parse(saved),save:s=>{saved=JSON.stringify(s);}};
@@ -190,8 +190,8 @@ test('the closing words go where the invitation was posted, even once the invita
  await first.handle({isChatInputCommand:()=>true,commandName:'aventure',memberPermissions:{has:()=>true},reply:async()=>{}});
  const adv=createAdventureDiscord({client,data:tiny,store,channelId:'new'});   // the bot restarted with another channel
  await adv.handle(button(user('a')).i);adv.message(dm(user('a'),'nord'));for(let i=0;i<30;i++)await tick();
- assert.equal(sent.channels.new,undefined);
- assert.deepEqual(sent.channels.old.slice(1).map(m=>m.content.length),['Première partie.'.length,1900,600]);   // after the invitation
+ assert.equal(sent.channels.old.length,1);
+ assert.deepEqual(sent.channels.new.map(m=>m.content.length),['Première partie.'.length,1900,600]);   // after the invitation
  assert.deepEqual(sent.dm.filter(([,m])=>/Victoire|gloire/.test(m.content)).map(([,m])=>m.content),['Victoire !','Et gloire.']);
 });
 test('the notices channel hears of every game started (with its link on the website) and won',async()=>{
