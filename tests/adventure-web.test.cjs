@@ -47,3 +47,23 @@ test('admin hints for anonymous browser players enter the saved journal without 
  assert.equal(line.kind,'hint');assert.equal(line.text,'Cherchez près de la porte.');assert.ok(line.key);assert.equal(env.fetches,0);
  assert.equal(env.create().webView(id).lines.at(-1).text,line.text);
 });
+test('collective ending names each reader’s two actual companions in browser state and saved story',async()=>{
+ const data={...fixture,final:{...fixture.final,players:3,victory:['Deux autres humains, pomifiés comme vous, sont désormais à vos côtés.']}};
+ const a=createAdventureDiscord({client:{users:{fetch:async()=>({send:async()=>{}})}},data,store:{load:()=>null,save:()=>{}},channelId:null});
+ const players=['a','b','c'].map(c=>'web_'+c.repeat(24));
+ for(let i=0;i<3;i++){await a.web({id:players[i],name:['Alice','Benoît','Chloé'][i],action:'start',requestId:requestId()});await a.web({id:players[i],action:'command',text:'nord',requestId:requestId()});}
+ assert.match(a.webView(players[0]).ending[0],/^Benoît et Chloé, deux autres humains pomifiés comme vous,/);
+ assert.match(a.webView(players[1]).ending[0],/^Alice et Chloé,/);
+ assert.ok(a.webView(players[0]).lines.some(l=>l.text.startsWith('Benoît et Chloé,')));
+});
+test('ending feedback mentions only the creator, is restricted to winners and survives retry/restart without duplicate posts',async()=>{
+ let saved=null,posts=[];const client={channels:{fetch:async channel=>{assert.equal(channel,'889835278494203915');return {send:async payload=>{posts.push(payload);return {id:'message1'};}};}}};
+ const store={load:()=>saved,save:s=>{saved=structuredClone(s);}};
+ const make=()=>createAdventureDiscord({client,data:fixture,store,channelId:null});const a=make();
+ await assert.rejects(a.feedback(id,'Très bien !',requestId()),e=>e.status===403);
+ a.state.won.push(id);a.state.names[id]='Alice';
+ await assert.rejects(a.feedback(id,'x'.repeat(1501),requestId()),e=>e.status===400);
+ await Promise.all([a.feedback(id,'Super aventure ! @everyone',requestId()),a.feedback(id,'Super aventure ! @everyone',requestId())]);
+ assert.equal(posts.length,1);assert.match(posts[0].content,/Alice/);assert.match(posts[0].content,/^<@369731837053894656>/);assert.deepEqual(posts[0].allowedMentions,{parse:[],users:['369731837053894656']});
+ await make().feedback(id,'Nouvelle tentative',requestId());assert.equal(posts.length,1);
+});

@@ -132,12 +132,18 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // the final room: the adventure ends for everyone once `final.players` players stand in it (players of any games,
  // they do not need to have played together); until then, those who arrived wait and hear of each newcomer.
  // Arriving after the end still gets the victory.
+ function endingFor(id){
+  const others=state.reached.filter(other=>other!==id).slice(0,2).map(other=>String(state.names[other]||'Un compagnon').replace(/([\\_*~`>|])/g,'\\$1'));
+  const texts=[].concat(data.final?.victory||[]);
+  if(others.length===2&&texts.length)texts[0]=texts[0].replace('Deux autres humains, pomifiés comme vous,',others.join(' et ')+', deux autres humains pomifiés comme vous,');
+  return texts;
+ }
  async function reach(userId){
   if(state.reached.includes(userId))return;
   state.reached.push(userId);save();
   const need=data.final?.players||1,count=state.reached.length;
   // a win is told once to each player, even one who starts over after the end
-  const win=async id=>{if(state.won.includes(id))return;state.won.push(id);await tell(id,data.final.victory,'victoire');void notify(id,'end');};
+  const win=async id=>{if(state.won.includes(id))return;state.won.push(id);await tell(id,endingFor(id),'victoire');void notify(id,'end');};
   if(state.done){await win(userId);save();return;}
   if(count<need){
    const waiting=(data.messages?.waiting||'Il faut être {total} dans cette salle pour achever l’aventure : vous êtes {n} pour l’instant. Attendez vos compagnons…')
@@ -218,12 +224,27 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    if(result.final&&(!archive||state.archiveRuns[id]?.run===requestedRun))await reach(id);
  }
  // Browser transport: same player state, queue, archive, media budget and collective ending as DMs.
+ const feedbackPending=new Map();
+ async function feedback(id,text,requestId){
+  if(!state.won.includes(id))throw Object.assign(Error('Terminez l’aventure avant de laisser un commentaire.'),{status:403});
+  text=String(text||'').trim();if(!text||Array.from(text).length>1500)throw Object.assign(Error('Le commentaire doit contenir de 1 à 1 500 caractères.'),{status:400});
+  if(!/^[a-zA-Z0-9-]{16,80}$/.test(requestId||''))throw Object.assign(Error('Identifiant de commentaire requis.'),{status:400});
+  state.feedback??={};if(state.feedback[id])return {accepted:true};
+  if(feedbackPending.has(id))return feedbackPending.get(id);
+  const task=(async()=>{
+   const channel=await client.channels.fetch('889835278494203915');
+   const name=String(state.names[id]||'Voyageur').replace(/([\\_*~`>|])/g,'\\$1');
+   const nonce=crypto.createHash('sha256').update('adventure-feedback:'+id).digest('hex').slice(0,24);
+   const message=await channel.send({content:'<@369731837053894656>\n**Commentaire de '+name+' — Dolce Traccia**\n\n'+text,allowedMentions:{parse:[],users:['369731837053894656']},nonce,enforceNonce:true});
+   state.feedback[id]={message:message.id,at:Date.now()};save();return {accepted:true};
+  })();feedbackPending.set(id,task);try{return await task;}finally{feedbackPending.delete(id);}
+ }
  function webView(id){const player=state.players[id];return {instance:webInstance,started:!!player,name:state.names[id]||'Voyageur',revision:version,
   room:player?{id:player.room,name:game.room(player.room)?.name||''}:null,
   progress:player?structuredClone(player):null,
   commandUsage:{...(state.typed[id]?.commands||{})},
   inventory:player?player.inventory.map(key=>({id:key,name:(data.objects||[]).find(o=>String(o.id)===key)?.name||key})):[],
-  ended:state.won.includes(id),lines:(state.logs[id]||[]).map(line=>({...line,key:crypto.createHash('sha1').update(JSON.stringify(line)).digest('hex')}))};}
+  ended:state.won.includes(id),ending:state.won.includes(id)?endingFor(id):[],lines:(state.logs[id]||[]).map(line=>({...line,key:crypto.createHash('sha1').update(JSON.stringify(line)).digest('hex')}))};}
  async function web({id,name,action='state',text='',requestId=''}){
   if(!/^(?:\d{17,20}|web_[a-f0-9]{24})$/.test(id))throw Object.assign(new Error('Identité invalide.'),{status:401});
   if(action==='state')return webView(id);
@@ -273,7 +294,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  const media=()=>[...pendingMedia].map(([sha,item])=>({sha,type:item.type,data:item.data.toString('base64')}));
  const mediaSent=shas=>{for(const sha of shas)pendingMedia.delete(sha);};
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
- function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns','webReceipts'])if(state[key])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
+ function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns','webReceipts','feedback'])if(state[key])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
  function webMedia(id,{file,sha}){
   if(file){const allowed=new Set(data.rooms.map(r=>r.image).filter(Boolean));if(!allowed.has(file))return null;
    const resolved=path.resolve(files,file);if(!resolved.startsWith(path.resolve(files)+path.sep)||!fs.existsSync(resolved))return null;
@@ -282,6 +303,6 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   if(!/^[a-f0-9]{40}$/.test(sha||'')||!state.logs[id]?.some(l=>l.media?.some(m=>m.sha===sha)))return null;
   const item=pendingMedia.get(sha);return item?{mime:item.type,data:item.data.toString('base64')}:null;
  }
- return {publishInvitation,web,webView,webMedia,handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
+ return {feedback,publishInvitation,web,webView,webMedia,handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,messages,normalize,BUTTON};
