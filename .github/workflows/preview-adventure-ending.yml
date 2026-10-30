@@ -1,20 +1,29 @@
-name: Send adventure ending preview privately
+name: Diagnose Dolce opening
 on: workflow_dispatch
-concurrency:
-  group: adventure-ending-preview
-  cancel-in-progress: false
 jobs:
-  publish:
+  diagnose:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Publish once through the production bot
-        env:
+      - env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
           VPS_USER: ${{ secrets.VPS_USERNAME }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          set -euo pipefail
           sudo apt-get install -y sshpass
-          sshpass -e ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'cd /home/twnkek290001/LN-Bot; export NVM_DIR="$HOME/.nvm"; [ ! -s "$NVM_DIR/nvm.sh" ] || . "$NVM_DIR/nvm.sh"; node -' < tools/preview-adventure-ending.cjs
+          sshpass -e ssh -o StrictHostKeyChecking=accept-new -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'python3 -' <<'PY'
+          import json,pathlib,datetime
+          root=pathlib.Path('/home/twnkek290001/LN-Bot')
+          print('UTC',datetime.datetime.now(datetime.timezone.utc).isoformat())
+          for name in ['dolce-opening.json','aventure.json']:
+              p=root/'.runtime'/name
+              if p.exists():
+                  s=json.loads(p.read_text());print(name, {k:s.get(k) for k in (['message','invitation'] if name.startswith('dolce') else ['invitation','done'])})
+              else: print(name,'ABSENT')
+          for p in (pathlib.Path.home()/'.pm2/logs').glob('LN-Bot*log'):
+              with p.open(errors='replace') as f:
+                  f.seek(max(0,p.stat().st_size-50000));lines=f.read().splitlines()
+              for l in lines[-150:]:
+                  if any(t in l for t in ['Ouverture Dolce','SyntaxError','TypeError','Error:','Connecté en tant']):print(p.name,l[:250])
+          print('INDEX_OPENING',"scheduleOpening" in (root/'index.js').read_text())
+          PY
