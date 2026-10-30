@@ -501,7 +501,8 @@
       "insérer",
       "glisser",
       "remettre",
-      "inserer"
+      "inserer",
+      "placer"
     ],
     "regarder": [
       "voir",
@@ -1707,6 +1708,22 @@
       "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*",
       "effect": [
         "cartes_vues"
+      ]
+    },
+    {
+      "place": [
+        4
+      ],
+      "verb": "regarder",
+      "mustnot": [
+        "escalier_decouvert"
+      ],
+      "text": "Sur le tapis de cartes se trouve un jeu de 22 atouts de tarot : des cartes numérotées de 1 à 21, ainsi qu'une carte sur laquelle est imprimée un joueur de banjo avec une bulle de dialogue disant :\n« Oyez ! Oyez ! 100 miras sont en jeu ce soir ! Distribuez les cartes entre les quatre participants pour ouvrir la partie !\n*(Pour distribuer les cartes, entrez une commande du type \"distribuer 1-2-3-4\". On distribue les cartes dans le sens des aiguilles d'une montre, et comme vous distribuez, vous serez le dernier servi.)*",
+      "effect": [
+        "cartes_vues"
+      ],
+      "noun": [
+        "carte"
       ]
     },
     {
