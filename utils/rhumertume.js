@@ -299,7 +299,8 @@ const aspi=character=>state.patients[character]?.variant==='aspi';
   catch(error){await interaction.editReply({content:error.message});}
   return true;
  }
- return {tick,infect,stage,level,variant,nameOf,roleplay,message,after,handle,gauges:c=>state.patients[c]&&{rage:state.patients[c].rage,madness:state.patients[c].madness},
+ async function cureAll(){await infectionQueue;const count=Object.keys(state.infected).length;state.infected={};state.patients={};state.pending={};recent.clear();save();return count;}
+ return {cureAll,tick,infect,stage,level,variant,nameOf,roleplay,message,after,handle,gauges:c=>state.patients[c]&&{rage:state.patients[c].rage,madness:state.patients[c].madness},
   isInfected:character=>stage(character)!=null,infected:()=>Object.keys(state.infected)};
 }
 module.exports={createRhumertume,pomify,progress,moods,parisParts,AVATAR_URL,LAST_DAY};

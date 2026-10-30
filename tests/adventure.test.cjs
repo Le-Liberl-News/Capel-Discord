@@ -65,12 +65,13 @@ test('anyone may enter through the button, and the game goes on in DMs',async()=
 test('enough players in the final room win, and the invitation channel hears the end once',async()=>{
  const {sent,client,user}=fakeDiscord();
  const small={...data,final:{...data.final,players:2,victory:'Victoire !',closing:'Le fort est tombé.'}};
- const adv=createAdventureDiscord({client,data:small,store:{load:()=>null,save:()=>{}},channelId:'c'});
+ let cures=0;
+ const adv=createAdventureDiscord({client,data:small,store:{load:()=>null,save:()=>{}},channelId:'c',onCollectiveVictory:async()=>{cures++;}});
  for(const id of ['a','b']){await adv.handle(button(user(id),true).i);Object.assign(adv.state.players[id],{room:'16',triggers:['trone_ouvert']});}
  adv.message(dm(user('a'),'est'));await tick();await tick();await tick();
- assert.deepEqual(adv.state.reached,['a']);assert.equal(adv.state.done,false);assert.equal(sent.channels.c,undefined);
+ assert.equal(cures,0);assert.deepEqual(adv.state.reached,['a']);assert.equal(adv.state.done,false);assert.equal(sent.channels.c,undefined);
  adv.message(dm(user('b'),'est'));for(let i=0;i<6;i++)await tick();
- assert.equal(adv.state.done,true);assert.equal(sent.channels.c.length,1);
+ assert.equal(cures,1);assert.equal(adv.state.done,true);assert.equal(sent.channels.c.length,1);
  assert.equal(sent.dm.filter(([,m])=>m.content===small.final.victory).length,2);
 });
 test('a room with a picture sends it on entering, other replies are only text',async()=>{

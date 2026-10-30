@@ -41,7 +41,7 @@ function count(typed,text){
  const command=normalize(text);typed.count++;if(!command)return;
  if(typed.commands[command]!=null||Object.keys(typed.commands).length<DISTINCT)typed.commands[command]=(typed.commands[command]??0)+1;
 }
-function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderFinalFrame,shareWait=30000,archive=null}){
+function createAdventureDiscord({client,data,store,channelId,notifyChannelId=null,files=FILES,log=console.error,render=renderFinalFrame,shareWait=30000,archive=null,onCollectiveVictory=async()=>{}}){
  const game=createAdventure(data),webInstance=crypto.randomBytes(8).toString('hex');
  const state=store.load()||{players:{},reached:[],done:false};
  state.logs??={};state.names??={};state.won??=[];state.shares??={};
@@ -146,6 +146,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    save();
    return;
   }
+  await onCollectiveVictory();
   state.done=true;save();
   for(const id of state.reached)await win(id);
   save();

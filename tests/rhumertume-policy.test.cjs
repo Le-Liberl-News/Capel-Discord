@@ -38,3 +38,5 @@ test('quiet production RP preserves pom identity without automatic events or cat
  assert.deepEqual(said,[]);assert.ok(r.isInfected('NPC1'));assert.ok(!r.isInfected('NPC4'));assert.ok(r.roleplay('NPC1','Bonjour').username.startsWith('Pom'));
  const fs=require('node:fs'),index=fs.readFileSync(require.resolve('../index'),'utf8');assert.ok(index.includes('automaticEvents:false'));assert.ok(!index.includes('rhumertume.tick()'));assert.ok(!index.includes('rhumertume.after(pseudo)'));assert.ok(!fs.readFileSync(require.resolve('../commands/anonyme'),'utf8').includes('rhumertume.after(pseudo)'));
 });
+
+test('collective cure restores every identity and persists across restart without announcements',async()=>{const f=fixture({data:{infected:{PlayerA:at('10:00:00'),NPC1:at('10:00:00')},pending:{NPC2:{cause:'pending'}}}}),r=f.make();assert.equal(await r.cureAll(),2);assert.deepEqual(r.infected(),[]);assert.equal(r.stage('PlayerA'),null);assert.deepEqual(f.store.load().pending,{});assert.deepEqual(f.make().infected(),[]);assert.equal(f.said.length,0);});
