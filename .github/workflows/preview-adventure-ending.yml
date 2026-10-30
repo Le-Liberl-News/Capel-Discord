@@ -1,7 +1,7 @@
-name: Diagnose Dolce opening
+name: Repair public adventure invitation
 on: workflow_dispatch
 jobs:
-  diagnose:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - env:
@@ -11,19 +11,18 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
           sudo apt-get install -y sshpass
-          sshpass -e ssh -o StrictHostKeyChecking=accept-new -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'python3 -' <<'PY'
-          import json,pathlib,datetime
-          root=pathlib.Path('/home/twnkek290001/LN-Bot')
-          print('UTC',datetime.datetime.now(datetime.timezone.utc).isoformat())
-          for name in ['dolce-opening.json','aventure.json']:
-              p=root/'.runtime'/name
-              if p.exists():
-                  s=json.loads(p.read_text());print(name, {k:s.get(k) for k in (['message','invitation'] if name.startswith('dolce') else ['invitation','done'])})
-              else: print(name,'ABSENT')
-          for p in (pathlib.Path.home()/'.pm2/logs').glob('LN-Bot*log'):
-              with p.open(errors='replace') as f:
-                  f.seek(max(0,p.stat().st_size-50000));lines=f.read().splitlines()
-              for l in lines[-150:]:
-                  if any(t in l for t in ['Ouverture Dolce','SyntaxError','TypeError','Error:','Connecté en tant']):print(p.name,l[:250])
-          print('INDEX_OPENING',"scheduleOpening" in (root/'index.js').read_text())
-          PY
+          sshpass -e ssh -o StrictHostKeyChecking=accept-new -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'cd /home/twnkek290001/LN-Bot; export NVM_DIR="$HOME/.nvm"; [ ! -s "$NVM_DIR/nvm.sh" ] || . "$NVM_DIR/nvm.sh"; node -' <<'JS'
+          require('dotenv').config({quiet:true});const fs=require('fs');(async()=>{
+          const target='1563508228019454024',receipt='.runtime/dolce-opening.json',state=JSON.parse(fs.readFileSync(receipt)),data=require('./rpg/data/aventure.json');
+          const api=async(route,method='GET',body)=>{const r=await fetch('https://discord.com/api/v10/'+route,{method,headers:{Authorization:'Bot '+process.env.DISCORD_TOKEN,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('Discord '+r.status+' '+(await r.json()).code);return r.json();};
+          if(state.repairedInvitation){console.log('Already repaired',state.repairedInvitation);return;}
+          let previous=null;try{previous=await api('channels/'+target+'/messages/'+state.invitation);}catch(e){console.log('Stored invitation unavailable:',e.message);}
+          console.log('Stored invitation time:',previous?.timestamp||'missing');
+          if(previous&&Date.parse(previous.timestamp)>=Date.UTC(2026,9,30,19)){console.log('Current launch invitation exists:',previous.id);return;}
+          const sent=await api('channels/'+target+'/messages','POST',{content:data.post.text,components:[{type:1,components:[{type:2,style:1,label:data.post.button,custom_id:'aventure:jouer'}]}],allowed_mentions:{parse:[]},nonce:'dolce-opening-public-v2',enforce_nonce:true});
+          console.log('New invitation delivered:',sent.id);
+          const announcement=await api('channels/915557045774716969/messages/'+state.message);const content=announcement.content.replace(new RegExp('/'+target+'/'+state.invitation,'g'),'/'+target+'/'+sent.id);
+          await api('channels/915557045774716969/messages/'+state.message,'PATCH',{content,allowed_mentions:{parse:[]}});
+          fs.writeFileSync(receipt,JSON.stringify({...state,invitation:sent.id,repairedInvitation:sent.id}));console.log('Announcement link repaired without a new mention.');
+          })().catch(e=>{console.error(e.message);process.exitCode=1;});
+          JS
