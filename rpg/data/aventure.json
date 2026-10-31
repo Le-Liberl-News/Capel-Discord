@@ -107,8 +107,7 @@
           "to": 7,
           "fail": "Le passage qui mène à la bibliothèque s'est refermé.",
           "mustnot": [
-            "couloir_ouvert",
-            "vinyle_pose"
+            "bibliotheque_bloquee"
           ]
         }
       },
@@ -360,7 +359,16 @@
       "exits": {
         "nord": 15,
         "sud": 21,
-        "ouest": 20,
+        "ouest": {
+          "to": 20,
+          "must": [
+            "vinyle_pose"
+          ],
+          "effect": [
+            "bibliotheque_bloquee"
+          ],
+          "fail": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
+        },
         "est": 22
       },
       "description": "Vous êtes à un carrefour entre deux couloirs. L'air est comme embrûmé. Où aller ensuite ?"
