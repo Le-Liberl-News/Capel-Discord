@@ -2820,6 +2820,22 @@
       ],
       "verb": "ouvrir",
       "noun": [
+        "sud"
+      ],
+      "mustnot": [
+        "couloir_ouvert"
+      ],
+      "effect": [
+        "couloir_ouvert"
+      ],
+      "text": "La porte est fermée à clé, vous n'avez pas de quoi l'ouvrir."
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ouvrir",
+      "noun": [
         "est"
       ],
       "must": [
