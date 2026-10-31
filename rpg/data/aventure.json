@@ -3221,6 +3221,20 @@
       "place": [
         0
       ],
+      "verb": "regarder",
+      "text": "Vous feuilletez le livre de recettes. Il contient la recette d'un plat nommé la \"bouillabaisse portable\" et d'autres plats aux concepts tout aussi excentriques, mais ça ne semble pas important.",
+      "tool": [
+        "livre"
+      ],
+      "noun": [
+        "cuisine",
+        "demain"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
       "verb": "ouvrir",
       "noun": [
         "livre"
@@ -3468,6 +3482,20 @@
       "text": "Le livre est intitulé « La cuisine de demain ».",
       "mustnot": [
         "livre_pris"
+      ]
+    },
+    {
+      "place": [
+        11
+      ],
+      "verb": "regarder",
+      "text": "Vous feuilletez le livre de recettes. Il contient la recette d'un plat nommé la \"bouillabaisse portable\" et d'autres plats aux concepts tout aussi excentriques, mais le contenu de ce livre ne semble pas important.",
+      "mustnot": [
+        "livre_pris"
+      ],
+      "noun": [
+        "cuisine",
+        "demain"
       ]
     },
     {
@@ -4658,6 +4686,28 @@
       "text": "Il y a plusieurs ouvrages dans cette catégorie, mais rien de particulièrement intéressant.\nCependant, vous remarquez qu'il y a un espace vide dans la rangée.",
       "noun": [
         "cuisine"
+      ],
+      "mustnot": [
+        "livre_range"
+      ]
+    },
+    {
+      "place": [
+        7,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ],
+      "verb": "regarder",
+      "text": "Il y a plusieurs ouvrages dans cette catégorie (dont « La cuisine de demain »), mais rien de particulièrement intéressant.",
+      "noun": [
+        "cuisine"
+      ],
+      "must": [
+        "livre_range"
       ]
     },
     {
