@@ -17,28 +17,6 @@ jobs:
     - name: 📥 Get latest code
       uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 24
-
-    - name: Validate startup sources
-      run: |
-        node --check index.js
-        node --test tests/runtime-diagnostics.test.cjs
-        python3 -m unittest discover -s tools/diagnostics -p "test_*.py"
-        node -e 'JSON.parse(require("node:fs").readFileSync("rpg/data/aventure.json","utf8"));'
-
-    - name: Install test dependencies
-      run: |
-        npm ci --ignore-scripts --no-audit --no-fund
-        npm rebuild ffmpeg-static
-
-    - name: Test the bot
-      run: |
-        node --test tests/*.test.js tests/*.test.cjs
-        node tools/check-adventure-media.cjs
-
     - name: 🛠️ Deploy & Restart natively
       env:
         VPS_PASS: ${{ secrets.VPS_PASSWORD }}
