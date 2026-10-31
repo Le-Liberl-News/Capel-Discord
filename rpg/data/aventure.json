@@ -34,6 +34,27 @@
           "effect": [
             "entree_effectuee"
           ]
+        },
+        "sud": {
+          "to": 1,
+          "must": [
+            "fin_du_jeu_proche"
+          ],
+          "fail": "Il n'y a rien à voir de ce côté."
+        },
+        "est": {
+          "to": 1,
+          "must": [
+            "fin_du_jeu_proche"
+          ],
+          "fail": "Il n'y a rien à voir de ce côté."
+        },
+        "ouest": {
+          "to": 1,
+          "must": [
+            "fin_du_jeu_proche"
+          ],
+          "fail": "Il n'y a rien à voir de ce côté."
         }
       },
       "description": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
@@ -963,7 +984,8 @@
       ],
       "verb": "regarder",
       "noun": [],
-      "text": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit."
+      "text": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit.",
+      "alone": true
     },
     {
       "place": [
@@ -1017,7 +1039,10 @@
       "mustnot": [
         "bibliotheque_ouverte"
       ],
-      "text": "Le cadenas reste fermé."
+      "text": "Le cadenas reste fermé.",
+      "effect": [
+        "cadenas_vu"
+      ]
     },
     {
       "place": [
@@ -1128,6 +1153,16 @@
         2
       ],
       "verb": "regarder",
+      "text": "La porte est ouverte.",
+      "noun": [
+        "ouest"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
       "noun": [
         "est"
       ],
@@ -1137,6 +1172,19 @@
       "text": "La porte est fermée par un cadenas à quatre chiffres. (*pour essayer un code, entrez une commande du type \"code 1234\"*)",
       "effect": [
         "cadenas_vu"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "noun": [
+        "est"
+      ],
+      "text": "La porte est ouverte. Vous pouvez passer librement.",
+      "must": [
+        "bibliotheque_ouverte"
       ]
     },
     {
@@ -3149,6 +3197,19 @@
       "place": [
         0
       ],
+      "verb": "ouvrir",
+      "noun": [
+        "livre"
+      ],
+      "text": "Vous feuilletez le livre de recettes. Il contient la recette d'un plat nommé la \"bouillabaisse portable\" et d'autres plats aux concepts tout aussi excentriques, mais ça ne semble pas important.",
+      "tool": [
+        "livre"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
       "verb": "regarder",
       "noun": [
         "cle"
@@ -3745,7 +3806,7 @@
       ],
       "verb": "reflechir",
       "noun": [],
-      "text": "Vous n'avez pas beaucoup d'options. La porte vous bloque, mais il faut trouver un moyen de la franchir malgré tout.",
+      "text": "Vous n'avez pas beaucoup d'options. La porte vous bloque, mais il faut trouver un moyen de la franchir malgré tout.\nRegardez ce qui vous entoure, c'est sûrement ce que vous avez de mieux à faire pour trouver une solution.",
       "mustnot": [
         "entree_effectuee"
       ]
@@ -3756,6 +3817,16 @@
       ],
       "verb": "toquer",
       "noun": [],
+      "text": "Bien tenté. Mais personne ne vient pour vous ouvrir. Il va falloir vous débrouiller seul."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "taper",
+      "noun": [
+        "porte"
+      ],
       "text": "Bien tenté. Mais personne ne vient pour vous ouvrir. Il va falloir vous débrouiller seul."
     },
     {
@@ -3810,9 +3881,24 @@
         "livre_range"
       ],
       "mustnot": [
+        "cartes_vues",
+        "monologue_entendu"
+      ],
+      "text": "Très bien, vous avez trouvé l'issue secrète de la bibliothèque. Regardons à quoi cela vous donne accès."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "reflechir",
+      "noun": [],
+      "mustnot": [
         "cartes_vues"
       ],
-      "text": "Très bien, vous avez trouvé l'issue secrète de la bibliothèque. Regardons à quoi cela nous donne accès."
+      "text": "La femme vous a dit quelque chose de cryptique, c'est le moins qu'on puisse dire.\nCependant, vous ne voyez pas trop à quoi cela vous avance pour l'instant...\nPeut-être avez-vous manqué quelque chose dans une des salles ?",
+      "must": [
+        "monologue_entendu"
+      ]
     },
     {
       "place": [
@@ -3895,9 +3981,10 @@
       ],
       "verb": "reflechir",
       "noun": [],
-      "text": "La femme a enfin parlé... Mais ses paroles sont pour le moins cryptiques.\nVous allez sans doute devoir relire ses mots maintes fois avant d'en saisir tout à fait le sens...",
+      "text": "La femme a parlé... Mais ses paroles sont pour le moins cryptiques.\nVous allez sans doute devoir relire ses mots maintes fois avant d'en saisir tout à fait le sens...",
       "must": [
-        "monologue_entendu"
+        "monologue_entendu",
+        "cartes_vues"
       ],
       "mustnot": [
         "escalier_decouvert"
@@ -4582,6 +4669,45 @@
         "trou"
       ],
       "text": "Vous essayez de voir de l'autre côté de la porte par le trou mais vous ne voyez quasiment rien."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "prendre",
+      "noun": [
+        "porte"
+      ],
+      "text": "Rien n'y fait : ni la porte, ni sa poignée ne veulent bouger d'un millimètre."
+    },
+    {
+      "place": [
+        6,
+        8,
+        4,
+        15
+      ],
+      "verb": "prendre",
+      "noun": [
+        "escalier"
+      ],
+      "text": "Dans quelle direction ?"
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "grandir",
+      "noun": [],
+      "text": "Vous concentrez votre énergie, contractez tous vos muscles, grognez puissamment...\nMais dommage, ça ne vous a pas fait grandir."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "regarder",
+      "noun": [],
+      "text": "Le manoir vous surplombe par sa taille imposante. Une sorte de brume vous empêche de voir son sommet."
     }
   ]
 }
