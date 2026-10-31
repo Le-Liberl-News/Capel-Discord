@@ -195,9 +195,25 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   await interaction.editReply({content:'Je t’ai écrit en message privé.'});
   return true;
  }
+ // Raw dispatches precede messageCreate. Cold DM channels are currently dropped by
+ // discord.js 14.26 before messageCreate, even with Partials.Channel enabled.
+ // Both entrances share the same queue and a bounded message-id receipt cache.
+ const dmReceipts=new Map();
+ function rawMessage(packet){
+  const data=packet?.d;
+  if(packet?.t!=='MESSAGE_CREATE'||!data||data.guild_id||data.author?.bot||!state.players[data.author?.id]||!String(data.content||'').trim()||!/^\d{17,20}$/.test(data.channel_id||'')||!/^\d{17,20}$/.test(data.id||''))return false;
+  let channelPromise;
+  return message({id:data.id,author:{id:data.author.id,bot:false,globalName:data.author.global_name,username:data.author.username},guild:null,content:data.content,channel:{send:async payload=>{
+   channelPromise??=client.channels.fetch(data.channel_id);
+   const channel=await channelPromise;
+   if(!channel?.isDMBased())throw Error('Le canal reçu n’est pas une conversation privée.');
+   return channel.send(payload);
+  }}});
+ }
  // a DM from a player: one command, played after the previous one is answered
  function message(msg){
-  if(msg.author.bot||msg.guild||!state.players[msg.author.id]||!msg.content.trim())return false;
+  if(!msg.author||msg.author.bot||msg.guild||!state.players[msg.author.id]||!String(msg.content||'').trim())return false;
+  if(msg.id){const now=Date.now();for(const [id,at]of dmReceipts){if(now-at<600000)break;dmReceipts.delete(id);}if(dmReceipts.has(msg.id))return true;dmReceipts.set(msg.id,now);while(dmReceipts.size>2048)dmReceipts.delete(dmReceipts.keys().next().value);}
   const id=msg.author.id,requestedRun=state.archiveRuns[id]?.run;
   state.names[id]=msg.author.globalName||msg.author.username||state.names[id]||id;
   const next=(queues.get(id)||Promise.resolve()).then(()=>processCommand(msg,id,requestedRun)).catch(e=>log('Aventure :',e));
@@ -303,6 +319,6 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   if(!/^[a-f0-9]{40}$/.test(sha||'')||!state.logs[id]?.some(l=>l.media?.some(m=>m.sha===sha)))return null;
   const item=pendingMedia.get(sha);return item?{mime:item.type,data:item.data.toString('base64')}:null;
  }
- return {feedback,publishInvitation,web,webView,webMedia,handle,message,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
+ return {feedback,publishInvitation,web,webView,webMedia,handle,message,rawMessage,state,snapshot,hint,media,mediaSent,subscribe,shared,forget,archiveBatch:()=>archive?.batch()??[],archiveAck:(items,runs)=>archive?.ack(items,runs),version:()=>version};
 }
 module.exports={createAdventureDiscord,chunks,messages,normalize,BUTTON};

@@ -219,6 +219,7 @@ const rhumertume=require('./utils/rhumertume').createRhumertume({automaticEvents
 // told in test-discord (notifyChannelId), which stays when the invitation moves to another channel
 const adventure=require('./utils/adventure/discord').createAdventureDiscord({client,archive:require('./utils/adventure/lineArchive').createLineArchive(path.join(__dirname,'.runtime/adventure-outbox')),data:require('./rpg/data/aventure.json'),store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/aventure.json')),channelId:'1563508228019454024',notifyChannelId:'889835278494203915',closingAttachment:path.join(__dirname,'rpg/data/aventure/announcement/depomification.gif'),onCollectiveVictory:()=>rhumertume.cureAll()});
 client.on('messageCreate',message=>{adventure.message(message);});
+client.on('raw',packet=>{adventure.rawMessage(packet);});
 require('./utils/adventure/opening').scheduleOpening({client,adventure,store:require('./utils/stateStore').createStateStore(path.join(__dirname,'.runtime/dolce-opening.json'))});
 // the games followed and the hints sent from the platform's editor
 require('./utils/adventure/platformSync').startAdventureSync({adventure,log:console.error});
