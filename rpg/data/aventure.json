@@ -739,11 +739,7 @@
       "pierre",
       "pierres"
     ],
-    "porte": [
-      "poignee",
-      "serrure",
-      "verrou"
-    ],
+    "porte": [],
     "papier-peint": [
       "mur",
       "murs",
@@ -879,6 +875,15 @@
     ],
     "trophee": [
       "trophees"
+    ],
+    "serrure": [
+      "poignee",
+      "verrou"
+    ],
+    "autour": [
+      "alentours",
+      "alentour",
+      "environs"
     ]
   },
   "actions": [
@@ -994,6 +999,16 @@
       "noun": [],
       "text": "La gigantesque porte du manoir se dresse face à vous. Elle n'est en réalité pas si grande, vous êtes simplement devenu très petit.",
       "alone": true
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "regarder",
+      "noun": [
+        "serrure"
+      ],
+      "text": "Vous ne remarquez rien de spécial sur cette partie de la porte.\nMais peut-être qu'en regardant la porte plus attentivement..."
     },
     {
       "place": [
@@ -2949,6 +2964,16 @@
     },
     {
       "place": [
+        15
+      ],
+      "verb": "ouvrir",
+      "noun": [
+        "serrure"
+      ],
+      "text": "Laquelle souhaitez-vous ouvrir : porte est ou porte sud ?"
+    },
+    {
+      "place": [
         16
       ],
       "verb": "regarder",
@@ -3396,6 +3421,13 @@
     },
     {
       "place": [
+        1
+      ],
+      "verb": "casser",
+      "text": "Votre colère est certainement justifiée. Mais la violence n'est pas la solution.\nEssayez plutôt de regarder un élément précis du décor."
+    },
+    {
+      "place": [
         0
       ],
       "verb": "casser",
@@ -3727,6 +3759,13 @@
     },
     {
       "place": [
+        1
+      ],
+      "verb": "prendre",
+      "text": "Vous ne trouvez rien à prendre autour de vous. Absolument rien.\nMais il va falloir trouver comment franchir la porte malgré tout."
+    },
+    {
+      "place": [
         0
       ],
       "verb": "prendre",
@@ -3858,7 +3897,7 @@
       ],
       "verb": "reflechir",
       "noun": [],
-      "text": "Vous n'avez pas beaucoup d'options. La porte vous bloque, mais il faut trouver un moyen de la franchir malgré tout.\nRegardez ce qui vous entoure, c'est sûrement ce que vous avez de mieux à faire pour trouver une solution.",
+      "text": "Vous n'avez pas beaucoup d'options. La porte vous bloque, mais il faut trouver un moyen de la franchir malgré tout.\nRegardez ce qui vous entoure, c'est sûrement ce que vous avez de mieux à faire pour trouver une solution.\n(*ne faites pas que \"regarder\", regardez un élément précis de votre entourage*)",
       "mustnot": [
         "entree_effectuee"
       ]
@@ -3879,7 +3918,7 @@
       "noun": [
         "porte"
       ],
-      "text": "Bien tenté. Mais personne ne vient pour vous ouvrir. Il va falloir vous débrouiller seul."
+      "text": "Bien tenté. Mais la porte est solide et personne ne vient pour vous ouvrir. Il va falloir vous débrouiller seul."
     },
     {
       "place": [
@@ -4390,6 +4429,26 @@
       ],
       "verb": "ranger",
       "noun": [
+        "couteau",
+        "serrure"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte à l'aide de la pointe du couteau que vous avez récupéré dans le salon.",
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "tool": [
+        "couteau"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ranger",
+      "noun": [
         "cuillere",
         "porte"
       ],
@@ -4410,8 +4469,48 @@
       ],
       "verb": "ranger",
       "noun": [
+        "cuillere",
+        "serrure"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la cuillère que vous avez récupérée dans le salon.",
+      "tool": [
+        "cuillere"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ranger",
+      "noun": [
         "fourchette",
         "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon.",
+      "tool": [
+        "fourchette"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "ranger",
+      "noun": [
+        "fourchette",
+        "serrure"
       ],
       "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon.",
       "tool": [
@@ -4450,6 +4549,26 @@
       ],
       "verb": "tourner",
       "noun": [
+        "couteau",
+        "serrure"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte à l'aide de la pointe du couteau que vous avez récupéré dans le salon.",
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ],
+      "tool": [
+        "couteau"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "tourner",
+      "noun": [
         "cuillere",
         "porte"
       ],
@@ -4470,8 +4589,48 @@
       ],
       "verb": "tourner",
       "noun": [
+        "cuillere",
+        "serrure"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la cuillère que vous avez récupérée dans le salon.",
+      "tool": [
+        "cuillere"
+      ],
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "tourner",
+      "noun": [
         "fourchette",
         "porte"
+      ],
+      "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon.",
+      "mustnot": [
+        "chambre_ouverte"
+      ],
+      "tool": [
+        "fourchette"
+      ],
+      "effect": [
+        "chambre_ouverte"
+      ]
+    },
+    {
+      "place": [
+        15
+      ],
+      "verb": "tourner",
+      "noun": [
+        "fourchette",
+        "serrure"
       ],
       "text": "Vous parvenez tant bien que mal à ouvrir la porte avec le manche de la fourchette que vous avez récupérée dans le salon.",
       "mustnot": [
@@ -4756,6 +4915,16 @@
     },
     {
       "place": [
+        1
+      ],
+      "verb": "prendre",
+      "text": "Rien n'y fait : ni la porte, ni sa poignée ne veulent bouger d'un millimètre.",
+      "noun": [
+        "serrure"
+      ]
+    },
+    {
+      "place": [
         6,
         8,
         4,
@@ -4782,6 +4951,37 @@
       "verb": "regarder",
       "noun": [],
       "text": "Le manoir vous surplombe par sa taille imposante. Une sorte de brume vous empêche de voir son sommet."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "regarder",
+      "noun": [
+        "soleil"
+      ],
+      "text": "Vous détournez vite les yeux pour ne pas vous brûler la rétine."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "regarder",
+      "noun": [
+        "autour"
+      ],
+      "text": "Il n'y a rien d'autre autour de vous. Seule cette porte, qui vous surplombe d'un air menaçant."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "passer",
+      "noun": [
+        "sous",
+        "porte"
+      ],
+      "text": "Vous êtes petit, mais pas à ce point."
     }
   ]
 }
