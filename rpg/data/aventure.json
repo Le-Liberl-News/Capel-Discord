@@ -3663,7 +3663,8 @@
       ],
       "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie.",
       "mustnot": [
-        "escalier_decouvert"
+        "escalier_decouvert",
+        "monologue_entendu"
       ]
     },
     {
@@ -3676,7 +3677,8 @@
       ],
       "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie.",
       "mustnot": [
-        "escalier_decouvert"
+        "escalier_decouvert",
+        "monologue_entendu"
       ]
     },
     {
@@ -3689,7 +3691,8 @@
       ],
       "text": "La femme hausse un sourcil. Vous êtes sûrement sur la bonne voie.",
       "mustnot": [
-        "escalier_decouvert"
+        "escalier_decouvert",
+        "monologue_entendu"
       ]
     },
     {
@@ -3754,7 +3757,24 @@
       ],
       "text": "La femme marque une pause avant de hocher lentement la tête. Mais elle semble attendre autre chose.",
       "mustnot": [
+        "escalier_decouvert",
+        "monologue_entendu"
+      ]
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "parler",
+      "noun": [
+        "carte"
+      ],
+      "text": "La femme marque une pause avant de hocher lentement la tête.",
+      "mustnot": [
         "escalier_decouvert"
+      ],
+      "must": [
+        "monologue_entendu"
       ]
     },
     {
