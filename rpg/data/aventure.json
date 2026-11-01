@@ -585,13 +585,24 @@
     ],
     "sauter": [
       "bondir",
-      "sautiller"
+      "sautiller",
+      "saut"
     ],
     "bonjour": [
       "coucou"
     ],
     "appuyer": [
       "presser"
+    ],
+    "attendre": [
+      "patienter"
+    ],
+    "chanter": [
+      "fredonner",
+      "chantonner"
+    ],
+    "asseoir": [
+      "assoir"
     ]
   },
   "nouns": {
@@ -1035,6 +1046,16 @@
       "effect": [
         "entree_effectuee"
       ]
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "passer",
+      "noun": [
+        "porte"
+      ],
+      "text": "La porte est trop massive, vous n'arriverez pas à l'ouvrir.\nMais si vous regardez bien, peut-être y a-t-il une autre manière de passer... ?"
     },
     {
       "place": [
@@ -2361,6 +2382,32 @@
     },
     {
       "place": [
+        9
+      ],
+      "verb": "ouvrir",
+      "noun": [
+        "barreau"
+      ],
+      "text": "La femme se tend soudain et vous interrompt : « ARRÊTEZ. ».",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
+        9
+      ],
+      "verb": "couper",
+      "noun": [
+        "barreau"
+      ],
+      "text": "La femme se tend soudain et vous interrompt : « ARRÊTEZ. ».",
+      "mustnot": [
+        "escalier_decouvert"
+      ]
+    },
+    {
+      "place": [
         10
       ],
       "verb": "regarder",
@@ -3475,6 +3522,16 @@
     },
     {
       "place": [
+        0
+      ],
+      "verb": "regarder",
+      "text": "Il n'y a pas de statue ici.",
+      "noun": [
+        "statue"
+      ]
+    },
+    {
+      "place": [
         7
       ],
       "verb": "ranger",
@@ -3741,6 +3798,22 @@
     },
     {
       "place": [
+        9
+      ],
+      "verb": "crier",
+      "noun": [],
+      "text": "Vous criez de tous vos poumons. L'écho de votre cri résonne alors dans la cave, s'estompant petit à petit.\nMais la femme continue de vous regarder, impassible."
+    },
+    {
+      "place": [
+        8
+      ],
+      "verb": "crier",
+      "noun": [],
+      "text": "Vous criez de tous vos poumons. L'écho de votre cri résonne alors dans la cave, s'estompant petit à petit."
+    },
+    {
+      "place": [
         0
       ],
       "verb": "crier",
@@ -3763,6 +3836,16 @@
       ],
       "verb": "prendre",
       "text": "Vous ne trouvez rien à prendre autour de vous. Absolument rien.\nMais il va falloir trouver comment franchir la porte malgré tout."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "prendre",
+      "noun": [
+        "cle"
+      ],
+      "text": "Il n'y a pas de clé ici."
     },
     {
       "place": [
@@ -4949,8 +5032,20 @@
         1
       ],
       "verb": "regarder",
-      "noun": [],
+      "noun": [
+        "manoir"
+      ],
       "text": "Le manoir vous surplombe par sa taille imposante. Une sorte de brume vous empêche de voir son sommet."
+    },
+    {
+      "place": [
+        1
+      ],
+      "verb": "regarder",
+      "noun": [
+        "brume"
+      ],
+      "text": "L'épaisse cache le sommet du manoir."
     },
     {
       "place": [
@@ -4982,6 +5077,63 @@
         "porte"
       ],
       "text": "Vous êtes petit, mais pas à ce point."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "pleurer",
+      "noun": [],
+      "text": "Allons, ne désespérez pas. Observez bien les choses qui vous entourent, la solution à vos problèmes s'y trouve sûrement."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "attendre",
+      "noun": [],
+      "text": "Vous patientez, mais rien ne se passe."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "chanter",
+      "noun": [],
+      "text": "Vous fredonnez un petit air : « Pom, pom pom, pom pom... »\nÇa vous a fait du bien.",
+      "mustnot": [
+        "deja_chante"
+      ],
+      "effect": [
+        "deja_chante"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "chanter",
+      "noun": [],
+      "text": "Vous fredonnez un petit air : « Pom, pom pom, pom pom... »",
+      "must": [
+        "deja_chante"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "kisekijesuis",
+      "noun": [],
+      "text": "Vous êtes un pom. Autrefois, vous étiez humain."
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "asseoir",
+      "noun": [],
+      "text": "Vous vous asseyez quelques instants. Réfléchissons, que faire maintenant... ?"
     }
   ]
 }
