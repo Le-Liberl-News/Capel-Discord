@@ -3545,6 +3545,25 @@
     },
     {
       "place": [
+        7,
+        71,
+        72,
+        74,
+        75,
+        76
+      ],
+      "verb": "ranger",
+      "noun": [
+        "livre",
+        "cuisine"
+      ],
+      "text": "D'accord, mais dans quelle section se trouve la rangée des livres sur la cuisine ?",
+      "tool": [
+        "livre"
+      ]
+    },
+    {
+      "place": [
         71,
         72,
         74,
