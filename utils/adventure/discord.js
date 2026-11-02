@@ -129,36 +129,37 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    await channel.send({content:text+(link?'\nÀ suivre ici : <'+link+'>':''),allowedMentions:{parse:[]}});
   }catch(e){log('Aventure, notification :',e.code??e);}
  }
- // the final room: the adventure ends for everyone once `final.players` players stand in it (players of any games,
- // they do not need to have played together); until then, those who arrived wait and hear of each newcomer.
- // Arriving after the end still gets the victory.
+ // the final room: a game ends once `final.players` players stand in it together (players of any games, they do not
+ // need to have played together), and again for every next group as many: until then, those who arrived wait and hear
+ // of each newcomer. The first group only cures the Capel's poms (onCollectiveVictory) and posts the closing words.
+ // state.group: the players waiting in the final room; state.companions: each winner's group.
+ state.group??=state.done?[]:[...state.reached];state.companions??={};
  function endingFor(id){
-  const others=state.reached.filter(other=>other!==id).slice(0,2).map(other=>String(state.names[other]||'Un compagnon').replace(/([\\_*~`>|])/g,'\\$1'));
+  const others=(state.companions[id]??state.reached.filter(other=>other!==id)).slice(0,2).map(other=>String(state.names[other]||'Un compagnon').replace(/([\\_*~`>|])/g,'\\$1'));
   const texts=[].concat(data.final?.victory||[]);
   if(others.length===2&&texts.length)texts[0]=texts[0].replace('Deux autres humains, pomifiés comme vous,',others.join(' et ')+', deux autres humains pomifiés comme vous,');
   return texts;
  }
  async function reach(userId){
   if(state.reached.includes(userId))return;
-  state.reached.push(userId);save();
-  const need=data.final?.players||1,count=state.reached.length;
-  // a win is told once to each player, even one who starts over after the end
-  const win=async id=>{if(state.won.includes(id))return;state.won.push(id);await tell(id,endingFor(id),'victoire');void notify(id,'end');};
-  if(state.done){await win(userId);save();return;}
+  state.reached.push(userId);state.group.push(userId);save();
+  const need=data.final?.players||1,count=state.group.length;
   if(count<need){
    const waiting=(data.messages?.waiting||'Il faut être {total} dans cette salle pour achever l’aventure : vous êtes {n} pour l’instant. Attendez vos compagnons…')
     .replaceAll('{n}',String(count)).replaceAll('{total}',String(need));
-   for(const id of state.reached)await tell(id,id===userId?waiting:(data.messages?.joined||'Un compagnon vous a rejoint ({n}/{total}).').replaceAll('{n}',String(count)).replaceAll('{total}',String(need)),'attente');
+   for(const id of state.group)await tell(id,id===userId?waiting:(data.messages?.joined||'Un compagnon vous a rejoint ({n}/{total}).').replaceAll('{n}',String(count)).replaceAll('{total}',String(need)),'attente');
    save();
    return;
   }
-  await onCollectiveVictory();
-  state.done=true;save();
-  for(const id of state.reached)await win(id);
+  const group=state.group.splice(0,need),first=!state.done;
+  if(first)await onCollectiveVictory();
+  state.done=true;
+  for(const id of group){state.companions[id]=group.filter(other=>other!==id);if(!state.won.includes(id))state.won.push(id);}
   save();
-  // the closing words, where the invitation to play was posted
+  for(const id of group){await tell(id,endingFor(id),'victoire');void notify(id,'end');}
+  // the closing words, where the invitation to play was posted, once
   const closing=messages(data.final.closing),where=channelId;
-  if(closing.length&&where){
+  if(first&&closing.length&&where){
    try{const channel=await client.channels.fetch(where);for(let i=0;i<closing.length;i++)await channel.send({content:closing[i],...(closingAttachment&&i===closing.length-1?{files:[{attachment:closingAttachment,name:'depomification.gif'}]}:{}),allowedMentions:{parse:[]}});}catch(e){log('Aventure, clôture :',e.code??e);}
   }
  }
@@ -223,18 +224,19 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  async function processCommand(msg,id,requestedRun){
    if(!state.players[id]||archive&&state.archiveRuns[id]?.run!==requestedRun)return;
    note(id,'command',msg.content.trim());count(state.typed[id]??={count:0,commands:{}},msg.content);
-   // « /reset »: the adventure starts over, even after its end (a win already told is not told again)
+   // « /reset »: the adventure starts over, even after its end, and can be won again with a new group
    if(msg.content.trim().toLowerCase()==='/reset'){
     if(archive){state.archiveRuns[id]={run:archive.newRun(),partial:false};archive.meta(state.archiveRuns[id].run,{user:id,name:state.names[id]??id,state:{},typed:{},partial:false});}else state.typed[id].history=roomHistory.create([],false);
     commandRooms.delete(id);
     const player=game.fresh(),start=game.start(player);
     const restart={...start,replies:[data.messages?.reset||'Votre aventure recommence depuis le début.',...start.replies]};
-    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);
+    state.players[id]=player;state.reached=state.reached.filter(r=>r!==id);state.group=state.group.filter(r=>r!==id);
     await send(msg.channel,restart,player,id);void notify(id,'restart');
     return;
    }
    const player=state.players[id];
-   if(state.done&&state.reached.includes(id)){const over=data.messages?.over||'Votre aventure est terminée.';note(id,'reply',over);save();await msg.channel.send({content:over});return;}
+   // a game won is over (« /reset » plays again); one waiting in the final room goes on
+   if(state.reached.includes(id)&&!state.group.includes(id)){const over=data.messages?.over||'Votre aventure est terminée.';note(id,'reply',over);save();await msg.channel.send({content:over});return;}
    const result=game.handle(player,msg.content);
    await send(msg.channel,result,player,id);
    if(result.final&&(!archive||state.archiveRuns[id]?.run===requestedRun))await reach(id);
@@ -317,7 +319,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  const media=()=>[...pendingMedia].map(([sha,item])=>({sha,type:item.type,data:item.data.toString('base64')}));
  const mediaSent=shas=>{for(const sha of shas)pendingMedia.delete(sha);};
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
- function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns','webReceipts','feedback'])if(state[key])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
+ function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns','webReceipts','feedback','companions'])if(state[key])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.group=state.group.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
  function webMedia(id,{file,sha}){
   id=state.aliases?.[id]??id;
   if(file){const allowed=new Set(data.rooms.map(r=>r.image).filter(Boolean));if(!allowed.has(file))return null;
