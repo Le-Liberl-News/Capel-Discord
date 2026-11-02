@@ -3961,6 +3961,26 @@
         0
       ],
       "verb": "prendre",
+      "text": "Il va falloir préciser quel objet prendre, si vous voulez que le jeu comprenne ce que vous voulez.",
+      "noun": [
+        "objet"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "prendre",
+      "text": "Il n'y a pas de vin.",
+      "noun": [
+        "vin"
+      ]
+    },
+    {
+      "place": [
+        0
+      ],
+      "verb": "prendre",
       "noun": [],
       "text": "Une voix s'infiltre dans vos pensées :\n« N'emportez pas cet objet... Toute chose, tout être... est vouée à se rapprocher... de sa destinée... »"
     },
