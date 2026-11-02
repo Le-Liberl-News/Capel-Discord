@@ -1134,11 +1134,33 @@
         2
       ],
       "verb": "regarder",
+      "text": "Vous remarquez un papier dans la poche du manteau. Un nombre y est écrit : 13.",
+      "noun": [
+        "porte-manteau",
+        "blanc"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
       "noun": [
         "manteau",
         "rouge"
       ],
       "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire.",
+      "noun": [
+        "porte-manteau",
+        "rouge"
+      ]
     },
     {
       "place": [
@@ -1156,11 +1178,33 @@
         2
       ],
       "verb": "regarder",
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire.",
+      "noun": [
+        "porte-manteau",
+        "violet"
+      ]
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
       "noun": [
         "manteau",
         "gris"
       ],
       "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire."
+    },
+    {
+      "place": [
+        2
+      ],
+      "verb": "regarder",
+      "text": "Rien de spécial à dire. C'est juste un manteau ordinaire sur un porte-manteau tout aussi ordinaire.",
+      "noun": [
+        "porte-manteau",
+        "gris"
+      ]
     },
     {
       "place": [
