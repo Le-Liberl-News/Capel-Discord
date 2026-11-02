@@ -2499,6 +2499,19 @@
         10
       ],
       "verb": "regarder",
+      "must": [
+        "cle_tombee"
+      ],
+      "text": "Le sol est effondré au bord de la pièce. L'arbrisseau qui contenait une clé est tombé dans ce trou.",
+      "noun": [
+        "trou"
+      ]
+    },
+    {
+      "place": [
+        10
+      ],
+      "verb": "regarder",
       "noun": [
         "arbrisseaux"
       ],
@@ -2535,6 +2548,19 @@
         "cle_tombee"
       ],
       "text": "Le sol est effondré au bord de la pièce. Au bord du trou, vous voyez qu'un arbrisseau porte une clé sur une de ses branches."
+    },
+    {
+      "place": [
+        10
+      ],
+      "verb": "regarder",
+      "mustnot": [
+        "cle_tombee"
+      ],
+      "text": "Le sol est effondré au bord de la pièce. Au bord du trou, vous voyez qu'un arbrisseau porte une clé sur une de ses branches.",
+      "noun": [
+        "trou"
+      ]
     },
     {
       "place": [
