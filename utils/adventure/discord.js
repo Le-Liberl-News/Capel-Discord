@@ -242,6 +242,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  // Browser transport: same player state, queue, archive, media budget and collective ending as DMs.
  const feedbackPending=new Map();
  async function feedback(id,text,requestId){
+  id=state.aliases?.[id]??id;
   if(!state.won.includes(id))throw Object.assign(Error('Terminez l’aventure avant de laisser un commentaire.'),{status:403});
   text=String(text||'').trim();if(!text||Array.from(text).length>1500)throw Object.assign(Error('Le commentaire doit contenir de 1 à 1 500 caractères.'),{status:400});
   if(!/^[a-zA-Z0-9-]{16,80}$/.test(requestId||''))throw Object.assign(Error('Identifiant de commentaire requis.'),{status:400});
@@ -263,6 +264,8 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
   ended:state.won.includes(id),ending:state.won.includes(id)?endingFor(id):[],lines:(state.logs[id]||[]).map(line=>({...line,key:crypto.createHash('sha1').update(JSON.stringify(line)).digest('hex')}))};}
  async function web({id,name,action='state',text='',requestId=''}){
   if(!/^(?:\d{17,20}|web_[a-f0-9]{24})$/.test(id))throw Object.assign(new Error('Identité invalide.'),{status:401});
+  // a browser that took a Discord player's name plays that player's game (see « start » below)
+  state.aliases??={};id=state.aliases[id]??id;
   if(action==='state')return webView(id);
   if(!['start','command','restart'].includes(action))throw Object.assign(new Error('Action inconnue.'),{status:400});
   if(!/^[a-zA-Z0-9-]{16,80}$/.test(requestId))throw Object.assign(new Error('Identifiant de commande requis.'),{status:400});
@@ -274,6 +277,10 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
    if(action==='start'&&!state.players[id]){
     const chosen=String(name??'Voyageur').normalize('NFC').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/gu,' ').trim();
     if(!chosen||Array.from(chosen).length>60)throw Object.assign(Error('Choisissez un nom de 1 à 60 caractères.'),{status:400});
+    // the very name of a Discord player (case aside): the browser takes up where they are, from now on; a name two
+    // Discord players share is nobody's
+    const same=Object.keys(state.players).filter(other=>!other.startsWith('web_')&&String(state.names[other]||'').normalize('NFC').toLowerCase()===chosen.toLowerCase());
+    if(same.length===1){state.aliases[id]=same[0];save();return webView(same[0]);}
     state.names[id]=chosen;
    }else state.names[id]??='Voyageur';
    receipts.push(requestId);if(receipts.length>24)receipts.shift();
@@ -312,6 +319,7 @@ function createAdventureDiscord({client,data,store,channelId,notifyChannelId=nul
  const subscribe=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
  function forget(items){let changed=false;for(const item of items){archive?.remove(item.run);if(state.archiveRuns[item.user]?.run!==item.run)continue;changed=true;for(const key of ['players','logs','typed','names','shares','archiveRuns','webReceipts','feedback'])if(state[key])delete state[key][item.user];state.reached=state.reached.filter(id=>id!==item.user);state.won=state.won.filter(id=>id!==item.user);commandRooms.delete(item.user);queues.delete(item.user);}if(changed)save();}
  function webMedia(id,{file,sha}){
+  id=state.aliases?.[id]??id;
   if(file){const allowed=new Set(data.rooms.map(r=>r.image).filter(Boolean));if(!allowed.has(file))return null;
    const resolved=path.resolve(files,file);if(!resolved.startsWith(path.resolve(files)+path.sep)||!fs.existsSync(resolved))return null;
    const ext=path.extname(file).toLowerCase(),mime={'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif'}[ext];
