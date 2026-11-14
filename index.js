@@ -66,6 +66,11 @@ const patchReleaseService = createPatchReleaseService({
     token: process.env.PLATFORM_TOKEN,
     channelId: process.env.PATCH_RELEASE_CHANNEL_ID,
 });
+// FC and The 3rd share the announcement channel, but have no scheduled builds.
+const patchReleaseServices = [patchReleaseService, ...['sky-fc', 'sky-3rd'].map(project => createPatchReleaseService({
+    client, project, token: process.env.PLATFORM_TOKEN,
+    channelId: process.env.PATCH_RELEASE_CHANNEL_ID,
+}))];
 const testerPresenceService = createTesterPresenceService({
     client,
     ingressChannelId: process.env.TESTER_PRESENCE_INGRESS_CHANNEL_ID ||
@@ -120,17 +125,32 @@ client.once('clientReady', async () => {
         console.error('[Présence testeurs] Initialisation du panneau impossible :', error);
     }
     try {
-        await patchReleaseService.ensurePanel();
+        for (const service of patchReleaseServices) await service.ensurePanel();
     } catch (error) {
         console.error('[PatchSC release] Initialisation du panneau impossible :', error);
     }
+});
+
+// Passive checks only: a new test build or a manually promoted release is
+// announced even when it was started on the platform, and after bot restarts.
+client.once('clientReady', () => {
+    const check = async () => {
+        for (const service of patchReleaseServices) {
+            try { await service.checkReleaseUpdates(); }
+            catch (error) { console.error('[Patch release] Vérification impossible :', service.project, error.message); }
+        }
+    };
+    check();
+    setInterval(check, 90_000).unref();
 });
 
 client.on('interactionCreate', async interaction => {
     if (await rhumertume.handle(interaction)) return;
     if (await adventure.handle(interaction)) return;
     if (interaction.isButton()) {
-        if (await patchReleaseService.handleButton(interaction)) return;
+        for (const service of patchReleaseServices) {
+            if (await service.handleButton(interaction)) return;
+        }
         return handleButtons(interaction, sheets);
     }
     if (interaction.isStringSelectMenu()) return handleSelectMenus(interaction);
@@ -236,7 +256,7 @@ client.on('messageCreate', message => {
         void testerPresenceService.processMessage(message);
         return;
     }
-    patchReleaseService.schedulePanelBump(message);
+    for (const service of patchReleaseServices) service.schedulePanelBump(message);
     if (debugReportIngress.accepts(message)) {
         void debugReportIngress.processMessage(message);
     }

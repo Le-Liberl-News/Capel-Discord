@@ -7,8 +7,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('
 // The platform starts and follows that build with its own GitHub App
 // (plateforme/api/build.php): Capel only holds its platform token.
 const PLATFORM_URL = new URL(process.env.PLATFORM_URL || 'https://leliberlnews.fr');
-const PROJECT = 'sky-sc';
-const BUILD_API = `/plateforme/api/build.php?project=${PROJECT}`;
+const PROJECTS = { 'sky-sc': 'Sky SC', 'sky-fc': 'Sky FC', 'sky-3rd': 'The 3rd' };
 const NIGHTLY_WORKFLOW = 'build.yml';
 const DAILY_REQUESTER = 'Capel (publication quotidienne)';
 const DISCORD_MESSAGE_LIMIT = 1900;
@@ -21,7 +20,16 @@ const RETRYABLE_NETWORK_ERRORS = new Set([
 ]);
 
 class PatchReleaseService {
-    constructor({ client, token, channelId }) {
+    constructor({ client, token, channelId, project = 'sky-sc', statePath }) {
+        if (!PROJECTS[project]) throw new Error('Projet de patch inconnu.');
+        this.project = project;
+        this.label = PROJECTS[project];
+        this.buildApi = `/plateforme/api/build.php?project=${project}`;
+        this.buttonId = project === 'sky-sc' ? BUTTON_ID : `${BUTTON_ID}_${project}`;
+        this.statePath = statePath || require('path').join(__dirname, '..', '.runtime', `release-announcements-${project}.json`);
+        this.announcementState = null;
+        this.announcementQueue = Promise.resolve();
+        this.polling = false;
         this.client = client;
         this.token = (token || '').trim();
         this.channelId = (channelId || '').trim();
@@ -41,7 +49,7 @@ class PatchReleaseService {
             } catch (error) {
                 if (!RETRYABLE_NETWORK_ERRORS.has(error.code) || attempt === attempts) throw error;
                 console.warn(
-                    `[PatchSC release] Plateforme inaccessible (${error.code}), ` +
+                    `[Patch release] Plateforme inaccessible (${error.code}), ` +
                     `nouvelle tentative ${attempt}/${attempts - 1}.`);
                 await delay(1_000 * (2 ** (attempt - 1)));
             }
@@ -104,7 +112,7 @@ class PatchReleaseService {
 
     // The build's latest runs, as GitHub names their fields.
     async workflowRuns() {
-        const result = await this.github('GET', BUILD_API);
+        const result = await this.github('GET', this.buildApi);
         return (Array.isArray(result.runs) ? result.runs : []).map(run => ({
             id: run.id, status: run.status, conclusion: run.conclusion || null,
             created_at: run.created_at, html_url: run.url,
@@ -120,23 +128,23 @@ class PatchReleaseService {
 
     // The newest patch release ("v…", not the backups), its tag as identity.
     async latestRelease() {
-        const release = (await this.github('GET', BUILD_API)).release;
+        const release = (await this.github('GET', this.buildApi)).release;
         return release ? {
             id: release.tag, tag_name: release.tag, name: release.name,
-            html_url: release.url, body: release.body || '', created_at: release.date,
+            html_url: release.url, body: release.body || '', created_at: release.date, prerelease: release.prerelease !== false,
         } : null;
     }
 
     panelPayload(state = {}) {
         const busy = Boolean(state.busy);
         const embed = new EmbedBuilder()
-            .setTitle('Publication du patch français Sky SC')
+            .setTitle(`Publication du patch français ${this.label}`)
             .setDescription(state.description ||
-                'Récupère les traductions de la plateforme, compile le patch et publie une release si un fichier a changé.')
+                `Récupère les traductions de la plateforme et compile le patch ${this.label}.${this.project === 'sky-sc' ? '' : ' Déclenchement manuel uniquement.'}`)
             .setColor(state.failed ? 0xC0392B : (busy ? 0xE67E22 : 0x2ECC71));
         if (state.url) embed.setURL(state.url);
         const button = new ButtonBuilder()
-            .setCustomId(BUTTON_ID)
+            .setCustomId(this.buttonId)
             .setLabel(busy ? 'Publication en cours…' : 'Générer une release')
             .setStyle(busy ? ButtonStyle.Secondary : ButtonStyle.Success)
             .setDisabled(busy || !this.token);
@@ -145,7 +153,7 @@ class PatchReleaseService {
 
     async ensurePanel() {
         if (!this.channelId) {
-            console.log('[PatchSC release] PATCH_RELEASE_CHANNEL_ID absent : panneau désactivé.');
+            console.log('[Patch release] PATCH_RELEASE_CHANNEL_ID absent : panneau désactivé.');
             return null;
         }
         const channel = await this.client.channels.fetch(this.channelId);
@@ -155,11 +163,11 @@ class PatchReleaseService {
         const messages = await channel.messages.fetch({ limit: 100 });
         this.panelMessage = messages.find(message =>
             message.author.id === this.client.user.id && message.components.some(row =>
-                row.components.some(component => component.customId === BUTTON_ID))) || null;
+                row.components.some(component => component.customId === this.buttonId))) || null;
         const active = this.token ? await this.activeRun() : null;
         const payload = active ? this.panelPayload({
             busy: true,
-            description: `Une ${active.stage} du patch SC est déjà en cours.`,
+            description: `Une ${active.stage} du patch ${this.label} est déjà en cours.`,
             url: active.html_url,
         }) : this.panelPayload();
         if (this.panelMessage) await this.panelMessage.edit(payload);
@@ -179,7 +187,7 @@ class PatchReleaseService {
         this.panelBumpTimer = setTimeout(() => {
             this.panelBumpTimer = null;
             this.bumpPanel().catch(error =>
-                console.error('[PatchSC release] Remontée du panneau impossible :', error));
+                console.error('[Patch release] Remontée du panneau impossible :', error));
         }, 2_000);
         return true;
     }
@@ -190,7 +198,7 @@ class PatchReleaseService {
         const messages = await channel.messages.fetch({ limit: 100 });
         const panels = messages.filter(message =>
             message.author.id === this.client.user.id && message.components.some(row =>
-                row.components.some(component => component.customId === BUTTON_ID)));
+                row.components.some(component => component.customId === this.buttonId)));
         for (const panel of panels.values()) {
             await panel.delete().catch(() => {});
         }
@@ -198,7 +206,7 @@ class PatchReleaseService {
         const active = this.token ? await this.activeRun() : null;
         this.panelMessage = await channel.send(active ? this.panelPayload({
             busy: true,
-            description: `Une ${active.stage} du patch SC est déjà en cours.`,
+            description: `Une ${active.stage} du patch ${this.label} est déjà en cours.`,
             url: active.html_url,
         }) : this.panelPayload());
         if (active) this.startMonitor(active, null, null);
@@ -236,10 +244,10 @@ class PatchReleaseService {
         this.requestedBy = requestedBy;
         this.monitorPromise = this.monitorPipeline(run, baselineReleaseId)
             .catch(async error => {
-                console.error('[PatchSC release] Surveillance échouée :', error);
+                console.error('[Patch release] Surveillance échouée :', error);
                 await this.updatePanel({ failed: true, description: `Échec : ${error.message}` });
                 if (this.requestedBy && this.panelMessage) await this.panelMessage.channel.send(
-                    `❌ Publication du patch SC interrompue : ${error.message}`);
+                    `❌ Publication du patch ${this.label} interrompue : ${error.message}`);
             })
             .finally(() => {
                 this.monitorPromise = null;
@@ -258,7 +266,7 @@ class PatchReleaseService {
                 description: 'Vérification terminée : aucun fichier binaire n’a changé, aucune release créée.',
             });
             if (this.requestedBy && this.panelMessage) await this.panelMessage.channel.send(
-                'ℹ️ Patch SC vérifié : aucun fichier n’a changé depuis la dernière release.');
+                `ℹ️ Patch ${this.label} vérifié : aucun fichier n’a changé depuis la dernière release.`);
             return;
         }
         await this.finishSuccess(release);
@@ -266,22 +274,93 @@ class PatchReleaseService {
 
     // The release and what changed (its notes), as PatchSC's webhook announced it.
     async finishSuccess(release) {
+        // The build monitor and passive release watcher may discover the same
+        // publication simultaneously. Serialize and persist their shared receipt.
+        const pending = this.announcementQueue.catch(() => {}).then(() => this.announceRelease(release));
+        this.announcementQueue = pending;
+        return pending;
+    }
+
+    releaseKey(release) {
+        return `${release.tag_name}:${release.prerelease === false ? 'release' : 'test'}`;
+    }
+
+    async loadAnnouncementState() {
+        if (this.announcementState) return;
+        try {
+            const saved = JSON.parse(await require('fs/promises').readFile(this.statePath, 'utf8'));
+            if (saved.schema !== 1 || !Array.isArray(saved.seen) || saved.seen.length > 200) throw new Error('Invalid release state');
+            this.announcementState = { schema: 1, seen: saved.seen, initialized: true };
+        } catch (error) {
+            if (error.code !== 'ENOENT') throw error;
+            this.announcementState = { schema: 1, seen: [], initialized: false };
+        }
+    }
+
+    async saveAnnouncementState() {
+        const fs = require('fs/promises');
+        await fs.mkdir(require('path').dirname(this.statePath), { recursive: true });
+        const state = this.announcementState;
+        state.seen = state.seen.slice(-200);
+        await fs.writeFile(`${this.statePath}.tmp`, JSON.stringify(state), { mode: 0o600 });
+        await fs.rename(`${this.statePath}.tmp`, this.statePath);
+    }
+
+    async announceRelease(release) {
+        await this.loadAnnouncementState();
+        const key = this.releaseKey(release);
+        if (this.announcementState.seen.includes(key)) return;
         const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
         if (channel && channel.isTextBased()) {
             for (const message of this.releaseMessages(release)) {
                 await channel.send({ content: message, allowedMentions: { parse: [] } });
             }
             await this.sendReleaseExamples(channel, release);
+            this.announcementState.seen.push(key);
+            await this.saveAnnouncementState();
         }
         await this.bumpPanel();
     }
 
+    /** Observe releases from Discord OR the platform. This never starts a build. */
+    async checkReleaseUpdates() {
+        if (!this.channelId || !this.token || this.polling) return;
+        this.polling = true;
+        try {
+            const result = await this.github('GET', `${this.buildApi}&releases=1`);
+            if (!Array.isArray(result.releases)) throw new Error('Historique de releases invalide.');
+            const releases = result.releases.map(release => ({
+                id: release.tag, tag_name: release.tag, name: release.name,
+                html_url: release.url, body: release.body || '', created_at: release.date,
+                prerelease: release.prerelease !== false,
+            }));
+            // First installation only: do not replay the old release history.
+            // Both forms are seeded for existing stable versions, so an older
+            // stable tag cannot be mistaken for a new test notification.
+            const pending = this.announcementQueue.catch(() => {}).then(async () => {
+            await this.loadAnnouncementState();
+            if (!this.announcementState.initialized) {
+                for (const release of releases) {
+                    this.announcementState.seen.push(this.releaseKey(release));
+                    if (!release.prerelease) this.announcementState.seen.push(`${release.tag_name}:test`);
+                }
+                this.announcementState.initialized = true;
+                await this.saveAnnouncementState();
+                return;
+            }
+            for (const release of releases.reverse()) await this.announceRelease(release);
+            });
+            this.announcementQueue = pending;
+            await pending;
+        } finally { this.polling = false; }
+    }
+
     async sendReleaseExamples(channel, release) {
-        const path = `${BUILD_API}&examples=${encodeURIComponent(release.tag_name)}`;
+        const path = `${this.buildApi}&examples=${encodeURIComponent(release.tag_name)}`;
         let manifest;
         try { manifest = await this.github('GET', path); }
         catch (error) {
-            console.error('[PatchSC release] Exemples indisponibles :', error.message);
+            console.error('[Patch release] Exemples indisponibles :', error.message);
             await channel.send({ content: 'Les exemples de changements n’ont pas pu être récupérés.', allowedMentions: { parse: [] } });
             return;
         }
@@ -303,7 +382,7 @@ class PatchReleaseService {
     releaseMessages(release) {
         const lines = String(release.body || '').split(/\r?\n/).filter(line => line.trim() !== '');
         const messages = [];
-        let current = `**${release.name || release.tag_name}**\n${release.html_url}`;
+        let current = `**${release.name || release.tag_name}** — ${release.prerelease === false ? 'Release' : 'Version de test'}\n${release.html_url}`;
         for (const line of lines) {
             if (current.length + line.length + 1 > DISCORD_MESSAGE_LIMIT) {
                 messages.push(current);
@@ -317,6 +396,9 @@ class PatchReleaseService {
     }
 
     async requestRelease(requestedBy = null, requesterName = null) {
+        if (this.project !== 'sky-sc' && !requestedBy) {
+            throw new Error('Les compilations FC et The 3rd doivent être lancées manuellement.');
+        }
         if (this.dispatching) {
             throw new Error('Une demande de publication est déjà en cours de traitement.');
         }
@@ -327,7 +409,7 @@ class PatchReleaseService {
             if (active) {
                 await this.updatePanel({
                     busy: true,
-                    description: `Une ${active.stage} du patch SC est déjà en cours.`,
+                    description: `Une ${active.stage} du patch ${this.label} est déjà en cours.`,
                     url: active.html_url,
                 });
                 this.startMonitor(active, null, requestedBy);
@@ -336,7 +418,7 @@ class PatchReleaseService {
             const baseline = await this.latestRelease();
             const requestedAt = Date.now();
             await this.github('POST', '/plateforme/api/build.php', {
-                project: PROJECT,
+                project: this.project,
                 requested_by: requestedBy ? (requesterName || 'Discord') : DAILY_REQUESTER,
             });
             await this.updatePanel({
@@ -356,14 +438,14 @@ class PatchReleaseService {
     }
 
     async handleButton(interaction) {
-        if (interaction.customId !== BUTTON_ID) return false;
+        if (interaction.customId !== this.buttonId) return false;
         await interaction.deferReply({ ephemeral: true });
         try {
             const result = await this.requestRelease(interaction.user.id,
                 interaction.member?.displayName || interaction.user.globalName || interaction.user.username);
             await interaction.editReply(result.alreadyRunning
                 ? `Une publication est déjà en cours : ${result.run.html_url}`
-                : '✅ Publication du patch SC demandée. Le bouton restera verrouillé jusqu’au résultat.');
+                : '✅ Publication du patch demandée. Le bouton restera verrouillé jusqu’au résultat.');
             return true;
         } catch (error) {
             await this.updatePanel({ failed: true, description: `Impossible de démarrer : ${error.message}` });
