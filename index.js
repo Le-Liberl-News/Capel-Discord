@@ -144,7 +144,12 @@ client.once('clientReady', () => {
     setInterval(check, 90_000).unref();
 });
 
+// The players' reviews sent from the installer, to accept or refuse in the admins' channel.
+const playerReviews = require('./utils/playerReviews.js').createPlayerReviews({ client, channelId: '1015201390244671498' });
+client.once('clientReady', () => { setTimeout(playerReviews.tick, 10_000); });
+
 client.on('interactionCreate', async interaction => {
+    if (await playerReviews.handle(interaction)) return;
     if (await rhumertume.handle(interaction)) return;
     if (await adventure.handle(interaction)) return;
     if (interaction.isButton()) {
