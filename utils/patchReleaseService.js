@@ -1,4 +1,5 @@
 const https = require('https');
+const { textExample, escape: escapeExample } = require('./patchReleaseExamples');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
 // Sky SC's patch is built from the translation platform by Patch2nd (build.yml):
@@ -66,7 +67,16 @@ class PatchReleaseService {
         return new Promise((resolve, reject) => {
             const request = https.request(options, response => {
                 const chunks = [];
-                response.on('data', chunk => chunks.push(chunk));
+                let bytes = 0;
+                response.on('error', reject);
+                response.on('data', chunk => {
+                    bytes += chunk.length;
+                    if (bytes > 16 * 1024 * 1024) {
+                        response.destroy(new Error('Réponse de la plateforme trop volumineuse.'));
+                        return;
+                    }
+                    chunks.push(chunk);
+                });
                 response.on('end', () => {
                     const raw = Buffer.concat(chunks).toString('utf8');
                     let parsed = null;
@@ -75,7 +85,7 @@ class PatchReleaseService {
                     }
                     if (response.statusCode < 200 || response.statusCode >= 300) {
                         const detail = parsed && (parsed.error || parsed.message) ? (parsed.error || parsed.message) : raw;
-                        reject(new Error(`Plateforme HTTP ${response.statusCode}${detail ? ` : ${detail}` : ''}`));
+                        reject(new Error(`Plateforme HTTP ${response.statusCode}${detail ? ` : ${String(detail).slice(0, 500)}` : ''}`));
                         return;
                     }
                     resolve(parsed);
@@ -261,8 +271,33 @@ class PatchReleaseService {
             for (const message of this.releaseMessages(release)) {
                 await channel.send({ content: message, allowedMentions: { parse: [] } });
             }
+            await this.sendReleaseExamples(channel, release);
         }
         await this.bumpPanel();
+    }
+
+    async sendReleaseExamples(channel, release) {
+        const path = `${BUILD_API}&examples=${encodeURIComponent(release.tag_name)}`;
+        let manifest;
+        try { manifest = await this.github('GET', path); }
+        catch (error) {
+            console.error('[PatchSC release] Exemples indisponibles :', error.message);
+            await channel.send({ content: 'Les exemples de changements n’ont pas pu être récupérés.', allowedMentions: { parse: [] } });
+            return;
+        }
+        if (manifest?.schema !== 1 || !Array.isArray(manifest.changes)) throw new Error('Exemples de release invalides.');
+        for (const change of manifest.changes) {
+            if (change.kind === 'text') {
+                await channel.send({ content: textExample(change), allowedMentions: { parse: [] } });
+            } else if (change.kind === 'image' && /^change-preview-\d+\.png$/.test(change.image_asset)) {
+                // Sequential downloads and sends: never retain a collection of decoded images.
+                const image = await this.github('GET', `${path}&image=${encodeURIComponent(change.image_asset)}`);
+                if (typeof image?.base64 !== 'string' || image.base64.length > 12 * 1024 * 1024) throw new Error('Aperçu image invalide.');
+                const png = Buffer.from(image.base64, 'base64');
+                if (png.length > 8 * 1024 * 1024 || !png.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw new Error('Aperçu PNG invalide.');
+                await channel.send({ content: `**${escapeExample(String(change.file).slice(0, 220))}**`, files: [{ attachment: png, name: change.image_asset }], allowedMentions: { parse: [] } });
+            }
+        }
     }
 
     releaseMessages(release) {
