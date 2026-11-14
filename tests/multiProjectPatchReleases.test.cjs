@@ -74,3 +74,17 @@ test('platform builds, promotion, persisted deduplication and concurrent discove
     await make().checkReleaseUpdates();
     assert.equal(sent.length,4);
 });
+
+
+test('obsolete compilation panels are removed without posting or deleting release summaries', async () => {
+    let removed=0, sent=0;
+    const channel={isTextBased:()=>true,send:async()=>{sent++;},messages:{fetch:async()=>new Map([
+        ['panel',{author:{id:'bot'},components:[{components:[{customId:'patch_release_start'}]}],delete:async()=>{removed++;}}],
+        ['summary',{author:{id:'bot'},components:[],delete:async()=>{throw new Error('Summary must remain');}}],
+        ['other',{author:{id:'someone'},components:[{components:[{customId:'patch_release_start'}]}],delete:async()=>{throw new Error('Other author must remain');}}],
+    ])}};
+    const service=new PatchReleaseService({client:{user:{id:'bot'},channels:{fetch:async()=>channel}},token:'fixture',channelId:'channel'});
+    await service.ensurePanel();await service.bumpPanel();await service.updatePanel({busy:true});
+    assert.equal(service.schedulePanelBump({channelId:'channel',webhookId:'hook'}),false);
+    assert.equal(removed,1);assert.equal(sent,0);
+});

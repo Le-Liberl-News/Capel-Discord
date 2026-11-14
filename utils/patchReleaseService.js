@@ -151,66 +151,26 @@ class PatchReleaseService {
         return { embeds: [embed], components: [new ActionRowBuilder().addComponents(button)] };
     }
 
+    // Compilation is started on the platform; Discord only receives results.
+    // Remove the obsolete button panels once at startup, preserving announcements.
     async ensurePanel() {
-        if (!this.channelId) {
-            console.log('[Patch release] PATCH_RELEASE_CHANNEL_ID absent : panneau désactivé.');
-            return null;
-        }
+        if (!this.channelId) return null;
         const channel = await this.client.channels.fetch(this.channelId);
-        if (!channel || !channel.isTextBased()) {
-            throw new Error(`Le salon de publication ${this.channelId} n'est pas un salon texte accessible.`);
-        }
+        if (!channel?.isTextBased()) return null;
         const messages = await channel.messages.fetch({ limit: 100 });
-        this.panelMessage = messages.find(message =>
-            message.author.id === this.client.user.id && message.components.some(row =>
-                row.components.some(component => component.customId === this.buttonId))) || null;
-        const active = this.token ? await this.activeRun() : null;
-        const payload = active ? this.panelPayload({
-            busy: true,
-            description: `Une ${active.stage} du patch ${this.label} est déjà en cours.`,
-            url: active.html_url,
-        }) : this.panelPayload();
-        if (this.panelMessage) await this.panelMessage.edit(payload);
-        else this.panelMessage = await channel.send(payload);
-        if (active) this.startMonitor(active, null, null);
-        return this.panelMessage;
-    }
-
-    async updatePanel(state) {
-        if (!this.panelMessage) await this.ensurePanel();
-        if (this.panelMessage) await this.panelMessage.edit(this.panelPayload(state));
-    }
-
-    schedulePanelBump(message) {
-        if (!this.channelId || message.channelId !== this.channelId || !message.webhookId) return false;
-        if (this.panelBumpTimer) clearTimeout(this.panelBumpTimer);
-        this.panelBumpTimer = setTimeout(() => {
-            this.panelBumpTimer = null;
-            this.bumpPanel().catch(error =>
-                console.error('[Patch release] Remontée du panneau impossible :', error));
-        }, 2_000);
-        return true;
-    }
-
-    async bumpPanel() {
-        const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
-        if (!channel || !channel.isTextBased()) return;
-        const messages = await channel.messages.fetch({ limit: 100 });
-        const panels = messages.filter(message =>
-            message.author.id === this.client.user.id && message.components.some(row =>
-                row.components.some(component => component.customId === this.buttonId)));
-        for (const panel of panels.values()) {
-            await panel.delete().catch(() => {});
+        for (const message of messages.values()) {
+            if (message.author.id === this.client.user.id && message.components.some(row =>
+                row.components.some(component => component.customId === this.buttonId))) {
+                await message.delete();
+            }
         }
         this.panelMessage = null;
-        const active = this.token ? await this.activeRun() : null;
-        this.panelMessage = await channel.send(active ? this.panelPayload({
-            busy: true,
-            description: `Une ${active.stage} du patch ${this.label} est déjà en cours.`,
-            url: active.html_url,
-        }) : this.panelPayload());
-        if (active) this.startMonitor(active, null, null);
+        return null;
     }
+
+    async updatePanel() {}
+    schedulePanelBump() { return false; }
+    async bumpPanel() {}
 
     async waitForRun(workflow, createdAfter, timeoutMs) {
         const deadline = Date.now() + timeoutMs;
@@ -439,19 +399,8 @@ class PatchReleaseService {
 
     async handleButton(interaction) {
         if (interaction.customId !== this.buttonId) return false;
-        await interaction.deferReply({ ephemeral: true });
-        try {
-            const result = await this.requestRelease(interaction.user.id,
-                interaction.member?.displayName || interaction.user.globalName || interaction.user.username);
-            await interaction.editReply(result.alreadyRunning
-                ? `Une publication est déjà en cours : ${result.run.html_url}`
-                : '✅ Publication du patch demandée. Le bouton restera verrouillé jusqu’au résultat.');
-            return true;
-        } catch (error) {
-            await this.updatePanel({ failed: true, description: `Impossible de démarrer : ${error.message}` });
-            await interaction.editReply(`❌ ${error.message}`);
-            return true;
-        }
+        await interaction.reply({ content: `Les compilations se lancent désormais depuis la plateforme : ${PLATFORM_URL.origin}/plateforme/build.php?project=${this.project}`, ephemeral: true });
+        return true;
     }
 }
 
