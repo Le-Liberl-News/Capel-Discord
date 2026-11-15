@@ -1,7 +1,7 @@
 // The players' reviews sent from the installer (InstallateurLN), posted in the admins' channel with a button to publish
 // each one and one to refuse it. The platform keeps them (plateforme/api/reviews-moderation.php): the Capel asks every
 // minute for the pending reviews not posted yet, posts them, tells the platform, and sends the admins' decisions.
-// Uses Capel's API token (PLATFORM_TOKEN). After a decision the message keeps one button to change one's mind.
+// Uses Capel's API token (PLATFORM_TOKEN). After an acceptance the message keeps a button to withdraw it; a refusal is final.
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const PLATFORM_URL = (process.env.PLATFORM_URL || 'https://leliberlnews.fr').replace(/\/+$/, '');
@@ -17,7 +17,8 @@ function buttons(id, status) {
     const publish = new ButtonBuilder().setCustomId(`${PREFIX}published:${id}`).setLabel('Accepter').setStyle(ButtonStyle.Success);
     const reject = new ButtonBuilder().setCustomId(`${PREFIX}rejected:${id}`).setLabel('Refuser').setStyle(ButtonStyle.Danger);
     if (status === 'published') return [new ActionRowBuilder().addComponents(reject.setLabel('Retirer'))];
-    if (status === 'rejected') return [new ActionRowBuilder().addComponents(publish.setLabel('Publier quand même'))];
+    // A refused review stays refused: no button left on it.
+    if (status === 'rejected') return [];
     return [new ActionRowBuilder().addComponents(publish, reject)];
 }
 

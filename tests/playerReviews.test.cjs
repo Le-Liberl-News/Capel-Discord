@@ -52,7 +52,7 @@ test('a click sends the decision with who clicked, and leaves one button to chan
     assert.equal(edited.embeds[0].toJSON().footer.text, 'Publié par Twn');
     assert.deepEqual(edited.components[0].toJSON().components.map(button => button.custom_id), ['avis-joueur:rejected:7']);
     assert.equal(await reviews.handle({ isButton: () => true, customId: 'upvote' }), false);
-    assert.ok(buttons(1, 'rejected'));
+    assert.deepEqual(buttons(1, 'rejected'), []);
 });
 
 test('elsewhere than the admins channel, nothing is decided', async () => {
