@@ -15,7 +15,7 @@ function textExample(change) {
         result += part.changed ? `**${escape(text)}**` : escape(text);
         if (cut) { result += '…'; break; }
     }
-    const removed = Array.isArray(change.removed) ? change.removed.join(' … ') : '';
+    const removed = Array.isArray(change.removed) ? change.removed.map(text => String(text ?? '')).filter(text => text.trim() !== '').join(' … ') : '';
     if (removed && result.length < 1800) {
         const excerpt = removed.slice(0, Math.floor((1850 - result.length) / 2));
         result += `\nRetiré : **${escape(excerpt).replace(/ /g, '␠')}**${excerpt.length < removed.length ? '…' : ''}`;

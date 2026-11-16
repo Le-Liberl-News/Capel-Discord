@@ -1,5 +1,5 @@
 const https = require('https');
-const { textExample, escape: escapeExample } = require('./patchReleaseExamples');
+const { escape: escapeExample } = require('./patchReleaseExamples');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
 // Sky SC's patch is built from the translation platform by Patch2nd (build.yml):
@@ -10,7 +10,6 @@ const PLATFORM_URL = new URL(process.env.PLATFORM_URL || 'https://leliberlnews.f
 const PROJECTS = { 'sky-sc': 'Sky SC', 'sky-fc': 'Sky FC', 'sky-3rd': 'The 3rd' };
 const NIGHTLY_WORKFLOW = 'build.yml';
 const DAILY_REQUESTER = 'Capel (publication quotidienne)';
-const DISCORD_MESSAGE_LIMIT = 1900;
 const BUTTON_ID = 'patch_release_start';
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -272,10 +271,14 @@ class PatchReleaseService {
         if (this.announcementState.seen.includes(key)) return;
         const channel = this.panelMessage?.channel || await this.client.channels.fetch(this.channelId);
         if (channel && channel.isTextBased()) {
-            for (const message of this.releaseMessages(release)) {
-                await channel.send({ content: message, allowedMentions: { parse: [] } });
-            }
-            await this.sendReleaseExamples(channel, release);
+            const report = new URL('/plateforme/release-changes.php', PLATFORM_URL);
+            report.searchParams.set('project', this.project);
+            const button = new ButtonBuilder().setLabel('Voir les changements').setStyle(ButtonStyle.Link).setURL(report.href);
+            await channel.send({
+                content: `**${escapeExample(release.name || release.tag_name)}** — ${release.prerelease === false ? 'Release' : 'Version de test'}\nLe détail des fichiers et des corrections est disponible sur la plateforme.`,
+                components: [new ActionRowBuilder().addComponents(button)],
+                allowedMentions: { parse: [] },
+            });
             this.announcementState.seen.push(key);
             await this.saveAnnouncementState();
         }
@@ -313,46 +316,6 @@ class PatchReleaseService {
             this.announcementQueue = pending;
             await pending;
         } finally { this.polling = false; }
-    }
-
-    async sendReleaseExamples(channel, release) {
-        const path = `${this.buildApi}&examples=${encodeURIComponent(release.tag_name)}`;
-        let manifest;
-        try { manifest = await this.github('GET', path); }
-        catch (error) {
-            console.error('[Patch release] Exemples indisponibles :', error.message);
-            await channel.send({ content: 'Les exemples de changements n’ont pas pu être récupérés.', allowedMentions: { parse: [] } });
-            return;
-        }
-        if (manifest?.schema !== 1 || !Array.isArray(manifest.changes)) throw new Error('Exemples de release invalides.');
-        for (const change of manifest.changes) {
-            if (change.kind === 'text') {
-                await channel.send({ content: textExample(change), allowedMentions: { parse: [] } });
-            } else if (change.kind === 'image' && /^change-preview-\d+\.png$/.test(change.image_asset)) {
-                // Sequential downloads and sends: never retain a collection of decoded images.
-                const image = await this.github('GET', `${path}&image=${encodeURIComponent(change.image_asset)}`);
-                if (typeof image?.base64 !== 'string' || image.base64.length > 12 * 1024 * 1024) throw new Error('Aperçu image invalide.');
-                const png = Buffer.from(image.base64, 'base64');
-                if (png.length > 8 * 1024 * 1024 || !png.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw new Error('Aperçu PNG invalide.');
-                await channel.send({ content: `**${escapeExample(String(change.file).slice(0, 220))}**`, files: [{ attachment: png, name: change.image_asset }], allowedMentions: { parse: [] } });
-            }
-        }
-    }
-
-    releaseMessages(release) {
-        const lines = String(release.body || '').split(/\r?\n/).filter(line => line.trim() !== '');
-        const messages = [];
-        let current = `**${release.name || release.tag_name}** — ${release.prerelease === false ? 'Release' : 'Version de test'}\n${release.html_url}`;
-        for (const line of lines) {
-            if (current.length + line.length + 1 > DISCORD_MESSAGE_LIMIT) {
-                messages.push(current);
-                current = line.slice(0, DISCORD_MESSAGE_LIMIT);
-            } else {
-                current += `\n${line}`;
-            }
-        }
-        messages.push(current);
-        return messages;
     }
 
     async requestRelease(requestedBy = null, requesterName = null) {
