@@ -131,14 +131,21 @@ client.once('clientReady', async () => {
     }
 });
 
-// Passive checks only: a new test build or a manually promoted release is
-// announced even when it was started on the platform, and after bot restarts.
+// Persistent schedules live on the platform; Capel polls them and announces
+// releases even when a build was started from the platform or before a restart.
 client.once('clientReady', () => {
+    let checking = false;
     const check = async () => {
-        for (const service of patchReleaseServices) {
-            try { await service.checkReleaseUpdates(); }
-            catch (error) { console.error('[Patch release] Vérification impossible :', service.project, error.message); }
-        }
+        if (checking) return;
+        checking = true;
+        try {
+            for (const service of patchReleaseServices) {
+                try { await service.checkScheduledBuild(); }
+                catch (error) { console.error('[Patch schedule] Vérification impossible :', service.project, error.message); }
+                try { await service.checkReleaseUpdates(); }
+                catch (error) { console.error('[Patch release] Vérification impossible :', service.project, error.message); }
+            }
+        } finally { checking = false; }
     };
     check();
     setInterval(check, 90_000).unref();
@@ -432,14 +439,3 @@ cron.schedule('0 22 * * *', async () => {
         } catch (error) { console.error("❌ Erreur lors de la clôture de 22h :", error); }
     }
 }, { timezone: "Europe/Paris" });
-
-cron.schedule('0 3 * * *', async () => {
-    try {
-        const result = await patchReleaseService.requestRelease();
-        console.log(result.alreadyRunning
-            ? '[PatchSC release] La publication quotidienne est déjà en cours.'
-            : '[PatchSC release] Publication quotidienne de 3 h déclenchée.');
-    } catch (error) {
-        console.error('[PatchSC release] Échec du déclenchement quotidien de 3 h :', error);
-    }
-}, { timezone: 'Europe/Paris' });

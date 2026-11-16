@@ -318,6 +318,18 @@ class PatchReleaseService {
         } finally { this.polling = false; }
     }
 
+    async checkScheduledBuild() {
+        if (this.checkingSchedule) return;
+        this.checkingSchedule = true;
+        try {
+            const result = await this.github('POST', '/plateforme/api/build.php', {
+                project: this.project, action: 'scheduled',
+            });
+            if (result.status === 'error') throw new Error(result.error || 'Échec de compilation automatique.');
+            return result;
+        } finally { this.checkingSchedule = false; }
+    }
+
     async requestRelease(requestedBy = null, requesterName = null) {
         if (this.project !== 'sky-sc' && !requestedBy) {
             throw new Error('Les compilations FC et The 3rd doivent être lancées manuellement.');
