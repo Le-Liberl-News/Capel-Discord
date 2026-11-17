@@ -4,6 +4,8 @@ const path = require('path');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRESENCE_MARKER = 'LIBERLNEWS_TESTER_PRESENCE_V1';
+const parisDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
+const nonNegative = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
 
 function clean(value, maximum) {
     return typeof value === 'string' ? value.trim().slice(0, maximum) : '';
@@ -78,6 +80,11 @@ class TesterPresenceService {
                     bubblesTotal: Math.max(0,
                         Number.isSafeInteger(tester.bubblesTotal) ? tester.bubblesTotal : 0),
                     lastSeen: Number.isSafeInteger(tester.lastSeen) ? tester.lastSeen : 0,
+                    dayStart: tester.dayStart && /^\d{4}-\d{2}-\d{2}$/.test(tester.dayStart.date) ? {
+                        date: tester.dayStart.date, chapter: nonNegative(tester.dayStart.chapter),
+                        stage: nonNegative(tester.dayStart.stage), checkpoint: nonNegative(tester.dayStart.checkpoint),
+                        checkpointCount: nonNegative(tester.dayStart.checkpointCount),
+                    } : null,
                 });
             }
             this.panelMessageId = clean(saved.panelMessageId, 32);
@@ -151,7 +158,16 @@ class TesterPresenceService {
     receive(body, now = Date.now()) {
         const installationId = clean(body?.installationId, 64);
         if (!UUID.test(installationId)) throw new Error('installationId invalide.');
+        const previous = this.testers.get(installationId.toLowerCase());
+        const day = parisDay.format(new Date(now));
+        const count = nonNegative(body.checkpointCount);
+        const base = previous?.checkpointCount === count ? previous : body;
+        const dayStart = previous?.dayStart?.date === day && previous.dayStart.checkpointCount === count
+            ? previous.dayStart
+            : { date: day, chapter: nonNegative(base.chapter), stage: nonNegative(base.stage),
+                checkpoint: nonNegative(base.checkpoint), checkpointCount: count };
         const tester = {
+            dayStart,
             installationId: installationId.toLowerCase(),
             author: clean(body.author, 64),
             sceneFile: clean(body.sceneFile, 64),
