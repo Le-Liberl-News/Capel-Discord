@@ -219,6 +219,7 @@ app.get('/api/health', (req,res) => res.status(client.isReady()?200:503).json({r
 app.use(require('./utils/runtimeDiagnostics').middleware);
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
+require('./utils/testerPresenceWeb').registerTesterPresenceWeb({ app, service: testerPresenceService });
 const upload = multer({ dest: 'uploads/' });
 
 // Outil de screenshot ingame pour le debug, à partir d'ici'

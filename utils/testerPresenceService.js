@@ -125,21 +125,33 @@ class TesterPresenceService {
         try {
             const separator = message.content.indexOf('\n');
             if (separator < 0) throw new Error('payload JSON absent');
-            const result = this.receive(JSON.parse(message.content.slice(separator + 1)));
+            const body = JSON.parse(message.content.slice(separator + 1));
             await message.delete().catch(() => {});
-            for (const chapter of result.completedChapters) {
-                await this.onChapterCompleted?.({ tester: result.tester, chapter });
-            }
-            if (result.completedChapters.length) {
-                this.notifiedChapters.set(result.tester.installationId, result.tester.chapter);
-                this.saveState();
-            }
-            this.scheduleRefresh();
+            await this.receiveAndAnnounce(body);
             return true;
         } catch (error) {
             console.error(`[Présence testeurs] Message ${message.id} rejeté :`, error);
             await message.delete().catch(() => {});
             return false;
+        }
+    }
+
+    async receiveAndAnnounce(body) {
+        const result = this.receive(body);
+        this.scheduleRefresh();
+        const { installationId } = result.tester;
+        for (const chapter of result.completedChapters) {
+            // Marked first: two close heartbeats never announce the same chapter twice; unmarked when it failed,
+            // so that the next one tries again.
+            this.notifiedChapters.set(installationId, chapter + 1);
+            try {
+                await this.onChapterCompleted?.({ tester: result.tester, chapter });
+            } catch (error) {
+                this.notifiedChapters.set(installationId, chapter);
+                this.saveState();
+                throw error;
+            }
+            this.saveState();
         }
     }
 

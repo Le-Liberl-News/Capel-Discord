@@ -48,8 +48,10 @@ publication final.
 
 ## Présence des testeurs
 
-La DLL envoie un heartbeat compact via le webhook Discord sous le marqueur
-`LIBERLNEWS_TESTER_PRESENCE_V1`. Par défaut, Capel le reconnaît avec les mêmes
+La DLL envoie la progression à la plateforme (`plateforme/api/tester-presence.php`), qui la
+transmet à Capel (`POST /api/tester-presence`, signée avec `.runtime/adventure-web.key`) :
+aucun message Discord. Les DLL jusqu'à la v0.1.47 passent encore par le webhook Discord,
+sous le marqueur `LIBERLNEWS_TESTER_PRESENCE_V1`. Pour elles, par défaut, Capel le reconnaît avec les mêmes
 `DEBUG_INGRESS_CHANNEL_ID` et `DEBUG_INGRESS_WEBHOOK_ID` que les signalements,
 supprime le message technique puis actualise un panneau unique dans
 `TESTER_PROGRESS_CHANNEL_ID` (ou `PATCH_RELEASE_CHANNEL_ID` en valeur de repli).
