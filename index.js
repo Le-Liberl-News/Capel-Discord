@@ -58,7 +58,12 @@ const debugReportIngress = createDebugReportIngress({
     tableId: TABLE_ID,
     destinationChannelId: REPORT_DESTINATION_CHANNEL_ID,
     ingressChannelId: TECHNICAL_INGRESS_CHANNEL_ID,
-    ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID
+    ingressWebhookId: process.env.DEBUG_INGRESS_WEBHOOK_ID,
+    alreadyReceived: id => overlayInbox.known(String(id))
+});
+const overlayInbox = require('./utils/overlayInbox.js').createOverlayInbox({
+    ingress: debugReportIngress,
+    folder: require('path').join(__dirname, '.runtime', 'overlay-inbox'),
 });
 const patchReleaseService = createPatchReleaseService({
     client,
@@ -113,6 +118,11 @@ client.once('clientReady', async () => {
         await debugReportIngress.scanPendingMessages();
     } catch (error) {
         console.error('[Debug ingress] Reprise des rapports impossible :', error);
+    }
+    try {
+        await overlayInbox.publishPending();
+    } catch (error) {
+        console.error('[Rapports] Reprise des rapports en attente impossible :', error);
     }
     try {
         await testerPresenceService.scanPendingMessages();
@@ -220,6 +230,7 @@ app.use(require('./utils/runtimeDiagnostics').middleware);
 app.use(express.json({ limit: '16kb' }));
 app.use('/img', express.static('./img'));
 require('./utils/testerPresenceWeb').registerTesterPresenceWeb({ app, service: testerPresenceService });
+overlayInbox.register({ app, multer });
 const upload = multer({ dest: 'uploads/' });
 
 // Outil de screenshot ingame pour le debug, à partir d'ici'

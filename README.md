@@ -19,8 +19,13 @@ lignes au statut `Non commencée` sont candidates. Le compte de service de
 
 ## Entrée des signalements en jeu
 
-Les signalements de la DLL peuvent transiter par un webhook Discord entrant, sans exposer
-de route HTTP publique :
+La DLL envoie les signalements et les corrections à la plateforme
+(`plateforme/api/overlay-report.php`), qui les transmet à Capel (`POST /api/overlay-report`,
+signée avec `.runtime/adventure-web.key`). Capel les garde dans `.runtime/overlay-inbox`
+jusqu'à leur publication : aucun message Discord intermédiaire.
+
+Le webhook Discord entrant reste le secours quand la plateforme ou Capel ne répond pas, et
+l'entrée des DLL jusqu'à la v0.1.47 :
 
 1. créer un salon texte privé dédié, par exemple `#capel-ingress` ;
 2. autoriser Capel à voir le salon, lire son historique, joindre des fichiers, réagir et

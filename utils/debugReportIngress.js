@@ -81,7 +81,9 @@ function createDebugReportIngress({
     tableId,
     destinationChannelId,
     ingressChannelId,
-    ingressWebhookId
+    ingressWebhookId,
+    // A report the platform already relayed (overlayInbox), sent again through the webhook.
+    alreadyReceived = () => false
 }) {
     const processing = new Set();
 
@@ -122,21 +124,49 @@ function createDebugReportIngress({
             downloadAttachment(mediaAttachment, videoReport ? MAX_VIDEO_BYTES : MAX_SCREENSHOT_BYTES),
             saveAttachment ? downloadAttachment(saveAttachment, MAX_SAVE_BYTES) : null
         ]);
-        if (!videoReport && !mediaBuffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+        const kind = videoReport ? 'video' : 'screenshot';
+        const files = { report: reportBuffer, media: mediaBuffer, save: saveBuffer };
+        const { id } = check(kind, files);
+        if (!alreadyReceived(id)) await publish(kind, files);
+        return id;
+    }
+
+    /** The checked item of a report ('screenshot', 'video') or of a correction notice ('audit'). */
+    function check(kind, files) {
+        if (!['screenshot', 'video', 'audit'].includes(kind)) throw new Error('Type d’envoi inconnu.');
+        if (!files.report || files.report.length > MAX_REPORT_BYTES) throw new Error('Le rapport est absent ou trop long.');
+        let raw;
+        try {
+            raw = JSON.parse(files.report.toString('utf8'));
+        } catch {
+            throw new Error('Le rapport ne contient pas un JSON valide.');
+        }
+        if (kind === 'audit') {
+            const audit = validateSheetAudit(raw);
+            return { id: audit.clientRequestId, audit };
+        }
+        const videoReport = kind === 'video';
+        if (!files.media || files.media.length > (videoReport ? MAX_VIDEO_BYTES : MAX_SCREENSHOT_BYTES)) {
+            throw new Error('La capture est absente ou trop volumineuse.');
+        }
+        if (!videoReport && !files.media.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
             throw new Error('La pièce jointe capture.png n’est pas un fichier PNG valide.');
         }
-        if (videoReport && !isMp4(mediaBuffer)) {
+        if (videoReport && !isMp4(files.media)) {
             throw new Error('La pièce jointe capture.mp4 n’est pas un fichier MP4 valide.');
         }
-        let rawReport;
-        try {
-            rawReport = JSON.parse(reportBuffer.toString('utf8'));
-        } catch {
-            throw new Error('Le fichier report.json ne contient pas un JSON valide.');
-        }
-        const report = validateDebugReport(rawReport);
+        const report = validateDebugReport(raw);
         if ((report.mediaType === 'video') !== videoReport) {
             throw new Error('Le type du rapport ne correspond pas à sa pièce jointe.');
+        }
+        return { id: report.clientReportId, report };
+    }
+
+    async function publish(kind, files) {
+        const { report, audit } = check(kind, files);
+        if (audit) {
+            await publishSheetAudit({ client, destinationChannelId, audit });
+            return;
         }
         await publishDebugReport({
             client,
@@ -144,10 +174,9 @@ function createDebugReportIngress({
             tableId,
             destinationChannelId,
             report,
-            media: { data: mediaBuffer, name: mediaName },
-            save: saveBuffer ? { data: saveBuffer, name: SAVE_FILE_NAME } : null
+            media: { data: files.media, name: kind === 'video' ? VIDEO_FILE_NAME : SCREENSHOT_FILE_NAME },
+            save: files.save ? { data: files.save, name: SAVE_FILE_NAME } : null
         });
-        return report.clientReportId;
     }
 
     async function processSheetUpdate(message) {
@@ -183,16 +212,10 @@ function createDebugReportIngress({
         }
         const attachment = findAttachment(message, SHEET_AUDIT_FILE_NAME);
         if (!attachment) throw new Error('Le fichier sheet-audit.json est absent.');
-        const buffer = await downloadAttachment(attachment, MAX_REPORT_BYTES);
-        let rawAudit;
-        try {
-            rawAudit = JSON.parse(buffer.toString('utf8'));
-        } catch {
-            throw new Error('Le fichier sheet-audit.json ne contient pas un JSON valide.');
-        }
-        const audit = validateSheetAudit(rawAudit);
-        await publishSheetAudit({ client, destinationChannelId, audit });
-        return audit.clientRequestId;
+        const files = { report: await downloadAttachment(attachment, MAX_REPORT_BYTES) };
+        const { id } = check('audit', files);
+        if (!alreadyReceived(id)) await publish('audit', files);
+        return id;
     }
 
     async function processMessage(message) {
@@ -275,7 +298,7 @@ function createDebugReportIngress({
         }
     }
 
-    return { accepts, processMessage, scanPendingMessages };
+    return { accepts, processMessage, scanPendingMessages, check, publish };
 }
 
 module.exports = { createDebugReportIngress };
